@@ -1,0 +1,138 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Turfkoi design tokens.
+ * Palette source: PROJECT_REQUIREMENTS.md SS11 + DESIGN_REFERENCE.md.
+ * Dark-first (audit I2: light theme deferred to P1).
+ */
+
+@theme inline {
+  /* shadcn color tokens */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Fonts: Geist (latin) + Bengali fallback (Hind Siliguri) via next/font */
+  --font-sans: var(--font-geist-sans), var(--font-bengali), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-sans);
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  /* Radius: base 12px -> {sm 6, md 8, lg 12, xl 16} (spec SS12: 4/8/12/16/9999) */
+  --radius-sm: calc(var(--radius) * 0.5);
+  --radius-md: calc(var(--radius) * 0.667);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.334);
+  --radius-2xl: calc(var(--radius) * 1.667);
+
+  /* Shadows (spec SS12: low/med/high -> card/popover/modal) */
+  --shadow-low: 0 1px 2px 0 rgb(0 0 0 / 0.40);
+  --shadow-med: 0 6px 16px -2px rgb(0 0 0 / 0.50);
+  --shadow-high: 0 16px 40px -8px rgb(0 0 0 / 0.60);
+
+  /* Type scale (spec SS13); desktop sizes, line-heights preserved on mobile */
+  --text-caption: 0.75rem; --text-caption--line-height: 1rem;
+  --text-small: 0.875rem; --text-small--line-height: 1.25rem;
+  --text-body: 1rem; --text-body--line-height: 1.5rem;
+  --text-h3: 1.5rem; --text-h3--line-height: 2rem;
+  --text-h2: 2rem; --text-h2--line-height: 2.5rem;
+  --text-h1: 2.5rem; --text-h1--line-height: 3rem;
+}
+
+/*
+ * MVP is dark-only (audit I2). :root mirrors .dark so the app never renders
+ * unstyled if the .dark class is absent. P1 will introduce a true light theme.
+ */
+:root,
+.dark {
+  --background: #080B10;
+  --foreground: #FFFFFF;
+  --card: #11161D;
+  --card-foreground: #FFFFFF;
+  --popover: #11161D;
+  --popover-foreground: #FFFFFF;
+  --primary: #00E676;          /* football green */
+  --primary-foreground: #04140B;
+  --secondary: #7C5CFC;        /* purple accent */
+  --secondary-foreground: #FFFFFF;
+  --muted: #161D27;
+  --muted-foreground: #8B95A5;
+  --accent: #1A2230;
+  --accent-foreground: #FFFFFF;
+  --destructive: #FF4D4F;
+  --destructive-foreground: #2A0606;
+  --success: #22C55E;
+  --success-foreground: #06281A;
+  --info: #3B82F6;
+  --info-foreground: #061A2E;
+  --warning: #FFC53D;
+  --warning-foreground: #2A1F00;
+  --border: #222B38;
+  --input: #161D27;
+  --ring: #00E676;
+  --chart-1: #00E676;
+  --chart-2: #7C5CFC;
+  --chart-3: #FFC53D;
+  --chart-4: #3B82F6;
+  --chart-5: #FF4D4F;
+  --radius: 0.75rem;
+  --sidebar: #0B1016;
+  --sidebar-foreground: #FFFFFF;
+  --sidebar-primary: #00E676;
+  --sidebar-primary-foreground: #04140B;
+  --sidebar-accent: #1A2230;
+  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-border: #222B38;
+  --sidebar-ring: #00E676;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  html {
+    @apply font-sans;
+  }
+}
