@@ -24,6 +24,9 @@ export const bookings = pgTable(
       .references(() => turfs.id, { onDelete: "restrict" }),
     date: date("date").notNull(),
     slotStart: time("slot_start").notNull(),
+    // Frozen at booking time so the settle-at-kickoff job and historical UI
+    // remain correct even if the turf_slots row is later edited or deleted.
+    slotEnd: time("slot_end").notNull(),
     bookerId: uuid("booker_id")
       .notNull()
       .references(() => users.id, { onDelete: "restrict" }),

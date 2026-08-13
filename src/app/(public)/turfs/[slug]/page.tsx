@@ -2,8 +2,8 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { MapPinIcon, CalendarCheckIcon } from "lucide-react"
 
-import { Button } from "@/components/ui/button"
 import { StatusBadge, EmptyState } from "@/components/shared"
+import { BookSlotButton } from "@/components/bookings/book-slot-button"
 import { getTurfBySlug, listTurfSlots } from "@/features/turfs/queries"
 
 interface PageProps {
@@ -36,7 +36,6 @@ export default async function TurfDetailPage({ params }: PageProps) {
   const facilityList = Object.entries(facilities).filter(
     ([k, v]) => k !== "grassType" && v === true
   )
-  const fmt = (t: string) => t.slice(0, 5)
 
   return (
     <div className="mx-auto max-w-4xl space-y-8 px-4 py-12">
@@ -129,36 +128,11 @@ export default async function TurfDetailPage({ params }: PageProps) {
           <EmptyState
             icon={CalendarCheckIcon}
             title="No published slots yet"
-            description="The turf owner hasn't published availability. Booking arrives in Phase 3."
+            description="The turf owner hasn't published availability."
           />
         ) : (
-          <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border">
-            {slots.slice(0, 30).map((s) => (
-              <li
-                key={`${s.date}-${s.startTime}`}
-                className="flex items-center justify-between gap-2 bg-card p-3 text-sm"
-              >
-                <span className="font-mono text-xs">
-                  {s.date} · {fmt(s.startTime)} ({s.durationMinutes}m)
-                </span>
-                <div className="flex items-center gap-2">
-                  <span className="tabular-nums">
-                    ৳{Number(s.price).toLocaleString()}
-                  </span>
-                  <StatusBadge
-                    status={s.status === "available" ? "success" : "neutral"}
-                    showIcon={false}
-                  >
-                    {s.status}
-                  </StatusBadge>
-                </div>
-              </li>
-            ))}
-          </ul>
+          <BookSlotButton turfId={turf.id} slots={slots} />
         )}
-        <Button variant="outline" disabled>
-          Book this turf — Phase 3
-        </Button>
       </section>
     </div>
   )
