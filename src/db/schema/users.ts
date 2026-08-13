@@ -3,6 +3,7 @@ import {
   uuid,
   text,
   timestamp,
+  boolean,
   primaryKey,
 } from "drizzle-orm/pg-core"
 
@@ -48,6 +49,10 @@ export const playerProfiles = pgTable("player_profiles", {
   skill: text("skill"),
   area: text("area"),
   coords: geographyPoint("coords"),
+  // Phase 6: "Available tonight" toggle (SS18). When true + availableAt is
+  // recent, the player appears in nearby "needs players" discovery.
+  available: boolean("available").notNull().default(false),
+  availableAt: timestamp("available_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),

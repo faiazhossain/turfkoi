@@ -63,6 +63,9 @@ export const matchPlayers = pgTable(
       .references(() => users.id, { onDelete: "cascade" }),
     teamId: uuid("team_id").references(() => teams.id, { onDelete: "set null" }),
     role: matchPlayerRole("role").notNull().default("member"),
+    // F2: "I played" confirmation — set when the player confirms attendance
+    // after the match. Null until confirmed.
+    playedConfirmedAt: timestamp("played_confirmed_at", { withTimezone: true }),
   },
   (t) => [primaryKey({ columns: [t.matchId, t.userId] })]
 )

@@ -30,7 +30,7 @@ the product is documented.
 - [x] **3. Booking & payments**
 - [x] **4. Team management**
 - [x] **5. Team matchmaking**
-- [ ] **6. Player matchmaking**
+- [x] **6. Player matchmaking**
 - [ ] **7. Admin**
 - [ ] **8. Production hardening**
 

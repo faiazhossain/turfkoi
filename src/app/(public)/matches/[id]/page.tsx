@@ -4,9 +4,12 @@ import { MapPinIcon, ClockIcon } from "lucide-react"
 
 import { StatusBadge, EmptyState } from "@/components/shared"
 import { MatchActions } from "@/components/matches/match-actions"
+import { JoinRequestButton } from "@/components/player/join-request-button"
+import { RequestManager } from "@/components/player/request-manager"
 import { getMatch } from "@/features/matches/queries"
-import { listMyTeams } from "@/features/teams/queries"
+import { ROSTER_LIMITS } from "@/features/matches/schemas"
 import { listTeamMembers, getTeamRole } from "@/features/teams/queries"
+import { listPendingPlayerRequests } from "@/features/player/queries"
 import { getCurrentUser } from "@/lib/auth"
 
 interface PageProps {
@@ -53,6 +56,39 @@ export default async function MatchDetailPage({ params }: PageProps) {
       teamMembers = await listTeamMembers(myTeamOptions[0].teamId)
     }
   }
+
+  // Compute open spots per team for the join button.
+  const maxRoster = ROSTER_LIMITS[m.matchType]?.max ?? 8
+  const openSpots = sides
+    .map((s) => {
+      const filled = roster.filter((p) => p.teamId === s.teamId).length
+      return {
+        teamId: s.teamId,
+        teamName: s.teamName,
+        open: Math.max(0, maxRoster - filled),
+      }
+    })
+    .filter((s) => s.open > 0)
+
+  // Load pending player requests for captains.
+  let pendingRequests: {
+    matchId: string; userId: string
+    playerName: string | null; playerPhone: string
+  }[] = []
+  if (myTeamOptions.length > 0 && ["confirmed", "roster_building"].includes(m.state)) {
+    const allReqs = await listPendingPlayerRequests(myTeamOptions.map((t) => t.teamId))
+    pendingRequests = allReqs
+      .filter((r) => r.matchId === m.id)
+      .map((r) => ({
+        matchId: r.matchId,
+        userId: r.userId,
+        playerName: r.playerName,
+        playerPhone: r.playerPhone,
+      }))
+  }
+
+  // Is the current user already on the roster?
+  const onRoster = user ? roster.some((p) => p.userId === user.id) : false
 
   const canConfirmResult =
     !!user &&
@@ -114,6 +150,15 @@ export default async function MatchDetailPage({ params }: PageProps) {
             </StatusBadge>
           ) : null}
         </div>
+      ) : null}
+
+      {/* Player matchmaking: join request + captain request management */}
+      {user && ["confirmed", "roster_building"].includes(m.state) && !onRoster && myTeamOptions.length === 0 && openSpots.length > 0 ? (
+        <JoinRequestButton matchId={m.id} spots={openSpots} />
+      ) : null}
+
+      {myTeamOptions.length > 0 && pendingRequests.length > 0 ? (
+        <RequestManager teamId={myTeamOptions[0].teamId} requests={pendingRequests} />
       ) : null}
 
       {user ? (

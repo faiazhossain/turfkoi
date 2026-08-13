@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { MapPinIcon, ClockIcon } from "lucide-react"
+import { ClockIcon } from "lucide-react"
 
 import { EmptyState, StatusBadge } from "@/components/shared"
 import { listOpenMatches } from "@/features/matches/queries"
