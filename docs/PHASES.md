@@ -25,7 +25,7 @@ the product is documented.
 ## Progress
 
 - [x] **0. Foundation** — scaffold, design tokens (+ contrast audit), full Drizzle schema, app shell, infra stubs, CI
-- [ ] **1. Auth & users**
+- [x] **1. Auth & users**
 - [ ] **2. Turf management**
 - [ ] **3. Booking & payments**
 - [ ] **4. Team management**

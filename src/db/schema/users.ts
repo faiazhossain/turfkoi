@@ -46,6 +46,7 @@ export const playerProfiles = pgTable("player_profiles", {
     .references(() => users.id, { onDelete: "cascade" }),
   position: text("position"),
   skill: text("skill"),
+  area: text("area"),
   coords: geographyPoint("coords"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()

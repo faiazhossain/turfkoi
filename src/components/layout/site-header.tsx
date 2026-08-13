@@ -16,7 +16,12 @@ export function SiteHeader() {
         </Link>
         <MainNav variant="desktop" />
         <div className="ml-auto flex items-center gap-2">
-          <Button variant="ghost" size="sm" className="hidden sm:inline-flex">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="hidden sm:inline-flex"
+            render={<Link href="/login" />}
+          >
             Sign in
           </Button>
           <Button size="sm" render={<Link href="/turfs" />}>

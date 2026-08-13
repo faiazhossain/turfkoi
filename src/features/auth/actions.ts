@@ -1,0 +1,68 @@
+"use server"
+
+import { revalidatePath } from "next/cache"
+import { AuthError } from "next-auth"
+import { eq } from "drizzle-orm"
+import { z } from "zod"
+
+import { signIn, signOut } from "@/auth"
+import { db } from "@/db"
+import { users, playerProfiles } from "@/db/schema"
+import { getCurrentUser } from "@/lib/auth"
+
+import { normalizePhone, isValidPhone } from "./phone"
+import { sendOtp, verifyOtp } from "./otp-service"
+import { onboardingFormSchema } from "./schemas"
+
+type ActionResult =
+  | { ok: true; devCode?: string; isNew?: boolean }
+  | { ok: false; reason: string }
+
+export async function sendOtpAction(rawPhone: string): Promise<ActionResult> {
+  const phone = normalizePhone(rawPhone)
+  if (!isValidPhone(phone)) return { ok: false, reason: "invalid_phone" }
+  const result = await sendOtp(phone)
+  return result.ok
+    ? { ok: true, devCode: result.devCode }
+    : { ok: false, reason: result.reason }
+}
+
+export async function verifyOtpAction(
+  rawPhone: string,
+  code: string
+): Promise<ActionResult> {
+  const phone = normalizePhone(rawPhone)
+  if (!isValidPhone(phone)) return { ok: false, reason: "invalid_phone" }
+  const result = await verifyOtp(phone, code.trim())
+  if (!result.ok) return { ok: false, reason: result.reason }
+  try {
+    await signIn("phone-otp", { phone, code: code.trim(), redirect: false })
+  } catch (err) {
+    if (err instanceof AuthError) return { ok: false, reason: "invalid" }
+    throw err
+  }
+  return { ok: true, isNew: result.isNew }
+}
+
+export async function completeOnboardingAction(
+  input: z.infer<typeof onboardingFormSchema>
+) {
+  const parsed = onboardingFormSchema.safeParse(input)
+  if (!parsed.success) {
+    return { ok: false as const, error: parsed.error.issues[0]?.message ?? "Invalid input" }
+  }
+  const user = await getCurrentUser()
+  if (!user) throw new Error("Unauthorized")
+  const { name, position, skill, area } = parsed.data
+  await db.update(users).set({ name }).where(eq(users.id, user.id))
+  await db
+    .update(playerProfiles)
+    .set({ position: position ?? null, skill: skill ?? null, area: area ?? null })
+    .where(eq(playerProfiles.userId, user.id))
+  revalidatePath("/app")
+  return { ok: true as const }
+}
+
+export async function signOutAction() {
+  await signOut({ redirectTo: "/login" })
+}

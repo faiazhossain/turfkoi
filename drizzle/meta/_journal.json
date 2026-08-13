@@ -8,6 +8,13 @@
       "when": 1786604646802,
       "tag": "0000_init",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1786607631736,
+      "tag": "0001_auth_otp",
+      "breakpoints": true
     }
   ]
 }
