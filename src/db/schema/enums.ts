@@ -120,3 +120,13 @@ export const reportStatus = pgEnum("report_status", [
   "resolved",
   "dismissed",
 ])
+
+// H4: dual-control refund request lifecycle. Amounts > Tk5,000 must move
+// pending → approved by a *second* admin before the money actually moves.
+export const refundRequestStatus = pgEnum("refund_request_status", [
+  "pending",
+  "approved",
+  "rejected",
+  "executed",
+  "cancelled",
+])

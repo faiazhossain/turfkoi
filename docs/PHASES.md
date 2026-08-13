@@ -31,7 +31,7 @@ the product is documented.
 - [x] **4. Team management**
 - [x] **5. Team matchmaking**
 - [x] **6. Player matchmaking**
-- [ ] **7. Admin**
+- [x] **7. Admin**
 - [ ] **8. Production hardening**
 
 ## Phase scopes (what "done" means for each)

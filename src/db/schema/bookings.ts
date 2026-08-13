@@ -11,7 +11,13 @@ import {
   index,
 } from "drizzle-orm/pg-core"
 
-import { bookingStatus, transactionStatus, paymentProvider, payoutStatus } from "./enums"
+import {
+  bookingStatus,
+  transactionStatus,
+  paymentProvider,
+  payoutStatus,
+  refundRequestStatus,
+} from "./enums"
 import { users } from "./users"
 import { turfs } from "./turfs"
 
@@ -48,6 +54,39 @@ export const bookings = pgTable(
       .where(sql`${t.status} in ('held', 'payment_pending', 'confirmed')`),
     index("bookings_turf_date_idx").on(t.turfId, t.date),
   ]
+)
+
+/**
+ * H4 dual-control refund requests. Amounts > Tk5,000 must be approved by a
+ * second admin before the refund executes (status pending → approved →
+ * executed). Amounts <= Tk5,000 are executed inline (status pending →
+ * executed). Either way a row is recorded for audit.
+ */
+export const refundRequests = pgTable(
+  "refund_requests",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    bookingId: uuid("booking_id")
+      .notNull()
+      .references(() => bookings.id, { onDelete: "restrict" }),
+    requestedBy: uuid("requested_by")
+      .notNull()
+      .references(() => users.id, { onDelete: "restrict" }),
+    approvedBy: uuid("approved_by").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
+    reason: text("reason"),
+    status: refundRequestStatus("status").notNull().default("pending"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    approvedAt: timestamp("approved_at", { withTimezone: true }),
+  },
+  (t) => [index("refund_requests_status_idx").on(t.status)]
 )
 
 // F3: transient slot holds with TTL - separate from bookings.
