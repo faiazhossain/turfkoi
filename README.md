@@ -5,16 +5,17 @@
 > A turf-booking + matchmaking platform built for Bangladesh: prices in
 > Taka (BDT), payments via bKash, phone-first auth, map-based discovery.
 
-This repository holds the product specs **and** the application. Phase 0
-(Foundation) is complete; feature phases follow the roadmap below.
+This repository holds the product specs **and** the application. The full MVP
+build is complete.
 
 ## Status
 
 - **Specs:** `PROJECT_REQUIREMENTS.md` (technical blueprint), `AUDIT_DECISIONS.md`
   (locked decisions - 52 approved, 1 deferred), `DESIGN_REFERENCE.md` (visual
   language), `PROJECT_OVERVIEW.md` (plain-language summary).
-- **Code:** Phase 0 foundation scaffolded - app shell, design tokens, full
-  Drizzle schema, infra client stubs, CI. No feature logic yet.
+- **Code:** full MVP shipped — auth, turfs, bookings + money flow, teams,
+  matchmaking (team + player), admin oversight, and production hardening.
+- **Features:** see [`docs/FEATURES.md`](docs/FEATURES.md).
 
 ## Tech stack
 
@@ -74,6 +75,7 @@ Node 22 (see `.nvmrc`). Package manager: npm.
 | `npm run db:generate` | Generate Drizzle migration |
 | `npm run db:push` / `db:migrate` | Apply schema to DB |
 | `npm run db:studio` | Drizzle Studio GUI |
+| `npm test` | Run the vitest suite (negative-path tests) |
 
 ## Design system
 
@@ -85,50 +87,42 @@ Dark-first palette and tokens live in `src/app/globals.css`. Contrast audit:
 ```
 src/
   app/                # routes (server components by default)
-    (public)/         # /, /turfs, /matches
-    (auth)/           # /app, /team, /turf-owner, /admin (guarded in Phase 1)
+    (public)/         # /, /turfs, /matches, /invite/[code]
+    (auth)/           # /app, /team, /turf-owner, /admin (guarded)
   components/
     ui/               # shadcn/ui primitives (Base UI)
     shared/           # StatusBadge, BottomSheet, EmptyState, ...
     layout/           # header, footer, mobile nav
   db/
-    schema/           # full Drizzle schema (all tables + audit additions)
+    schema/           # full Drizzle schema (26 tables + 19 enums)
     geo.ts            # PostGIS geography custom type
-  lib/                # auth, db, payment, realtime, ratelimit, geo, ...
-drizzle/              # generated migrations
+  features/           # per-domain actions / queries / schemas
+  lib/                # auth, db, payment, realtime, ratelimit, geo, logger, ...
+drizzle/              # generated migrations + audit-role.sql
 .github/workflows/    # CI
 ```
 
-## Roadmap (audit-approved MVP)
+## Features (high level)
 
-| Phase | Scope |
-|---|---|
-| **0. Foundation** (done) | Scaffold, tokens, schema, shell, CI |
-| 1. Auth & users | Phone + OTP (mock), roles, RBAC, protected routes |
-| 2. Turf management | Turf CRUD, PostGIS, slots, owner dashboard |
-| 3. Booking & payments | Discovery, slot hold, bKash, money flow, payouts |
-| 4. Team management | Team CRUD, members, dashboard |
-| 5. Team matchmaking | Match state machine, find/accept opponent |
-| 6. Player matchmaking | Find game, nearby matches, guest roster |
-| 7. Admin | Approvals, payouts, disputes |
-| 8. Production hardening | Threat model, audit immutability, DR, alerting |
+- **Player** — phone+OTP auth, availability toggle, nearby matches, match
+  history, referral invite link, account deletion.
+- **Team** — CRUD, phone-based invites, multi-team switcher, internal roles.
+- **Turf owner** — turf CRUD with PostGIS + R2 photo upload, slot generation,
+  per-turf-owner cancellation policy, owner dashboard with "Fill This Slot".
+- **Matchmaking** — team (pay-then-roster state machine) + player (geo-sorted
+  nearby matches, join requests, guest roster).
+- **Booking & money flow** — 10-min slot holds, bKash-only payments (webhook
+  signature **and** IP allowlist), settle-at-kickoff, weekly admin-triggered
+  bKash payouts.
+- **Admin** — KPI overview, user/turf/team/booking/match/transaction
+  management, payouts, **dual-control refunds > Tk5,000**, dispute resolution,
+  reports.
+- **Production hardening** — threat model, INSERT-only audit role, magic-byte
+  file validation, PII-redacting structured logger, account deletion workflow,
+  perf targets, DR + alerting runbooks, vitest negative tests, SEO sitemap +
+  robots, contrast/a11y re-audit.
 
-See `AUDIT_DECISIONS.md` for the locked decisions behind each phase.
-
-### Continuing the build
-
-Progress is tracked in [`docs/PHASES.md`](docs/PHASES.md). To implement the next
-undone phase in any fresh session (same machine or a different PC), run the
-project command:
-
-```
-/next-phase
-```
-
-Or paste: `Read docs/PHASES.md and implement the next incomplete phase.` The
-command reads the tracker, builds the next unfinished phase by the rules in that
-file, ticks it off, and commits — so it works the same on any machine with the
-repo cloned.
+Full per-role breakdown: [`docs/FEATURES.md`](docs/FEATURES.md).
 
 ## CI
 
