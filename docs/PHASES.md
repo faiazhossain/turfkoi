@@ -28,7 +28,7 @@ the product is documented.
 - [x] **1. Auth & users**
 - [x] **2. Turf management**
 - [x] **3. Booking & payments**
-- [ ] **4. Team management**
+- [x] **4. Team management**
 - [ ] **5. Team matchmaking**
 - [ ] **6. Player matchmaking**
 - [ ] **7. Admin**

@@ -159,6 +159,7 @@
 10. **Migration tool** — **Drizzle.**
 11. **Slot hold TTL** — **10 minutes** (Phase 3). §27 names "e.g., 10 min" as the hold window; adopted as the constant `SLOT_HOLD_TTL_MS`. Expired both via the `slot-hold-expire` Inngest job and a check-on-read fallback.
 12. **Booking concurrency on neon-http** — the HTTP driver can't `SELECT … FOR UPDATE` in a transaction (J2). We satisfy J2's *intent* with three layered primitives instead: the partial unique index `bookings_active_unique` rejects a second active booking for the same slot; client-generated idempotency keys (J3) make creation safely retryable; conditional `UPDATE … WHERE status=…` transitions ensure only one webhook/hold/cancel wins a race. Safer on serverless than row-level locks and avoids introducing a second DB driver.
+13. **Team invitations** — **Direct add by phone** (Phase 4). Captain enters a phone number; if the user has signed up, they're added to `team_members` immediately. If not, a `team_invitations` row is stored and fulfilled automatically on first signup via `findOrCreateUserByPhone`. No invite-link mechanism; A2's WhatsApp seeding happens via direct phone adds.
 
 ---
 

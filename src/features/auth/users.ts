@@ -1,7 +1,7 @@
-import { eq } from "drizzle-orm"
+import { eq, and, isNull } from "drizzle-orm"
 
 import { db } from "@/db"
-import { users, userRoles, playerProfiles } from "@/db/schema"
+import { users, userRoles, playerProfiles, teamMembers, teamInvitations } from "@/db/schema"
 import type { Role } from "@/lib/capabilities"
 
 export async function getUserByPhone(phone: string) {
@@ -27,6 +27,35 @@ async function ensureProfileAndRole(userId: string): Promise<void> {
 }
 
 /**
+ * Phase 4: when a user signs up, fulfill any pending team invitations that
+ * match their phone. Each fulfilled invite creates a team_members row and
+ * marks the invitation as fulfilled (idempotent).
+ */
+async function fulfillPendingInvitations(userId: string, phone: string): Promise<void> {
+  const pending = await db
+    .select()
+    .from(teamInvitations)
+    .where(
+      and(
+        eq(teamInvitations.phone, phone),
+        isNull(teamInvitations.fulfilledAt)
+      )
+    )
+  if (pending.length === 0) return
+
+  for (const inv of pending) {
+    await db
+      .insert(teamMembers)
+      .values({ teamId: inv.teamId, userId, role: inv.role })
+      .onConflictDoNothing()
+    await db
+      .update(teamInvitations)
+      .set({ fulfilledAt: new Date() })
+      .where(eq(teamInvitations.id, inv.id))
+  }
+}
+
+/**
  * Find-or-create a user by phone. Resilient to races and partial creates
  * (neon-http has no multi-statement transactions), via unique(phone) + idempotent
  * backfill of profile + role.
@@ -43,6 +72,8 @@ export async function findOrCreateUserByPhone(phone: string): Promise<{
   try {
     const [created] = await db.insert(users).values({ phone }).returning()
     await ensureProfileAndRole(created.id)
+    // Fulfill any pending team invitations for this phone number.
+    await fulfillPendingInvitations(created.id, phone)
     return { user: created, isNew: true }
   } catch (err) {
     // unique(phone) race: another request created it first.
