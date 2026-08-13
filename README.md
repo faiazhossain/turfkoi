@@ -115,6 +115,21 @@ drizzle/              # generated migrations
 
 See `AUDIT_DECISIONS.md` for the locked decisions behind each phase.
 
+### Continuing the build
+
+Progress is tracked in [`docs/PHASES.md`](docs/PHASES.md). To implement the next
+undone phase in any fresh session (same machine or a different PC), run the
+project command:
+
+```
+/next-phase
+```
+
+Or paste: `Read docs/PHASES.md and implement the next incomplete phase.` The
+command reads the tracker, builds the next unfinished phase by the rules in that
+file, ticks it off, and commits — so it works the same on any machine with the
+repo cloned.
+
 ## CI
 
 `.github/workflows/ci.yml` runs on every PR and push to `main`: env guard, lint,
