@@ -5,7 +5,12 @@ import { CheckCircle2Icon, ClockIcon, MapPinIcon } from "lucide-react"
 import { StatusBadge, EmptyState } from "@/components/shared"
 import { FeeBreakdown } from "@/components/bookings/fee-breakdown"
 import { BookingActions } from "@/components/bookings/booking-actions"
+import { CreateMatchButton } from "@/components/bookings/create-match-button"
 import { getBooking } from "@/features/bookings/queries"
+import { listMyTeams } from "@/features/teams/queries"
+import { db } from "@/db"
+import { matches } from "@/db/schema"
+import { eq } from "drizzle-orm"
 import { computeFees } from "@/lib/pricing"
 import { getCurrentUser } from "@/lib/auth"
 
@@ -64,6 +69,24 @@ export default async function BookingDetailPage({
   const tone = STATUS_TONE[b.status] ?? "neutral"
   const paymentFailed = payment === "failed"
 
+  // For confirmed bookings: check if a match already exists + load teams.
+  let existingMatch: { id: string } | null = null
+  let userTeams: { id: string; name: string; role: string }[] = []
+  if (b.status === "confirmed" && user) {
+    const [m] = await db
+      .select({ id: matches.id })
+      .from(matches)
+      .where(eq(matches.bookingId, b.id))
+      .limit(1)
+    existingMatch = m ?? null
+    if (!existingMatch) {
+      const teams = await listMyTeams(user.id)
+      userTeams = teams
+        .filter((t) => t.role === "owner" || t.role === "captain")
+        .map((t) => ({ id: t.id, name: t.name, role: t.role }))
+    }
+  }
+
   return (
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-12">
       <nav className="text-sm text-muted-foreground">
@@ -115,6 +138,21 @@ export default async function BookingDetailPage({
         status={b.status}
         paymentFailed={paymentFailed}
       />
+
+      {b.status === "confirmed" && existingMatch ? (
+        <div className="rounded-lg border border-border bg-card p-3 text-sm">
+          <a
+            href={`/matches/${existingMatch.id}`}
+            className="text-primary hover:underline"
+          >
+            View match →
+          </a>
+        </div>
+      ) : null}
+
+      {b.status === "confirmed" && !existingMatch ? (
+        <CreateMatchButton bookingId={b.id} teams={userTeams} />
+      ) : null}
 
       <section className="space-y-1 text-xs text-muted-foreground">
         <p>

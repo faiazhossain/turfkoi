@@ -29,7 +29,7 @@ the product is documented.
 - [x] **2. Turf management**
 - [x] **3. Booking & payments**
 - [x] **4. Team management**
-- [ ] **5. Team matchmaking**
+- [x] **5. Team matchmaking**
 - [ ] **6. Player matchmaking**
 - [ ] **7. Admin**
 - [ ] **8. Production hardening**
