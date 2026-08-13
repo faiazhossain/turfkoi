@@ -27,7 +27,7 @@ export default function HomePage() {
     <>
       <section className="mx-auto max-w-6xl px-4 py-16 md:py-24">
         <StatusBadge status="primary" className="mb-4">
-          Built for football in Bangladesh
+          Made for turf sports in Bangladesh
         </StatusBadge>
         <h1 className="max-w-3xl text-4xl font-bold leading-tight tracking-tight md:text-5xl">
           Book a turf. <span className="text-primary">Find an opponent.</span> Fill the

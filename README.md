@@ -2,7 +2,7 @@
 
 > Book a turf. Find an opponent. Fill missing players. Play.
 >
-> A football turf-booking + matchmaking platform built for Bangladesh: prices in
+> A turf-booking + matchmaking platform built for Bangladesh: prices in
 > Taka (BDT), payments via bKash, phone-first auth, map-based discovery.
 
 This repository holds the product specs **and** the application. Phase 0

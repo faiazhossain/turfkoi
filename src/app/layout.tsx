@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     template: "%s | Turfkoi",
   },
   description:
-    "Book football turfs in Bangladesh, find an opposing team, fill missing roster spots, and play. Prices in Taka, payments via bKash.",
+    "Book turfs in Bangladesh, find an opposing team, fill missing roster spots, and play. Prices in Taka, payments via bKash.",
   applicationName: "Turfkoi",
 }
 

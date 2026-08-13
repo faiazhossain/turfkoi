@@ -6,7 +6,7 @@
 
 ## What Is Turfkoi?
 
-Turfkoi is an app/website for **booking football turfs (fields) in Bangladesh** and for **finding people to play with**.
+Turfkoi is an app/website for **booking turfs (fields) in Bangladesh** and for **finding people to play with**.
 
 It is built for the local market: prices in Taka (BDT), payments through bKash/Nagad, and showed in maps.
 
@@ -166,7 +166,7 @@ It ends with **10 open questions** that must be answered before coding starts (f
 
 ## The Short Version
 
-- **What is it?** A Bangladeshi app to book football turfs and find people to play with.
+- **What is it?** A Bangladeshi app to book turfs and find people to play with.
 - **Problem?** Players, teams, and turf owners all struggle to connect; everything happens over phone and WhatsApp.
 - **Solution?** One platform that books the field, finds the opponent, fills the roster, takes payment, and records the result.
 - **Money?** Turf owners list free; the booker pays a small, transparent, locked-in fee.
