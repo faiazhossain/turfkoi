@@ -26,7 +26,7 @@ the product is documented.
 
 - [x] **0. Foundation** — scaffold, design tokens (+ contrast audit), full Drizzle schema, app shell, infra stubs, CI
 - [x] **1. Auth & users**
-- [ ] **2. Turf management**
+- [x] **2. Turf management**
 - [ ] **3. Booking & payments**
 - [ ] **4. Team management**
 - [ ] **5. Team matchmaking**

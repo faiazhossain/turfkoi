@@ -12,6 +12,7 @@ import {
   primaryKey,
   index,
 } from "drizzle-orm/pg-core"
+import { sql } from "drizzle-orm"
 
 import { turfFormat, slotStatus, cancellationPolicy } from "./enums"
 import { geographyPoint } from "../geo"
@@ -20,6 +21,19 @@ import { users } from "./users"
 export type CancellationPolicyConfig = {
   cutoffHours?: number
   tiers?: { withinHours: number; refundPercent: number }[]
+}
+
+// SS24: facilities surfaced on the turf (Phase 2 schema extension).
+// Booleans default false at write time by the form layer.
+export type Facilities = {
+  indoor?: boolean
+  grassType?: string
+  lighting?: boolean
+  parking?: boolean
+  changingRoom?: boolean
+  shower?: boolean
+  washroom?: boolean
+  equipment?: boolean
 }
 
 export const turfs = pgTable("turfs", {
@@ -36,6 +50,10 @@ export const turfs = pgTable("turfs", {
   city: text("city"),
   area: text("area"),
   address: text("address"),
+  // SS24: descriptive + amenity fields (Phase 2 schema extension).
+  description: text("description"),
+  photos: text("photos").array().notNull().default(sql`ARRAY[]::text[]`),
+  facilities: jsonb("facilities").$type<Facilities>(),
   // Turfs are admin-verified before going live (SS35).
   isVerified: boolean("is_verified").notNull().default(false),
   isActive: boolean("is_active").notNull().default(true),

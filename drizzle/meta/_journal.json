@@ -15,6 +15,13 @@
       "when": 1786607631736,
       "tag": "0001_auth_otp",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1786639890875,
+      "tag": "0002_clammy_ricochet",
+      "breakpoints": true
     }
   ]
 }
