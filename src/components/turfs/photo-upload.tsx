@@ -12,13 +12,14 @@ interface PhotoUploadProps {
 }
 
 /**
- * Presigned R2 upload flow (Phase 2):
+ * Presigned R2 upload flow (Phase 2 + H5 magic-byte verify from Phase 8):
  *  1. User selects a file.
  *  2. We POST to /api/turfs/upload-url for a presigned PUT URL.
  *  3. We PUT the file directly to R2.
- *  4. The returned publicUrl is appended to the form's photo list.
- *
- * Magic-byte validation (H5) lands in Phase 8.
+ *  4. We POST to /api/turfs/upload-verify; the server fetches the first 32
+ *     bytes and confirms the magic-byte signature matches the claimed type.
+ *     A mismatch deletes the object and returns 415 — never trust extensions.
+ *  5. The returned publicUrl is appended to the form's photo list.
  */
 export function PhotoUpload({ turfId, photos, onChange }: PhotoUploadProps) {
   const inputRef = React.useRef<HTMLInputElement>(null)
@@ -45,7 +46,7 @@ export function PhotoUpload({ turfId, photos, onChange }: PhotoUploadProps) {
           setError(`Upload rejected (${res.status})`)
           continue
         }
-        const { uploadUrl, publicUrl, maxBytes } = await res.json()
+        const { uploadUrl, publicUrl, maxBytes, key } = await res.json()
         if (file.size > maxBytes) {
           setError(`${file.name} is too large (max ${maxBytes / 1024 / 1024} MB)`)
           continue
@@ -57,6 +58,24 @@ export function PhotoUpload({ turfId, photos, onChange }: PhotoUploadProps) {
         })
         if (!put.ok) {
           setError(`${file.name} upload failed`)
+          continue
+        }
+        // H5: magic-byte verify. R2 has the bytes; the server confirms the
+        // signature matches the claimed content type before we trust publicUrl.
+        const verify = await fetch("/api/turfs/upload-verify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            turfId,
+            key,
+            contentType: file.type,
+          }),
+        })
+        if (!verify.ok) {
+          const { error: verifyErr } = (await verify.json().catch(() => ({}))) as {
+            error?: string
+          }
+          setError(verifyErr ?? `${file.name} failed validation`)
           continue
         }
         next.push(publicUrl)

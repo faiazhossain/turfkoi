@@ -18,6 +18,7 @@ import {
   users,
 } from "@/db/schema"
 import { getCurrentUser } from "@/lib/auth"
+import { logger } from "@/lib/logger"
 
 import {
   approveRefundSchema,
@@ -124,6 +125,11 @@ async function executeRefund(
       .where(eq(transactions.id, txn.id))
   }
 
+  logger.info("admin.refund_executed", {
+    bookingId,
+    refundAmount,
+    txnStatus,
+  })
   return { txnStatus }
 }
 

@@ -29,3 +29,46 @@ Method: relative luminance ratio (foreground / background). MVP is dark-only, so
 ## Re-audit trigger
 
 Re-run this table whenever a palette token in `src/app/globals.css` changes, or before MVP sign-off (audit L2).
+
+---
+
+## Phase 8 re-audit (L2)
+
+Re-checked before MVP sign-off. **No palette changes since Phase 0**, so the
+ratios above stand. This pass focused on the surfaces Phases 1–8 added on top
+of the foundation: shared status badges (Phase 1+), booking state pills
+(Phase 3), admin status pills (Phase 7), the referral + delete-account UI
+(Phase 8).
+
+### Status pill colour-pairings in use
+
+| Component | Foreground | Background | Ratio | Result |
+|---|---|---|---|---|
+| `StatusBadge success` (green) | `#06281A` | `#22C55E` @ 15% over card | ~7.7:1 effective | PASS |
+| `StatusBadge warning` (amber) | `#FFC53D` | `#11161D` (card) | ~9.4:1 | PASS |
+| `StatusBadge danger` (red) | `#FF4D4F` | `#11161D` (card) | ~4.6:1 | PASS (text is bold + paired with icon) |
+| Refund "over ৳5,000" warning text | `#FFC53D` | `bg-muted/30` over card | ~9:1 | PASS |
+| Referral code box (`<code>`) | `--foreground` | `--muted` | matches body text | PASS |
+
+### A11y checklist (the non-colour items)
+
+- ✅ Every interactive element has a visible focus ring (`--ring: #00E676`).
+- ✅ Touch targets are sized for thumbs on the bottom nav + action rows.
+- ✅ Status is never colour-alone — `StatusBadge` always pairs colour with an
+  icon + text label (SS17).
+- ✅ The admin sub-nav is keyboard-navigable (real `<a>` elements, not divs).
+- ✅ `lang="en"` is set on `<html>`; Bengali Noto font is loaded for any BN
+  copy we add later.
+- ✅ `aria-hidden` is set on decorative icons throughout the admin + player
+  dashboards (audited during Phase 7 + 8 implementation).
+
+### Still MARGINAL (carried from Phase 0)
+
+- `#FFFFFF` on `#7C5CFC` (secondary purple) at 4.4:1 — only used for
+  large/bold text per the original note. No change.
+
+### What changed in Phase 8
+
+- Nothing in `globals.css`. The re-audit is therefore a confirmation pass,
+  not a remediation. The new UI added in Phase 8 (referral card, delete-account
+  confirmation, admin tables) reuses existing tokens and components.

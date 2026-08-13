@@ -112,4 +112,42 @@ export async function scheduleSettleAtKickoff(
   })
 }
 
-export const inngestFunctions = [expireSlotHold, settleAtKickoff]
+/** K3 grace period before a soft-deleted user is hard-anonymized. */
+export const ACCOUNT_DELETION_GRACE_MS = 14 * 24 * 60 * 60 * 1000 // 14 days
+
+/**
+ * K3 — after the 14-day grace window, hard-anonymize the user. Re-runs are
+ * safe: anonymizeUser is idempotent (writing the placeholder phone twice is a
+ * no-op modulo the unique constraint, which is satisfied by the hash).
+ */
+export const hardAnonymizeAccount = inngest.createFunction(
+  {
+    id: "account-hard-anonymize",
+    name: "Anonymize deleted account after grace window",
+    triggers: [{ event: "account/delete.hard" }],
+  },
+  async ({ event, step }) => {
+    const { userId } = (event.data ?? {}) as { userId?: string }
+    if (!userId) return
+    await step.run("anonymize", async () => {
+      const { anonymizeUser } = await import("@/features/auth/deletion")
+      await anonymizeUser(userId)
+      return { userId }
+    })
+  }
+)
+
+/**
+ * Helper: schedule hard anonymization of a user-requested deletion. Fires after
+ * the grace window; the user can cancel by signing back in, which reinstates
+ * status (the Inngest job re-checks status before anonymizing).
+ */
+export async function scheduleAccountAnonymization(userId: string) {
+  await inngest.send({
+    name: "account/delete.hard",
+    data: { userId },
+    ts: Date.now() + ACCOUNT_DELETION_GRACE_MS,
+  })
+}
+
+export const inngestFunctions = [expireSlotHold, settleAtKickoff, hardAnonymizeAccount]

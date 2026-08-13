@@ -59,8 +59,14 @@ async function fulfillPendingInvitations(userId: string, phone: string): Promise
  * Find-or-create a user by phone. Resilient to races and partial creates
  * (neon-http has no multi-statement transactions), via unique(phone) + idempotent
  * backfill of profile + role.
+ *
+ * `refCode` (Phase 8 / A3) attributes a new signup to a referrer. It is a no-op
+ * for existing users and on invalid / self-referral codes.
  */
-export async function findOrCreateUserByPhone(phone: string): Promise<{
+export async function findOrCreateUserByPhone(
+  phone: string,
+  refCode?: string
+): Promise<{
   user: { id: string; phone: string; name: string | null }
   isNew: boolean
 }> {
@@ -74,6 +80,13 @@ export async function findOrCreateUserByPhone(phone: string): Promise<{
     await ensureProfileAndRole(created.id)
     // Fulfill any pending team invitations for this phone number.
     await fulfillPendingInvitations(created.id, phone)
+    // Attribute the signup to a referrer if a valid code was supplied.
+    if (refCode) {
+      const { attributeReferral } = await import("./referrals")
+      await attributeReferral(refCode, created.id).catch(() => {
+        /* non-fatal */
+      })
+    }
     return { user: created, isNew: true }
   } catch (err) {
     // unique(phone) race: another request created it first.

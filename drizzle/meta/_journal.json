@@ -50,6 +50,13 @@
       "when": 1786643388569,
       "tag": "0006_busy_karen_page",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1786644682607,
+      "tag": "0007_curved_arclight",
+      "breakpoints": true
     }
   ]
 }

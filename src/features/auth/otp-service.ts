@@ -72,7 +72,11 @@ async function latestOtp(phone: string) {
   return rows[0] ?? null
 }
 
-export async function verifyOtp(phone: string, code: string): Promise<VerifyResult> {
+export async function verifyOtp(
+  phone: string,
+  code: string,
+  refCode?: string
+): Promise<VerifyResult> {
   if (!phone) return { ok: false, reason: "invalid_phone" }
 
   const ip = await clientIp()
@@ -103,7 +107,7 @@ export async function verifyOtp(phone: string, code: string): Promise<VerifyResu
 
   // Success: consume + find-or-create user.
   await db.update(otps).set({ consumedAt: new Date() }).where(eq(otps.id, otp.id))
-  const { isNew } = await findOrCreateUserByPhone(phone)
+  const { isNew } = await findOrCreateUserByPhone(phone, refCode)
   return { ok: true, isNew }
 }
 

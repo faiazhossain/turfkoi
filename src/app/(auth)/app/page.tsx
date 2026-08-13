@@ -1,8 +1,9 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import { CalendarDaysIcon, ZapIcon, MapPinIcon } from "lucide-react"
+import { CalendarDaysIcon, ZapIcon, MapPinIcon, GiftIcon } from "lucide-react"
 
 import { EmptyState, StatusBadge } from "@/components/shared"
+import { Button } from "@/components/ui/button"
 import { AvailabilityToggle } from "@/components/player/availability-toggle"
 import { JoinRequestButton } from "@/components/player/join-request-button"
 import { ConfirmPlayedButton } from "@/components/player/confirm-played-button"
@@ -13,6 +14,7 @@ import {
   listPlayerMatchHistory,
   getPlayerProfile,
 } from "@/features/player/queries"
+import { getOrCreateReferralCode } from "@/features/auth/referrals"
 
 const STATUS_TONE: Record<string, "success" | "warning" | "neutral"> = {
   held: "warning",
@@ -37,11 +39,13 @@ export default async function PlayerDashboardPage() {
   if (!session?.user) redirect("/login")
 
   const profile = await getPlayerProfile(session.user.id)
-  const [bookings, nearbyMatches, history] = await Promise.all([
+  const [bookings, nearbyMatches, history, refCode] = await Promise.all([
     listMyBookings(session.user.id, 5),
     listMatchesNeedingPlayers(profile?.coords ?? null, 5),
     listPlayerMatchHistory(session.user.id, 5),
+    getOrCreateReferralCode(session.user.id),
   ])
+  const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/invite/${refCode}`
 
   return (
     <div className="mx-auto max-w-6xl space-y-8 px-4 py-12">
@@ -57,6 +61,44 @@ export default async function PlayerDashboardPage() {
       {/* Availability toggle */}
       <section>
         <AvailabilityToggle available={profile?.available ?? false} />
+      </section>
+
+      {/* Invite friends (A3 referral — minimal MVP scaffold) */}
+      <section className="rounded-lg border border-border bg-card p-4">
+        <div className="flex items-center gap-2">
+          <GiftIcon className="size-5 text-primary" aria-hidden />
+          <h2 className="font-heading text-lg font-semibold">Invite friends</h2>
+        </div>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Share your link. When a friend signs up, they&apos;re attributed to
+          you (rewards arrive with the P1 referral program).
+        </p>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <code className="rounded-md border border-border bg-muted px-2 py-1 text-sm">
+            {inviteUrl}
+          </code>
+          <Button
+            size="sm"
+            variant="outline"
+            render={
+              <a
+                href={`https://wa.me/?text=${encodeURIComponent(
+                  "Join me on Turfkoi — book a turf, find a game: " + inviteUrl
+                )}`}
+                target="_blank"
+                rel="noreferrer"
+              />
+            }
+          >
+            Share on WhatsApp
+          </Button>
+          <Link
+            href="/app/settings"
+            className="text-xs text-muted-foreground hover:underline"
+          >
+            Account settings →
+          </Link>
+        </div>
       </section>
 
       {/* Bookings */}

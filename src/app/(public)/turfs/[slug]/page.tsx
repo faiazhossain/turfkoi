@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
+import type { Metadata } from "next"
 import { MapPinIcon, CalendarCheckIcon } from "lucide-react"
 
 import { StatusBadge, EmptyState } from "@/components/shared"
@@ -8,6 +9,25 @@ import { getTurfBySlug, listTurfSlots } from "@/features/turfs/queries"
 
 interface PageProps {
   params: Promise<{ slug: string }>
+}
+
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
+  const { slug } = await params
+  const turf = await getTurfBySlug(slug)
+  if (!turf) return {}
+  const title = `${turf.name} — Book in Bangladesh`
+  const description =
+    `${turf.format === "fives" ? "5-a-side" : "7-a-side"} turf in ` +
+    `${[turf.area, turf.city].filter(Boolean).join(", ") || "Bangladesh"}. ` +
+    `See live availability and book online with bKash.`
+  return {
+    title,
+    description,
+    openGraph: { title, description, type: "website" },
+    alternates: { canonical: `/turfs/${turf.slug}` },
+  }
 }
 
 const FACILITY_LABELS: Record<string, string> = {

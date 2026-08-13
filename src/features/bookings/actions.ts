@@ -18,6 +18,7 @@ import {
 import { can } from "@/lib/capabilities"
 import { getCurrentUser } from "@/lib/auth"
 import { rateLimit } from "@/lib/ratelimit"
+import { logger } from "@/lib/logger"
 import { computeFees } from "@/lib/pricing"
 import { computeRefund } from "@/lib/cancellation"
 import { bkashProvider } from "@/lib/payment"
@@ -319,6 +320,7 @@ export async function confirmPaymentAction(
 
   if (bookingUpdated.length > 0) {
     const b = bookingUpdated[0]
+    logger.info("booking.confirmed", { bookingId: b.id })
     // Mark the slot booked.
     await db
       .update(turfSlots)
@@ -443,6 +445,11 @@ export async function cancelBookingAction(
       decision.refundAmount >= Number(txn.amount)
         ? "refunded"
         : "partially_refunded"
+    logger.info("booking.refunded", {
+      bookingId,
+      refundAmount: decision.refundAmount,
+      policy: row.turf.cancellationPolicy,
+    })
     await db
       .update(transactions)
       .set({ status: newStatus, updatedAt: new Date() })

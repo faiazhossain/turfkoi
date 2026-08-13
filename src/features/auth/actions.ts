@@ -9,6 +9,7 @@ import { signIn, signOut } from "@/auth"
 import { db } from "@/db"
 import { users, playerProfiles } from "@/db/schema"
 import { getCurrentUser } from "@/lib/auth"
+import { cookies } from "next/headers"
 
 import { normalizePhone, isValidPhone } from "./phone"
 import { sendOtp, verifyOtp } from "./otp-service"
@@ -33,7 +34,9 @@ export async function verifyOtpAction(
 ): Promise<ActionResult> {
   const phone = normalizePhone(rawPhone)
   if (!isValidPhone(phone)) return { ok: false, reason: "invalid_phone" }
-  const result = await verifyOtp(phone, code.trim())
+  // A3: pull the referral code from the cookie (set by /invite/[code]).
+  const refCode = (await cookies()).get("turfkoi_ref")?.value || undefined
+  const result = await verifyOtp(phone, code.trim(), refCode)
   if (!result.ok) return { ok: false, reason: result.reason }
   try {
     await signIn("phone-otp", { phone, code: code.trim(), redirect: false })
@@ -64,5 +67,26 @@ export async function completeOnboardingAction(
 }
 
 export async function signOutAction() {
+  await signOut({ redirectTo: "/login" })
+}
+
+/**
+ * K3 — request account deletion. Soft-deletes immediately (user can't sign in
+ * while status='deleted'), then schedules the hard-anonymize Inngest job to
+ * fire after a 14-day grace window. The user can cancel by contacting support
+ * (which reinstates `status='active'`); the Inngest job is a no-op if status
+ * has been reinstated.
+ */
+export async function requestAccountDeletionAction() {
+  const user = await getCurrentUser()
+  if (!user) throw new Error("Unauthorized")
+  await db
+    .update(users)
+    .set({ status: "deleted", updatedAt: new Date() })
+    .where(eq(users.id, user.id))
+  const { scheduleAccountAnonymization } = await import("@/lib/inngest")
+  await scheduleAccountAnonymization(user.id).catch(() => {
+    // non-fatal: admin can still trigger anonymization manually
+  })
   await signOut({ redirectTo: "/login" })
 }
