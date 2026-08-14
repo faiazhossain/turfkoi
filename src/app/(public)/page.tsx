@@ -2,6 +2,7 @@ import Link from "next/link"
 import { CalendarCheckIcon, SwordsIcon, UsersIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { HeroAnimation } from "@/components/home/hero-animation"
 import { StatusBadge } from "@/components/shared"
 
 const features = [
@@ -26,24 +27,29 @@ export default function HomePage() {
   return (
     <>
       <section className="mx-auto max-w-6xl px-4 py-16 md:py-24">
-        <StatusBadge status="primary" className="mb-4">
-          Made for turf sports in Bangladesh
-        </StatusBadge>
-        <h1 className="max-w-3xl text-4xl font-bold leading-tight tracking-tight md:text-5xl">
-          Book a turf. <span className="text-primary">Find an opponent.</span> Fill the
-          gap. Play.
-        </h1>
-        <p className="mt-4 max-w-xl text-base text-muted-foreground">
-          Turfkoi brings turf booking, team matchmaking, and filling missing roster spots
-          into one place. Prices in Taka, payments via bKash.
-        </p>
-        <div className="mt-6 flex flex-wrap gap-3">
-          <Button size="lg" render={<Link href="/turfs" />}>
-            Book a turf
-          </Button>
-          <Button size="lg" variant="outline" render={<Link href="/matches" />}>
-            Find a match
-          </Button>
+        <div className="grid items-center gap-10 md:grid-cols-2">
+          <div>
+            <StatusBadge status="primary" className="mb-4">
+              Made for turf sports in Bangladesh
+            </StatusBadge>
+            <h1 className="max-w-3xl text-4xl font-bold leading-tight tracking-tight md:text-5xl">
+              Book a turf. <span className="text-primary">Find an opponent.</span> Fill the
+              gap. Play.
+            </h1>
+            <p className="mt-4 max-w-xl text-base text-muted-foreground">
+              Turfkoi brings turf booking, team matchmaking, and filling missing roster spots
+              into one place. Prices in Taka, payments via bKash.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Button size="lg" render={<Link href="/turfs" />}>
+                Book a turf
+              </Button>
+              <Button size="lg" variant="outline" render={<Link href="/matches" />}>
+                Find a match
+              </Button>
+            </div>
+          </div>
+          <HeroAnimation className="hero-animation h-[280px] sm:h-[380px] md:h-[500px]" />
         </div>
       </section>
 

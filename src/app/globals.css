@@ -136,3 +136,22 @@
     @apply font-sans;
   }
 }
+
+/*
+ * Hero animation: make SVG transforms pivot around each element's own bbox
+ * (matches GSAP's `transformOrigin: "50% 50%"` behaviour for SVG). Scoped to
+ * the hero wrapper so it never leaks into icons or other SVGs on the page.
+ */
+.hero-animation {
+  position: relative;
+}
+.hero-animation svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.hero-animation svg * {
+  transform-box: fill-box;
+  transform-origin: center;
+}
