@@ -13,10 +13,11 @@ import { cookies } from "next/headers"
 
 import { normalizePhone, isValidPhone } from "./phone"
 import { sendOtp, verifyOtp } from "./otp-service"
+import { getUserRoles } from "./users"
 import { onboardingFormSchema } from "./schemas"
 
 type ActionResult =
-  | { ok: true; devCode?: string; isNew?: boolean }
+  | { ok: true; devCode?: string; isNew?: boolean; home?: string }
   | { ok: false; reason: string }
 
 export async function sendOtpAction(rawPhone: string): Promise<ActionResult> {
@@ -53,7 +54,15 @@ export async function verifyOtpAction(
     }
     throw err
   }
-  return { ok: true, isNew: result.isNew }
+  // Post-login routing by strongest role: admins land on the admin console,
+  // turf owners on their dashboard — the player dashboard is player work.
+  const roles = await getUserRoles(result.userId)
+  const home = roles.includes("admin")
+    ? "/admin"
+    : roles.includes("turf_owner")
+      ? "/turf-owner"
+      : "/app"
+  return { ok: true, isNew: result.isNew, home }
 }
 
 export async function completeOnboardingAction(

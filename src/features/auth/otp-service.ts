@@ -20,7 +20,7 @@ export type SendOtpResult =
   | { ok: false; reason: "invalid_phone" | "rate_limited" }
 
 export type VerifyResult =
-  | { ok: true; isNew: boolean }
+  | { ok: true; isNew: boolean; userId: string }
   | { ok: false; reason: "invalid_phone" | "rate_limited" | "locked" | "expired" | "consumed" | "invalid" }
 
 function generateCode(): string {
@@ -109,8 +109,8 @@ export async function verifyOtp(
 
   // Success: consume + find-or-create user.
   await db.update(otps).set({ consumedAt: new Date() }).where(eq(otps.id, otp.id))
-  const { isNew } = await findOrCreateUserByPhone(phone, refCode)
-  return { ok: true, isNew }
+  const { user, isNew } = await findOrCreateUserByPhone(phone, refCode)
+  return { ok: true, isNew, userId: user.id }
 }
 
 /**

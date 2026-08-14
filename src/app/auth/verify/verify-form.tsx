@@ -48,7 +48,9 @@ export function VerifyForm() {
     setError(null)
     const result = await verifyOtpAction(phone, values.code)
     if (result.ok) {
-      router.replace(result.isNew ? "/auth/onboarding" : "/app")
+      // New users always complete onboarding first; returning users land on
+      // their role-appropriate home (admin console / owner dashboard / app).
+      router.replace(result.isNew ? "/auth/onboarding" : (result.home ?? "/app"))
       return
     }
     setError(REASONS[result.reason] ?? "Could not verify. Try again.")
