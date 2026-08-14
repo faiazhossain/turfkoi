@@ -22,10 +22,12 @@ import { otpFormSchema, type OtpFormValues } from "@/features/auth/schemas"
 
 const REASONS: Record<string, string> = {
   invalid: "Wrong code. Try again.",
+  consumed: "This code was already used. Request a new one.",
   expired: "That code expired. Request a new one.",
   locked: "Too many attempts. Try again in 15 minutes.",
   rate_limited: "Too many attempts. Slow down.",
   invalid_phone: "Phone issue. Start over.",
+  signin_failed: "Could not sign you in. Try again in a moment.",
 }
 
 export function VerifyForm() {

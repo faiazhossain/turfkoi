@@ -41,7 +41,16 @@ export async function verifyOtpAction(
   try {
     await signIn("phone-otp", { phone, code: code.trim(), redirect: false })
   } catch (err) {
-    if (err instanceof AuthError) return { ok: false, reason: "invalid" }
+    if (err instanceof AuthError) {
+      // Only a CredentialsSignin rejection means the credentials were checked
+      // and rejected. Any other AuthError (UntrustedHost, MissingSecret,
+      // CallbackRouteError, ...) is a config/runtime fault — surface it in the
+      // logs instead of masking it as a wrong code, which traps the user in a
+      // retry loop against an already-consumed OTP.
+      if (err.type === "CredentialsSignin") return { ok: false, reason: "invalid" }
+      console.error("[auth] signIn failed:", err.type, err.message ?? err.cause)
+      return { ok: false, reason: "signin_failed" }
+    }
     throw err
   }
   return { ok: true, isNew: result.isNew }

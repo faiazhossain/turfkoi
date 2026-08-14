@@ -21,7 +21,7 @@ export type SendOtpResult =
 
 export type VerifyResult =
   | { ok: true; isNew: boolean }
-  | { ok: false; reason: "invalid_phone" | "rate_limited" | "locked" | "expired" | "invalid" }
+  | { ok: false; reason: "invalid_phone" | "rate_limited" | "locked" | "expired" | "consumed" | "invalid" }
 
 function generateCode(): string {
   // Short-lived, rate-limited, hashed; Math.random is sufficient here.
@@ -88,7 +88,9 @@ export async function verifyOtp(
   if (!otp) return { ok: false, reason: "invalid" }
   if (otp.lockedUntil && otp.lockedUntil > new Date())
     return { ok: false, reason: "locked" }
-  if (otp.consumedAt) return { ok: false, reason: "invalid" }
+  // A consumed code is not "wrong" — telling the user so sends them into a
+  // retry loop that can never succeed. They need a fresh code instead.
+  if (otp.consumedAt) return { ok: false, reason: "consumed" }
   if (otp.expiresAt < new Date()) return { ok: false, reason: "expired" }
 
   if (otp.codeHash !== hashCode(code)) {
