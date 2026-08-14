@@ -138,12 +138,24 @@
 }
 
 /*
- * Hero animation: make SVG transforms pivot around each element's own bbox
- * (matches GSAP's `transformOrigin: "50% 50%"` behaviour for SVG). Scoped to
- * the hero wrapper so it never leaks into icons or other SVGs on the page.
+ * Hero animation. Scoped styles for the illustrated sequence:
+ *  - Per-phase color journey through the brand palette: soccer uses the
+ *    container's pitch green, soccer2 shifts to the purple accent, and the
+ *    basketball settles into gold. Strokes pick these up via currentColor.
+ *  - transform-box: fill-box makes SVG transforms pivot around each element's
+ *    own bbox (GSAP's `transformOrigin: "50% 50%"` equivalent).
+ *  - Round stroke caps so draw-on ends look sketched, not cut.
+ *  - A faint radial wash grounds the illustration with a touch of depth.
  */
 .hero-animation {
   position: relative;
+}
+.hero-animation::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 70% 60% at 50% 45%, rgb(255 255 255 / 0.04), transparent 70%);
+  pointer-events: none;
 }
 .hero-animation svg {
   position: absolute;
@@ -151,7 +163,14 @@
   width: 100%;
   height: 100%;
 }
+.hero-animation svg#soccer2 {
+  color: var(--secondary);
+}
+.hero-animation svg#basket {
+  color: var(--warning);
+}
 .hero-animation svg * {
   transform-box: fill-box;
   transform-origin: center;
+  stroke-linecap: round;
 }
