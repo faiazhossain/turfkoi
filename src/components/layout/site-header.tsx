@@ -2,17 +2,18 @@ import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
 import { SignOutButton } from "@/components/auth/sign-out-button"
-import { getCurrentUser } from "@/lib/auth"
+import { getSession } from "@/lib/auth"
 import { MainNav } from "./main-nav"
 
 /**
- * Session-aware top nav (DESIGN_REFERENCE.md §2 row 1: "role-aware top nav",
- * Requirements Section 7/44). The original Phase 0 header was a static
- * placeholder that always showed "Sign in"; it now reads the current user
- * and exposes role-gated entry points (Owner / Admin) plus sign-out.
+ * Session-aware top nav (DESIGN_REFERENCE.md §2 row 1, Requirements §7/44).
+ * Deliberately role-agnostic: signed-in users see Dashboard + Sign out,
+ * signed-out users see Sign in. Role-specific surfaces (Owner / Admin) live
+ * on the player dashboard as a "switch hats" card instead — global chrome
+ * stays identical for players, owners, and admins alike.
  */
 export async function SiteHeader() {
-  const user = await getCurrentUser()
+  const session = await getSession()
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur supports-backdrop-filter:bg-background/60">
@@ -26,28 +27,8 @@ export async function SiteHeader() {
         </Link>
         <MainNav variant="desktop" />
         <div className="ml-auto flex items-center gap-2">
-          {user ? (
+          {session?.user ? (
             <>
-              {user.roles.includes("turf_owner") && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="hidden md:inline-flex"
-                  render={<Link href="/turf-owner" />}
-                >
-                  Owner
-                </Button>
-              )}
-              {user.roles.includes("admin") && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="hidden md:inline-flex"
-                  render={<Link href="/admin" />}
-                >
-                  Admin
-                </Button>
-              )}
               <Button variant="ghost" size="sm" render={<Link href="/app" />}>
                 Dashboard
               </Button>

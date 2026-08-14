@@ -1,13 +1,13 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import { CalendarDaysIcon, ZapIcon, MapPinIcon, GiftIcon } from "lucide-react"
+import { CalendarDaysIcon, ZapIcon, MapPinIcon, GiftIcon, ShieldIcon, StoreIcon } from "lucide-react"
 
 import { EmptyState, StatusBadge } from "@/components/shared"
 import { Button } from "@/components/ui/button"
 import { AvailabilityToggle } from "@/components/player/availability-toggle"
 import { JoinRequestButton } from "@/components/player/join-request-button"
 import { ConfirmPlayedButton } from "@/components/player/confirm-played-button"
-import { getSession } from "@/lib/auth"
+import { getCurrentUser, getSession } from "@/lib/auth"
 import { listMyBookings } from "@/features/bookings/queries"
 import {
   listMatchesNeedingPlayers,
@@ -37,6 +37,8 @@ const MATCH_STATE_TONE: Record<string, "success" | "warning" | "neutral" | "prim
 export default async function PlayerDashboardPage() {
   const session = await getSession()
   if (!session?.user) redirect("/login")
+  const user = await getCurrentUser()
+  const extraRoles = user?.roles.filter((r) => r !== "player") ?? []
 
   const profile = await getPlayerProfile(session.user.id)
   const [bookings, nearbyMatches, history, refCode] = await Promise.all([
@@ -57,6 +59,31 @@ export default async function PlayerDashboardPage() {
           <p className="text-sm text-muted-foreground">{session.user.phone}</p>
         </div>
       </div>
+
+      {/* Role switcher — only for users with more than the player hat */}
+      {extraRoles.length > 0 && (
+        <section className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-card p-4">
+          <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Switch hats
+          </span>
+          {user!.roles.includes("turf_owner") && (
+            <Button
+              size="sm"
+              variant="outline"
+              render={<Link href="/turf-owner" />}
+            >
+              <StoreIcon aria-hidden />
+              Turf owner
+            </Button>
+          )}
+          {user!.roles.includes("admin") && (
+            <Button size="sm" variant="outline" render={<Link href="/admin" />}>
+              <ShieldIcon aria-hidden />
+              Admin
+            </Button>
+          )}
+        </section>
+      )}
 
       {/* Availability toggle */}
       <section>
