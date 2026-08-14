@@ -51,7 +51,15 @@ export const authConfig = {
       const isAuthRoute = path === "/login" || path.startsWith("/auth/")
       if (isProtected && !loggedIn) return false // -> redirects to /login
       if (isAuthRoute && loggedIn && path !== "/auth/onboarding") {
-        return Response.redirect(new URL("/app", request.nextUrl))
+        // Send signed-in users straight to their role-appropriate home
+        // (admin -> /admin, turf owner -> /turf-owner, else player app).
+        const roles = auth?.user?.roles ?? []
+        const home = roles.includes("admin")
+          ? "/admin"
+          : roles.includes("turf_owner")
+            ? "/turf-owner"
+            : "/app"
+        return Response.redirect(new URL(home, request.nextUrl))
       }
       return true
     },
