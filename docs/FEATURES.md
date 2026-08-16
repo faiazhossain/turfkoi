@@ -24,7 +24,7 @@ based discovery. Mobile-first, dark-themed.
 | Realtime | Pusher (provider wired, called from match + team flows) | `src/lib/realtime.ts` |
 | Rate limit / cache | Upstash Redis | `src/lib/ratelimit.ts` |
 | Analytics | PostHog (P1 — provider imported, calls deferred) | — |
-| Auth | Auth.js v5 (phone + OTP, JWT in httpOnly cookie) | `src/auth.config.ts`, `src/features/auth/` |
+| Auth | Auth.js v5 (phone/email + bcrypt password, email OTP for registration + reset, JWT in httpOnly cookie) | `src/auth.config.ts`, `src/features/auth/` |
 | Payments | bKash only (Nagad deferred to P1) | `src/lib/payment.ts`, `src/app/api/payments/bkash/` |
 | Storage | S3-compatible (R2) presigned PUT uploads + magic-byte verify | `src/features/turfs/storage.ts`, `src/lib/file-validation.ts` |
 | Deploy | Vercel | — |
@@ -38,11 +38,15 @@ Schema: **26 tables** across 8 files (`src/db/schema/`) + **19 enums**.
 Routes: `/app` (dashboard), `/app/settings`, `/matches`, `/matches/[id]`,
 `/bookings/[id]`.
 
-- **Phone + OTP sign-in** — enter phone, get a 6-digit code (mocked in dev:
-  console + dev toast; production swaps in a BD SMS gateway), verify. Brute-
-  force protection (D2): 5-attempt lockout, 60s resend, per-phone + per-IP
-  Upstash rate limits. First sign-in creates the user + auto-fulfills any
-  pending team invitations for that phone.
+- **Registration + password sign-in** — register once with name + phone +
+  email + password; a 6-digit code sent to the email (mocked in dev: console
+  + dev badge; production sends via Resend) verifies the address. After
+  that, sign in with phone OR email + password - no OTP on login. Email OTP
+  also authorizes password resets. Brute-force protection (D2): 5-attempt
+  OTP lockout, 60s resend, per-email + per-IP Upstash rate limits, login
+  rate limits + one generic credential error (anti-enumeration). First
+  sign-in creates the user + auto-fulfills any pending team invitations for
+  that phone.
 - **Onboarding** — first-run: name, position, skill, area. `/auth/onboarding`.
 - **Availability toggle** — "play tonight" flag (`/app`); when on + recent, the
   player appears in nearby "needs players" discovery.
@@ -189,7 +193,7 @@ locks.
   canonical).
 - `/matches`, `/matches/[id]` — public match directory.
 - `/invite/[code]` — referral landing.
-- `/login`, `/auth/{verify,onboarding}` — auth flow.
+- `/login`, `/register`, `/forgot-password`, `/auth/onboarding` — auth flow.
 - `sitemap.xml`, `robots.txt` — SEO (authenticated routes disallowed).
 
 ## Production hardening (Phase 8)

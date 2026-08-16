@@ -11,6 +11,8 @@ export default auth
 export const config = {
   matcher: [
     "/login",
+    "/register",
+    "/forgot-password",
     "/auth/:path*",
     "/app/:path*",
     "/team/:path*",

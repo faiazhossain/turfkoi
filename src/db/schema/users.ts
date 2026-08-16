@@ -12,10 +12,12 @@ import { geographyPoint } from "../geo"
 
 export const users = pgTable("users", {
   id: uuid("id").defaultRandom().primaryKey(),
-  // Phone is the primary identifier (audit D1). Email is optional.
+  // Login identifier: phone OR email + password. Phone stays the social key
+  // (team invites match on it); email is where OTP verification goes.
   phone: text("phone").notNull().unique(),
   email: text("email").unique(),
   passwordHash: text("password_hash"),
+  emailVerifiedAt: timestamp("email_verified_at", { withTimezone: true }),
   name: text("name"),
   status: userStatus("status").notNull().default("active"),
   createdAt: timestamp("created_at", { withTimezone: true })

@@ -4,9 +4,23 @@ import { db } from "@/db"
 import { users, userRoles, playerProfiles, teamMembers, teamInvitations } from "@/db/schema"
 import type { Role } from "@/lib/capabilities"
 
+import type { Identifier } from "./identifier"
+
 export async function getUserByPhone(phone: string) {
   const rows = await db.select().from(users).where(eq(users.phone, phone)).limit(1)
   return rows[0] ?? null
+}
+
+export async function getUserByEmail(email: string) {
+  const rows = await db.select().from(users).where(eq(users.email, email)).limit(1)
+  return rows[0] ?? null
+}
+
+/** Resolve a login identifier (email or phone) to a user. */
+export async function getUserByIdentifier(identifier: Identifier) {
+  return identifier.kind === "email"
+    ? getUserByEmail(identifier.email)
+    : getUserByPhone(identifier.phone)
 }
 
 export async function getUserRoles(userId: string): Promise<Role[]> {
@@ -55,31 +69,51 @@ async function fulfillPendingInvitations(userId: string, phone: string): Promise
   }
 }
 
+export interface RegisterUserInput {
+  name: string
+  phone: string
+  email: string
+  passwordHash: string
+}
+
+export type CreateUserResult =
+  | { ok: true; user: { id: string; phone: string; name: string | null } }
+  | { ok: false; reason: "phone_taken" | "email_taken" }
+
 /**
- * Find-or-create a user by phone. Resilient to races and partial creates
- * (neon-http has no multi-statement transactions), via unique(phone) + idempotent
- * backfill of profile + role.
+ * Create a registered user (email verified, password set). Registration is the
+ * only creation path now - the old find-or-create-on-OTP flow is gone.
  *
- * `refCode` (Phase 8 / A3) attributes a new signup to a referrer. It is a no-op
- * for existing users and on invalid / self-referral codes.
+ * Resilient to races and partial creates (neon-http has no multi-statement
+ * transactions) via unique(phone) / unique(email) + idempotent backfill of
+ * profile + role.
+ *
+ * `refCode` (Phase 8 / A3) attributes the signup to a referrer. It is a no-op
+ * on invalid / self-referral codes.
  */
-export async function findOrCreateUserByPhone(
-  phone: string,
+export async function createRegisteredUser(
+  input: RegisterUserInput,
   refCode?: string
-): Promise<{
-  user: { id: string; phone: string; name: string | null }
-  isNew: boolean
-}> {
-  const existing = await getUserByPhone(phone)
-  if (existing) {
-    await ensureProfileAndRole(existing.id)
-    return { user: existing, isNew: false }
-  }
+): Promise<CreateUserResult> {
+  const existingPhone = await getUserByPhone(input.phone)
+  if (existingPhone) return { ok: false, reason: "phone_taken" }
+  const existingEmail = await getUserByEmail(input.email)
+  if (existingEmail) return { ok: false, reason: "email_taken" }
+
   try {
-    const [created] = await db.insert(users).values({ phone }).returning()
+    const [created] = await db
+      .insert(users)
+      .values({
+        name: input.name,
+        phone: input.phone,
+        email: input.email,
+        passwordHash: input.passwordHash,
+        emailVerifiedAt: new Date(),
+      })
+      .returning()
     await ensureProfileAndRole(created.id)
     // Fulfill any pending team invitations for this phone number.
-    await fulfillPendingInvitations(created.id, phone)
+    await fulfillPendingInvitations(created.id, input.phone)
     // Attribute the signup to a referrer if a valid code was supplied.
     if (refCode) {
       const { attributeReferral } = await import("./referrals")
@@ -87,14 +121,25 @@ export async function findOrCreateUserByPhone(
         /* non-fatal */
       })
     }
-    return { user: created, isNew: true }
+    return { ok: true, user: created }
   } catch (err) {
-    // unique(phone) race: another request created it first.
-    const again = await getUserByPhone(phone)
-    if (again) {
-      await ensureProfileAndRole(again.id)
-      return { user: again, isNew: false }
-    }
+    // unique race: another request created the user first. Re-read to tell
+    // phone from email so the form can show the right field error.
+    const phoneAgain = await getUserByPhone(input.phone)
+    if (phoneAgain) return { ok: false, reason: "phone_taken" }
+    const emailAgain = await getUserByEmail(input.email)
+    if (emailAgain) return { ok: false, reason: "email_taken" }
     throw err
   }
+}
+
+/** Password reset path: replace the hash after a verified email OTP. */
+export async function updateUserPassword(
+  userId: string,
+  passwordHash: string
+): Promise<void> {
+  await db
+    .update(users)
+    .set({ passwordHash, updatedAt: new Date() })
+    .where(eq(users.id, userId))
 }

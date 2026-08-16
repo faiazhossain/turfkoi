@@ -37,7 +37,7 @@ export const teamMembers = pgTable(
 /**
  * Phone-based team invitations (Phase 4). When a captain enters a phone number:
  *   - If the user exists → added to team_members immediately.
- *   - If not → a row is stored here; findOrCreateUserByPhone fulfills it on
+ *   - If not → a row is stored here; createRegisteredUser fulfills it on
  *     first signup, auto-adding the new user to the team as 'player'.
  *
  * One pending invitation per (team_id, phone) — re-adding a phone is a no-op.

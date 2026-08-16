@@ -29,7 +29,7 @@ build is complete.
 | Realtime | Pusher |
 | Rate limit / cache | Upstash Redis |
 | Analytics | PostHog (P1) |
-| Auth | Auth.js (phone + OTP, JWT cookie) |
+| Auth | Auth.js (phone/email + bcrypt password, email OTP for registration + reset, JWT cookie) |
 | Payments | bKash (MVP) |
 | Deploy | Vercel |
 
@@ -104,8 +104,9 @@ drizzle/              # generated migrations + audit-role.sql
 
 ## Features (high level)
 
-- **Player** — phone+OTP auth, availability toggle, nearby matches, match
-  history, referral invite link, account deletion.
+- **Player** — registration with email verification + password auth,
+  availability toggle, nearby matches, match history, referral invite link,
+  account deletion.
 - **Team** — CRUD, phone-based invites, multi-team switcher, internal roles.
 - **Turf owner** — turf CRUD with PostGIS + R2 photo upload, slot generation,
   per-turf-owner cancellation policy, owner dashboard with "Fill This Slot".

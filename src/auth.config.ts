@@ -10,7 +10,7 @@ declare module "next-auth" {
       id: string
       phone?: string | null
       roles: Role[]
-    } & DefaultSession["user"]
+    } & DefaultSession["user"] // email/name come from DefaultSession
   }
 }
 
@@ -48,7 +48,11 @@ export const authConfig = {
       const isProtected = PROTECTED_PREFIXES.some(
         (p) => path === p || path.startsWith(p + "/")
       )
-      const isAuthRoute = path === "/login" || path.startsWith("/auth/")
+      const isAuthRoute =
+        path === "/login" ||
+        path === "/register" ||
+        path === "/forgot-password" ||
+        path.startsWith("/auth/")
       if (isProtected && !loggedIn) return false // -> redirects to /login
       if (isAuthRoute && loggedIn && path !== "/auth/onboarding") {
         // Send signed-in users straight to their role-appropriate home
@@ -69,6 +73,7 @@ export const authConfig = {
       if (token?.id) {
         session.user.id = token.id
         session.user.phone = token.phone ?? null
+        if (token.email) session.user.email = token.email
         session.user.roles = token.roles ?? []
       }
       return session

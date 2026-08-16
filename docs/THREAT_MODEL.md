@@ -7,14 +7,21 @@ the locked security decisions.
 ## Surfaces
 
 ### 1. Authentication (`src/features/auth/`, `src/auth.config.ts`)
-- **Spoofing** — phone + OTP. Mitigated by D2 (6-digit, 5-attempt lockout,
-  60s resend, per-phone Upstash rate limit). OTP codes hashed at rest.
+- **Spoofing** — login is phone/email + bcrypt password. Email OTP (6-digit,
+  5-attempt lockout, 60s resend, per-email + per-IP Upstash rate limits,
+  hashed at rest) verifies the address at registration and authorizes
+  password resets only.
 - **Tampering** — JWT in httpOnly secure cookie; Auth.js handles signing.
-- **Repudiation** — every OTP issue + verify is logged with phone (redacted
+  Passwords are bcrypt-hashed (cost 10); no plaintext ever stored.
+- **Repudiation** — every OTP issue + verify is logged with email (redacted
   in logs via H6) + IP. Audit log (H2) captures role/permission changes.
-- **Info disclosure** — OTP mocked in dev (console + dev toast); production
-  swaps in a BD SMS gateway. The mock MUST stay gated behind `NODE_ENV`.
-- **DoS** — Upstash rate limit on OTP verify (10/min/phone, 20/min/IP).
+- **Info disclosure** — OTP email mocked in dev (console + dev badge on the
+  form); production sends via Resend. The mock MUST stay gated behind
+  `NODE_ENV` / an unset `RESEND_API_KEY` throws in prod. Login failures
+  return one generic error (anti-enumeration); password reset request
+  always returns ok whether or not the email is registered.
+- **DoS** — Upstash rate limits: OTP send 1/60s/email + 5/10min/IP, OTP
+  verify 10/min/email + 20/min/IP, login 10/5min/identifier + 20/5min/IP.
 
 ### 2. Booking + payments (`src/features/bookings/`)
 - **Spoofing** — booker identity bound to JWT; `holdSlotAction` re-checks via

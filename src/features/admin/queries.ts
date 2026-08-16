@@ -148,7 +148,10 @@ export async function listUsers(search?: string): Promise<AdminUserRow[]> {
     .leftJoin(userRoles, eq(userRoles.userId, users.id))
     .where(
       search
-        ? ilike(users.phone, `%${search}%`)
+        ? or(
+            ilike(users.phone, `%${search}%`),
+            ilike(users.email, `%${search}%`)
+          )
         : undefined
     )
     .orderBy(desc(users.createdAt))

@@ -57,6 +57,20 @@
       "when": 1786644682607,
       "tag": "0007_curved_arclight",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1786870679972,
+      "tag": "0008_demonic_doomsday",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1786870703840,
+      "tag": "0009_rapid_guardsmen",
+      "breakpoints": true
     }
   ]
 }
