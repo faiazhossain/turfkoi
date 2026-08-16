@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 
 import { Button } from "@/components/ui/button"
+import { Loader } from "@/components/ui/loader"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
@@ -213,7 +214,7 @@ export default function RegisterPage() {
                 type="submit"
                 size="lg"
                 className="w-full"
-                disabled={detailsForm.formState.isSubmitting}
+                loading={detailsForm.formState.isSubmitting}
               >
                 {detailsForm.formState.isSubmitting ? "Sending code..." : "Continue"}
               </Button>
@@ -246,7 +247,7 @@ export default function RegisterPage() {
                   type="submit"
                   size="lg"
                   className="w-full"
-                  disabled={codeForm.formState.isSubmitting}
+                  loading={codeForm.formState.isSubmitting}
                 >
                   {codeForm.formState.isSubmitting ? "Verifying..." : "Verify and create account"}
                 </Button>
@@ -265,6 +266,9 @@ export default function RegisterPage() {
                   disabled={detailsForm.formState.isSubmitting}
                   className="text-muted-foreground hover:text-foreground"
                 >
+                  {detailsForm.formState.isSubmitting && (
+                    <Loader size={14} className="size-3.5" aria-hidden />
+                  )}
                   Resend code
                 </button>
               </div>

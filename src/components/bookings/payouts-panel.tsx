@@ -78,7 +78,7 @@ export function PayoutsPanel({
             Period: {periodStart} → {periodEnd}
           </p>
         </div>
-        <Button onClick={generate} disabled={pending}>
+        <Button onClick={generate} loading={pending}>
           Generate this week&apos;s payouts
         </Button>
       </div>
@@ -126,7 +126,8 @@ export function PayoutsPanel({
                       <Button
                         size="sm"
                         onClick={() => markPaid(p.id)}
-                        disabled={pending || ref.length < 4}
+                        loading={pending}
+                        disabled={ref.length < 4}
                       >
                         Confirm
                       </Button>

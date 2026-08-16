@@ -95,7 +95,12 @@ export function RefundRequestButton({
         </p>
       ) : null}
       <div className="flex items-center gap-1">
-        <Button size="sm" onClick={submit} disabled={pending || Number(amount) <= 0}>
+        <Button
+          size="sm"
+          onClick={submit}
+          disabled={Number(amount) <= 0}
+          loading={pending}
+        >
           {needsApproval ? "Stage refund" : "Execute refund"}
         </Button>
         <Button
@@ -155,7 +160,8 @@ export function RefundReviewActions({
       <Button
         size="sm"
         onClick={approve}
-        disabled={pending || !canApprove}
+        disabled={!canApprove}
+        loading={pending}
         title={
           canApprove
             ? "Approve and execute"
@@ -164,7 +170,7 @@ export function RefundReviewActions({
       >
         Approve
       </Button>
-      <Button size="sm" variant="outline" onClick={reject} disabled={pending}>
+      <Button size="sm" variant="outline" onClick={reject} loading={pending}>
         Reject
       </Button>
     </div>

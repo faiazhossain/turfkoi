@@ -1,6 +1,7 @@
 import { Button as ButtonPrimitive } from "@base-ui/react/button"
 import { cva, type VariantProps } from "class-variance-authority"
 
+import { Loader } from "@/components/ui/loader"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
@@ -46,19 +47,31 @@ function Button({
   size = "default",
   render,
   nativeButton,
+  loading = false,
+  disabled,
+  children,
   ...props
-}: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
+}: ButtonPrimitive.Props &
+  VariantProps<typeof buttonVariants> & {
+    /** Shows the approved loader and disables the button while an async action runs. */
+    loading?: boolean
+  }) {
   // When rendering as a non-button element (e.g. a Link), opt out of native
   // button semantics to satisfy Base UI and preserve anchor semantics.
   const resolvedNativeButton = nativeButton ?? render === undefined
   return (
     <ButtonPrimitive
       data-slot="button"
+      aria-busy={loading || undefined}
+      disabled={loading || disabled}
       className={cn(buttonVariants({ variant, size, className }))}
       render={render}
       nativeButton={resolvedNativeButton}
       {...props}
-    />
+    >
+      {loading && <Loader size={14} className="size-3.5" aria-hidden />}
+      {children}
+    </ButtonPrimitive>
   )
 }
 

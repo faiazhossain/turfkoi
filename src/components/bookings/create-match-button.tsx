@@ -76,7 +76,7 @@ export function CreateMatchButton({
         </SelectContent>
       </Select>
       <div className="flex gap-2">
-        <Button onClick={create} disabled={pending || !teamId} size="sm">
+        <Button onClick={create} loading={pending} disabled={!teamId} size="sm">
           {pending ? "Creating…" : "Create match"}
         </Button>
         <Button

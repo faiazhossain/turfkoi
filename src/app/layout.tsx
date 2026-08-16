@@ -7,6 +7,7 @@ import { Providers } from "@/components/providers"
 import { SiteHeader } from "@/components/layout/site-header"
 import { SiteFooter } from "@/components/layout/site-footer"
 import { MobileNav } from "@/components/layout/mobile-nav"
+import { RouteTransitionOverlay } from "@/components/layout/route-transition-overlay"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -53,6 +54,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <main className="flex-1">{children}</main>
           <SiteFooter />
           <MobileNav />
+          <RouteTransitionOverlay />
         </Providers>
       </body>
     </html>

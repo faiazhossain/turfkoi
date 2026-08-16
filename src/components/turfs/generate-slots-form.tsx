@@ -4,7 +4,6 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Loader2Icon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -171,15 +170,12 @@ export function GenerateSlotsForm({ turfId }: { turfId: string }) {
       ) : null}
       {info ? <StatusBadge status="success">{info}</StatusBadge> : null}
 
-      <Button type="submit" size="lg" disabled={form.formState.isSubmitting}>
-        {form.formState.isSubmitting ? (
-          <>
-            <Loader2Icon className="animate-spin" aria-hidden />
-            Generating
-          </>
-        ) : (
-          "Generate slots"
-        )}
+      <Button
+        type="submit"
+        size="lg"
+        loading={form.formState.isSubmitting}
+      >
+        {form.formState.isSubmitting ? "Generating" : "Generate slots"}
       </Button>
     </form>
   )

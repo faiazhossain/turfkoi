@@ -95,7 +95,7 @@ export function TeamForm({ mode, teamId, initial }: TeamFormProps) {
           URL: /team/{form.watch("slug") || "your-slug"}
         </p>
       </div>
-      <Button type="submit" disabled={pending}>
+      <Button type="submit" loading={pending}>
         {pending
           ? "Saving…"
           : mode === "create"

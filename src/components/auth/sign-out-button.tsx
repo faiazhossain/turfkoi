@@ -12,7 +12,7 @@ export function SignOutButton() {
     <Button
       variant="outline"
       size="sm"
-      disabled={pending}
+      loading={pending}
       onClick={() => startTransition(async () => await signOutAction())}
     >
       <LogOutIcon />

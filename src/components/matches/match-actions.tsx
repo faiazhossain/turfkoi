@@ -155,7 +155,7 @@ export function MatchActions(props: MatchActionsProps) {
               <Button
                 key={t.teamId}
                 onClick={() => accept(t.teamId)}
-                disabled={pending}
+                loading={pending}
               >
                 Accept as {t.teamName}
               </Button>
@@ -194,7 +194,7 @@ export function MatchActions(props: MatchActionsProps) {
                           size="xs"
                           variant="ghost"
                           onClick={() => removePlayer(p.userId)}
-                          disabled={pending}
+                          loading={pending}
                         >
                           Remove
                         </Button>
@@ -224,7 +224,8 @@ export function MatchActions(props: MatchActionsProps) {
                       setAddTeamId(t.teamId)
                       addPlayer()
                     }}
-                    disabled={pending || !addPlayerId}
+                    disabled={!addPlayerId}
+                    loading={pending}
                   >
                     Add
                   </Button>
@@ -267,7 +268,7 @@ export function MatchActions(props: MatchActionsProps) {
                 className="w-20 text-center"
               />
             </div>
-            <Button onClick={submitResult} disabled={pending}>
+            <Button onClick={submitResult} loading={pending}>
               Submit
             </Button>
           </div>
@@ -282,7 +283,7 @@ export function MatchActions(props: MatchActionsProps) {
             Score: {props.homeScore} – {props.awayScore}
           </p>
           <div className="flex gap-2">
-            <Button onClick={confirmResult} disabled={pending}>
+            <Button onClick={confirmResult} loading={pending}>
               Confirm result
             </Button>
           </div>

@@ -4,7 +4,6 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Loader2Icon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -250,18 +249,13 @@ export function TurfForm({ mode, turfId, defaultValues }: TurfFormProps) {
         <Button
           type="submit"
           size="lg"
-          disabled={form.formState.isSubmitting}
+          loading={form.formState.isSubmitting}
         >
-          {form.formState.isSubmitting ? (
-            <>
-              <Loader2Icon className="animate-spin" aria-hidden />
-              Saving
-            </>
-          ) : mode === "create" ? (
-            "Create turf"
-          ) : (
-            "Save changes"
-          )}
+          {form.formState.isSubmitting
+            ? "Saving"
+            : mode === "create"
+              ? "Create turf"
+              : "Save changes"}
         </Button>
         <Button
           type="button"

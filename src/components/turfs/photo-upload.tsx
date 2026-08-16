@@ -3,6 +3,7 @@
 import * as React from "react"
 import { PlusIcon, XIcon } from "lucide-react"
 
+import { Loader } from "@/components/ui/loader"
 import { Input } from "@/components/ui/input"
 
 interface PhotoUploadProps {
@@ -110,7 +111,11 @@ export function PhotoUpload({ turfId, photos, onChange }: PhotoUploadProps) {
           disabled={uploading}
           className="flex size-20 flex-col items-center justify-center gap-1 rounded-md border border-dashed border-border text-xs text-muted-foreground hover:bg-muted"
         >
-          <PlusIcon className="size-4" aria-hidden />
+          {uploading ? (
+            <Loader size={14} className="size-3.5" aria-hidden />
+          ) : (
+            <PlusIcon className="size-4" aria-hidden />
+          )}
           {uploading ? "Uploading" : "Add"}
         </button>
       </div>

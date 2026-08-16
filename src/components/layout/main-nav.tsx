@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation"
 
 import { cn } from "@/lib/utils"
 import { primaryNav } from "./nav-data"
+import { LinkPendingIndicator } from "./link-pending-indicator"
 
 function isActive(pathname: string, href: string) {
   if (href === "/") return pathname === "/"
@@ -26,12 +27,13 @@ export function MainNav({ variant }: { variant: "desktop" | "mobile" }) {
               href={item.href}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-md px-1 py-1.5 text-[0.625rem] font-medium transition-colors",
+                "relative flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-md px-1 py-1.5 text-[0.625rem] font-medium transition-colors",
                 active ? "text-primary" : "text-muted-foreground hover:text-foreground"
               )}
             >
               <Icon className="size-5" aria-hidden />
               {item.label}
+              <LinkPendingIndicator className="absolute top-0.5 right-1/4" />
             </Link>
           )
         })}
@@ -56,6 +58,7 @@ export function MainNav({ variant }: { variant: "desktop" | "mobile" }) {
             )}
           >
             {item.label}
+            <LinkPendingIndicator />
           </Link>
         )
       })}

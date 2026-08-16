@@ -80,7 +80,7 @@ export function RequestManager({ teamId, requests }: RequestManagerProps) {
                 variant="outline"
                 aria-label="Accept"
                 onClick={() => accept(r.matchId, r.userId)}
-                disabled={pending}
+                loading={pending}
               >
                 <CheckIcon aria-hidden />
               </Button>
@@ -89,7 +89,7 @@ export function RequestManager({ teamId, requests }: RequestManagerProps) {
                 variant="ghost"
                 aria-label="Reject"
                 onClick={() => reject(r.matchId, r.userId)}
-                disabled={pending}
+                loading={pending}
               >
                 <XIcon aria-hidden />
               </Button>

@@ -174,3 +174,82 @@
   transform-origin: center;
   stroke-linecap: round;
 }
+
+/*
+ * Approved project loader (app-loader). Single approved spinner-type
+ * loading visual — do not introduce alternative spinner designs.
+ * Timing/staggering preserved from the approved design source.
+ */
+.app-loader {
+  display: block;
+}
+.app-loader path {
+  animation: app-loader-pulse 1s infinite;
+}
+.app-loader .path-7 {
+  animation-delay: -1s;
+}
+.app-loader .path-6 {
+  animation-delay: -0.875s;
+}
+.app-loader .path-5 {
+  animation-delay: -0.75s;
+}
+.app-loader .path-4 {
+  animation-delay: -0.625s;
+}
+.app-loader .path-3 {
+  animation-delay: -0.5s;
+}
+.app-loader .path-2 {
+  animation-delay: -0.375s;
+}
+.app-loader .path-1 {
+  animation-delay: -0.25s;
+}
+.app-loader .path-0 {
+  animation-delay: -0.125s;
+}
+
+@keyframes app-loader-pulse {
+  0% {
+    opacity: 0.1;
+  }
+  30% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 0.1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-loader path {
+    animation-duration: 3s;
+  }
+}
+
+/*
+ * Link navigation pending hint (useLinkStatus). Fixed size, hidden by
+ * default; fades in only when a navigation is actually in flight, so
+ * prefetched/instant transitions show no flash.
+ */
+.link-hint {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.875rem;
+  height: 0.875rem;
+  opacity: 0;
+  visibility: hidden;
+}
+.link-hint.is-pending {
+  visibility: visible;
+  animation: link-hint-fade-in 200ms ease 100ms forwards;
+}
+
+@keyframes link-hint-fade-in {
+  to {
+    opacity: 0.9;
+  }
+}

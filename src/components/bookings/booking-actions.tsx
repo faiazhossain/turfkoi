@@ -73,7 +73,7 @@ export function BookingActions({
       ) : null}
 
       {canPay ? (
-        <Button onClick={pay} disabled={pending} size="lg" className="w-full">
+        <Button onClick={pay} loading={pending} size="lg" className="w-full">
           {pending ? "Preparing payment…" : "Pay with bKash"}
         </Button>
       ) : null}
@@ -88,7 +88,7 @@ export function BookingActions({
             <div className="flex gap-2">
               <Button
                 onClick={cancel}
-                disabled={pending}
+                loading={pending}
                 variant="destructive"
                 size="sm"
               >

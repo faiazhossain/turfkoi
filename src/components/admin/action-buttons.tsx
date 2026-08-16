@@ -29,7 +29,7 @@ export function VerifyTurfButton({ turfId }: { turfId: string }) {
     })
   }
   return (
-    <Button size="sm" onClick={run} disabled={pending}>
+    <Button size="sm" onClick={run} loading={pending}>
       Verify
     </Button>
   )
@@ -62,7 +62,7 @@ export function UserStatusToggle({
       size="sm"
       variant={next === "suspended" ? "destructive" : "outline"}
       onClick={run}
-      disabled={pending}
+      loading={pending}
     >
       {next === "suspended" ? "Suspend" : "Activate"}
     </Button>
@@ -94,7 +94,7 @@ export function RoleToggle({
       size="xs"
       variant={enabled ? "secondary" : "outline"}
       onClick={run}
-      disabled={pending}
+      loading={pending}
       aria-pressed={enabled}
     >
       {role.replace("_", " ")}
@@ -140,10 +140,10 @@ export function ResolveDisputeButtons({
 
   return (
     <div className="flex items-center gap-1">
-      <Button size="sm" onClick={confirm} disabled={pending}>
+      <Button size="sm" onClick={confirm} loading={pending}>
         Confirm result
       </Button>
-      <Button size="sm" variant="destructive" onClick={scratch} disabled={pending}>
+      <Button size="sm" variant="destructive" onClick={scratch} loading={pending}>
         Scratch
       </Button>
     </div>
@@ -178,7 +178,7 @@ export function ReportStatusSelect({
     })
   }
   return (
-    <Button size="sm" variant="outline" onClick={run} disabled={pending}>
+    <Button size="sm" variant="outline" onClick={run} loading={pending}>
       → {next[status]}
     </Button>
   )

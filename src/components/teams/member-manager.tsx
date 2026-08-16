@@ -139,7 +139,7 @@ export function MemberManager({
                 placeholder="+8801XXXXXXXXX"
               />
             </div>
-            <Button onClick={add} disabled={pending || phone.length < 6}>
+            <Button onClick={add} loading={pending} disabled={phone.length < 6}>
               Add
             </Button>
           </div>
@@ -196,7 +196,7 @@ export function MemberManager({
                     variant="ghost"
                     aria-label="Remove member"
                     onClick={() => remove(m.userId)}
-                    disabled={pending}
+                    loading={pending}
                   >
                     <Trash2Icon aria-hidden />
                   </Button>
@@ -223,7 +223,7 @@ export function MemberManager({
                 size="sm"
                 variant="destructive"
                 onClick={() => { if (transferTarget) transfer(transferTarget) }}
-                disabled={pending}
+                loading={pending}
               >
                 Transfer to {members.find((m) => m.userId === transferTarget)?.name ?? "this member"}?
               </Button>

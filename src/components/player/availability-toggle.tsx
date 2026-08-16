@@ -28,7 +28,7 @@ export function AvailabilityToggle({ available }: { available: boolean }) {
     <Button
       variant={available ? "default" : "outline"}
       onClick={toggle}
-      disabled={pending}
+      loading={pending}
       className="w-full"
     >
       <ZapIcon aria-hidden />

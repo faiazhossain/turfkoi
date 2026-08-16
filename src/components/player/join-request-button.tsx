@@ -45,7 +45,7 @@ export function JoinRequestButton({
           size="sm"
           variant="outline"
           onClick={() => join(s.teamName)}
-          disabled={pending}
+          loading={pending}
         >
           Request to join {s.teamName} ({s.open} spots)
         </Button>

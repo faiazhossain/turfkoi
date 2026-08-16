@@ -128,7 +128,7 @@ export default function ForgotPasswordPage() {
                 type="submit"
                 size="lg"
                 className="w-full"
-                disabled={emailForm.formState.isSubmitting}
+                loading={emailForm.formState.isSubmitting}
               >
                 {emailForm.formState.isSubmitting ? "Sending code..." : "Send code"}
               </Button>
@@ -190,7 +190,7 @@ export default function ForgotPasswordPage() {
                   type="submit"
                   size="lg"
                   className="w-full"
-                  disabled={resetForm.formState.isSubmitting}
+                  loading={resetForm.formState.isSubmitting}
                 >
                   {resetForm.formState.isSubmitting ? "Saving..." : "Set new password"}
                 </Button>

@@ -47,7 +47,7 @@ export function DeleteAccountButton() {
         retained.
       </p>
       <div className="flex items-center gap-1">
-        <Button variant="destructive" onClick={run} disabled={pending}>
+        <Button variant="destructive" onClick={run} loading={pending}>
           Yes, delete my account
         </Button>
         <Button variant="ghost" onClick={() => setConfirming(false)} disabled={pending}>

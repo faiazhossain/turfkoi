@@ -29,7 +29,7 @@ export function ConfirmPlayedButton({ matchId }: { matchId: string }) {
       size="xs"
       variant="outline"
       onClick={confirm}
-      disabled={pending}
+      loading={pending}
     >
       <CheckIcon aria-hidden />
       I played

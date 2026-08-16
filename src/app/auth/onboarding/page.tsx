@@ -80,7 +80,7 @@ export default function OnboardingPage() {
               type="submit"
               size="lg"
               className="w-full"
-              disabled={form.formState.isSubmitting}
+              loading={form.formState.isSubmitting}
             >
               {form.formState.isSubmitting ? "Saving..." : "Continue"}
             </Button>

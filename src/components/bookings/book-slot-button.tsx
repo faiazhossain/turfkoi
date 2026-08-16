@@ -70,7 +70,7 @@ export function BookSlotButton({ turfId, slots }: { turfId: string; slots: Slot[
               <Button
                 size="sm"
                 onClick={() => book(s)}
-                disabled={pending}
+                loading={pending}
               >
                 {busy ? "Holding…" : "Book"}
               </Button>
