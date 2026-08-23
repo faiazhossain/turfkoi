@@ -310,6 +310,7 @@ export function LocationPicker({
         onReady={handleReady}
         className="h-64"
         ariaLabel={`${label} picker map`}
+        fullscreen
       />
 
       <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">

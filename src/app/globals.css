@@ -253,3 +253,30 @@
     opacity: 0.9;
   }
 }
+
+/*
+ * MapLibre popups — restyle the default white chrome to the app's dark
+ * card theme so map labels match the rest of the page. MapLibre's CSS is
+ * dynamically imported (loads after this sheet), so these selectors are
+ * compound to keep winning the cascade.
+ */
+.maplibregl-popup .maplibregl-popup-content {
+  background: var(--card);
+  color: var(--card-foreground);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.45);
+}
+.maplibregl-popup.maplibregl-popup-anchor-bottom .maplibregl-popup-tip {
+  border-top-color: var(--card);
+}
+.maplibregl-popup.maplibregl-popup-anchor-top .maplibregl-popup-tip {
+  border-bottom-color: var(--card);
+}
+.maplibregl-popup.maplibregl-popup-anchor-left .maplibregl-popup-tip {
+  border-right-color: var(--card);
+}
+.maplibregl-popup.maplibregl-popup-anchor-right .maplibregl-popup-tip {
+  border-left-color: var(--card);
+}

@@ -115,6 +115,7 @@ export default async function TurfsPage({ searchParams }: PageProps) {
               lng: t.lng,
               label: t.name,
               href: `/turfs/${t.slug}`,
+              kind: "turf" as const,
             }))}
           />
           <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">

@@ -25,6 +25,7 @@ export function MapCanvas({
   className,
   onReady,
   ariaLabel = "Map",
+  fullscreen = false,
 }: {
   center?: [number, number]
   zoom?: number
@@ -34,6 +35,7 @@ export function MapCanvas({
     maplibregl: typeof import("maplibre-gl")
   ) => void
   ariaLabel?: string
+  fullscreen?: boolean
 }) {
   const containerRef = useRef<HTMLDivElement>(null)
   // Capture initial view only — later prop changes are ignored by design.
@@ -66,6 +68,12 @@ export function MapCanvas({
           center: initialView.current.center,
           zoom: initialView.current.zoom,
         })
+        if (fullscreen) {
+          map.addControl(
+            new maplibregl.FullscreenControl(),
+            "top-right"
+          )
+        }
         map.on("load", () => {
           if (disposed) return
           loaded = true
@@ -93,7 +101,10 @@ export function MapCanvas({
       ref={containerRef}
       role="application"
       aria-label={ariaLabel}
-      className={cn("relative h-64 w-full overflow-hidden rounded-lg border border-border", className)}
+      className={cn(
+        "relative h-64 w-full overflow-hidden rounded-lg border border-border fullscreen:rounded-none fullscreen:border-none",
+        className
+      )}
     >
       {!ready && !failed ? (
         <div className="absolute inset-0 z-10 flex items-center justify-center bg-muted/60">

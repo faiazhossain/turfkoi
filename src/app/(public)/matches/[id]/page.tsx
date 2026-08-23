@@ -206,6 +206,7 @@ export default async function MatchDetailPage({ params }: PageProps) {
                           lat: turfLatLng.lat,
                           lng: turfLatLng.lng,
                           label: t.name,
+                          kind: "turf" as const,
                         },
                       ]
                     : []),
@@ -214,6 +215,7 @@ export default async function MatchDetailPage({ params }: PageProps) {
                     lat: p.lat,
                     lng: p.lng,
                     label: `${p.name ?? "Player"}${p.position ? ` · ${p.position}` : ""}`,
+                    kind: "player" as const,
                   })),
                 ]}
               />
