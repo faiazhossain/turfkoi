@@ -16,6 +16,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { StatusBadge } from "@/components/shared"
+import { LocationPicker } from "@/components/map"
 import { completeOnboardingAction } from "@/features/auth/actions"
 import {
   onboardingFormSchema,
@@ -74,6 +75,23 @@ export default function OnboardingPage() {
             <div className="space-y-2">
               <Label htmlFor="area">Area (optional)</Label>
               <Input id="area" placeholder="e.g. Dhanmondi, Dhaka" {...form.register("area")} />
+            </div>
+            <div className="space-y-2">
+              <Label>Your location</Label>
+              <p className="text-xs text-muted-foreground">
+                Set your location so nearby matches can find you. We only store
+                an approximate spot (within ~100m), never your exact address.
+              </p>
+              <LocationPicker
+                value={form.watch("coords") ?? null}
+                onChange={(point, place) => {
+                  form.setValue("coords", point, { shouldDirty: true })
+                  // Autofill area from the picked place unless already typed.
+                  if (place?.name && !form.getValues("area")) {
+                    form.setValue("area", place.name, { shouldDirty: true })
+                  }
+                }}
+              />
             </div>
             {error && <StatusBadge status="danger">{error}</StatusBadge>}
             <Button

@@ -47,6 +47,7 @@ const STEP1_REASONS: Record<string, string> = {
   phone_taken: "That phone number already has an account.",
   email_taken: "That email already has an account.",
   rate_limited: "Too many requests. Wait a minute and try again.",
+  send_failed: "Could not send the email right now. Please try again.",
 }
 
 const STEP2_REASONS: Record<string, string> = {

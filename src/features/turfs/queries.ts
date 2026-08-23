@@ -14,6 +14,9 @@ export type TurfListItem = {
   format: "fives" | "sevens"
   photo: string | null
   distanceKm: number | null
+  /** Pin position for the discovery map (ST_Y/ST_X of the geography column). */
+  lat: number
+  lng: number
 }
 
 export interface ListTurfsFilter {
@@ -71,6 +74,8 @@ export async function listTurfs(
       format: turfs.format,
       photo: sql<string | null>`${turfs.photos}[1]`.as("photo"),
       distanceKm: distanceExpr.as("distance_km"),
+      lat: sql<number>`ST_Y(${turfs.coords}::geometry)`.as("lat"),
+      lng: sql<number>`ST_X(${turfs.coords}::geometry)`.as("lng"),
     })
     .from(turfs)
     .where(conditions.length ? and(...conditions) : undefined)
@@ -84,6 +89,8 @@ export async function listTurfs(
   return rows.map((r) => ({
     ...r,
     distanceKm: r.distanceKm == null ? null : Number(r.distanceKm),
+    lat: Number(r.lat),
+    lng: Number(r.lng),
   }))
 }
 
@@ -95,6 +102,23 @@ export async function getTurfBySlug(slug: string) {
 export async function getTurfById(id: string) {
   const rows = await db.select().from(turfs).where(eq(turfs.id, id)).limit(1)
   return rows[0] ?? null
+}
+
+/**
+ * Lat/lng for a turf via ST_Y/ST_X. The geography column comes back as EWKB
+ * on a plain select, so read positions through SQL instead.
+ */
+export async function getTurfLatLng(id: string) {
+  const rows = await db
+    .select({
+      lat: sql<number>`ST_Y(${turfs.coords}::geometry)`,
+      lng: sql<number>`ST_X(${turfs.coords}::geometry)`,
+    })
+    .from(turfs)
+    .where(eq(turfs.id, id))
+    .limit(1)
+  const r = rows[0]
+  return r ? { lat: Number(r.lat), lng: Number(r.lng) } : null
 }
 
 export async function listMyTurfs(ownerId: string) {

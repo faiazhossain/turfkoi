@@ -15,7 +15,7 @@ const LOCK_MINUTES = 15
 
 export type SendOtpResult =
   | { ok: true; devCode?: string }
-  | { ok: false; reason: "invalid_email" | "rate_limited" }
+  | { ok: false; reason: "invalid_email" | "rate_limited" | "send_failed" }
 
 export type VerifyResult =
   | { ok: true }
@@ -63,13 +63,24 @@ export async function sendOtp(email: string): Promise<SendOtpResult> {
   const code = isProd ? generateCode() : "123456"
   const codeHash = hashCode(code)
 
-  await db.insert(otps).values({
-    email,
-    codeHash,
-    expiresAt: new Date(Date.now() + TTL_MINUTES * 60_000),
-  })
+  const [inserted] = await db
+    .insert(otps)
+    .values({
+      email,
+      codeHash,
+      expiresAt: new Date(Date.now() + TTL_MINUTES * 60_000),
+    })
+    .returning({ id: otps.id })
 
-  await emailProvider.sendOtp(email, code)
+  try {
+    await emailProvider.sendOtp(email, code)
+  } catch (err) {
+    // A code the user never received must not sit as the latest OTP for the
+    // address, and the failure must surface instead of throwing unhandled.
+    console.error("[otp] email send failed:", err)
+    await db.delete(otps).where(eq(otps.id, inserted.id))
+    return { ok: false, reason: "send_failed" }
+  }
 
   return { ok: true, devCode: isProd ? undefined : code }
 }

@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { StatusBadge } from "@/components/shared"
+import { LocationPicker } from "@/components/map"
 
 import { createTurfAction, updateTurfAction } from "@/features/turfs/actions"
 import {
@@ -128,39 +129,23 @@ export function TurfForm({ mode, turfId, defaultValues }: TurfFormProps) {
         <Field label="Description" error={form.formState.errors.description?.message}>
           <Textarea {...form.register("description")} rows={3} />
         </Field>
-        <div className="grid gap-3 sm:grid-cols-3">
-          <Field label="Latitude" error={(form.formState.errors.coords as { message?: string } | undefined)?.message}>
-            <Input
-              type="number"
-              step="any"
-              {...form.register("coords.lat", { valueAsNumber: true })}
-            />
-          </Field>
-          <Field label="Longitude">
-            <Input
-              type="number"
-              step="any"
-              {...form.register("coords.lng", { valueAsNumber: true })}
-            />
-          </Field>
-          <Field label="Format">
-            <Select
-              value={form.watch("format")}
-              onValueChange={(v) => form.setValue("format", v as "fives" | "sevens")}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {FORMAT_OPTIONS.map((o) => (
-                  <SelectItem key={o.value} value={o.value}>
-                    {o.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
-        </div>
+        <Field label="Format">
+          <Select
+            value={form.watch("format")}
+            onValueChange={(v) => form.setValue("format", v as "fives" | "sevens")}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {FORMAT_OPTIONS.map((o) => (
+                <SelectItem key={o.value} value={o.value}>
+                  {o.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Field>
       </section>
 
       <section className="space-y-3">
@@ -176,6 +161,27 @@ export function TurfForm({ mode, turfId, defaultValues }: TurfFormProps) {
             <Input {...form.register("address")} placeholder="House, road" />
           </Field>
         </div>
+        <Field
+          label="Pin on map"
+          error={form.formState.errors.coords?.message}
+        >
+          <LocationPicker
+            value={form.watch("coords") ?? null}
+            label="turf"
+            onChange={(point, place) => {
+              form.setValue("coords", point, { shouldDirty: true })
+              // Autofill blank location fields from the picked place.
+              if (place) {
+                if (place.name && !form.getValues("area")) {
+                  form.setValue("area", place.name, { shouldDirty: true })
+                }
+                if (place.city && !form.getValues("city")) {
+                  form.setValue("city", place.city, { shouldDirty: true })
+                }
+              }
+            }}
+          />
+        </Field>
       </section>
 
       <section className="space-y-3">

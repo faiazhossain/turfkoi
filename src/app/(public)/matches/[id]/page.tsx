@@ -3,13 +3,18 @@ import { notFound } from "next/navigation"
 import { MapPinIcon, ClockIcon } from "lucide-react"
 
 import { StatusBadge, EmptyState } from "@/components/shared"
+import { MapView } from "@/components/map"
 import { MatchActions } from "@/components/matches/match-actions"
 import { JoinRequestButton } from "@/components/player/join-request-button"
 import { RequestManager } from "@/components/player/request-manager"
 import { getMatch } from "@/features/matches/queries"
 import { ROSTER_LIMITS } from "@/features/matches/schemas"
 import { listTeamMembers, getTeamRole } from "@/features/teams/queries"
-import { listPendingPlayerRequests } from "@/features/player/queries"
+import {
+  listPendingPlayerRequests,
+  listAvailablePlayersNearTurf,
+} from "@/features/player/queries"
+import { getTurfLatLng } from "@/features/turfs/queries"
 import { getCurrentUser } from "@/lib/auth"
 
 interface PageProps {
@@ -90,6 +95,18 @@ export default async function MatchDetailPage({ params }: PageProps) {
   // Is the current user already on the roster?
   const onRoster = user ? roster.some((p) => p.userId === user.id) : false
 
+  // Captains: solo players marked available near this turf (SS20/SS32).
+  let nearbyPlayers: Awaited<ReturnType<typeof listAvailablePlayersNearTurf>> = []
+  if (myTeamOptions.length > 0 && openSpots.length > 0) {
+    const all = await listAvailablePlayersNearTurf(t.id)
+    const rosterIds = new Set(roster.map((p) => p.userId))
+    const requestedIds = new Set(pendingRequests.map((r) => r.userId))
+    nearbyPlayers = all.filter(
+      (p) => !rosterIds.has(p.userId) && !requestedIds.has(p.userId)
+    )
+  }
+  const turfLatLng = nearbyPlayers.length > 0 ? await getTurfLatLng(t.id) : null
+
   const canConfirmResult =
     !!user &&
     m.state === "completed" &&
@@ -159,6 +176,75 @@ export default async function MatchDetailPage({ params }: PageProps) {
 
       {myTeamOptions.length > 0 && pendingRequests.length > 0 ? (
         <RequestManager teamId={myTeamOptions[0].teamId} requests={pendingRequests} />
+      ) : null}
+
+      {/* Captains: solo players available near this turf */}
+      {myTeamOptions.length > 0 && openSpots.length > 0 ? (
+        <section className="space-y-3">
+          <h2 className="font-heading text-lg font-semibold">
+            Players available nearby
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Solo players marked available within 10 km of this turf. Locations
+            are approximate (within ~100m).
+          </p>
+          {nearbyPlayers.length === 0 ? (
+            <p className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
+              No available players nearby right now. Your open spots are still
+              visible to players searching this area.
+            </p>
+          ) : (
+            <>
+              <MapView
+                ariaLabel="Available players near this turf"
+                className="h-72"
+                markers={[
+                  ...(turfLatLng
+                    ? [
+                        {
+                          id: "turf",
+                          lat: turfLatLng.lat,
+                          lng: turfLatLng.lng,
+                          label: t.name,
+                        },
+                      ]
+                    : []),
+                  ...nearbyPlayers.map((p) => ({
+                    id: p.userId,
+                    lat: p.lat,
+                    lng: p.lng,
+                    label: `${p.name ?? "Player"}${p.position ? ` · ${p.position}` : ""}`,
+                  })),
+                ]}
+              />
+              <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border">
+                {nearbyPlayers.map((p) => (
+                  <li
+                    key={p.userId}
+                    className="flex items-center justify-between gap-2 bg-card p-3 text-sm"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate font-heading font-medium">
+                        {p.name ?? "Player"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {[p.position, p.skill].filter(Boolean).join(" · ") ||
+                          "Position not set"}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
+                      <MapPinIcon className="size-3" aria-hidden />
+                      {p.area || "Nearby"}
+                      <span className="tabular-nums">
+                        {p.distanceKm.toFixed(1)} km
+                      </span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </section>
       ) : null}
 
       {user ? (

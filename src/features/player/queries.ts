@@ -1,5 +1,5 @@
 import "server-only"
-import { and, asc, desc, eq, inArray, sql } from "drizzle-orm"
+import { and, asc, desc, eq, gte, inArray, sql } from "drizzle-orm"
 
 import { db } from "@/db"
 import {
@@ -121,6 +121,55 @@ export async function listMatchesNeedingPlayers(
   }
 
   return withOpenSpots.map((m) => ({ ...m, distanceKm: null }))
+}
+
+/**
+ * SS20 / SS32: solo players marked "available" whose location is within
+ * `radiusKm` of the given turf — the team->player discovery direction that
+ * pairs with listMatchesNeedingPlayers (player->match).
+ *
+ * Privacy: player coords are rounded to ~110m at write time (F7), so pins
+ * only ever show an approximate spot.
+ */
+export async function listAvailablePlayersNearTurf(
+  turfId: string,
+  radiusKm = 10,
+  limit = 20
+) {
+  // "Available tonight" freshness window (SS18): stale toggles drop out.
+  const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000)
+  const distanceExpr = sql<number>`ST_Distance(${playerProfiles.coords}, ${turfs.coords}) / 1000.0`
+
+  const rows = await db
+    .select({
+      userId: playerProfiles.userId,
+      name: users.name,
+      position: playerProfiles.position,
+      skill: playerProfiles.skill,
+      area: playerProfiles.area,
+      distanceKm: distanceExpr,
+      lat: sql<number>`ST_Y(${playerProfiles.coords}::geometry)`,
+      lng: sql<number>`ST_X(${playerProfiles.coords}::geometry)`,
+    })
+    .from(playerProfiles)
+    .innerJoin(users, eq(users.id, playerProfiles.userId))
+    .innerJoin(turfs, eq(turfs.id, turfId))
+    .where(
+      and(
+        eq(playerProfiles.available, true),
+        gte(playerProfiles.availableAt, cutoff),
+        sql`ST_DWithin(${playerProfiles.coords}, ${turfs.coords}, ${radiusKm * 1000})`
+      )
+    )
+    .orderBy(asc(distanceExpr))
+    .limit(limit)
+
+  return rows.map((r) => ({
+    ...r,
+    distanceKm: Number(r.distanceKm),
+    lat: Number(r.lat),
+    lng: Number(r.lng),
+  }))
 }
 
 /** Matches the player has participated in (match_players row exists). */

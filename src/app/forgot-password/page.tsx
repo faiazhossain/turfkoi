@@ -48,6 +48,11 @@ const OTP_REASONS: Record<string, string> = {
   rate_limited: "Too many attempts. Slow down.",
 }
 
+const EMAIL_REASONS: Record<string, string> = {
+  rate_limited: "Too many requests. Wait a minute and try again.",
+  send_failed: "Could not send the email right now. Please try again.",
+}
+
 export default function ForgotPasswordPage() {
   const router = useRouter()
   const [step, setStep] = useState<"email" | "reset">("email")
@@ -73,7 +78,7 @@ export default function ForgotPasswordPage() {
       setStep("reset")
       return
     }
-    setError(result.reason)
+    setError(EMAIL_REASONS[result.reason] ?? result.reason)
   }
 
   async function submitReset(values: NewPasswordValues) {

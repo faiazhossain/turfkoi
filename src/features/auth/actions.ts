@@ -12,6 +12,7 @@ import { signIn, signOut } from "@/auth"
 import { db } from "@/db"
 import { users, playerProfiles } from "@/db/schema"
 import { getCurrentUser } from "@/lib/auth"
+import { roundCoords } from "@/lib/geo"
 import { rateLimit } from "@/lib/ratelimit"
 
 import { resolveIdentifier } from "./identifier"
@@ -237,11 +238,18 @@ export async function completeOnboardingAction(
   }
   const user = await getCurrentUser()
   if (!user) throw new Error("Unauthorized")
-  const { name, position, skill, area } = parsed.data
+  const { name, position, skill, area, coords } = parsed.data
   await db.update(users).set({ name }).where(eq(users.id, user.id))
   await db
     .update(playerProfiles)
-    .set({ position: position ?? null, skill: skill ?? null, area: area ?? null })
+    .set({
+      position: position ?? null,
+      skill: skill ?? null,
+      area: area ?? null,
+      // F7 privacy: round player coords to 3 decimals (~110m) at write time.
+      coords: coords ? roundCoords(coords) : null,
+      updatedAt: new Date(),
+    })
     .where(eq(playerProfiles.userId, user.id))
   revalidatePath("/app")
   return { ok: true as const }

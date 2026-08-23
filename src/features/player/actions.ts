@@ -12,6 +12,7 @@ import {
   matches,
 } from "@/db/schema"
 import { getCurrentUser } from "@/lib/auth"
+import { roundCoords } from "@/lib/geo"
 import { getTeamRole } from "@/features/teams/queries"
 import { countRoster } from "@/features/matches/queries"
 import { ROSTER_LIMITS } from "@/features/matches/schemas"
@@ -72,17 +73,14 @@ export async function updateProfileAction(
     .values({
       userId: user.id,
       ...rest,
-      coords: coords
-        ? { lat: coords.lat, lng: coords.lng } as unknown as null
-        : undefined,
+      // F7 privacy: round player coords to 3 decimals (~110m) at write time.
+      coords: coords ? roundCoords(coords) : null,
     })
     .onConflictDoUpdate({
       target: playerProfiles.userId,
       set: {
         ...rest,
-        coords: coords
-          ? ({ lat: coords.lat, lng: coords.lng } as unknown as null)
-          : undefined,
+        coords: coords ? roundCoords(coords) : null,
         updatedAt: new Date(),
       },
     })

@@ -4,6 +4,7 @@ import { MapPinIcon, SearchIcon } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { EmptyState, StatusBadge } from "@/components/shared"
+import { MapView } from "@/components/map"
 import { TurfCard } from "@/components/turfs"
 import { listTurfs, type ListTurfsFilter } from "@/features/turfs/queries"
 
@@ -45,8 +46,8 @@ export default async function TurfsPage({ searchParams }: PageProps) {
           Find a turf
         </h1>
         <p className="text-sm text-muted-foreground">
-          Browse verified turfs across Bangladesh. Map-based discovery arrives
-          in Phase 3 — for now, filter by area and distance.
+          Browse verified turfs across Bangladesh — filter by area, or see them
+          on the map.
         </p>
       </header>
 
@@ -105,6 +106,17 @@ export default async function TurfsPage({ searchParams }: PageProps) {
               {turfs.length} turf{turfs.length === 1 ? "" : "s"}
             </StatusBadge>
           </div>
+          <MapView
+            ariaLabel="Turf locations"
+            className="h-80"
+            markers={turfs.map((t) => ({
+              id: t.id,
+              lat: t.lat,
+              lng: t.lng,
+              label: t.name,
+              href: `/turfs/${t.slug}`,
+            }))}
+          />
           <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
             {turfs.map((t) => (
               <TurfCard key={t.id} {...t} />

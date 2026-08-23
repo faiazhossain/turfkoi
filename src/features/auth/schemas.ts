@@ -49,6 +49,14 @@ export const onboardingFormSchema = z.object({
   position: z.string().max(40).optional(),
   skill: z.string().max(40).optional(),
   area: z.string().max(80).optional(),
+  // SS32: map pin during onboarding powers nearby discovery. Rounded to
+  // ~110m at write time (audit F7) — never store exact coords for players.
+  coords: z
+    .object({
+      lat: z.number().min(-90).max(90),
+      lng: z.number().min(-180).max(180),
+    })
+    .optional(),
 })
 
 export type RegistrationFormValues = z.input<typeof registrationFormSchema>
