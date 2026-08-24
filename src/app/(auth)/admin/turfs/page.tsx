@@ -1,13 +1,13 @@
 import Link from "next/link"
 
 import { StatusBadge } from "@/components/shared"
-import { VerifyTurfButton } from "@/components/admin"
+import { InvitePanel, VerifyTurfButton } from "@/components/admin"
 import { listTurfsAdmin } from "@/features/admin/queries"
 
 export default async function AdminTurfsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: "pending" | "verified" | "all" }>
+  searchParams: Promise<{ status?: "pending" | "verified" | "awaiting" | "all" }>
 }) {
   const { status } = await searchParams
   const filter = status ?? "all"
@@ -16,9 +16,17 @@ export default async function AdminTurfsPage({
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="font-heading text-lg font-semibold">Turfs</h2>
+        <div className="flex items-center gap-3">
+          <h2 className="font-heading text-lg font-semibold">Turfs</h2>
+          <Link
+            href="/admin/turfs/new"
+            className="rounded-lg border border-border px-3 py-1.5 text-sm hover:bg-muted/50"
+          >
+            Seed turf
+          </Link>
+        </div>
         <div className="flex gap-1 text-sm">
-          {(["all", "pending", "verified"] as const).map((f) => (
+          {(["all", "pending", "verified", "awaiting"] as const).map((f) => (
             <Link
               key={f}
               href={`/admin/turfs?status=${f}`}
@@ -54,7 +62,11 @@ export default async function AdminTurfsPage({
                   >
                     {t.name}
                   </Link>
-                  {t.isVerified ? (
+                  {t.ownerId === null ? (
+                    <StatusBadge status="neutral" showIcon={false}>
+                      awaiting claim
+                    </StatusBadge>
+                  ) : t.isVerified ? (
                     <StatusBadge status="success" showIcon={false}>
                       verified
                     </StatusBadge>
@@ -74,10 +86,14 @@ export default async function AdminTurfsPage({
                   {" · "}
                   {t.format === "fives" ? "5-a-side" : "7-a-side"}
                   {" · "}
-                  owner {t.ownerPhone}
+                  {t.ownerId ? `owner ${t.ownerPhone}` : "no owner yet"}
                 </p>
               </div>
-              {!t.isVerified ? <VerifyTurfButton turfId={t.id} /> : null}
+              {t.ownerId === null ? (
+                <InvitePanel turfId={t.id} />
+              ) : !t.isVerified ? (
+                <VerifyTurfButton turfId={t.id} />
+              ) : null}
             </li>
           ))}
         </ul>

@@ -1,7 +1,7 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { and, eq, sql } from "drizzle-orm"
+import { and, eq, isNotNull, isNull, sql } from "drizzle-orm"
 import type { z } from "zod"
 
 import { db } from "@/db"
@@ -150,9 +150,27 @@ export async function verifyTurfAction(
   const updated = await db
     .update(turfs)
     .set({ isVerified: true, updatedAt: new Date() })
-    .where(and(eq(turfs.id, parsed.data.turfId), eq(turfs.isVerified, false)))
+    .where(
+      and(
+        eq(turfs.id, parsed.data.turfId),
+        eq(turfs.isVerified, false),
+        // Seeded turfs can't go public before an owner claims them.
+        isNotNull(turfs.ownerId)
+      )
+    )
     .returning({ id: turfs.id })
   if (updated.length === 0) {
+    const seeded = await db
+      .select({ id: turfs.id })
+      .from(turfs)
+      .where(and(eq(turfs.id, parsed.data.turfId), isNull(turfs.ownerId)))
+      .limit(1)
+    if (seeded.length > 0) {
+      return {
+        ok: false,
+        error: "This turf hasn't been claimed by its owner yet.",
+      }
+    }
     return { ok: false, error: "Turf not found or already verified." }
   }
   revalidatePath("/admin/turfs")

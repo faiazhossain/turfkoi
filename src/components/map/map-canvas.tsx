@@ -67,6 +67,7 @@ export function MapCanvas({
           style: MAP_TILES_URL,
           center: initialView.current.center,
           zoom: initialView.current.zoom,
+          attributionControl: false,
         })
         if (fullscreen) {
           map.addControl(

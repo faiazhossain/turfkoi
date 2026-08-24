@@ -4,7 +4,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { SignOutButton } from "@/components/auth/sign-out-button"
-import { getSession } from "@/lib/auth"
+import { getCurrentUser, getSession } from "@/lib/auth"
 import { MainNav } from "./main-nav"
 import { LinkPendingIndicator } from "./link-pending-indicator"
 
@@ -29,6 +29,19 @@ async function SessionActions() {
     )
   }
 
+  // Pure admins aren't players — route them at their console, not /app.
+  const user = await getCurrentUser()
+  if (user?.roles.includes("admin")) {
+    return (
+      <>
+        <Button variant="ghost" size="sm" render={<Link href="/admin" />}>
+          Admin console
+        </Button>
+        <SignOutButton />
+      </>
+    )
+  }
+
   return (
     <>
       <Button variant="ghost" size="sm" render={<Link href="/app" />}>
@@ -41,10 +54,9 @@ async function SessionActions() {
 
 /**
  * Session-aware top nav (DESIGN_REFERENCE.md §2 row 1, Requirements §7/44).
- * Deliberately role-agnostic: signed-in users see Dashboard + Sign out,
- * signed-out users see Sign in. Role-specific surfaces (Owner / Admin) live
- * on the player dashboard as a "switch hats" card instead — global chrome
- * stays identical for players, owners, and admins alike.
+ * Signed-out users see Sign in; players and owners see Dashboard + Sign out;
+ * admins see Admin console + Sign out (their home is /admin, not the player
+ * dashboard).
  */
 export function SiteHeader() {
   return (

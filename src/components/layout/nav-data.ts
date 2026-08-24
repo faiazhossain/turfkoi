@@ -13,7 +13,7 @@ export interface NavItem {
  */
 export const primaryNav: NavItem[] = [
   { label: "Home", href: "/", icon: HomeIcon },
-  { label: "Discover", href: "/turfs", icon: CompassIcon },
+  { label: "Turfs", href: "/turfs", icon: CompassIcon },
   { label: "Matches", href: "/matches", icon: SwordsIcon },
   { label: "Profile", href: "/app", icon: UserIcon },
 ]

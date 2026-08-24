@@ -1,5 +1,5 @@
 import "server-only"
-import { or, desc, eq, ilike, inArray, ne, sql, gte } from "drizzle-orm"
+import { or, desc, eq, ilike, inArray, isNull, ne, sql, gte } from "drizzle-orm"
 
 import { db } from "@/db"
 import {
@@ -177,7 +177,7 @@ export async function listUsers(search?: string): Promise<AdminUserRow[]> {
 }
 
 export async function listTurfsAdmin(
-  filter: "pending" | "verified" | "all" = "all"
+  filter: "pending" | "verified" | "awaiting" | "all" = "all"
 ) {
   const rows = await db
     .select({
@@ -194,12 +194,15 @@ export async function listTurfsAdmin(
       createdAt: turfs.createdAt,
     })
     .from(turfs)
-    .innerJoin(users, eq(users.id, turfs.ownerId))
+    // Seeded turfs have no owner yet — a left join keeps them listed.
+    .leftJoin(users, eq(users.id, turfs.ownerId))
     .where(
       filter === "pending"
         ? eq(turfs.isVerified, false)
         : filter === "verified"
         ? eq(turfs.isVerified, true)
+        : filter === "awaiting"
+        ? isNull(turfs.ownerId)
         : undefined
     )
     .orderBy(desc(turfs.createdAt))

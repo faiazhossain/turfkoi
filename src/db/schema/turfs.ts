@@ -42,9 +42,9 @@ export const turfs = pgTable("turfs", {
   name: text("name").notNull(),
   // MVP single-owner canonical field (admin concierge-onboards turfs).
   // Multi-owner via turf_owners M:N is Post-MVP (audit A1).
-  ownerId: uuid("owner_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "restrict" }),
+  // Nullable: NULL means the turf is admin-seeded and awaiting the owner's
+  // claim via a turf_claim_invites token (see turf-claims.ts).
+  ownerId: uuid("owner_id").references(() => users.id, { onDelete: "restrict" }),
   coords: geographyPoint("coords").notNull(),
   format: turfFormat("format").notNull().default("fives"),
   city: text("city"),

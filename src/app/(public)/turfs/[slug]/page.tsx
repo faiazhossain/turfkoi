@@ -6,6 +6,7 @@ import { MapPinIcon, CalendarCheckIcon } from "lucide-react"
 import { StatusBadge, EmptyState } from "@/components/shared"
 import { BookSlotButton } from "@/components/bookings/book-slot-button"
 import { getTurfBySlug, listTurfSlots } from "@/features/turfs/queries"
+import { getCurrentUser } from "@/lib/auth"
 
 interface PageProps {
   params: Promise<{ slug: string }>
@@ -16,7 +17,8 @@ export async function generateMetadata({
 }: PageProps): Promise<Metadata> {
   const { slug } = await params
   const turf = await getTurfBySlug(slug)
-  if (!turf) return {}
+  // Seeded-but-unclaimed turfs are not public — don't leak them in metadata.
+  if (!turf || turf.ownerId === null) return {}
   const title = `${turf.name} — Book in Bangladesh`
   const description =
     `${turf.format === "fives" ? "5-a-side" : "7-a-side"} turf in ` +
@@ -45,6 +47,13 @@ export default async function TurfDetailPage({ params }: PageProps) {
   const turf = await getTurfBySlug(slug)
   if (!turf) notFound()
 
+  // Seeded-but-unclaimed turfs stay hidden; admins can still preview them
+  // from the admin console.
+  if (turf.ownerId === null) {
+    const viewer = await getCurrentUser()
+    if (!viewer?.roles.includes("admin")) notFound()
+  }
+
   const today = new Date()
   const fromDate = today.toISOString().slice(0, 10)
   const toDate = new Date(today.getTime() + 7 * 86400000)
@@ -53,6 +62,7 @@ export default async function TurfDetailPage({ params }: PageProps) {
   const slots = await listTurfSlots(turf.id, { from: fromDate, to: toDate })
 
   const facilities = turf.facilities ?? {}
+  const photos = turf.photos ?? []
   const facilityList = Object.entries(facilities).filter(
     ([k, v]) => k !== "grassType" && v === true
   )
@@ -68,11 +78,11 @@ export default async function TurfDetailPage({ params }: PageProps) {
 
       {/* Hero photo / gallery */}
       <section>
-        {turf.photos.length > 0 ? (
+        {photos.length > 0 ? (
           <div className="aspect-video w-full overflow-hidden rounded-xl bg-muted">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={turf.photos[0]}
+              src={photos[0]}
               alt={turf.name}
               className="size-full object-cover"
             />

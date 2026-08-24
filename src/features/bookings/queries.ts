@@ -125,10 +125,13 @@ export async function listSettledForPayout(
     )
     .orderBy(turfs.ownerId)
 
-  if (rows.length === 0) return []
+  // Booked turfs always have an owner; the null check is only for the type
+  // (turfs.owner_id is nullable for seeded, unclaimed turfs).
+  const ownered = rows.filter((r): r is (typeof rows)[number] & { turfOwnerId: string } => r.turfOwnerId !== null)
+  if (ownered.length === 0) return []
 
   // Pull any payout rows that already cover these bookings (by owner + period).
-  const ownerIds = Array.from(new Set(rows.map((r) => r.turfOwnerId)))
+  const ownerIds = Array.from(new Set(ownered.map((r) => r.turfOwnerId)))
   const existing = await db
     .select({
       turfOwnerId: payouts.turfOwnerId,
@@ -148,7 +151,7 @@ export async function listSettledForPayout(
     )
 
   const byOwner = new Map<string, PayoutCandidate>()
-  for (const r of rows) {
+  for (const r of ownered) {
     if (isCovered(r.turfOwnerId, r.bookingDate)) continue
     const cur = byOwner.get(r.turfOwnerId) ?? {
       turfOwnerId: r.turfOwnerId,

@@ -19,7 +19,8 @@ export interface CapabilityContext {
   /** The requesting user's role within the team (from team_members). */
   teamRole?: "owner" | "captain" | "manager" | "player" | null
   turfId?: string
-  ownerId?: string
+  /** null = unclaimed/seeded turf (no owner can match; admins still pass). */
+  ownerId?: string | null
   bookerId?: string
   submitterId?: string
 }

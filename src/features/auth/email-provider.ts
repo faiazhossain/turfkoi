@@ -2,6 +2,12 @@ import { Resend } from "resend"
 
 export interface EmailProvider {
   sendOtp(email: string, code: string): Promise<void>
+  sendTurfClaimInvite(
+    email: string,
+    turfName: string,
+    claimUrl: string,
+    expiresAt: Date
+  ): Promise<void>
 }
 
 /**
@@ -17,6 +23,13 @@ export const mockEmailProvider: EmailProvider = {
       return
     }
     throw new Error("[email] RESEND_API_KEY is not set - cannot send OTP")
+  },
+  async sendTurfClaimInvite(email, turfName, claimUrl) {
+    if (process.env.NODE_ENV !== "production") {
+      console.info(`[mock-email] claim invite for ${email} (${turfName}): ${claimUrl}`)
+      return
+    }
+    throw new Error("[email] RESEND_API_KEY is not set - cannot send claim invite")
   },
 }
 
@@ -39,6 +52,22 @@ function resendEmailProvider(): EmailProvider {
           "It expires in 5 minutes.",
           "If you did not request it, you can ignore this email.",
         ].join(" "),
+      })
+      if (error) {
+        throw new Error(`[email] resend send failed: ${error.message}`)
+      }
+    },
+    async sendTurfClaimInvite(email, turfName, claimUrl, expiresAt) {
+      const { error } = await client.emails.send({
+        from,
+        to: [email],
+        subject: `Claim your turf "${turfName}" on Turfkoi`,
+        text: [
+          `You've been invited to manage "${turfName}" on Turfkoi.`,
+          `Open this link to claim it: ${claimUrl}`,
+          `The link expires on ${expiresAt.toDateString()}.`,
+          "If you weren't expecting this email, you can ignore it.",
+        ].join("\n\n"),
       })
       if (error) {
         throw new Error(`[email] resend send failed: ${error.message}`)

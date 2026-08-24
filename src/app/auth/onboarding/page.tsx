@@ -35,7 +35,7 @@ export default function OnboardingPage() {
     setError(null)
     const result = await completeOnboardingAction(values)
     if (result.ok) {
-      router.replace("/app")
+      router.replace(result.home ?? "/app")
       router.refresh()
       return
     }

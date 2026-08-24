@@ -19,6 +19,11 @@ import { resolveIdentifier } from "./identifier"
 import { normalizePhone } from "./phone"
 import { sendOtp, verifyOtp } from "./otp-service"
 import {
+  CLAIM_COOKIE,
+  claimPath,
+  resolveClaimToken,
+} from "@/features/turf-claims/invites"
+import {
   createRegisteredUser,
   getUserByEmail,
   getUserByIdentifier,
@@ -47,8 +52,15 @@ async function clientIp(): Promise<string> {
 }
 
 /** Post-login routing by strongest role: admins land on the admin console,
- * turf owners on their dashboard - the player dashboard is player work. */
+ * turf owners on their dashboard - the player dashboard is player work.
+ * A pending turf-claim invite (cookie set by /claim/[token] when visited
+ * signed-out) takes precedence over the role home. */
 async function homeForUser(userId: string): Promise<string> {
+  const claimToken = (await cookies()).get(CLAIM_COOKIE)?.value
+  if (claimToken) {
+    const resolved = await resolveClaimToken(claimToken)
+    if (resolved.ok) return claimPath(claimToken)
+  }
   const roles = await getUserRoles(userId)
   return roles.includes("admin")
     ? "/admin"
@@ -252,6 +264,12 @@ export async function completeOnboardingAction(
     })
     .where(eq(playerProfiles.userId, user.id))
   revalidatePath("/app")
+  // A pending turf claim (owner registered straight from the invite link)
+  // continues after onboarding instead of the player home.
+  const claimToken = (await cookies()).get(CLAIM_COOKIE)?.value
+  if (claimToken && (await resolveClaimToken(claimToken)).ok) {
+    return { ok: true as const, home: claimPath(claimToken) }
+  }
   return { ok: true as const }
 }
 

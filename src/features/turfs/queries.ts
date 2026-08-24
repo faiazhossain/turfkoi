@@ -1,5 +1,5 @@
 import "server-only"
-import { and, asc, eq, gte, lte, sql, inArray } from "drizzle-orm"
+import { and, asc, eq, gte, isNotNull, lte, sql, inArray } from "drizzle-orm"
 
 import { db } from "@/db"
 import { turfs, turfSlots, bookings } from "@/db/schema"
@@ -46,7 +46,12 @@ export async function listTurfs(
 
   const conditions = []
   if (onlyPublic) {
-    conditions.push(eq(turfs.isVerified, true), eq(turfs.isActive, true))
+    // Seeded-but-unclaimed turfs (owner_id NULL) never appear publicly.
+    conditions.push(
+      eq(turfs.isVerified, true),
+      eq(turfs.isActive, true),
+      isNotNull(turfs.ownerId)
+    )
   }
   if (filter.format) conditions.push(eq(turfs.format, filter.format))
   if (filter.area) {

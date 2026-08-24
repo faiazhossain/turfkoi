@@ -38,7 +38,19 @@ export default async function PlayerDashboardPage() {
   const session = await getSession()
   if (!session?.user) redirect("/login")
   const user = await getCurrentUser()
-  const extraRoles = user?.roles.filter((r) => r !== "player") ?? []
+
+  // A pure admin is not a player — their dashboard is the admin console.
+  // Admins who also own turfs or teams keep access to the player view.
+  const roles = user?.roles ?? []
+  if (
+    roles.includes("admin") &&
+    !roles.includes("turf_owner") &&
+    !roles.includes("team_owner")
+  ) {
+    redirect("/admin")
+  }
+
+  const extraRoles = roles.filter((r) => r !== "player")
 
   const profile = await getPlayerProfile(session.user.id)
   const [bookings, nearbyMatches, history, refCode] = await Promise.all([
