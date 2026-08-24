@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { CircleHelpIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -16,8 +17,10 @@ import {
 /**
  * Steps a prospective turf owner follows to get an account. Owners cannot
  * self-register: an admin seeds the turf, sends a claim link, and the owner
- * registers through it (see src/features/turf-claims/invites.ts). Kept as
- * plain data so the copy can be tested without rendering.
+ * registers through it (see src/features/turf-claims/invites.ts). Turfs can
+ * also enter via an owner application at /own-a-turf, which admins approve
+ * into the same flow. Kept as plain data so the copy can be tested without
+ * rendering.
  */
 export const OWNER_ONBOARDING_STEPS = [
   {
@@ -39,7 +42,10 @@ export const OWNER_ONBOARDING_STEPS = [
 ] as const
 
 export const OWNER_HELP_NOTE =
-  "No link yet? The Turfkoi team will reach out to you to get your turf set up."
+  "No link yet? Apply to list your turf — the Turfkoi team reviews every application and reaches out with next steps."
+
+/** CTA that routes prospective owners into the application funnel. */
+export const OWNER_APPLY_PATH = "/own-a-turf"
 
 export function OwnerHelpButton() {
   return (
@@ -72,7 +78,11 @@ export function OwnerHelpButton() {
           ))}
         </ol>
         <p className="text-sm text-muted-foreground">{OWNER_HELP_NOTE}</p>
-        <DialogFooter showCloseButton />
+        <DialogFooter showCloseButton>
+          <Button render={<Link href={OWNER_APPLY_PATH} />}>
+            List your turf
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   )

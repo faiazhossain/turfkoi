@@ -25,6 +25,8 @@ export type PickedPlace = {
   name: string
   city: string | null
   area: string
+  /** Street-level address when Photon returns one; null otherwise. */
+  address: string | null
 }
 
 /**
@@ -59,6 +61,10 @@ export function LocationPicker({
   const markerRef = useRef<MLMarker | null>(null)
   const searchSeq = useRef(0)
   const valueRef = useRef(value)
+  // The query set programmatically by selectResult; the search effect skips
+  // it so picking a result doesn't re-run the query and re-open the dropdown.
+  // Cleared on the next manual keystroke.
+  const suppressSearchRef = useRef<string | null>(null)
 
   useEffect(() => {
     valueRef.current = value
@@ -69,6 +75,16 @@ export function LocationPicker({
     const seq = ++searchSeq.current
     const controller = new AbortController()
     const timer = setTimeout(async () => {
+      if (
+        suppressSearchRef.current !== null &&
+        query === suppressSearchRef.current
+      ) {
+        // Query came from selecting a result — keep the results (so a manual
+        // refocus can reopen them) but don't search or drop the list again.
+        setSearchStatus("idle")
+        setOpen(false)
+        return
+      }
       if (query.trim().length < 3) {
         setResults([])
         setSearchStatus("idle")
@@ -112,7 +128,12 @@ export function LocationPicker({
         const place: PickedPlace | null = feature
           ? (() => {
               const p = photonToPlace(feature)
-              return { name: p.name, city: p.city, area: p.area }
+              return {
+                name: p.name,
+                city: p.city,
+                area: p.area,
+                address: p.address,
+              }
             })()
           : null
         setPickedName(place?.name ?? null)
@@ -178,6 +199,7 @@ export function LocationPicker({
   // ----- Search result selection -----
   function selectResult(feature: PhotonFeature) {
     const place = photonToPlace(feature)
+    suppressSearchRef.current = place.name
     setQuery(place.name)
     setOpen(false)
 
@@ -201,7 +223,12 @@ export function LocationPicker({
     setPickedName(place.name)
     onChange(
       { lat: place.lat, lng: place.lng },
-      { name: place.name, city: place.city, area: place.area }
+      {
+        name: place.name,
+        city: place.city,
+        area: place.area,
+        address: place.address,
+      }
     )
   }
 
@@ -257,7 +284,10 @@ export function LocationPicker({
         />
         <Input
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            suppressSearchRef.current = null
+            setQuery(e.target.value)
+          }}
           onFocus={() => results.length > 0 && setOpen(true)}
           placeholder={`Search a place to set your ${label.toLowerCase()}`}
           className="pl-8"

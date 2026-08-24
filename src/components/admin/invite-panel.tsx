@@ -24,12 +24,14 @@ type CreatedInvite = {
 export function InvitePanel({
   turfId,
   defaultOpen = false,
+  defaultEmail = "",
 }: {
   turfId: string
   defaultOpen?: boolean
+  defaultEmail?: string
 }) {
   const [open, setOpen] = useState(defaultOpen)
-  const [email, setEmail] = useState("")
+  const [email, setEmail] = useState(defaultEmail)
   const [pending, setPending] = useState(false)
   const [invite, setInvite] = useState<CreatedInvite | null>(null)
 

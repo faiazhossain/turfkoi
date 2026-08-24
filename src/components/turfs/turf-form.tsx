@@ -150,6 +150,32 @@ export function TurfForm({ mode, turfId, defaultValues }: TurfFormProps) {
 
       <section className="space-y-3">
         <h3 className="font-heading text-sm font-semibold">Location</h3>
+        <Field
+          label="Pin on map"
+          error={form.formState.errors.coords?.message}
+        >
+          <LocationPicker
+            value={form.watch("coords") ?? null}
+            label="turf"
+            onChange={(point, place) => {
+              form.setValue("coords", point, { shouldDirty: true })
+              // Autofill location fields the user hasn't typed in themselves
+              // (autofill writes without shouldDirty, so it never counts as
+              // a manual edit and re-picking refreshes it).
+              if (place) {
+                if (place.name && !form.getFieldState("area").isDirty) {
+                  form.setValue("area", place.name)
+                }
+                if (place.city && !form.getFieldState("city").isDirty) {
+                  form.setValue("city", place.city)
+                }
+                if (place.address && !form.getFieldState("address").isDirty) {
+                  form.setValue("address", place.address)
+                }
+              }
+            }}
+          />
+        </Field>
         <div className="grid gap-3 sm:grid-cols-3">
           <Field label="Area" error={form.formState.errors.area?.message}>
             <Input {...form.register("area")} placeholder="Dhanmondi" />
@@ -161,27 +187,6 @@ export function TurfForm({ mode, turfId, defaultValues }: TurfFormProps) {
             <Input {...form.register("address")} placeholder="House, road" />
           </Field>
         </div>
-        <Field
-          label="Pin on map"
-          error={form.formState.errors.coords?.message}
-        >
-          <LocationPicker
-            value={form.watch("coords") ?? null}
-            label="turf"
-            onChange={(point, place) => {
-              form.setValue("coords", point, { shouldDirty: true })
-              // Autofill blank location fields from the picked place.
-              if (place) {
-                if (place.name && !form.getValues("area")) {
-                  form.setValue("area", place.name, { shouldDirty: true })
-                }
-                if (place.city && !form.getValues("city")) {
-                  form.setValue("city", place.city, { shouldDirty: true })
-                }
-              }
-            }}
-          />
-        </Field>
       </section>
 
       <section className="space-y-3">

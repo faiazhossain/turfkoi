@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest"
 
-import { OWNER_HELP_NOTE, OWNER_ONBOARDING_STEPS } from "./owner-help-button"
+import {
+  OWNER_APPLY_PATH,
+  OWNER_HELP_NOTE,
+  OWNER_ONBOARDING_STEPS,
+} from "./owner-help-button"
 
 /**
  * Copy-only tests: vitest runs in a node environment, so the dialog itself is
@@ -47,6 +51,11 @@ describe("OWNER_ONBOARDING_STEPS", () => {
 
 describe("OWNER_HELP_NOTE", () => {
   it("reassures owners who have not been contacted yet", () => {
-    expect(OWNER_HELP_NOTE).toMatch(/reach out/i)
+    expect(OWNER_HELP_NOTE).toMatch(/reach\w* out/i)
+  })
+
+  it("routes owners into the application funnel", () => {
+    expect(OWNER_HELP_NOTE).toMatch(/apply/i)
+    expect(OWNER_APPLY_PATH).toBe("/own-a-turf")
   })
 })

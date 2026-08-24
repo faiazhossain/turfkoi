@@ -3,11 +3,11 @@
 import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { CheckIcon, XIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import { StatusBadge } from "@/components/shared"
 import {
   Select,
@@ -17,13 +17,17 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { LocationPicker } from "@/components/map"
-import { InvitePanel } from "./invite-panel"
+import type { GeoPoint } from "@/db/geo"
 
-import { seedTurfAction } from "@/features/turf-claims/actions"
+import { InvitePanel } from "./invite-panel"
 import {
-  seedTurfSchema,
-  type SeedTurfValues,
-} from "@/features/turf-claims/schemas"
+  approveTurfApplicationAction,
+  rejectTurfApplicationAction,
+} from "@/features/turf-applications/actions"
+import {
+  approveApplicationSchema,
+  type ApproveApplicationValues,
+} from "@/features/turf-applications/schemas"
 
 function slugify(s: string) {
   return s
@@ -34,76 +38,92 @@ function slugify(s: string) {
     .replace(/^-+|-+$/g, "")
 }
 
+// Dhaka default, same as SeedTurfForm.
+const DHAKA_CENTER = { lat: 23.8103, lng: 90.4125 }
+
 const FORMAT_OPTIONS = [
   { value: "fives", label: "5-a-side" },
   { value: "sevens", label: "7-a-side" },
 ] as const
 
-/**
- * Admin concierge seeding: capture just enough to identify the turf (name,
- * pin, area). The real owner completes the listing after claiming via the
- * invite link that appears right after seeding.
- */
-export function SeedTurfForm() {
-  const [serverError, setServerError] = useState<string | null>(null)
-  const [seededId, setSeededId] = useState<string | null>(null)
+export type PendingApplication = {
+  id: string
+  turfName: string
+  email: string | null
+  city: string | null
+  area: string | null
+  address: string | null
+  coords: GeoPoint | null
+}
 
-  const form = useForm<SeedTurfValues>({
-    resolver: zodResolver(seedTurfSchema),
+/**
+ * Approve an application: admin verifies the seed data (prefilled from the
+ * application), the action seeds the unowned turf, and the InvitePanel that
+ * appears mints the claim link for the owner.
+ */
+export function ApproveApplicationPanel({ application }: { application: PendingApplication }) {
+  const [serverError, setServerError] = useState<string | null>(null)
+  const [open, setOpen] = useState(false)
+  const [turfId, setTurfId] = useState<string | null>(null)
+
+  const form = useForm<ApproveApplicationValues>({
+    resolver: zodResolver(approveApplicationSchema),
     defaultValues: {
-      name: "",
-      slug: "",
+      applicationId: application.id,
+      name: application.turfName,
+      slug: slugify(application.turfName),
       description: "",
-      coords: { lat: 23.8103, lng: 90.4125 }, // Dhaka default
+      coords: application.coords ?? DHAKA_CENTER,
       format: "fives",
-      city: "",
-      area: "",
-      address: "",
+      city: application.city ?? "",
+      area: application.area ?? "",
+      address: application.address ?? "",
     },
   })
 
-  async function onSubmit(values: SeedTurfValues) {
+  async function onSubmit(values: ApproveApplicationValues) {
     setServerError(null)
-    const res = await seedTurfAction(values)
+    const res = await approveTurfApplicationAction(values)
     if (!res.ok) {
       setServerError(res.error)
       return
     }
-    setSeededId(res.id ?? null)
+    setTurfId(res.id ?? null)
   }
 
-  if (seededId) {
+  if (turfId) {
     return (
-      <div className="space-y-4">
-        <StatusBadge status="success">
-          Turf seeded. Send the claim link to the owner.
-        </StatusBadge>
-        <InvitePanel turfId={seededId} defaultOpen />
+      <InvitePanel
+        turfId={turfId}
+        defaultOpen
+        defaultEmail={application.email ?? ""}
+      />
+    )
+  }
+
+  if (!open) {
+    return (
+      <div className="flex gap-2">
+        <Button size="sm" variant="outline" onClick={() => setOpen(true)}>
+          <CheckIcon className="size-3.5" aria-hidden />
+          Approve
+        </Button>
+        <RejectApplicationButton applicationId={application.id} />
       </div>
     )
   }
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-      <section className="space-y-3">
-        <h3 className="font-heading text-sm font-semibold">Basics</h3>
+    <div className="w-full space-y-4 rounded-lg border border-border bg-muted/40 p-3">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label="Turf name" error={form.formState.errors.name?.message}>
-            <Input
-              {...form.register("name")}
-              onChange={(e) => {
-                form.setValue("name", e.target.value)
-                form.setValue("slug", slugify(e.target.value))
-              }}
-            />
+            <Input {...form.register("name")} />
           </Field>
           <Field label="Slug" error={form.formState.errors.slug?.message}>
             <Input {...form.register("slug")} placeholder="my-turf" />
           </Field>
         </div>
-        <Field label="Description (optional)">
-          <Textarea {...form.register("description")} rows={3} />
-        </Field>
         <Field label="Format">
           <Select
             value={form.watch("format")}
@@ -121,17 +141,13 @@ export function SeedTurfForm() {
             </SelectContent>
           </Select>
         </Field>
-      </section>
-
-      <section className="space-y-3">
-        <h3 className="font-heading text-sm font-semibold">Location</h3>
-        <Field label="Pin on map" error={form.formState.errors.coords?.message}>
+        <Field label="Verify pin on map" error={form.formState.errors.coords?.message}>
           <LocationPicker
             value={form.watch("coords") ?? null}
             label="turf"
             onChange={(point, place) => {
               form.setValue("coords", point, { shouldDirty: true })
-              // Autofill location fields the user hasn't typed in themselves
+              // Autofill location fields the admin hasn't typed in themselves
               // (autofill writes without shouldDirty, so it never counts as
               // a manual edit and re-picking refreshes it).
               if (place) {
@@ -159,16 +175,57 @@ export function SeedTurfForm() {
             <Input {...form.register("address")} placeholder="House, road" />
           </Field>
         </div>
-      </section>
+        {serverError ? <StatusBadge status="danger">{serverError}</StatusBadge> : null}
+        <div className="flex gap-2">
+          <Button size="sm" type="submit" loading={form.formState.isSubmitting}>
+            {form.formState.isSubmitting ? "Approving" : "Approve and seed turf"}
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            type="button"
+            onClick={() => setOpen(false)}
+            disabled={form.formState.isSubmitting}
+          >
+            Cancel
+          </Button>
+        </div>
+      </form>
+    </div>
+  )
+}
 
-      {serverError ? (
-        <StatusBadge status="danger">{serverError}</StatusBadge>
-      ) : null}
+function RejectApplicationButton({ applicationId }: { applicationId: string }) {
+  const [pending, setPending] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-      <Button type="submit" size="lg" loading={form.formState.isSubmitting}>
-        {form.formState.isSubmitting ? "Seeding" : "Seed turf"}
+  async function onReject() {
+    setPending(true)
+    setError(null)
+    try {
+      const res = await rejectTurfApplicationAction({ applicationId })
+      if (!res.ok) setError(res.error)
+    } finally {
+      setPending(false)
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <Button
+        size="sm"
+        variant="ghost"
+        onClick={onReject}
+        loading={pending}
+        aria-label="Reject application"
+      >
+        <XIcon className="size-3.5" aria-hidden />
+        Reject
       </Button>
-    </form>
+      {error ? (
+        <StatusBadge status="danger">{error}</StatusBadge>
+      ) : null}
+    </div>
   )
 }
 

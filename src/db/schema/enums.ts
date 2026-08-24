@@ -121,6 +121,14 @@ export const reportStatus = pgEnum("report_status", [
   "dismissed",
 ])
 
+// Owner-initiated "list my turf" applications (Option C funnel). Admin
+// approves -> turf is seeded + claim invite minted; rejected stays archived.
+export const turfApplicationStatus = pgEnum("turf_application_status", [
+  "pending",
+  "approved",
+  "rejected",
+])
+
 // H4: dual-control refund request lifecycle. Amounts > Tk5,000 must move
 // pending → approved by a *second* admin before the money actually moves.
 export const refundRequestStatus = pgEnum("refund_request_status", [

@@ -18,9 +18,14 @@ export function photonAutocompleteUrl(query: string, limit = 5): string {
   return `${PHOTON_BASE_URL}/?q=${q}&limit=${limit}&lat=23.8103&lon=90.4125`
 }
 
-/** Reverse geocode: coords -> place name (for the area field on pick). */
+/**
+ * Reverse geocode: coords -> place name (for the area field on pick).
+ * NOTE: the reverse endpoint lives at the host root — NOT under /api like
+ * autocomplete. Pointing it at /api/reverse silently 404s and every map
+ * click/drag/geolocation pick loses its place autofill.
+ */
 export function photonReverseUrl(lat: number, lng: number): string {
-  return `${PHOTON_BASE_URL}/reverse?lat=${lat}&lon=${lng}`
+  return `https://photon.komoot.io/reverse?lat=${lat}&lon=${lng}`
 }
 
 export type PhotonFeature = {
@@ -28,6 +33,7 @@ export type PhotonFeature = {
   properties: {
     name?: string
     street?: string
+    housenumber?: string
     city?: string
     state?: string
     countrycode?: string
@@ -47,5 +53,7 @@ export function photonToPlace(feature: PhotonFeature) {
     name: area,
     city: p.city ?? p.state ?? null,
     area: [p.street, p.city].filter(Boolean).join(", ") || area,
+    // Street-level address ("12, Road 5" style) when Photon has one.
+    address: [p.housenumber, p.street].filter(Boolean).join(" ") || null,
   }
 }
