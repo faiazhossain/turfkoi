@@ -17,6 +17,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { StatusBadge } from "@/components/shared"
+import { OwnerHelpButton } from "@/components/auth/owner-help-button"
 import { loginAction } from "@/features/auth/actions"
 import { loginFormSchema, type LoginFormValues } from "@/features/auth/schemas"
 
@@ -109,6 +110,9 @@ export default function LoginPage() {
           Create an account
         </Link>
       </p>
+      <div className="text-center">
+        <OwnerHelpButton />
+      </div>
     </div>
   )
 }

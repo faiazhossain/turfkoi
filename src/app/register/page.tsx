@@ -19,6 +19,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { StatusBadge } from "@/components/shared"
+import { OwnerHelpButton } from "@/components/auth/owner-help-button"
 import {
   startRegistrationAction,
   verifyRegistrationAction,
@@ -283,6 +284,9 @@ export default function RegisterPage() {
           Sign in
         </Link>
       </p>
+      <div className="text-center">
+        <OwnerHelpButton />
+      </div>
     </div>
   )
 }
