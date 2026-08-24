@@ -1,11 +1,11 @@
 import { redirect } from "next/navigation"
-import { cookies } from "next/headers"
+import Link from "next/link"
 
 import { getCurrentUser } from "@/lib/auth"
 import { getTurfById } from "@/features/turfs/queries"
+import { Button } from "@/components/ui/button"
 
 import {
-  CLAIM_COOKIE,
   CLAIM_INVITE_TTL_DAYS,
   resolveClaimToken,
 } from "@/features/turf-claims/invites"
@@ -44,8 +44,9 @@ const FAILURE_COPY: Record<string, { title: string; body: string }> = {
 /**
  * Turf-owner claim landing. An admin seeds the turf and sends this link; the
  * holder signs in (or registers via email OTP) and claims ownership. Signed-out
- * visitors get the claim token parked in an httpOnly cookie so login/register
- * can route them straight back here (see homeForUser).
+ * visitors see the turf first with sign-in/register options; the proxy parks
+ * the claim token in an httpOnly cookie so login/register route them straight
+ * back here (see homeForUser).
  */
 export default async function ClaimTurfPage({
   params,
@@ -70,18 +71,11 @@ export default async function ClaimTurfPage({
   }
 
   const user = await getCurrentUser()
-  if (!user) {
-    const store = await cookies()
-    store.set(CLAIM_COOKIE, token, {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
-      path: "/",
-      maxAge: CLAIM_INVITE_TTL_DAYS * 24 * 60 * 60,
-    })
-    redirect("/login")
-  }
 
+  // The pending-claim cookie is parked by the proxy on this request, so
+  // login/register route straight back here (see homeForUser). But we don't
+  // redirect signed-out owners to login — show them what they're claiming
+  // first and let them pick sign-in or registration.
   const turf = await getTurfById(resolved.turfId)
   if (!turf) redirect("/login")
 
@@ -117,7 +111,24 @@ export default async function ClaimTurfPage({
               </div>
             ) : null}
           </dl>
-          <ClaimTurfButton token={token} />
+          {user ? (
+            <ClaimTurfButton token={token} />
+          ) : (
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Sign in or create a free account to claim this turf — you&apos;ll
+                come straight back here.
+              </p>
+              <div className="flex gap-2">
+                <Button size="lg" render={<Link href="/login" />}>
+                  Sign in
+                </Button>
+                <Button size="lg" variant="outline" render={<Link href="/register" />}>
+                  Create account
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

@@ -1,6 +1,6 @@
 import "server-only"
 
-import { desc, eq } from "drizzle-orm"
+import { count, desc, eq } from "drizzle-orm"
 
 import { db } from "@/db"
 import { turfApplications, turfs } from "@/db/schema"
@@ -36,4 +36,13 @@ export async function listTurfApplications(filter: ApplicationFilter) {
           .where(eq(turfApplications.status, filter))
           .orderBy(desc(turfApplications.createdAt))
   return rows
+}
+
+/** Pending-application count for the admin sub-nav badge. */
+export async function countPendingApplications(): Promise<number> {
+  const rows = await db
+    .select({ n: count() })
+    .from(turfApplications)
+    .where(eq(turfApplications.status, "pending"))
+  return Number(rows[0]?.n ?? 0)
 }

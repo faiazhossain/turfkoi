@@ -37,6 +37,11 @@ export const turfApplications = pgTable(
     // (coords are NOT NULL on turfs, so approval must supply one either way).
     coords: geographyPoint("coords"),
     status: turfApplicationStatus("status").notNull().default("pending"),
+    // Set when the applicant is signed in — lets approve/reject notify them
+    // in-app (anonymous submitters fall back to the claim-invite email).
+    submittedBy: uuid("submitted_by").references(() => users.id, {
+      onDelete: "set null",
+    }),
     // Set on approval: the turf seeded from this application.
     turfId: uuid("turf_id").references(() => turfs.id, {
       onDelete: "set null",

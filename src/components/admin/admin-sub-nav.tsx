@@ -27,7 +27,11 @@ const NAV = [
   { href: "/admin/reports", label: "Reports", icon: FlagIcon },
 ]
 
-export function AdminSubNav() {
+export function AdminSubNav({
+  pendingApplications = 0,
+}: {
+  pendingApplications?: number
+}) {
   const pathname = usePathname()
   return (
     <nav
@@ -41,6 +45,12 @@ export function AdminSubNav() {
               ? pathname === "/admin"
               : pathname?.startsWith(item.href)
           const Icon = item.icon
+          const badge =
+            item.href === "/admin/applications" && pendingApplications > 0
+              ? pendingApplications > 9
+                ? "9+"
+                : String(pendingApplications)
+              : null
           return (
             <li key={item.href}>
               <Link
@@ -54,6 +64,11 @@ export function AdminSubNav() {
               >
                 <Icon className="size-4" aria-hidden />
                 {item.label}
+                {badge ? (
+                  <span className="ml-0.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] leading-none font-semibold text-primary-foreground">
+                    {badge}
+                  </span>
+                ) : null}
               </Link>
             </li>
           )

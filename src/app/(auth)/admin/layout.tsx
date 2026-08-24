@@ -3,6 +3,7 @@ import { redirect } from "next/navigation"
 import { EmptyState } from "@/components/shared"
 import { AdminSubNav } from "@/components/admin"
 import { getCurrentUser } from "@/lib/auth"
+import { countPendingApplications } from "@/features/turf-applications/queries"
 
 export default async function AdminLayout({
   children,
@@ -22,6 +23,10 @@ export default async function AdminLayout({
     )
   }
 
+  // Badge on the Applications sub-nav item (kept fresh by the revalidatePath
+  // calls in the application actions).
+  const pendingApplications = await countPendingApplications()
+
   return (
     <div className="mx-auto max-w-6xl px-4 py-12">
       <header className="mb-6">
@@ -30,7 +35,7 @@ export default async function AdminLayout({
           Payouts, refunds, disputes, and oversight.
         </p>
       </header>
-      <AdminSubNav />
+      <AdminSubNav pendingApplications={pendingApplications} />
       {children}
     </div>
   )

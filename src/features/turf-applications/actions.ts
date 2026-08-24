@@ -5,9 +5,10 @@ import { headers } from "next/headers"
 import { and, eq } from "drizzle-orm"
 
 import { db } from "@/db"
-import { turfApplications, turfs } from "@/db/schema"
+import { turfApplications, turfs, users } from "@/db/schema"
 import { getCurrentUser } from "@/lib/auth"
 import { rateLimit } from "@/lib/ratelimit"
+import { createNotifications, notifyAdmins } from "@/features/notifications/create"
 
 import {
   approveApplicationSchema,
@@ -35,6 +36,26 @@ async function adminActor(): Promise<
 }
 
 /**
+ * Resolve who to notify about an application outcome: the signed-in
+ * submitter if there was one, else an account matching the contact email.
+ * Anonymous submitters with no matching account get the claim-invite email
+ * path instead — returns null there.
+ */
+async function resolveApplicantRecipient(
+  submittedBy: string | null,
+  email: string | null
+): Promise<string | null> {
+  if (submittedBy) return submittedBy
+  if (!email) return null
+  const rows = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.email, email))
+    .limit(1)
+  return rows[0]?.id ?? null
+}
+
+/**
  * Public application submit. Rate-limited per IP (5/hour) since this needs
  * no account — enough for an eager owner, useless for a bot.
  */
@@ -57,10 +78,25 @@ export async function submitTurfApplicationAction(
   }
 
   const { coords, ...rest } = parsed.data
+  // Stamp the submitter when they're signed in so approve/reject can notify
+  // them in-app (anonymous submissions still work — see the email fallback).
+  const user = await getCurrentUser()
   const [created] = await db
     .insert(turfApplications)
-    .values({ ...rest, coords: coords ?? null })
+    .values({ ...rest, coords: coords ?? null, submittedBy: user?.id ?? null })
     .returning({ id: turfApplications.id })
+
+  // Surface the application in every admin's notification bell.
+  await notifyAdmins({
+    type: "turf_application.submitted",
+    payload: {
+      turfName: parsed.data.turfName,
+      contactName: parsed.data.contactName,
+      city: parsed.data.city ?? null,
+    },
+    entityType: "turf_application",
+    entityId: created.id,
+  })
 
   revalidatePath("/admin/applications")
   return { ok: true, id: created.id }
@@ -83,7 +119,12 @@ export async function approveTurfApplicationAction(
   if (!actor.ok) return actor
 
   const appRows = await db
-    .select({ id: turfApplications.id, status: turfApplications.status })
+    .select({
+      id: turfApplications.id,
+      status: turfApplications.status,
+      submittedBy: turfApplications.submittedBy,
+      email: turfApplications.email,
+    })
     .from(turfApplications)
     .where(eq(turfApplications.id, parsed.data.applicationId))
     .limit(1)
@@ -130,6 +171,20 @@ export async function approveTurfApplicationAction(
     return { ok: false, error: "This application was already handled." }
   }
 
+  // Tell the applicant the good news (in-app when we can resolve an account).
+  const recipient = await resolveApplicantRecipient(app.submittedBy, app.email)
+  if (recipient) {
+    await createNotifications(
+      {
+        type: "turf_application.approved",
+        payload: { turfName: parsed.data.name, slug: parsed.data.slug },
+        entityType: "turf",
+        entityId: turfId,
+      },
+      [recipient]
+    )
+  }
+
   revalidatePath("/admin/applications")
   revalidatePath("/admin/turfs")
   return { ok: true, id: turfId }
@@ -147,6 +202,23 @@ export async function rejectTurfApplicationAction(input: {
   const actor = await adminActor()
   if (!actor.ok) return actor
 
+  const appRows = await db
+    .select({
+      id: turfApplications.id,
+      status: turfApplications.status,
+      turfName: turfApplications.turfName,
+      submittedBy: turfApplications.submittedBy,
+      email: turfApplications.email,
+    })
+    .from(turfApplications)
+    .where(eq(turfApplications.id, parsed.data.applicationId))
+    .limit(1)
+  const app = appRows[0]
+  if (!app) return { ok: false, error: "Application not found." }
+  if (app.status !== "pending") {
+    return { ok: false, error: "This application was already handled." }
+  }
+
   const flipped = await db
     .update(turfApplications)
     .set({ status: "rejected", reviewedBy: actor.id, reviewedAt: new Date() })
@@ -159,6 +231,19 @@ export async function rejectTurfApplicationAction(input: {
     .returning({ id: turfApplications.id })
   if (flipped.length === 0) {
     return { ok: false, error: "This application was already handled." }
+  }
+
+  const recipient = await resolveApplicantRecipient(app.submittedBy, app.email)
+  if (recipient) {
+    await createNotifications(
+      {
+        type: "turf_application.rejected",
+        payload: { turfName: app.turfName },
+        entityType: "turf_application",
+        entityId: app.id,
+      },
+      [recipient]
+    )
   }
 
   revalidatePath("/admin/applications")

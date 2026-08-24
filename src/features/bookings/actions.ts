@@ -27,6 +27,7 @@ import {
   scheduleSettleAtKickoff,
   SLOT_HOLD_TTL_MS,
 } from "@/lib/inngest"
+import { createNotifications } from "@/features/notifications/create"
 
 import {
   holdSlotSchema,
@@ -336,6 +337,31 @@ export async function confirmPaymentAction(
     // Schedule settle-at-kickoff. Best-effort — the admin sweep can reconcile.
     const kickoffTs = slotDateToEpoch(b.date, b.slotStart.slice(0, 5))
     await scheduleSettleAtKickoff(b.id, kickoffTs).catch(() => {})
+
+    // Notify the booker and the turf owner (in-app; best-effort by design).
+    const infoRows = await db
+      .select({ turfName: turfs.name })
+      .from(bookings)
+      .innerJoin(turfs, eq(turfs.id, bookings.turfId))
+      .where(eq(bookings.id, txn.bookingId))
+      .limit(1)
+    const turfName = infoRows[0]?.turfName ?? "your turf"
+    const shared = {
+      bookingId: txn.bookingId,
+      turfName,
+      date: b.date,
+      startTime: b.slotStart.slice(0, 5),
+    }
+    await createNotifications(
+      { type: "booking.confirmed", payload: shared, entityType: "booking", entityId: txn.bookingId },
+      [txn.payerId]
+    )
+    if (txn.receiverId && txn.receiverId !== txn.payerId) {
+      await createNotifications(
+        { type: "booking.received", payload: shared, entityType: "booking", entityId: txn.bookingId },
+        [txn.receiverId]
+      )
+    }
   }
 
   revalidatePath(`/bookings/${txn.bookingId}`)
@@ -459,6 +485,31 @@ export async function cancelBookingAction(
   revalidatePath(`/bookings/${bookingId}`)
   revalidatePath("/app")
   revalidatePath(`/turfs/${row.turf.slug}`)
+
+  // Notify the cancelling user's counterpart (in-app; best-effort).
+  const cancellingBooker = user.id === row.booking.bookerId
+  const counterpartId = cancellingBooker
+    ? row.turf.ownerId
+    : row.booking.bookerId
+  if (counterpartId && counterpartId !== user.id) {
+    await createNotifications(
+      {
+        type: "booking.cancelled",
+        payload: {
+          bookingId,
+          turfName: row.turf.name,
+          date: row.booking.date,
+          startTime: row.booking.slotStart.slice(0, 5),
+          // The refund lands in the booker's bKash — only they care about it.
+          refundAmount: cancellingBooker ? undefined : decision.refundAmount,
+        },
+        entityType: "booking",
+        entityId: bookingId,
+      },
+      [counterpartId]
+    )
+  }
+
   return { ok: true, id: bookingId, refundAmount: decision.refundAmount }
 }
 

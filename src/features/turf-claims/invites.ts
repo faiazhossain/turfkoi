@@ -6,11 +6,10 @@ import { and, eq, isNull } from "drizzle-orm"
 import { db } from "@/db"
 import { turfClaimInvites, turfs } from "@/db/schema"
 
-/** 14 days — enough for a low-tech owner to get around to the link. */
-export const CLAIM_INVITE_TTL_DAYS = 14
-
-/** Cookie that carries a pending claim token across login/register. */
-export const CLAIM_COOKIE = "turfkoi_claim"
+// Edge-safe constants live in ./constants so the middleware can import them
+// without dragging this server-only module into the edge bundle.
+import { CLAIM_INVITE_TTL_DAYS } from "./constants"
+export { CLAIM_COOKIE, CLAIM_INVITE_TTL_DAYS } from "./constants"
 
 export type ClaimTokenResolution =
   | { ok: true; inviteId: string; turfId: string; expiresAt: Date }

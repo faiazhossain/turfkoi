@@ -4,6 +4,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { SignOutButton } from "@/components/auth/sign-out-button"
+import { NotificationBell } from "@/features/notifications/components/notification-bell"
 import { getCurrentUser, getSession } from "@/lib/auth"
 import { MainNav } from "./main-nav"
 import { LinkPendingIndicator } from "./link-pending-indicator"
@@ -34,6 +35,7 @@ async function SessionActions() {
   if (user?.roles.includes("admin")) {
     return (
       <>
+        <NotificationBell />
         <Button variant="ghost" size="sm" render={<Link href="/admin" />}>
           Admin console
         </Button>
@@ -44,6 +46,7 @@ async function SessionActions() {
 
   return (
     <>
+      <NotificationBell />
       <Button variant="ghost" size="sm" render={<Link href="/app" />}>
         Dashboard
       </Button>
