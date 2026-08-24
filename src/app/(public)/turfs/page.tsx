@@ -1,12 +1,9 @@
-import Link from "next/link"
-import { MapPinIcon, SearchIcon } from "lucide-react"
+import { MapPinIcon } from "lucide-react"
 
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
 import { EmptyState, StatusBadge } from "@/components/shared"
 import { MapView } from "@/components/map"
-import { TurfCard } from "@/components/turfs"
-import { listTurfs, type ListTurfsFilter } from "@/features/turfs/queries"
+import { AreaSearch, TurfCard } from "@/components/turfs"
+import { listTurfs, listTurfAreas, type ListTurfsFilter } from "@/features/turfs/queries"
 
 interface PageProps {
   searchParams: Promise<{
@@ -36,7 +33,7 @@ function parseFilter(
 export default async function TurfsPage({ searchParams }: PageProps) {
   const sp = await searchParams
   const filter = parseFilter(sp)
-  const turfs = await listTurfs(filter)
+  const [turfs, areas] = await Promise.all([listTurfs(filter), listTurfAreas()])
   const hasFilter = Boolean(sp.area || sp.lat || sp.format)
 
   return (
@@ -51,43 +48,11 @@ export default async function TurfsPage({ searchParams }: PageProps) {
         </p>
       </header>
 
-      <form className="flex flex-wrap items-center gap-2">
-        <div className="relative min-w-48 flex-1">
-          <SearchIcon
-            className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
-            aria-hidden
-          />
-          <Input
-            name="area"
-            defaultValue={sp.area ?? ""}
-            placeholder="Area, e.g. Dhanmondi"
-            className="pl-8"
-          />
-        </div>
-        <Input
-          name="lat"
-          type="hidden"
-          defaultValue={sp.lat ?? ""}
-        />
-        <Input
-          name="lng"
-          type="hidden"
-          defaultValue={sp.lng ?? ""}
-        />
-        <Input
-          name="radius"
-          type="hidden"
-          defaultValue={sp.radius ?? "10"}
-        />
-        <Button type="submit" variant="outline">
-          Search
-        </Button>
-        {hasFilter ? (
-          <Button type="button" variant="ghost" render={<Link href="/turfs" />}>
-            Clear
-          </Button>
-        ) : null}
-      </form>
+      <AreaSearch
+        areas={areas}
+        defaultValue={sp.area ?? ""}
+        hasFilter={hasFilter}
+      />
 
       {turfs.length === 0 ? (
         <EmptyState

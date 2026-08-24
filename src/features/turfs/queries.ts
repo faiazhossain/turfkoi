@@ -99,6 +99,31 @@ export async function listTurfs(
   }))
 }
 
+export type TurfAreaOption = { area: string; city: string | null }
+
+/**
+ * Distinct areas of publicly listed turfs that have a location. Powers the
+ * discovery search suggestions, so only areas with real, located turfs are
+ * ever offered in the dropdown.
+ */
+export async function listTurfAreas(): Promise<TurfAreaOption[]> {
+  const rows = await db
+    .selectDistinct({ area: turfs.area, city: turfs.city })
+    .from(turfs)
+    .where(
+      and(
+        eq(turfs.isVerified, true),
+        eq(turfs.isActive, true),
+        isNotNull(turfs.ownerId),
+        isNotNull(turfs.coords),
+        isNotNull(turfs.area)
+      )
+    )
+    .orderBy(asc(turfs.area))
+  // SQL already excludes NULL areas; flatMap narrows the nullable column type.
+  return rows.flatMap((r) => (r.area == null ? [] : [{ area: r.area, city: r.city }]))
+}
+
 export async function getTurfBySlug(slug: string) {
   const rows = await db.select().from(turfs).where(eq(turfs.slug, slug)).limit(1)
   return rows[0] ?? null

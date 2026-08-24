@@ -1,4 +1,5 @@
 export { TurfCard } from "./turf-card"
+export { AreaSearch } from "./area-search"
 export { KpiTile } from "./kpi-tile"
 export { SlotGrid } from "./slot-grid"
 export { TurfForm } from "./turf-form"
