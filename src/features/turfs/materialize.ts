@@ -1,5 +1,5 @@
 import "server-only"
-import { and, eq, gte, lte } from "drizzle-orm"
+import { and, desc, eq, gte, lte, sql } from "drizzle-orm"
 
 import { db } from "@/db"
 import {
@@ -32,6 +32,45 @@ export type ActiveSchedule = {
   id: string
   name: string
   sections: ScheduleSection[]
+}
+
+export type SavedSchedule = {
+  id: string
+  name: string
+  isActive: boolean
+  effectiveFrom: string | null
+  effectiveTo: string | null
+  sectionCount: number
+}
+
+/**
+ * All schedules for a turf, newest first. Powers the saved-schedule library
+ * (P3.1) — the owner keeps "Regular week" and "Ramadan hours" side by side
+ * and switches between them.
+ */
+export async function listSchedules(turfId: string): Promise<SavedSchedule[]> {
+  const rows = await db
+    .select({
+      id: turfSchedules.id,
+      name: turfSchedules.name,
+      isActive: turfSchedules.isActive,
+      effectiveFrom: turfSchedules.effectiveFrom,
+      effectiveTo: turfSchedules.effectiveTo,
+      sectionCount: sql<number>`count(${turfScheduleSections.id})::int`,
+    })
+    .from(turfSchedules)
+    .leftJoin(turfScheduleSections, eq(turfScheduleSections.scheduleId, turfSchedules.id))
+    .where(eq(turfSchedules.turfId, turfId))
+    .groupBy(turfSchedules.id)
+    .orderBy(desc(turfSchedules.createdAt))
+  return rows.map((r) => ({
+    id: r.id,
+    name: r.name,
+    isActive: r.isActive,
+    effectiveFrom: r.effectiveFrom,
+    effectiveTo: r.effectiveTo,
+    sectionCount: r.sectionCount,
+  }))
 }
 
 export type DateException = {
@@ -243,4 +282,84 @@ export async function materializeTurfSchedule(
     conflicts: plan.conflicts,
     keptManual: plan.keptManual,
   }
+}
+
+export type SlotConflict = {
+  date: string
+  startTime: string
+  durationMinutes: number
+  kind: "booked_outside_plan" | "booked_duration_mismatch" | "kept_manual"
+  detail: string
+}
+
+/**
+ * Needs-attention center (P3.2): slots the materializer refuses to touch
+ * because a booking or the owner's hand work sits where the active schedule
+ * no longer agrees. These are surfaced to the owner rather than forced —
+ * the booking lifecycle owns booked rows, manual rows outrank the schedule.
+ */
+export async function listSlotConflicts(turfId: string): Promise<SlotConflict[]> {
+  const active = await getActiveSchedule(turfId)
+  if (!active) return []
+
+  const from = todayInDhaka()
+  const to = addDays(from, SCHEDULE_HORIZON_DAYS)
+  const desired = expandScheduleRange(active.sections, from, to)
+  const desiredKeys = new Set(
+    desired.map((d) => `${d.date}|${d.startTime}`)
+  )
+
+  const rows = await db
+    .select()
+    .from(turfSlots)
+    .where(
+      and(
+        eq(turfSlots.turfId, turfId),
+        gte(turfSlots.date, from),
+        lte(turfSlots.date, to)
+      )
+    )
+
+  const conflicts: SlotConflict[] = []
+  for (const row of rows) {
+    const key = `${row.date}|${row.startTime.slice(0, 5)}`
+    const inPlan = desiredKeys.has(key)
+    if (row.source === "manual") {
+      if (!inPlan || row.durationMinutes !== desired.find((d) => `${d.date}|${d.startTime}` === key)?.durationMinutes) {
+        conflicts.push({
+          date: row.date,
+          startTime: row.startTime.slice(0, 5),
+          durationMinutes: row.durationMinutes,
+          kind: "kept_manual",
+          detail: "Custom slot - regeneration never touches it",
+        })
+      }
+      continue
+    }
+    if (row.status === "booked" || row.status === "held") {
+      if (!inPlan) {
+        conflicts.push({
+          date: row.date,
+          startTime: row.startTime.slice(0, 5),
+          durationMinutes: row.durationMinutes,
+          kind: "booked_outside_plan",
+          detail: "Active booking sits outside the new schedule",
+        })
+      } else {
+        const want = desired.find((d) => `${d.date}|${d.startTime}` === key)
+        if (want && want.durationMinutes !== row.durationMinutes) {
+          conflicts.push({
+            date: row.date,
+            startTime: row.startTime.slice(0, 5),
+            durationMinutes: row.durationMinutes,
+            kind: "booked_duration_mismatch",
+            detail: `Booked ${row.durationMinutes} min but the schedule now wants ${want.durationMinutes} min`,
+          })
+        }
+      }
+    }
+  }
+  return conflicts.sort((a, b) =>
+    a.date === b.date ? a.startTime.localeCompare(b.startTime) : a.date.localeCompare(b.date)
+  )
 }

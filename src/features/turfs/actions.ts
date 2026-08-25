@@ -21,6 +21,7 @@ import {
 } from "@/lib/slot-expansion"
 
 import {
+  activateScheduleSchema,
   addSlotSchema,
   clearDateExceptionSchema,
   dateExceptionSchema,
@@ -28,6 +29,7 @@ import {
   saveScheduleSchema,
   slotOverrideSchema,
   turfFormSchema,
+  type ActivateScheduleValues,
   type AddSlotValues,
   type DateExceptionValues,
   type GenerateSlotsValues,
@@ -573,4 +575,80 @@ export async function clearDateExceptionAction(
   await materializeTurfSchedule(turfId)
   revalidatePath(`/turf-owner/turfs/${turfId}`)
   return { ok: true }
+}
+
+/**
+ * Slot system P3.1: activate a saved schedule, optionally for an effective
+ * window (the seasonal-switch mechanism — "Ramadan hours, Feb 19 - Mar 20",
+ * then back to "Regular week" after Eid). Deactivates the previously active
+ * schedule and rematerializes so the new week's slots land immediately.
+ * Booked/manual slots are untouched by the switch (the materializer's
+ * safety contract); conflicts surface to the owner.
+ */
+export async function activateScheduleAction(
+  turfId: string,
+  input: ActivateScheduleValues
+): Promise<SaveScheduleResult> {
+  const parsed = activateScheduleSchema.safeParse(input)
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid" }
+  }
+  const user = await getCurrentUser()
+  if (!user) return unauthorized()
+
+  const existing = await db
+    .select({ ownerId: turfs.ownerId })
+    .from(turfs)
+    .where(eq(turfs.id, turfId))
+    .limit(1)
+  if (!existing[0]) return { ok: false, error: "Turf not found." }
+  if (!can(user, "turf.update", { ownerId: existing[0].ownerId })) {
+    return forbidden()
+  }
+
+  const { scheduleId, effectiveFrom, effectiveTo } = parsed.data
+  try {
+    // Deactivate every schedule for this turf, then activate the target.
+    await db
+      .update(turfSchedules)
+      .set({ isActive: false, updatedAt: new Date() })
+      .where(eq(turfSchedules.turfId, turfId))
+
+    const updated = await db
+      .update(turfSchedules)
+      .set({
+        isActive: true,
+        effectiveFrom: effectiveFrom ?? null,
+        effectiveTo: effectiveTo ?? null,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(eq(turfSchedules.id, scheduleId), eq(turfSchedules.turfId, turfId))
+      )
+      .returning({ id: turfSchedules.id })
+    if (updated.length === 0) {
+      return { ok: false, error: "Schedule not found." }
+    }
+
+    const res = await materializeTurfSchedule(turfId)
+    revalidatePath(`/turf-owner/turfs/${turfId}`)
+    return {
+      ok: true,
+      scheduleId,
+      materialized: {
+        inserted: res.inserted,
+        updated: res.updated,
+        deleted: res.deleted,
+        conflicts: res.conflicts,
+      },
+    }
+  } catch (err) {
+    if (String(err).includes("turf_schedules_one_active")) {
+      return {
+        ok: false,
+        error: "Another schedule just went active — retry in a moment.",
+      }
+    }
+    throw err
+  }
 }

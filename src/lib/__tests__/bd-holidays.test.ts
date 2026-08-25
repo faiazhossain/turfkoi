@@ -4,6 +4,7 @@ import {
   findBdHoliday,
   isDuringRamadan,
   listBdHolidays,
+  nextRamadanWindow,
   RAMADAN_WINDOWS,
   upcomingBdHolidays,
 } from "@/lib/bd-holidays"
@@ -95,5 +96,24 @@ describe("findBdHoliday / isDuringRamadan", () => {
     for (let i = 1; i < RAMADAN_WINDOWS.length; i++) {
       expect(RAMADAN_WINDOWS[i]!.from > RAMADAN_WINDOWS[i - 1]!.from).toBe(true)
     }
+  })
+})
+
+describe("nextRamadanWindow", () => {
+  it("returns the window in progress during Ramadan", () => {
+    expect(nextRamadanWindow("2026-03-01")).toEqual({
+      year: 2026,
+      from: "2026-02-19",
+      to: "2026-03-20",
+    })
+  })
+
+  it("skips a window that has already ended", () => {
+    // 2026 Ramadan finished in March; from late August the next one is 2027.
+    expect(nextRamadanWindow("2026-08-25")?.year).toBe(2027)
+  })
+
+  it("returns null once the seed runs out", () => {
+    expect(nextRamadanWindow("2028-01-01")).toBeNull()
   })
 })

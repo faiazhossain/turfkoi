@@ -229,6 +229,29 @@ export const clearDateExceptionSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD"),
 })
 
+// P3.1: activate a saved schedule, optionally for an effective window.
+// Null bounds = runs from activation (or forever). The window is what makes
+// "Ramadan hours, Feb 19 - Mar 20" a one-tap seasonal switch.
+export const activateScheduleSchema = z
+  .object({
+    scheduleId: z.string().uuid(),
+    effectiveFrom: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD")
+      .nullable()
+      .optional(),
+    effectiveTo: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD")
+      .nullable()
+      .optional(),
+  })
+  .refine((v) => !v.effectiveFrom || !v.effectiveTo || v.effectiveTo >= v.effectiveFrom, {
+    message: "End date must be on or after the start date",
+    path: ["effectiveTo"],
+  })
+export type ActivateScheduleValues = z.infer<typeof activateScheduleSchema>
+
 export const slotOverrideSchema = z.object({
   price: z
     .number()

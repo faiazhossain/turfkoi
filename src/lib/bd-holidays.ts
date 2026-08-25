@@ -143,6 +143,18 @@ export function isDuringRamadan(date: string): boolean {
   return RAMADAN_WINDOWS.some((w) => date >= w.from && date <= w.to)
 }
 
+/**
+ * The Ramadan window covering `fromDate`, or the next one after it
+ * (estimated, moon-dependent) — null once the seed runs out. Powers the
+ * saved-schedule one-tap prefill (P3.4): activating "Ramadan hours" with
+ * the window filled in limits when that schedule produces slots.
+ */
+export function nextRamadanWindow(
+  fromDate: string
+): { year: number; from: string; to: string } | null {
+  return RAMADAN_WINDOWS.find((w) => w.to >= fromDate) ?? null
+}
+
 function addDays(date: string, days: number): string {
   const [y, m, d] = date.split("-").map(Number)
   const utc = new Date(Date.UTC(y!, m! - 1, d! + days))

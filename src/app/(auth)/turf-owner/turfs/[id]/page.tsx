@@ -24,7 +24,9 @@ import {
   AddSlotForm,
   DayExceptionForm,
   GenerateSlotsForm,
+  SavedSchedulesCard,
   ScheduleBuilderForm,
+  SlotConflictsCard,
   SlotGrid,
   TurfDayCalendar,
   TurfForm,
@@ -32,7 +34,12 @@ import {
 } from "@/components/turfs"
 import { TurfPhotoGallery } from "@/components/turfs/turf-photo-gallery"
 import { getTurfById, listTurfSlots, listTurfPhotos } from "@/features/turfs/queries"
-import { getActiveSchedule, listDateExceptions } from "@/features/turfs/materialize"
+import {
+  getActiveSchedule,
+  listDateExceptions,
+  listSchedules,
+  listSlotConflicts,
+} from "@/features/turfs/materialize"
 import type { TurfFormValues, SaveScheduleValues } from "@/features/turfs/schemas"
 
 interface PageProps {
@@ -105,6 +112,8 @@ export default async function EditTurfPage({
   const slots = await listTurfSlots(turf.id, { from: fromDate, to: toDate })
   const photos = await listTurfPhotos(turf.id)
   const activeSchedule = await getActiveSchedule(turf.id)
+  const slotConflicts = await listSlotConflicts(turf.id)
+  const savedSchedules = await listSchedules(turf.id)
 
   // Calendar state is server-driven: ?month= decides markers, ?date= the
   // day panel. Defaults: current month, no selection.
@@ -234,6 +243,7 @@ export default async function EditTurfPage({
         </TabsContent>
 
         <TabsContent value="slots" className="space-y-6">
+          <SlotConflictsCard conflicts={slotConflicts} />
           <Card>
             <CardHeader>
               <CardTitle className="font-heading text-lg">
@@ -269,6 +279,12 @@ export default async function EditTurfPage({
               />
             </CardContent>
           </Card>
+
+          <SavedSchedulesCard
+            turfId={turf.id}
+            schedules={savedSchedules}
+            today={todayIso}
+          />
 
           <Card>
             <CardHeader>

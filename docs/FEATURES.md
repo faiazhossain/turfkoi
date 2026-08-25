@@ -156,6 +156,31 @@ Routes: `/turf-owner`, `/turf-owner/turfs/new`, `/turf-owner/turfs/[id]`.
   2026-2027. It powers calendar markers and prefills closure reasons; it is
   a suggestion layer, never a mandate — owners decide per date. Lunar dates
   need a yearly update when the government list lands.
+- **Saved-schedule library + seasonal switch (P3)** — every saved schedule
+  (active or "for later") is listed on the owner Slots tab. Activate swaps
+  the running week: siblings deactivate, the target rematerializes the next
+  30 days immediately, and a one-line summary reports what changed. An
+  optional effective window makes a schedule seasonal — outside its window
+  a schedule produces no slots at all, so "Ramadan hours" runs its course
+  and the owner switches back to "Regular week" after Eid. The seeded
+  Ramadan window is one tap away (a prefill button backed by
+  `nextRamadanWindow`). Switches never touch booked or hand-edited slots
+  (the materializer safety contract); leftovers surface in the conflict
+  center.
+- **Needs-attention conflict center (P3)** — `listSlotConflicts` sweeps the
+  next 30 days for slots the materializer refuses to touch because the
+  active schedule no longer agrees with reality: active bookings outside
+  the plan, booked slots whose length the schedule would change, and kept
+  manual slots. They render in a "Needs attention" card on the owner Slots
+  tab (read-only — the owner resolves them in the day panel).
+- **Database overlap guard (P3)** — `turf_slots.slot_range` is a generated
+  `tsrange` column `[start, start + duration)` backed by the
+  `turf_slots_no_overlap` EXCLUDE gist constraint (btree_gist), making
+  overlapping inventory physically unrepresentable at the DB level on top
+  of the app-level checks. Back-to-back slots stay legal (exclusive upper
+  bound). Drizzle models the column via a `tsrange` customType with
+  `generatedAlwaysAs`, so migration diffs know it exists; the trigger and
+  EXCLUDE constraint live in the hand-written part of migration 0014.
 - **Custom slots** — hand-place a single slot on one date (a late-night
   Ramadan game, a one-off session) via the "Add a custom slot" card.
   Overlaps are rejected across a 3-day window (yesterday's 23:30/90 spills

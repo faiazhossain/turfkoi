@@ -1,4 +1,5 @@
 import {
+  customType,
   pgTable,
   uuid,
   text,
@@ -194,6 +195,18 @@ export const turfDateExceptions = pgTable(
   ]
 )
 
+/**
+ * Postgres `tsrange` (Drizzle has no native builder — same approach as the
+ * geography customType in db/geo.ts). Only consumer is the generated
+ * turf_slots.slot_range overlap-guard column below; the driver hands back
+ * the range's text form, which nothing reads today.
+ */
+const tsrange = customType<{ data: string; driverData: string }>({
+  dataType() {
+    return "tsrange"
+  },
+})
+
 export const turfSlots = pgTable(
   "turf_slots",
   {
@@ -214,6 +227,14 @@ export const turfSlots = pgTable(
     scheduleId: uuid("schedule_id").references(() => turfSchedules.id, {
       onDelete: "set null",
     }),
+    // P3.3 overlap guard (drizzle/0014): DB-computed [start, start+duration)
+    // range backing the turf_slots_no_overlap EXCLUDE constraint. Generated
+    // STORED so it can never drift from the base columns; the app never
+    // writes it. Modeled here so migration diffs know the column exists and
+    // never try to drop it.
+    slotRange: tsrange("slot_range").generatedAlwaysAs(
+      sql`tsrange(date + start_time, date + start_time + (duration_minutes || ' minutes')::interval, '[)')`
+    ),
   },
   (t) => [
     // F8: formalize the "PK-ish" - composite PK on (turf, date, start_time).

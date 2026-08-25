@@ -12,6 +12,7 @@ type Rows = Record<string, unknown>[]
 let selectQueue: Rows[] = []
 let insertCalls: { table: unknown; values: unknown }[] = []
 let insertReturnQueue: Rows[] = []
+let updateReturnQueue: Rows[] = []
 let updateCalls: Array<{ table: unknown; set: Record<string, unknown> }> = []
 let deleteCalls: { table: unknown }[] = []
 let revalidateCalls: string[] = []
@@ -51,6 +52,9 @@ vi.mock("@/db", () => ({
         updateCalls.push({ table, set })
         return q
       })
+      q.returning = vi.fn(() =>
+        Promise.resolve(updateReturnQueue.shift() ?? [{ id: "updated" }])
+      )
       return q
     }),
     delete: vi.fn((table: unknown) => {
@@ -78,6 +82,7 @@ vi.mock("@/features/turfs/materialize", () => ({
 }))
 
 import {
+  activateScheduleAction,
   addSlotAction,
   clearDateExceptionAction,
   saveScheduleAction,
@@ -92,6 +97,7 @@ import {
 
 const TURF_ID = "00000000-0000-0000-0000-000000000001"
 const OWNER_ID = "00000000-0000-0000-0000-000000000002"
+const SCHED_ID = "0056ddcb-866e-4a48-a82f-f72635a38129"
 
 function signInAs(roles: string[]) {
   currentUser = { id: OWNER_ID, roles }
@@ -109,6 +115,7 @@ beforeEach(() => {
   selectQueue = []
   insertCalls = []
   insertReturnQueue = []
+  updateReturnQueue = []
   updateCalls = []
   deleteCalls = []
   revalidateCalls = []
@@ -362,5 +369,64 @@ describe("clearDateExceptionAction", () => {
   it("rejects when not signed in", async () => {
     const res = await clearDateExceptionAction(TURF_ID, { date: "2099-03-20" })
     expect(failure(res)).toContain("signed in")
+  })
+})
+
+describe("activateScheduleAction", () => {
+  it("rejects an inverted effective window", async () => {
+    signInAs(["turf_owner"])
+    const res = await activateScheduleAction(TURF_ID, {
+      scheduleId: SCHED_ID,
+      effectiveFrom: "2099-03-20",
+      effectiveTo: "2099-03-01",
+    })
+    expect(failure(res)).toContain("on or after")
+    expect(materializeMock).not.toHaveBeenCalled()
+  })
+
+  it("rejects a non-owner", async () => {
+    signInAs(["player"])
+    const res = await activateScheduleAction(TURF_ID, {
+      scheduleId: SCHED_ID,
+    })
+    expect(failure(res)).toContain("permission")
+  })
+
+  it("deactivates all schedules, activates the target, materializes", async () => {
+    signInAs(["turf_owner"])
+    updateReturnQueue.push([{ id: "sched-ramadan" }])
+    const res = await activateScheduleAction(TURF_ID, {
+      scheduleId: SCHED_ID,
+      effectiveFrom: "2099-02-19",
+      effectiveTo: "2099-03-20",
+    })
+    if (!res.ok) throw new Error(`expected success, got: ${res.error}`)
+
+    const deactivateAll = updateCalls.find(
+      (c) => c.table === turfSchedules && c.set.isActive === false
+    )
+    expect(deactivateAll).toBeDefined()
+
+    const activate = updateCalls.find(
+      (c) => c.table === turfSchedules && c.set.isActive === true
+    )
+    expect(activate).toBeDefined()
+    expect(activate!.set).toMatchObject({
+      effectiveFrom: "2099-02-19",
+      effectiveTo: "2099-03-20",
+    })
+
+    expect(materializeMock).toHaveBeenCalledWith(TURF_ID)
+    expect(res.materialized).toBeDefined()
+  })
+
+  it("reports an unknown schedule", async () => {
+    signInAs(["turf_owner"])
+    updateReturnQueue.push([]) // update returns nothing -> not found
+    const res = await activateScheduleAction(TURF_ID, {
+      scheduleId: SCHED_ID,
+    })
+    expect(failure(res)).toContain("not found")
+    expect(materializeMock).not.toHaveBeenCalled()
   })
 })
