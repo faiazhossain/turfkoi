@@ -13,57 +13,44 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import { useI18n } from "@/i18n/client"
 
 /**
  * Steps a prospective turf owner follows to get an account. Owners cannot
  * self-register: an admin seeds the turf, sends a claim link, and the owner
  * registers through it (see src/features/turf-claims/invites.ts). Turfs can
  * also enter via an owner application at /own-a-turf, which admins approve
- * into the same flow. Kept as plain data so the copy can be tested without
- * rendering.
+ * into the same flow. Copy lives in the dictionaries (auth.ownerStep*);
+ * this stays plain key data so it can be tested without rendering.
  */
 export const OWNER_ONBOARDING_STEPS = [
-  {
-    title: "We list your turf",
-    body: "Turf accounts are set up by invitation. The Turfkoi team adds your turf to the platform first.",
-  },
-  {
-    title: "You receive a claim link",
-    body: "The Turfkoi team sends you a personal link by WhatsApp or email. It stays valid for 14 days.",
-  },
-  {
-    title: "Open the link, then register or sign in",
-    body: "Create your account on this page, or sign in if you already have one. You will be taken straight back to your turf.",
-  },
-  {
-    title: "Press Claim turf",
-    body: "That makes you the owner. You will set up slots, pricing, and photos next.",
-  },
+  { titleKey: "auth.ownerStep1Title", bodyKey: "auth.ownerStep1Body" },
+  { titleKey: "auth.ownerStep2Title", bodyKey: "auth.ownerStep2Body" },
+  { titleKey: "auth.ownerStep3Title", bodyKey: "auth.ownerStep3Body" },
+  { titleKey: "auth.ownerStep4Title", bodyKey: "auth.ownerStep4Body" },
 ] as const
 
-export const OWNER_HELP_NOTE =
-  "No link yet? Apply to list your turf — the Turfkoi team reviews every application and reaches out with next steps."
+export const OWNER_HELP_NOTE_KEY = "auth.ownerHelpNote"
 
 /** CTA that routes prospective owners into the application funnel. */
 export const OWNER_APPLY_PATH = "/own-a-turf"
 
 export function OwnerHelpButton() {
+  const { t } = useI18n()
   return (
     <Dialog>
       <DialogTrigger render={<Button variant="link" />}>
         <CircleHelpIcon aria-hidden />
-        Own a turf?
+        {t("auth.ownATurfTitle")}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Own a turf?</DialogTitle>
-          <DialogDescription>
-            How turf owners get their account on Turfkoi.
-          </DialogDescription>
+          <DialogTitle>{t("auth.ownATurfTitle")}</DialogTitle>
+          <DialogDescription>{t("auth.ownATurfDesc")}</DialogDescription>
         </DialogHeader>
         <ol className="space-y-3">
           {OWNER_ONBOARDING_STEPS.map((step, index) => (
-            <li key={step.title} className="flex gap-3">
+            <li key={step.titleKey} className="flex gap-3">
               <span
                 aria-hidden
                 className="flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium"
@@ -71,16 +58,16 @@ export function OwnerHelpButton() {
                 {index + 1}
               </span>
               <div className="space-y-0.5">
-                <p className="font-medium">{step.title}</p>
-                <p className="text-sm text-muted-foreground">{step.body}</p>
+                <p className="font-medium">{t(step.titleKey)}</p>
+                <p className="text-sm text-muted-foreground">{t(step.bodyKey)}</p>
               </div>
             </li>
           ))}
         </ol>
-        <p className="text-sm text-muted-foreground">{OWNER_HELP_NOTE}</p>
+        <p className="text-sm text-muted-foreground">{t(OWNER_HELP_NOTE_KEY)}</p>
         <DialogFooter showCloseButton>
           <Button render={<Link href={OWNER_APPLY_PATH} />}>
-            List your turf
+            {t("auth.listYourTurf")}
           </Button>
         </DialogFooter>
       </DialogContent>

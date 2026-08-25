@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/card"
 import { StatusBadge } from "@/components/shared"
 import { LocationPicker } from "@/components/map"
+import { useI18n } from "@/i18n/client"
 import { completeOnboardingAction } from "@/features/auth/actions"
 import {
   onboardingFormSchema,
@@ -25,6 +26,7 @@ import {
 
 export default function OnboardingPage() {
   const router = useRouter()
+  const { t } = useI18n()
   const [error, setError] = useState<string | null>(null)
   const form = useForm<OnboardingFormValues>({
     resolver: zodResolver(onboardingFormSchema),
@@ -39,48 +41,47 @@ export default function OnboardingPage() {
       router.refresh()
       return
     }
-    setError(result.error)
+    setError(result.error ? t(result.error) : null)
   }
 
   return (
     <div className="mx-auto flex max-w-md flex-col gap-6 px-4 py-16">
       <Card>
         <CardHeader>
-          <CardTitle className="font-heading text-2xl">Set up your profile</CardTitle>
+          <CardTitle className="font-heading text-2xl">{t("auth.onboardingTitle")}</CardTitle>
           <CardDescription>
-            A couple of details so teams and players can find you.
+            {t("auth.onboardingDesc")}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Display name</Label>
+              <Label htmlFor="name">{t("auth.displayName")}</Label>
               <Input id="name" autoComplete="name" {...form.register("name")} />
               {form.formState.errors.name && (
                 <p className="text-sm text-destructive">
-                  {form.formState.errors.name.message}
+                  {t(form.formState.errors.name.message ?? "")}
                 </p>
               )}
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label htmlFor="position">Position (optional)</Label>
-                <Input id="position" placeholder="e.g. MID" {...form.register("position")} />
+                <Label htmlFor="position">{t("auth.positionLabel")}</Label>
+                <Input id="position" placeholder={t("auth.positionPlaceholder")} {...form.register("position")} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="skill">Skill (optional)</Label>
-                <Input id="skill" placeholder="e.g. Intermediate" {...form.register("skill")} />
+                <Label htmlFor="skill">{t("auth.skillLabel")}</Label>
+                <Input id="skill" placeholder={t("auth.skillPlaceholder")} {...form.register("skill")} />
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="area">Area (optional)</Label>
-              <Input id="area" placeholder="e.g. Dhanmondi, Dhaka" {...form.register("area")} />
+              <Label htmlFor="area">{t("auth.areaLabel")}</Label>
+              <Input id="area" placeholder={t("auth.areaPlaceholder")} {...form.register("area")} />
             </div>
             <div className="space-y-2">
-              <Label>Your location</Label>
+              <Label>{t("auth.yourLocation")}</Label>
               <p className="text-xs text-muted-foreground">
-                Set your location so nearby matches can find you. We only store
-                an approximate spot (within ~100m), never your exact address.
+                {t("auth.locationHelp")}
               </p>
               <LocationPicker
                 value={form.watch("coords") ?? null}
@@ -100,7 +101,7 @@ export default function OnboardingPage() {
               className="w-full"
               loading={form.formState.isSubmitting}
             >
-              {form.formState.isSubmitting ? "Saving..." : "Continue"}
+              {form.formState.isSubmitting ? t("auth.saving") : t("common.continue")}
             </Button>
           </form>
         </CardContent>

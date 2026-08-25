@@ -79,7 +79,7 @@ export async function startRegistrationAction(
 ): Promise<ActionResult> {
   const parsed = registrationFormSchema.safeParse(input)
   if (!parsed.success) {
-    return { ok: false, reason: parsed.error.issues[0]?.message ?? "Invalid input" }
+    return { ok: false, reason: parsed.error.issues[0]?.message ?? "errors.generic" }
   }
   const { phone, email } = parsed.data
   const normalizedPhone = normalizePhone(phone)
@@ -107,7 +107,7 @@ export async function verifyRegistrationAction(
   const parsed = registrationFormSchema.safeParse(input)
   const parsedCode = otpFormSchema.safeParse({ code: rawCode })
   if (!parsed.success || !parsedCode.success) {
-    return { ok: false, reason: "Invalid input. Start again." }
+    return { ok: false, reason: "invalid_input_restart" }
   }
   const { name, phone, email, password } = parsed.data
   const normalizedPhone = normalizePhone(phone)
@@ -190,7 +190,7 @@ export async function loginAction(
  */
 export async function requestPasswordResetAction(rawEmail: string): Promise<ActionResult> {
   const parsed = forgotPasswordFormSchema.safeParse({ email: rawEmail })
-  if (!parsed.success) return { ok: false, reason: parsed.error.issues[0]?.message ?? "Invalid email" }
+  if (!parsed.success) return { ok: false, reason: parsed.error.issues[0]?.message ?? "errors.generic" }
 
   const user = await getUserByEmail(parsed.data.email)
   if (!user) return { ok: true }
@@ -213,7 +213,7 @@ export async function resetPasswordAction(
     password: rawPassword,
   })
   if (!parsedEmail.success || !parsedRest.success) {
-    return { ok: false, reason: parsedRest.error?.issues[0]?.message ?? "Invalid input" }
+    return { ok: false, reason: parsedRest.error?.issues[0]?.message ?? "errors.generic" }
   }
   const { email } = parsedEmail.data
   const { code, password } = parsedRest.data
@@ -246,7 +246,7 @@ export async function completeOnboardingAction(
 ) {
   const parsed = onboardingFormSchema.safeParse(input)
   if (!parsed.success) {
-    return { ok: false as const, error: parsed.error.issues[0]?.message ?? "Invalid input" }
+    return { ok: false as const, error: parsed.error.issues[0]?.message ?? "errors.generic" }
   }
   const user = await getCurrentUser()
   if (!user) throw new Error("Unauthorized")

@@ -18,6 +18,8 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { StatusBadge } from "@/components/shared"
+import { useI18n } from "@/i18n/client"
+import { reasonMessage } from "@/features/auth/reasons"
 import {
   requestPasswordResetAction,
   resetPasswordAction,
@@ -35,26 +37,14 @@ const newPasswordSchema = z
     confirmPassword: z.string(),
   })
   .refine((d) => d.password === d.confirmPassword, {
-    message: "Passwords do not match",
+    message: "auth.passwordsNoMatch",
     path: ["confirmPassword"],
   })
 type NewPasswordValues = z.infer<typeof newPasswordSchema>
 
-const OTP_REASONS: Record<string, string> = {
-  invalid: "Wrong code. Try again.",
-  consumed: "This code was already used. Request a new one.",
-  expired: "That code expired. Request a new one.",
-  locked: "Too many attempts. Try again in 15 minutes.",
-  rate_limited: "Too many attempts. Slow down.",
-}
-
-const EMAIL_REASONS: Record<string, string> = {
-  rate_limited: "Too many requests. Wait a minute and try again.",
-  send_failed: "Could not send the email right now. Please try again.",
-}
-
 export default function ForgotPasswordPage() {
   const router = useRouter()
+  const { t } = useI18n()
   const [step, setStep] = useState<"email" | "reset">("email")
   const [email, setEmail] = useState("")
   const [error, setError] = useState<string | null>(null)
@@ -78,7 +68,7 @@ export default function ForgotPasswordPage() {
       setStep("reset")
       return
     }
-    setError(EMAIL_REASONS[result.reason] ?? result.reason)
+    setError(reasonMessage(t, result.reason))
   }
 
   async function submitReset(values: NewPasswordValues) {
@@ -88,7 +78,7 @@ export default function ForgotPasswordPage() {
       router.replace(result.home ?? "/login")
       return
     }
-    setError(OTP_REASONS[result.reason] ?? result.reason)
+    setError(reasonMessage(t, result.reason))
   }
 
   return (
@@ -96,25 +86,23 @@ export default function ForgotPasswordPage() {
       <Card>
         <CardHeader>
           <CardTitle className="font-heading text-2xl">
-            {step === "email" ? "Reset your password" : "Enter the code"}
+            {step === "email" ? t("auth.resetTitle") : t("auth.enterCodeTitle")}
           </CardTitle>
           <CardDescription>
-            {step === "email"
-              ? "Enter the email you registered with. If it has an account, we will send a verification code."
-              : (
-                  <>
-                    We sent a 6-digit code to{" "}
-                    <span className="text-foreground">{email}</span>. Enter it and
-                    choose a new password.
-                  </>
-                )}
+            {step === "email" ? (
+              t("auth.resetDesc")
+            ) : (
+              <>
+                {t("auth.sentCodeResetTo", { email })}
+              </>
+            )}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {step === "email" ? (
             <form onSubmit={emailForm.handleSubmit(submitEmail)} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t("auth.emailLabel")}</Label>
                 <Input
                   id="email"
                   type="email"
@@ -124,7 +112,7 @@ export default function ForgotPasswordPage() {
                 />
                 {emailForm.formState.errors.email && (
                   <p className="text-sm text-destructive">
-                    {emailForm.formState.errors.email.message}
+                    {t(emailForm.formState.errors.email.message ?? "")}
                   </p>
                 )}
               </div>
@@ -135,17 +123,17 @@ export default function ForgotPasswordPage() {
                 className="w-full"
                 loading={emailForm.formState.isSubmitting}
               >
-                {emailForm.formState.isSubmitting ? "Sending code..." : "Send code"}
+                {emailForm.formState.isSubmitting ? t("auth.sendingCode") : t("auth.sendCode")}
               </Button>
             </form>
           ) : (
             <>
               {isDev && (
-                <StatusBadge status="info">Dev mode: use code 123456</StatusBadge>
+                <StatusBadge status="info">{t("auth.devCodeHint")}</StatusBadge>
               )}
               <form onSubmit={resetForm.handleSubmit(submitReset)} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="code">Verification code</Label>
+                  <Label htmlFor="code">{t("auth.codeLabel")}</Label>
                   <Input
                     id="code"
                     inputMode="numeric"
@@ -157,27 +145,27 @@ export default function ForgotPasswordPage() {
                   />
                   {resetForm.formState.errors.code && (
                     <p className="text-sm text-destructive">
-                      {resetForm.formState.errors.code.message}
+                      {t(resetForm.formState.errors.code.message ?? "")}
                     </p>
                   )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password">New password</Label>
+                  <Label htmlFor="password">{t("auth.newPassword")}</Label>
                   <Input
                     id="password"
                     type="password"
                     autoComplete="new-password"
-                    placeholder="At least 8 characters"
+                    placeholder={t("auth.passwordPlaceholder")}
                     {...resetForm.register("password")}
                   />
                   {resetForm.formState.errors.password && (
                     <p className="text-sm text-destructive">
-                      {resetForm.formState.errors.password.message}
+                      {t(resetForm.formState.errors.password.message ?? "")}
                     </p>
                   )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirm new password</Label>
+                  <Label htmlFor="confirmPassword">{t("auth.confirmNewPassword")}</Label>
                   <Input
                     id="confirmPassword"
                     type="password"
@@ -186,7 +174,7 @@ export default function ForgotPasswordPage() {
                   />
                   {resetForm.formState.errors.confirmPassword && (
                     <p className="text-sm text-destructive">
-                      {resetForm.formState.errors.confirmPassword.message}
+                      {t(resetForm.formState.errors.confirmPassword.message ?? "")}
                     </p>
                   )}
                 </div>
@@ -197,12 +185,12 @@ export default function ForgotPasswordPage() {
                   className="w-full"
                   loading={resetForm.formState.isSubmitting}
                 >
-                  {resetForm.formState.isSubmitting ? "Saving..." : "Set new password"}
+                  {resetForm.formState.isSubmitting ? t("auth.saving") : t("auth.setNewPassword")}
                 </Button>
               </form>
               <div className="text-center text-sm">
                 <Link href="/forgot-password" className="text-muted-foreground hover:text-foreground">
-                  Use a different email
+                  {t("auth.useDifferentEmail")}
                 </Link>
               </div>
             </>
@@ -210,9 +198,9 @@ export default function ForgotPasswordPage() {
         </CardContent>
       </Card>
       <p className="text-center text-sm text-muted-foreground">
-        Remembered it?{" "}
+        {t("auth.rememberedIt")}{" "}
         <Link href="/login" className="text-foreground underline-offset-4 hover:underline">
-          Back to sign in
+          {t("auth.backToSignIn")}
         </Link>
       </p>
     </div>

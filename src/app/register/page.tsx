@@ -20,6 +20,8 @@ import {
 } from "@/components/ui/card"
 import { StatusBadge } from "@/components/shared"
 import { OwnerHelpButton } from "@/components/auth/owner-help-button"
+import { useI18n } from "@/i18n/client"
+import { reasonMessage } from "@/features/auth/reasons"
 import {
   startRegistrationAction,
   verifyRegistrationAction,
@@ -39,31 +41,21 @@ const detailsSchema = z
     confirmPassword: z.string(),
   })
   .refine((d) => d.password === d.confirmPassword, {
-    message: "Passwords do not match",
+    message: "auth.passwordsNoMatch",
     path: ["confirmPassword"],
   })
 type DetailsValues = z.infer<typeof detailsSchema>
 
-const STEP1_REASONS: Record<string, string> = {
-  phone_taken: "That phone number already has an account.",
-  email_taken: "That email already has an account.",
-  rate_limited: "Too many requests. Wait a minute and try again.",
-  send_failed: "Could not send the email right now. Please try again.",
-}
-
-const STEP2_REASONS: Record<string, string> = {
-  invalid: "Wrong code. Try again.",
-  consumed: "This code was already used. Request a new one.",
-  expired: "That code expired. Request a new one.",
-  locked: "Too many attempts. Try again in 15 minutes.",
-  rate_limited: "Too many attempts. Slow down.",
-  signin_failed: "Account created, but sign-in failed. Try signing in.",
-  phone_taken: "That phone number was just registered. Sign in instead.",
-  email_taken: "That email was just registered. Sign in instead.",
+// Step-2 reasons need register-flow-specific wording (e.g. "just registered").
+const STEP2_KEYS: Record<string, string> = {
+  phone_taken: "auth.errors.phone_taken_just",
+  email_taken: "auth.errors.email_taken_just",
+  signin_failed: "auth.errors.signin_failed_created",
 }
 
 export default function RegisterPage() {
   const router = useRouter()
+  const { t } = useI18n()
   const [step, setStep] = useState<"details" | "code">("details")
   const [details, setDetails] = useState<RegistrationFormValues | null>(null)
   const [step1Error, setStep1Error] = useState<string | null>(null)
@@ -94,7 +86,7 @@ export default function RegisterPage() {
       setStep("code")
       return
     }
-    setStep1Error(STEP1_REASONS[result.reason] ?? result.reason)
+    setStep1Error(reasonMessage(t, result.reason))
   }
 
   async function submitCode(values: OtpFormValues) {
@@ -109,7 +101,7 @@ export default function RegisterPage() {
       router.replace(result.home ?? "/auth/onboarding")
       return
     }
-    setStep2Error(STEP2_REASONS[result.reason] ?? result.reason)
+    setStep2Error(reasonMessage(t, STEP2_KEYS[result.reason] ?? result.reason))
   }
 
   async function resendCode() {
@@ -117,7 +109,7 @@ export default function RegisterPage() {
     setStep2Error(null)
     const result = await startRegistrationAction(details)
     if (!result.ok) {
-      setStep2Error(STEP1_REASONS[result.reason] ?? result.reason)
+      setStep2Error(reasonMessage(t, result.reason))
     }
   }
 
@@ -126,34 +118,33 @@ export default function RegisterPage() {
       <Card>
         <CardHeader>
           <CardTitle className="font-heading text-2xl">
-            {step === "details" ? "Create your account" : "Enter the code"}
+            {step === "details" ? t("auth.registerTitle") : t("auth.enterCodeTitle")}
           </CardTitle>
           <CardDescription>
-            {step === "details"
-              ? "Register with your phone and email. We send a verification code to your email."
-              : (
-                  <>
-                    We sent a 6-digit code to{" "}
-                    <span className="text-foreground">{details?.email}</span>.
-                  </>
-                )}
+            {step === "details" ? (
+              t("auth.registerDesc")
+            ) : (
+              <>
+                {t("auth.sentCodeTo", { email: details?.email ?? "" })}
+              </>
+            )}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {step === "details" ? (
             <form onSubmit={detailsForm.handleSubmit(submitDetails)} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Name</Label>
-                <Input id="name" autoComplete="name" placeholder="Your name"
+                <Label htmlFor="name">{t("auth.nameLabel")}</Label>
+                <Input id="name" autoComplete="name" placeholder={t("auth.namePlaceholder")}
                   {...detailsForm.register("name")} />
                 {detailsForm.formState.errors.name && (
                   <p className="text-sm text-destructive">
-                    {detailsForm.formState.errors.name.message}
+                    {t(detailsForm.formState.errors.name.message ?? "")}
                   </p>
                 )}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="phone">Phone number</Label>
+                <Label htmlFor="phone">{t("auth.phoneLabel")}</Label>
                 <Input
                   id="phone"
                   inputMode="tel"
@@ -163,12 +154,12 @@ export default function RegisterPage() {
                 />
                 {detailsForm.formState.errors.phone && (
                   <p className="text-sm text-destructive">
-                    {detailsForm.formState.errors.phone.message}
+                    {t(detailsForm.formState.errors.phone.message ?? "")}
                   </p>
                 )}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t("auth.emailLabel")}</Label>
                 <Input
                   id="email"
                   type="email"
@@ -178,27 +169,27 @@ export default function RegisterPage() {
                 />
                 {detailsForm.formState.errors.email && (
                   <p className="text-sm text-destructive">
-                    {detailsForm.formState.errors.email.message}
+                    {t(detailsForm.formState.errors.email.message ?? "")}
                   </p>
                 )}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">{t("auth.passwordLabel")}</Label>
                 <Input
                   id="password"
                   type="password"
                   autoComplete="new-password"
-                  placeholder="At least 8 characters"
+                  placeholder={t("auth.passwordPlaceholder")}
                   {...detailsForm.register("password")}
                 />
                 {detailsForm.formState.errors.password && (
                   <p className="text-sm text-destructive">
-                    {detailsForm.formState.errors.password.message}
+                    {t(detailsForm.formState.errors.password.message ?? "")}
                   </p>
                 )}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm password</Label>
+                <Label htmlFor="confirmPassword">{t("auth.confirmPassword")}</Label>
                 <Input
                   id="confirmPassword"
                   type="password"
@@ -207,7 +198,7 @@ export default function RegisterPage() {
                 />
                 {detailsForm.formState.errors.confirmPassword && (
                   <p className="text-sm text-destructive">
-                    {detailsForm.formState.errors.confirmPassword.message}
+                    {t(detailsForm.formState.errors.confirmPassword.message ?? "")}
                   </p>
                 )}
               </div>
@@ -218,17 +209,17 @@ export default function RegisterPage() {
                 className="w-full"
                 loading={detailsForm.formState.isSubmitting}
               >
-                {detailsForm.formState.isSubmitting ? "Sending code..." : "Continue"}
+                {detailsForm.formState.isSubmitting ? t("auth.sendingCode") : t("common.continue")}
               </Button>
             </form>
           ) : (
             <>
               {isDev && (
-                <StatusBadge status="info">Dev mode: use code 123456</StatusBadge>
+                <StatusBadge status="info">{t("auth.devCodeHint")}</StatusBadge>
               )}
               <form onSubmit={codeForm.handleSubmit(submitCode)} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="code">Verification code</Label>
+                  <Label htmlFor="code">{t("auth.codeLabel")}</Label>
                   <Input
                     id="code"
                     inputMode="numeric"
@@ -240,7 +231,7 @@ export default function RegisterPage() {
                   />
                   {codeForm.formState.errors.code && (
                     <p className="text-sm text-destructive">
-                      {codeForm.formState.errors.code.message}
+                      {t(codeForm.formState.errors.code.message ?? "")}
                     </p>
                   )}
                 </div>
@@ -251,7 +242,7 @@ export default function RegisterPage() {
                   className="w-full"
                   loading={codeForm.formState.isSubmitting}
                 >
-                  {codeForm.formState.isSubmitting ? "Verifying..." : "Verify and create account"}
+                  {codeForm.formState.isSubmitting ? t("auth.verifying") : t("auth.verifyAndCreate")}
                 </Button>
               </form>
               <div className="flex items-center justify-between text-sm">
@@ -260,7 +251,7 @@ export default function RegisterPage() {
                   onClick={() => setStep("details")}
                   className="text-muted-foreground hover:text-foreground"
                 >
-                  Change details
+                  {t("auth.changeDetails")}
                 </button>
                 <button
                   type="button"
@@ -271,7 +262,7 @@ export default function RegisterPage() {
                   {detailsForm.formState.isSubmitting && (
                     <Loader size={14} className="size-3.5" aria-hidden />
                   )}
-                  Resend code
+                  {t("auth.resendCode")}
                 </button>
               </div>
             </>
@@ -279,9 +270,9 @@ export default function RegisterPage() {
         </CardContent>
       </Card>
       <p className="text-center text-sm text-muted-foreground">
-        Already have an account?{" "}
+        {t("auth.alreadyHaveAccount")}{" "}
         <Link href="/login" className="text-foreground underline-offset-4 hover:underline">
-          Sign in
+          {t("nav.signIn")}
         </Link>
       </p>
       <div className="text-center">
