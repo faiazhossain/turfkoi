@@ -5,6 +5,7 @@ import { StatusBadge } from "@/components/shared"
 import {
   DeleteTurfControl,
   InvitePanel,
+  OwnerLoginCodePanel,
   TurfActiveToggle,
   UnverifyTurfButton,
   VerifyTurfButton,
@@ -148,11 +149,8 @@ export default async function AdminTurfCockpitPage({ params }: PageProps) {
             )}
             <TurfActiveToggle turfId={turf.id} isActive={turf.isActive} />
           </div>
-          {turf.ownerId !== null ? (
-            <p className="text-xs text-muted-foreground">
-              One-time WhatsApp sign-in codes for this owner arrive with the
-              OTP support tool.
-            </p>
+          {turf.ownerId !== null && ownerPhone ? (
+            <OwnerLoginCodePanel turfId={turf.id} ownerPhone={ownerPhone} />
           ) : null}
         </CardContent>
       </Card>

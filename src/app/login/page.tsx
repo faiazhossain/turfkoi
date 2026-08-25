@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/card"
 import { StatusBadge } from "@/components/shared"
 import { OwnerHelpButton } from "@/components/auth/owner-help-button"
+import { OwnerCodeLogin } from "@/components/auth/owner-code-login"
 import { loginAction } from "@/features/auth/actions"
 import { loginFormSchema, type LoginFormValues } from "@/features/auth/schemas"
 
@@ -30,6 +31,7 @@ const REASONS: Record<string, string> = {
 export default function LoginPage() {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
+  const [mode, setMode] = useState<"password" | "code">("password")
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginFormSchema),
     defaultValues: { identifier: "", password: "" },
@@ -51,10 +53,15 @@ export default function LoginPage() {
         <CardHeader>
           <CardTitle className="font-heading text-2xl">Sign in</CardTitle>
           <CardDescription>
-            Use the phone number or email you registered with.
+            {mode === "password"
+              ? "Use the phone number or email you registered with."
+              : "For turf owners who received a one-time code from the Turfkoi team."}
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {mode === "code" ? (
+            <OwnerCodeLogin />
+          ) : (
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="identifier">Phone or email</Label>
@@ -102,7 +109,22 @@ export default function LoginPage() {
               {form.formState.isSubmitting ? "Signing in..." : "Sign in"}
             </Button>
           </form>
+          )}
         </CardContent>
+        <div className="px-6 pb-6">
+          <button
+            type="button"
+            onClick={() => {
+              setError(null)
+              setMode(mode === "password" ? "code" : "password")
+            }}
+            className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+          >
+            {mode === "password"
+              ? "Have a sign-in code from the Turfkoi team?"
+              : "Sign in with password instead"}
+          </button>
+        </div>
       </Card>
       <p className="text-center text-sm text-muted-foreground">
         New here?{" "}
