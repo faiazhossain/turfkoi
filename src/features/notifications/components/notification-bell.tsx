@@ -7,6 +7,7 @@ import { BellIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { useI18n } from "@/i18n/client"
 import { cn } from "@/lib/utils"
 
 import type { NotificationDTO } from "../hooks"
@@ -14,11 +15,12 @@ import { useNotifications } from "../hooks"
 import { NotificationList } from "./notification-list"
 
 function UnreadBadge({ count }: { count: number }) {
+  const { t } = useI18n()
   if (count <= 0) return null
   return (
     <span
       className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] leading-none font-semibold text-primary-foreground"
-      aria-label={`${count} unread notifications`}
+      aria-label={t("notifications.unreadCountAria", { count })}
     >
       {count > 9 ? "9+" : count}
     </span>
@@ -40,6 +42,7 @@ export function NotificationBell({
   className?: string
 }) {
   const router = useRouter()
+  const { t } = useI18n()
   const feed = useNotifications({ realtime: variant === "popover" })
 
   const onOpen = (item: NotificationDTO, href?: string) => {
@@ -49,11 +52,16 @@ export function NotificationBell({
 
   if (feed.signedOut) return null
 
+  const bellAria =
+    feed.unreadCount > 0
+      ? t("notifications.bellAriaUnread", { count: feed.unreadCount })
+      : t("notifications.bellAria")
+
   if (variant === "link") {
     return (
       <Link
         href="/notifications"
-        aria-label={`Notifications${feed.unreadCount > 0 ? ` (${feed.unreadCount} unread)` : ""}`}
+        aria-label={bellAria}
         className={cn(
           "relative flex size-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground",
           className
@@ -72,7 +80,7 @@ export function NotificationBell({
           <Button
             variant="ghost"
             size="icon-sm"
-            aria-label={`Notifications${feed.unreadCount > 0 ? ` (${feed.unreadCount} unread)` : ""}`}
+            aria-label={bellAria}
           />
         }
         className="relative"
@@ -82,7 +90,7 @@ export function NotificationBell({
       </PopoverTrigger>
       <PopoverContent align="end" className="w-80 p-2">
         <div className="flex items-center justify-between px-2 pb-1">
-          <p className="text-sm font-medium">Notifications</p>
+          <p className="text-sm font-medium">{t("notifications.title")}</p>
           {feed.unreadCount > 0 ? (
             <Button
               variant="link"
@@ -90,7 +98,7 @@ export function NotificationBell({
               loading={feed.markAllPending}
               onClick={() => void feed.markAllRead()}
             >
-              Mark all read
+              {t("notifications.markAllRead")}
             </Button>
           ) : null}
         </div>
@@ -112,7 +120,7 @@ export function NotificationBell({
             className="w-full"
             render={<Link href="/notifications" />}
           >
-            View all notifications
+            {t("notifications.viewAll")}
           </Button>
         </div>
       </PopoverContent>

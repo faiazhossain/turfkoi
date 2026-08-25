@@ -14,9 +14,19 @@ import {
  * ./schemas.ts validate them at runtime when reading rows back from the DB.
  * Keep this module pure (no server-only, no db) so client components and
  * Vitest can import it freely.
+ *
+ * Renderers return dictionary keys (`notifications.*`) plus interpolation
+ * params instead of literal strings, so every surface can render through the
+ * active locale's translator.
  */
 
 export type NotificationPriority = "info" | "transactional" | "critical"
+
+/** A localizable string: dictionary key + optional `{param}` values. */
+export interface LocalizedText {
+  key: string
+  params?: Record<string, string | number>
+}
 
 /** Payload shape per notification type. */
 export interface NotificationPayloads {
@@ -65,8 +75,8 @@ export interface NotificationTypeConfig<P> {
   priority: NotificationPriority
   audience: "player" | "turf_owner" | "admin"
   icon: ComponentType<{ className?: string }>
-  title: (payload: P) => string
-  body: (payload: P) => string | null
+  title: (payload: P) => LocalizedText
+  body: (payload: P) => LocalizedText | null
   href?: (payload: P) => string
 }
 
@@ -79,51 +89,89 @@ export const NOTIFICATION_TYPES: Registry = {
     priority: "info",
     audience: "admin",
     icon: InboxIcon,
-    title: (p) => `New turf application: ${p.turfName}`,
-    body: (p) =>
-      p.city ? `${p.contactName} • ${p.city}` : `Submitted by ${p.contactName}`,
+    title: (p) => ({
+      key: "notifications.turfApplicationSubmittedTitle",
+      params: { turf: p.turfName },
+    }),
+    body: (p): LocalizedText | null =>
+      p.city
+        ? {
+            key: "notifications.turfApplicationSubmittedBodyCity",
+            params: { contact: p.contactName, city: p.city },
+          }
+        : {
+            key: "notifications.turfApplicationSubmittedBody",
+            params: { contact: p.contactName },
+          },
     href: () => "/admin/applications",
   },
   "turf_application.approved": {
     priority: "transactional",
     audience: "turf_owner",
     icon: MapPinIcon,
-    title: (p) => `${p.turfName} is approved`,
-    body: () => "Your turf is live on Turfkoi — claim it to manage bookings.",
+    title: (p) => ({
+      key: "notifications.turfApplicationApprovedTitle",
+      params: { turf: p.turfName },
+    }),
+    body: () => ({ key: "notifications.turfApplicationApprovedBody" }),
     href: (p) => `/turfs/${p.slug}`,
   },
   "turf_application.rejected": {
     priority: "info",
     audience: "turf_owner",
     icon: CircleXIcon,
-    title: (p) => `Application update: ${p.turfName}`,
-    body: () => "Unfortunately we couldn't approve this application right now.",
+    title: (p) => ({
+      key: "notifications.turfApplicationRejectedTitle",
+      params: { turf: p.turfName },
+    }),
+    body: () => ({ key: "notifications.turfApplicationRejectedBody" }),
   },
   "booking.confirmed": {
     priority: "transactional",
     audience: "player",
     icon: CalendarCheckIcon,
-    title: (p) => `Booking confirmed at ${p.turfName}`,
-    body: (p) => `${p.date} • ${p.startTime}`,
+    title: (p) => ({
+      key: "notifications.bookingConfirmedTitle",
+      params: { turf: p.turfName },
+    }),
+    body: (p) => ({
+      key: "notifications.bookingBody",
+      params: { date: p.date, start: p.startTime },
+    }),
     href: (p) => `/bookings/${p.bookingId}`,
   },
   "booking.received": {
     priority: "transactional",
     audience: "turf_owner",
     icon: CalendarPlusIcon,
-    title: (p) => `New booking at ${p.turfName}`,
-    body: (p) => `${p.date} • ${p.startTime}`,
+    title: (p) => ({
+      key: "notifications.bookingReceivedTitle",
+      params: { turf: p.turfName },
+    }),
+    body: (p) => ({
+      key: "notifications.bookingBody",
+      params: { date: p.date, start: p.startTime },
+    }),
     href: () => "/turf-owner",
   },
   "booking.cancelled": {
     priority: "critical",
     audience: "player",
     icon: CalendarXIcon,
-    title: (p) => `Booking cancelled at ${p.turfName}`,
-    body: (p) =>
+    title: (p) => ({
+      key: "notifications.bookingCancelledTitle",
+      params: { turf: p.turfName },
+    }),
+    body: (p): LocalizedText | null =>
       typeof p.refundAmount === "number" && p.refundAmount > 0
-        ? `${p.date} • ${p.startTime} • refund ৳${p.refundAmount}`
-        : `${p.date} • ${p.startTime}`,
+        ? {
+            key: "notifications.bookingCancelledBodyRefund",
+            params: { date: p.date, start: p.startTime, amount: p.refundAmount },
+          }
+        : {
+            key: "notifications.bookingBody",
+            params: { date: p.date, start: p.startTime },
+          },
     href: (p) => `/bookings/${p.bookingId}`,
   },
 }

@@ -6,20 +6,22 @@ import { toast } from "sonner"
 import { CheckIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { useI18n } from "@/i18n/client"
 import { confirmPlayedAction } from "@/features/player/actions"
 
 export function ConfirmPlayedButton({ matchId }: { matchId: string }) {
   const router = useRouter()
+  const { t } = useI18n()
   const [pending, start] = useTransition()
 
   function confirm() {
     start(async () => {
       const res = await confirmPlayedAction(matchId)
       if (!res.ok) {
-        toast.error(res.error)
+        toast.error(t(res.error ?? "errors.generic"))
         return
       }
-      toast.success("Thanks for confirming!")
+      toast.success(t("player.playedToast"))
       router.refresh()
     })
   }
@@ -32,7 +34,7 @@ export function ConfirmPlayedButton({ matchId }: { matchId: string }) {
       loading={pending}
     >
       <CheckIcon aria-hidden />
-      I played
+      {t("player.playedLabel")}
     </Button>
   )
 }

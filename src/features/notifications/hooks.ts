@@ -8,8 +8,10 @@ import {
 } from "@tanstack/react-query"
 import { toast } from "sonner"
 
+import { useI18n } from "@/i18n/client"
 import { getPusherClient } from "@/lib/pusher-client"
 
+import type { LocalizedText } from "./types"
 import {
   markAllNotificationsReadAction,
   markNotificationReadAction,
@@ -75,6 +77,7 @@ export function useNotifications(options: {
 }): NotificationsFeed {
   const { realtime = false, initialData } = options
   const queryClient = useQueryClient()
+  const { t } = useI18n()
   const [markAllPending, setMarkAllPending] = useState(false)
 
   const query = useInfiniteQuery({
@@ -103,13 +106,13 @@ export function useNotifications(options: {
     const channel = pusher.subscribe(`user-${userId}`)
     const onNew = (evt: {
       priority?: string
-      title?: string
-      body?: string | null
+      title?: LocalizedText | null
+      body?: LocalizedText | null
     }) => {
       void queryClient.invalidateQueries({ queryKey: QUERY_KEY })
       if (evt.priority === "critical" && evt.title) {
-        toast(evt.title, {
-          description: evt.body ?? undefined,
+        toast(t(evt.title.key, evt.title.params), {
+          description: evt.body ? t(evt.body.key, evt.body.params) : undefined,
         })
       }
     }
@@ -118,7 +121,7 @@ export function useNotifications(options: {
       channel.unbind("notification.new", onNew)
       pusher.unsubscribe(`user-${userId}`)
     }
-  }, [realtime, userId, queryClient])
+  }, [realtime, userId, queryClient, t])
 
   const patchPage = useCallback(
     (fn: (page: FeedPage) => FeedPage) => {

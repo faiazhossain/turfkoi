@@ -1,8 +1,11 @@
+import type { Metadata } from "next"
 import Link from "next/link"
 import { redirect } from "next/navigation"
 import { CalendarDaysIcon, ZapIcon, MapPinIcon, GiftIcon, ShieldIcon, StoreIcon } from "lucide-react"
 
 import { EmptyState, StatusBadge } from "@/components/shared"
+import { buildMetadata } from "@/i18n/metadata"
+import { getT } from "@/i18n/server"
 import { Button } from "@/components/ui/button"
 import { AvailabilityToggle } from "@/components/player/availability-toggle"
 import { JoinRequestButton } from "@/components/player/join-request-button"
@@ -34,7 +37,12 @@ const MATCH_STATE_TONE: Record<string, "success" | "warning" | "neutral" | "prim
   completed: "success",
 }
 
+export async function generateMetadata(): Promise<Metadata> {
+  return buildMetadata({ titleKey: "metadata.playerDashboardTitle" })
+}
+
 export default async function PlayerDashboardPage() {
+  const t = await getT()
   const session = await getSession()
   if (!session?.user) redirect("/login")
   const user = await getCurrentUser()
@@ -66,7 +74,7 @@ export default async function PlayerDashboardPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="font-heading text-2xl font-semibold">
-            {session.user.name ?? "Player dashboard"}
+            {session.user.name ?? t("player.dashboardTitle")}
           </h1>
           <p className="text-sm text-muted-foreground">{session.user.phone}</p>
         </div>
@@ -76,7 +84,7 @@ export default async function PlayerDashboardPage() {
       {extraRoles.length > 0 && (
         <section className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-card p-4">
           <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Switch hats
+            {t("player.switchHats")}
           </span>
           {user!.roles.includes("turf_owner") && (
             <Button
@@ -85,13 +93,13 @@ export default async function PlayerDashboardPage() {
               render={<Link href="/turf-owner" />}
             >
               <StoreIcon aria-hidden />
-              Turf owner
+              {t("player.turfOwner")}
             </Button>
           )}
           {user!.roles.includes("admin") && (
             <Button size="sm" variant="outline" render={<Link href="/admin" />}>
               <ShieldIcon aria-hidden />
-              Admin
+              {t("player.admin")}
             </Button>
           )}
         </section>
@@ -106,11 +114,12 @@ export default async function PlayerDashboardPage() {
       <section className="rounded-lg border border-border bg-card p-4">
         <div className="flex items-center gap-2">
           <GiftIcon className="size-5 text-primary" aria-hidden />
-          <h2 className="font-heading text-lg font-semibold">Invite friends</h2>
+          <h2 className="font-heading text-lg font-semibold">
+            {t("player.inviteTitle")}
+          </h2>
         </div>
         <p className="mt-1 text-sm text-muted-foreground">
-          Share your link. When a friend signs up, they&apos;re attributed to
-          you (rewards arrive with the P1 referral program).
+          {t("player.inviteDesc")}
         </p>
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <code className="rounded-md border border-border bg-muted px-2 py-1 text-sm">
@@ -122,38 +131,40 @@ export default async function PlayerDashboardPage() {
             render={
               <a
                 href={`https://wa.me/?text=${encodeURIComponent(
-                  "Join me on Turfkoi — book a turf, find a game: " + inviteUrl
+                  t("player.inviteShareText", { url: inviteUrl })
                 )}`}
                 target="_blank"
                 rel="noreferrer"
               />
             }
           >
-            Share on WhatsApp
+            {t("player.shareOnWhatsApp")}
           </Button>
           <Link
             href="/app/settings"
             className="text-xs text-muted-foreground hover:underline"
           >
-            Account settings →
+            {t("player.accountSettings")}
           </Link>
         </div>
       </section>
 
       {/* Bookings */}
       <section className="space-y-3">
-        <h2 className="font-heading text-lg font-semibold">Your bookings</h2>
+        <h2 className="font-heading text-lg font-semibold">
+          {t("player.bookingsTitle")}
+        </h2>
         {bookings.length === 0 ? (
           <EmptyState
             icon={CalendarDaysIcon}
-            title="No bookings yet"
-            description="Browse turfs and book a slot to get started."
+            title={t("player.noBookingsTitle")}
+            description={t("player.noBookingsDesc")}
             action={
               <Link
                 href="/turfs"
                 className="text-sm font-medium text-primary hover:underline"
               >
-                Find a turf →
+                {t("player.findTurf")}
               </Link>
             }
           />
@@ -182,7 +193,7 @@ export default async function PlayerDashboardPage() {
                         </span>
                       ) : null}
                       <StatusBadge status={tone} showIcon={false}>
-                        {b.status.replace(/_/g, " ")}
+                        {t(`player.bookingStatus.${b.status}`)}
                       </StatusBadge>
                     </div>
                   </Link>
@@ -197,15 +208,16 @@ export default async function PlayerDashboardPage() {
       <section className="space-y-3">
         <div className="flex items-center gap-2">
           <ZapIcon className="size-5 text-primary" aria-hidden />
-          <h2 className="font-heading text-lg font-semibold">Play tonight</h2>
+          <h2 className="font-heading text-lg font-semibold">
+            {t("player.playTonightTitle")}
+          </h2>
         </div>
         <p className="text-sm text-muted-foreground">
-          Matches near you that need players.
+          {t("player.playTonightDesc")}
         </p>
         {nearbyMatches.length === 0 ? (
           <p className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
-            No matches need players right now. Check back later or set yourself
-            available.
+            {t("player.noNearbyMatches")}
           </p>
         ) : (
           <ul className="space-y-2">
@@ -220,7 +232,8 @@ export default async function PlayerDashboardPage() {
                       href={`/matches/${m.id}`}
                       className="truncate font-heading font-medium hover:underline"
                     >
-                      {m.teams.map((t) => t.teamName).join(" vs ") || "Match"}
+                      {m.teams.map((tm) => tm.teamName).join(` ${t("player.vs")} `) ||
+                        t("matches.breadcrumbMatch")}
                     </Link>
                     <div className="flex items-center gap-1 text-xs text-muted-foreground">
                       <MapPinIcon className="size-3" aria-hidden />
@@ -243,10 +256,12 @@ export default async function PlayerDashboardPage() {
 
       {/* Match history */}
       <section className="space-y-3">
-        <h2 className="font-heading text-lg font-semibold">Match history</h2>
+        <h2 className="font-heading text-lg font-semibold">
+          {t("player.historyTitle")}
+        </h2>
         {history.length === 0 ? (
           <p className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
-            You haven&apos;t played in any matches yet.
+            {t("player.noHistory")}
           </p>
         ) : (
           <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border">
@@ -276,7 +291,7 @@ export default async function PlayerDashboardPage() {
                     status={MATCH_STATE_TONE[h.state] ?? "neutral"}
                     showIcon={false}
                   >
-                    {h.state.replace(/_/g, " ")}
+                    {t(`matches.state.${h.state}`)}
                   </StatusBadge>
                   {h.state === "completed" && !h.playedConfirmedAt ? (
                     <ConfirmPlayedButton matchId={h.id} />

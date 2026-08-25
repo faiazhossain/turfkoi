@@ -29,8 +29,8 @@ export async function createNotifications(
   try {
     await db.insert(notifications).values(buildNotificationRows(params, userIds))
 
-    // Realtime payload is fully rendered server-side so clients can update
-    // the badge/toast without a refetch.
+    // Realtime payload carries localized key/params so clients can render the
+    // badge/toast in the active locale without a refetch.
     const config = getNotificationConfig(params.type)
     if (config) {
       const payload = params.payload as Record<string, unknown>

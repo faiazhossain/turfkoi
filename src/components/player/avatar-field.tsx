@@ -6,6 +6,7 @@ import { UserRoundIcon } from "lucide-react"
 
 import { Loader } from "@/components/ui/loader"
 import { StatusBadge } from "@/components/shared"
+import { useI18n } from "@/i18n/client"
 import { useImageUpload } from "@/hooks/use-image-upload"
 import { clientImageUrl } from "@/features/images/urls"
 import { setPlayerAvatarAction } from "@/features/images/actions"
@@ -19,6 +20,7 @@ export function AvatarField({
   avatarPublicId: string | null
 }) {
   const router = useRouter()
+  const { t } = useI18n()
   const inputRef = React.useRef<HTMLInputElement>(null)
   const { upload, uploading, error: uploadError } = useImageUpload()
 
@@ -39,7 +41,7 @@ export function AvatarField({
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={clientImageUrl(avatarPublicId, "avatar")}
-              alt="Your avatar"
+              alt={t("settings.avatarAlt")}
               className="size-full object-cover"
             />
           ) : (
@@ -56,10 +58,10 @@ export function AvatarField({
             <Loader size={14} className="size-3.5" aria-hidden />
           ) : null}
           {uploading
-            ? "Uploading"
+            ? t("settings.uploading")
             : avatarPublicId
-              ? "Change photo"
-              : "Upload photo"}
+              ? t("settings.changePhoto")
+              : t("settings.uploadPhoto")}
         </button>
       </div>
       <input
@@ -72,7 +74,9 @@ export function AvatarField({
           if (inputRef.current) inputRef.current.value = ""
         }}
       />
-      {uploadError ? <StatusBadge status="danger">{uploadError}</StatusBadge> : null}
+      {uploadError ? (
+        <StatusBadge status="danger">{t(uploadError)}</StatusBadge>
+      ) : null}
     </div>
   )
 }

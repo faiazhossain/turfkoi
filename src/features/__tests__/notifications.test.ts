@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest"
 
+import { en } from "@/i18n/dictionaries/en"
+import { translate } from "@/i18n/translate"
+
 import { buildNotificationRows } from "../notifications/rows"
 import { notificationPayloadSchemas } from "../notifications/schemas"
 import {
@@ -55,12 +58,35 @@ describe("notification registry", () => {
     }
   })
 
-  it("every sample payload renders a non-empty title", () => {
+  it("every sample payload resolves to a translated, non-empty title and body", () => {
     for (const [type, payload] of Object.entries(SAMPLE_PAYLOADS)) {
       const config = getNotificationConfig(type)
       expect(config, type).toBeDefined()
-      expect(config!.title(payload as never).length, type).toBeGreaterThan(0)
+      const title = config!.title(payload as never)
+      // Registry returns dictionary keys; resolve through the English
+      // dictionary so a missing key fails here (translate echoes unknown keys).
+      const rendered = translate(en, title.key, title.params)
+      expect(rendered, type).not.toBe(title.key)
+      expect(rendered.length, type).toBeGreaterThan(0)
+      const body = config!.body(payload as never)
+      if (body) {
+        const renderedBody = translate(en, body.key, body.params)
+        expect(renderedBody, type).not.toBe(body.key)
+      }
     }
+  })
+
+  it("interpolates params into translated strings", () => {
+    const config = getNotificationConfig("booking.confirmed")!
+    const title = config.title(SAMPLE_PAYLOADS["booking.confirmed"] as never)
+    expect(translate(en, title.key, title.params)).toBe(
+      "Booking confirmed at Dhanmondi Arena"
+    )
+    const cancelled = getNotificationConfig("booking.cancelled")!
+    const body = cancelled.body(SAMPLE_PAYLOADS["booking.cancelled"] as never)!
+    expect(translate(en, body.key, body.params)).toBe(
+      "2026-08-24 • 20:00 • refund ৳250"
+    )
   })
 
   it("hrefs are internal routes starting with /", () => {

@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
+import { useI18n } from "@/i18n/client"
 
 import type { FeedPage, NotificationDTO } from "../hooks"
 import { useNotifications } from "../hooks"
@@ -15,6 +16,7 @@ import { NotificationList } from "./notification-list"
  */
 export function NotificationsClient({ initial }: { initial: FeedPage }) {
   const router = useRouter()
+  const { t } = useI18n()
   const feed = useNotifications({ initialData: initial })
 
   const onOpen = (item: NotificationDTO, href?: string) => {
@@ -25,7 +27,9 @@ export function NotificationsClient({ initial }: { initial: FeedPage }) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="font-heading text-2xl font-semibold">Notifications</h1>
+        <h1 className="font-heading text-2xl font-semibold">
+          {t("notifications.title")}
+        </h1>
         {feed.unreadCount > 0 ? (
           <Button
             variant="outline"
@@ -33,7 +37,7 @@ export function NotificationsClient({ initial }: { initial: FeedPage }) {
             loading={feed.markAllPending}
             onClick={() => void feed.markAllRead()}
           >
-            Mark all read
+            {t("notifications.markAllRead")}
           </Button>
         ) : null}
       </div>

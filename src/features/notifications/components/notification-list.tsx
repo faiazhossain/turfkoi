@@ -6,6 +6,8 @@ import type { ComponentType } from "react"
 
 import { Button } from "@/components/ui/button"
 import { EmptyState } from "@/components/shared"
+import { useI18n } from "@/i18n/client"
+import type { Translator } from "@/i18n/translate"
 import { cn } from "@/lib/utils"
 
 import type { NotificationDTO, NotificationsFeed } from "../hooks"
@@ -22,22 +24,25 @@ interface Rendered {
 /**
  * Render a row from its typed registry config. Unknown types or payloads
  * that fail zod validation (e.g. legacy rows) degrade to a generic entry
- * instead of crashing the list.
+ * instead of crashing the list. Titles/bodies are dictionary keys resolved
+ * through the active locale.
  */
-function renderNotification(n: NotificationDTO): Rendered {
+function renderNotification(n: NotificationDTO, t: Translator): Rendered {
   const config = getNotificationConfig(n.type)
   const schema = notificationPayloadSchemas[n.type as keyof typeof notificationPayloadSchemas]
   const parsed = config && schema ? schema.safeParse(n.payload) : null
   if (config && parsed?.success) {
     const payload = parsed.data as never
+    const title = config.title(payload)
+    const body = config.body(payload)
     return {
       Icon: config.icon,
-      title: config.title(payload),
-      body: config.body(payload),
+      title: t(title.key, title.params),
+      body: body ? t(body.key, body.params) : null,
       href: config.href?.(payload),
     }
   }
-  return { Icon: BellIcon, title: "New notification", body: null }
+  return { Icon: BellIcon, title: t("notifications.newNotification"), body: null }
 }
 
 const PRIORITY_TONE: Record<string, string> = {
@@ -53,7 +58,8 @@ export function NotificationRow({
   item: NotificationDTO
   onOpen: (item: NotificationDTO, href?: string) => void
 }) {
-  const { Icon, title, body, href } = renderNotification(item)
+  const { t } = useI18n()
+  const { Icon, title, body, href } = renderNotification(item, t)
   const unread = !item.readAt
   return (
     <button
@@ -85,7 +91,7 @@ export function NotificationRow({
           {unread ? (
             <span
               className="ml-auto size-2 shrink-0 rounded-full bg-primary"
-              aria-label="Unread"
+              aria-label={t("notifications.unreadAria")}
             />
           ) : null}
         </span>
@@ -114,12 +120,14 @@ export function NotificationList({
   feed: NotificationsFeed
   onOpen: (item: NotificationDTO, href?: string) => void
 }) {
+  const { t } = useI18n()
+
   if (feed.items.length === 0) {
     return (
       <EmptyState
         icon={BellIcon}
-        title="You're all caught up"
-        description="Booking updates, turf approvals, and more will show up here."
+        title={t("notifications.emptyTitle")}
+        description={t("notifications.emptyDesc")}
         className="border-none py-6"
       />
     )
@@ -139,7 +147,7 @@ export function NotificationList({
           disabled={!feed.hasNextPage || feed.isFetchingNextPage}
           onClick={feed.fetchNextPage}
         >
-          Load more
+          {t("notifications.loadMore")}
         </Button>
       ) : null}
     </div>
