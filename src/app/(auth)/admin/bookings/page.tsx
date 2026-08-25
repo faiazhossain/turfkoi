@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import Link from "next/link"
 
 import {
@@ -18,6 +19,12 @@ import {
   listBookingsAdmin,
   listRefundRequests,
 } from "@/features/admin/queries"
+import { getT } from "@/i18n/server"
+import { buildMetadata } from "@/i18n/metadata"
+
+export async function generateMetadata(): Promise<Metadata> {
+  return buildMetadata({ titleKey: "metadata.adminBookingsTitle" })
+}
 
 const TONE: Record<string, "success" | "warning" | "neutral" | "danger"> = {
   held: "warning",
@@ -35,6 +42,7 @@ export default async function AdminBookingsPage({
 }: {
   searchParams: Promise<{ status?: string }>
 }) {
+  const t = await getT()
   const { status } = await searchParams
   const [bookings, pendingRefunds, user] = await Promise.all([
     listBookingsAdmin({ status, limit: 50 }),
@@ -45,14 +53,13 @@ export default async function AdminBookingsPage({
   return (
     <div className="space-y-8">
       <section className="space-y-3">
-        <h2 className="font-heading text-lg font-semibold">Pending refunds</h2>
+        <h2 className="font-heading text-lg font-semibold">{t("admin.bookings.pendingRefundsTitle")}</h2>
         <p className="text-sm text-muted-foreground">
-          Refunds over ৳5,000 require a second admin to approve. The requester
-          can&apos;t approve their own request.
+          {t("admin.bookings.refundsNote")}
         </p>
         {pendingRefunds.length === 0 ? (
           <p className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
-            No pending refund requests.
+            {t("admin.bookings.noPendingRefunds")}
           </p>
         ) : (
           <ul className="space-y-2">
@@ -68,11 +75,11 @@ export default async function AdminBookingsPage({
                     <p className="font-heading font-medium">
                       ৳{amount.toLocaleString()}{" "}
                       <span className="text-xs font-normal text-muted-foreground">
-                        refund
+                        {t("admin.bookings.refund")}
                       </span>
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {r.turfName} · requested by {r.requestedByPhone}
+                      {r.turfName} · {t("admin.bookings.requestedBy", { phone: r.requestedByPhone })}
                     </p>
                     {r.reason ? (
                       <p className="text-xs italic text-muted-foreground">
@@ -93,14 +100,14 @@ export default async function AdminBookingsPage({
 
       <section className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="font-heading text-lg font-semibold">Bookings</h2>
+          <h2 className="font-heading text-lg font-semibold">{t("admin.bookings.title")}</h2>
           <form className="flex items-center gap-2 text-sm">
             <select
               name="status"
               defaultValue={status ?? ""}
               className="rounded-lg border border-border bg-background px-2 py-1.5"
             >
-              <option value="">All statuses</option>
+              <option value="">{t("admin.allStatuses")}</option>
               {[
                 "held",
                 "payment_pending",
@@ -110,7 +117,7 @@ export default async function AdminBookingsPage({
                 "refunded",
               ].map((s) => (
                 <option key={s} value={s}>
-                  {s.replace(/_/g, " ")}
+                  {t(`player.bookingStatus.${s}`)}
                 </option>
               ))}
             </select>
@@ -118,24 +125,24 @@ export default async function AdminBookingsPage({
               type="submit"
               className="rounded-lg border border-border px-3 py-1.5 font-medium hover:bg-muted"
             >
-              Filter
+              {t("admin.filter")}
             </button>
           </form>
         </div>
         {bookings.length === 0 ? (
           <p className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-            No bookings match.
+            {t("admin.bookings.empty")}
           </p>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Turf</TableHead>
-                <TableHead>Booker</TableHead>
-                <TableHead>Slot</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Total</TableHead>
-                <TableHead>Refund</TableHead>
+                <TableHead>{t("admin.bookings.colTurf")}</TableHead>
+                <TableHead>{t("admin.bookings.colBooker")}</TableHead>
+                <TableHead>{t("admin.bookings.colSlot")}</TableHead>
+                <TableHead>{t("admin.bookings.colStatus")}</TableHead>
+                <TableHead>{t("admin.bookings.colTotal")}</TableHead>
+                <TableHead>{t("admin.bookings.colRefund")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -159,7 +166,7 @@ export default async function AdminBookingsPage({
                     </TableCell>
                     <TableCell>
                       <StatusBadge status={TONE[b.status] ?? "neutral"} showIcon={false}>
-                        {b.status.replace(/_/g, " ")}
+                        {t(`player.bookingStatus.${b.status}`)}
                       </StatusBadge>
                     </TableCell>
                     <TableCell className="tabular-nums">

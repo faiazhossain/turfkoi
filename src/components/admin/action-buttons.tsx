@@ -12,6 +12,7 @@ import {
   resolveMatchDisputeAction,
   updateReportStatusAction,
 } from "@/features/admin/actions"
+import { useI18n } from "@/i18n/client"
 import type { reportStatus } from "@/db/schema"
 
 type ReportStatus = (typeof reportStatus.enumValues)[number]
@@ -19,18 +20,19 @@ type ReportStatus = (typeof reportStatus.enumValues)[number]
 /** Verify a pending turf. */
 export function VerifyTurfButton({ turfId }: { turfId: string }) {
   const router = useRouter()
+  const { t } = useI18n()
   const [pending, start] = useTransition()
   function run() {
     start(async () => {
       const res = await verifyTurfAction({ turfId })
-      if (!res.ok) { toast.error(res.error); return }
-      toast.success("Turf verified.")
+      if (!res.ok) { toast.error(t(res.error)); return }
+      toast.success(t("admin.turfs.verifiedToast"))
       router.refresh()
     })
   }
   return (
     <Button size="sm" onClick={run} loading={pending}>
-      Verify
+      {t("admin.turfs.verify")}
     </Button>
   )
 }
@@ -44,18 +46,19 @@ export function UserStatusToggle({
   status: "active" | "suspended" | "deleted"
 }) {
   const router = useRouter()
+  const { t } = useI18n()
   const [pending, start] = useTransition()
   const next = status === "active" ? "suspended" : "active"
   function run() {
     start(async () => {
       const res = await setUserStatusAction({ userId, status: next })
-      if (!res.ok) { toast.error(res.error); return }
-      toast.success(`User ${next}.`)
+      if (!res.ok) { toast.error(t(res.error)); return }
+      toast.success(t(next === "suspended" ? "admin.users.userSuspendedToast" : "admin.users.userActivatedToast"))
       router.refresh()
     })
   }
   if (status === "deleted") {
-    return <span className="text-xs text-muted-foreground">deleted</span>
+    return <span className="text-xs text-muted-foreground">{t("admin.users.status.deleted")}</span>
   }
   return (
     <Button
@@ -64,7 +67,7 @@ export function UserStatusToggle({
       onClick={run}
       loading={pending}
     >
-      {next === "suspended" ? "Suspend" : "Activate"}
+      {t(next === "suspended" ? "admin.users.suspend" : "admin.users.activate")}
     </Button>
   )
 }
@@ -80,12 +83,17 @@ export function RoleToggle({
   enabled: boolean
 }) {
   const router = useRouter()
+  const { t } = useI18n()
   const [pending, start] = useTransition()
   function run() {
     start(async () => {
       const res = await setUserRoleAction({ userId, role, on: !enabled })
-      if (!res.ok) { toast.error(res.error); return }
-      toast.success(`${role} ${!enabled ? "granted" : "removed"}.`)
+      if (!res.ok) { toast.error(t(res.error)); return }
+      toast.success(
+        t(!enabled ? "admin.users.roleGrantedToast" : "admin.users.roleRemovedToast", {
+          role: t(`admin.users.roles.${role}`),
+        })
+      )
       router.refresh()
     })
   }
@@ -97,7 +105,7 @@ export function RoleToggle({
       loading={pending}
       aria-pressed={enabled}
     >
-      {role.replace("_", " ")}
+      {t(`admin.users.roles.${role}`)}
     </Button>
   )
 }
@@ -113,6 +121,7 @@ export function ResolveDisputeButtons({
   awayScore: number | null
 }) {
   const router = useRouter()
+  const { t } = useI18n()
   const [pending, start] = useTransition()
 
   function confirm() {
@@ -123,8 +132,8 @@ export function ResolveDisputeButtons({
         homeScore: homeScore ?? undefined,
         awayScore: awayScore ?? undefined,
       })
-      if (!res.ok) { toast.error(res.error); return }
-      toast.success("Result confirmed.")
+      if (!res.ok) { toast.error(t(res.error)); return }
+      toast.success(t("admin.matches.resultConfirmedToast"))
       router.refresh()
     })
   }
@@ -132,8 +141,8 @@ export function ResolveDisputeButtons({
   function scratch() {
     start(async () => {
       const res = await resolveMatchDisputeAction({ matchId, decision: "scratch" })
-      if (!res.ok) { toast.error(res.error); return }
-      toast.success("Match scratched (cancelled).")
+      if (!res.ok) { toast.error(t(res.error)); return }
+      toast.success(t("admin.matches.scratchedToast"))
       router.refresh()
     })
   }
@@ -141,10 +150,10 @@ export function ResolveDisputeButtons({
   return (
     <div className="flex items-center gap-1">
       <Button size="sm" onClick={confirm} loading={pending}>
-        Confirm result
+        {t("admin.matches.confirmResult")}
       </Button>
       <Button size="sm" variant="destructive" onClick={scratch} loading={pending}>
-        Scratch
+        {t("admin.matches.scratch")}
       </Button>
     </div>
   )
@@ -159,6 +168,7 @@ export function ReportStatusSelect({
   status: ReportStatus
 }) {
   const router = useRouter()
+  const { t } = useI18n()
   const [pending, start] = useTransition()
   const next: Record<ReportStatus, ReportStatus> = {
     pending: "reviewing",
@@ -172,14 +182,14 @@ export function ReportStatusSelect({
         reportId,
         status: next[status],
       })
-      if (!res.ok) { toast.error(res.error); return }
-      toast.success(`Report → ${next[status]}.`)
+      if (!res.ok) { toast.error(t(res.error)); return }
+      toast.success(t("admin.reports.statusToast", { status: t(`admin.reports.status.${next[status]}`) }))
       router.refresh()
     })
   }
   return (
     <Button size="sm" variant="outline" onClick={run} loading={pending}>
-      → {next[status]}
+      {t("admin.reports.nextLabel", { status: t(`admin.reports.status.${next[status]}`) })}
     </Button>
   )
 }

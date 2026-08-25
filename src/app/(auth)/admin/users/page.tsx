@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import Link from "next/link"
 
 import { Input } from "@/components/ui/input"
@@ -5,6 +6,12 @@ import { StatusBadge } from "@/components/shared"
 import { RoleToggle, UserStatusToggle } from "@/components/admin"
 import { listUsers } from "@/features/admin/queries"
 import type { userRole } from "@/db/schema"
+import { getT } from "@/i18n/server"
+import { buildMetadata } from "@/i18n/metadata"
+
+export async function generateMetadata(): Promise<Metadata> {
+  return buildMetadata({ titleKey: "metadata.adminUsersTitle" })
+}
 
 type Role = (typeof userRole.enumValues)[number]
 const ALL_ROLES: Role[] = ["admin", "turf_owner", "team_owner", "player"]
@@ -14,32 +21,33 @@ export default async function AdminUsersPage({
 }: {
   searchParams: Promise<{ q?: string }>
 }) {
+  const t = await getT()
   const { q } = await searchParams
   const users = await listUsers(q)
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="font-heading text-lg font-semibold">Users</h2>
+        <h2 className="font-heading text-lg font-semibold">{t("admin.users.title")}</h2>
         <form className="flex items-center gap-2">
           <Input
             name="q"
             defaultValue={q ?? ""}
-            placeholder="Search by phone"
+            placeholder={t("admin.searchByPhone")}
             className="w-56"
           />
           <button
             type="submit"
             className="rounded-lg border border-border px-3 py-1.5 text-sm font-medium hover:bg-muted"
           >
-            Search
+            {t("common.search")}
           </button>
         </form>
       </div>
 
       {users.length === 0 ? (
         <p className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-          No users match.
+          {t("admin.users.empty")}
         </p>
       ) : (
         <ul className="space-y-2">
@@ -50,10 +58,10 @@ export default async function AdminUsersPage({
             >
               <div className="min-w-0">
                 <p className="font-heading font-medium">
-                  {u.name ?? "Unnamed"}
+                  {u.name ?? t("admin.users.unnamed")}
                   {u.status !== "active" ? (
                     <StatusBadge status="warning" showIcon={false} className="ml-2">
-                      {u.status}
+                      {t(`admin.users.status.${u.status}`)}
                     </StatusBadge>
                   ) : null}
                 </p>
@@ -79,7 +87,7 @@ export default async function AdminUsersPage({
       )}
       <p className="text-xs text-muted-foreground">
         <Link href="/admin" className="hover:underline">
-          ← Back to overview
+          {t("admin.backToOverview")}
         </Link>
       </p>
     </div>

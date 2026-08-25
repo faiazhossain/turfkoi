@@ -1,3 +1,5 @@
+import type { Metadata } from "next"
+
 import {
   Table,
   TableBody,
@@ -8,6 +10,12 @@ import {
 } from "@/components/ui/table"
 import { StatusBadge } from "@/components/shared"
 import { listTransactionsAdmin } from "@/features/admin/queries"
+import { getT } from "@/i18n/server"
+import { buildMetadata } from "@/i18n/metadata"
+
+export async function generateMetadata(): Promise<Metadata> {
+  return buildMetadata({ titleKey: "metadata.adminTransactionsTitle" })
+}
 
 const TONE: Record<string, "success" | "warning" | "neutral" | "danger" | "info"> = {
   created: "neutral",
@@ -24,6 +32,7 @@ export default async function AdminTransactionsPage({
 }: {
   searchParams: Promise<{ status?: string }>
 }) {
+  const t = await getT()
   const { status } = await searchParams
   const txns = await listTransactionsAdmin({
     status: status === "failed" ? "failed" : status,
@@ -33,14 +42,14 @@ export default async function AdminTransactionsPage({
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="font-heading text-lg font-semibold">Transactions</h2>
+        <h2 className="font-heading text-lg font-semibold">{t("admin.txns.title")}</h2>
         <form className="flex items-center gap-2 text-sm">
           <select
             name="status"
             defaultValue={status ?? ""}
             className="rounded-lg border border-border bg-background px-2 py-1.5"
           >
-            <option value="">All statuses</option>
+            <option value="">{t("admin.allStatuses")}</option>
             {[
               "created",
               "pending",
@@ -51,7 +60,7 @@ export default async function AdminTransactionsPage({
               "partially_refunded",
             ].map((s) => (
               <option key={s} value={s}>
-                {s.replace(/_/g, " ")}
+                {t(`admin.txns.status.${s}`)}
               </option>
             ))}
           </select>
@@ -59,48 +68,48 @@ export default async function AdminTransactionsPage({
             type="submit"
             className="rounded-lg border border-border px-3 py-1.5 font-medium hover:bg-muted"
           >
-            Filter
+            {t("admin.filter")}
           </button>
         </form>
       </div>
       {txns.length === 0 ? (
         <p className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-          No transactions match.
+          {t("admin.txns.empty")}
         </p>
       ) : (
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Payer</TableHead>
-              <TableHead>Amount</TableHead>
-              <TableHead>Fee</TableHead>
-              <TableHead>Provider</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Ref</TableHead>
-              <TableHead>When</TableHead>
+              <TableHead>{t("admin.txns.colPayer")}</TableHead>
+              <TableHead>{t("admin.txns.colAmount")}</TableHead>
+              <TableHead>{t("admin.txns.colFee")}</TableHead>
+              <TableHead>{t("admin.txns.colProvider")}</TableHead>
+              <TableHead>{t("admin.txns.colStatus")}</TableHead>
+              <TableHead>{t("admin.txns.colRef")}</TableHead>
+              <TableHead>{t("admin.txns.colWhen")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {txns.map((t) => (
-              <TableRow key={t.id}>
-                <TableCell className="font-mono text-xs">{t.payerPhone}</TableCell>
+            {txns.map((txn) => (
+              <TableRow key={txn.id}>
+                <TableCell className="font-mono text-xs">{txn.payerPhone}</TableCell>
                 <TableCell className="tabular-nums">
-                  ৳{Number(t.amount).toLocaleString()}
+                  ৳{Number(txn.amount).toLocaleString()}
                 </TableCell>
                 <TableCell className="tabular-nums text-muted-foreground">
-                  ৳{Number(t.platformFee).toLocaleString()}
+                  ৳{Number(txn.platformFee).toLocaleString()}
                 </TableCell>
-                <TableCell className="text-xs">{t.provider}</TableCell>
+                <TableCell className="text-xs">{txn.provider}</TableCell>
                 <TableCell>
-                  <StatusBadge status={TONE[t.status] ?? "neutral"} showIcon={false}>
-                    {t.status.replace(/_/g, " ")}
+                  <StatusBadge status={TONE[txn.status] ?? "neutral"} showIcon={false}>
+                    {t(`admin.txns.status.${txn.status}`)}
                   </StatusBadge>
                 </TableCell>
                 <TableCell className="font-mono text-xs text-muted-foreground">
-                  {t.providerReference ?? "—"}
+                  {txn.providerReference ?? "—"}
                 </TableCell>
                 <TableCell className="font-mono text-xs">
-                  {t.createdAt.toISOString().slice(0, 16)}
+                  {txn.createdAt.toISOString().slice(0, 16)}
                 </TableCell>
               </TableRow>
             ))}

@@ -37,8 +37,8 @@ export type ActionResult =
 
 async function requireAdmin(): Promise<{ id: string } | { error: string }> {
   const user = await getCurrentUser()
-  if (!user) return { error: "You are not signed in." }
-  if (!user.roles.includes("admin")) return { error: "Admins only." }
+  if (!user) return { error: "errors.notSignedIn" }
+  if (!user.roles.includes("admin")) return { error: "errors.adminOnly" }
   return { id: user.id }
 }
 
@@ -142,7 +142,7 @@ export async function verifyTurfAction(
 ): Promise<ActionResult> {
   const parsed = verifyTurfSchema.safeParse(input)
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid" }
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "errors.invalid" }
   }
   const actor = await adminActor()
   if ("error" in actor) return actor
@@ -168,10 +168,10 @@ export async function verifyTurfAction(
     if (seeded.length > 0) {
       return {
         ok: false,
-        error: "This turf hasn't been claimed by its owner yet.",
+        error: "admin.errors.turfUnclaimed",
       }
     }
-    return { ok: false, error: "Turf not found or already verified." }
+    return { ok: false, error: "admin.errors.turfNotFoundVerified" }
   }
   revalidatePath("/admin/turfs")
   revalidatePath("/admin")
@@ -187,14 +187,14 @@ export async function setUserStatusAction(
 ): Promise<ActionResult> {
   const parsed = setUserStatusSchema.safeParse(input)
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid" }
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "errors.invalid" }
   }
   const actor = await adminActor()
   if ("error" in actor) return actor
 
   // Guardrail: never suspend yourself.
   if (parsed.data.userId === actor.id && parsed.data.status === "suspended") {
-    return { ok: false, error: "You can't suspend your own account." }
+    return { ok: false, error: "admin.errors.cantSuspendSelf" }
   }
 
   await db
@@ -211,7 +211,7 @@ export async function setUserRoleAction(
 ): Promise<ActionResult> {
   const parsed = setUserRoleSchema.safeParse(input)
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid" }
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "errors.invalid" }
   }
   const actor = await adminActor()
   if ("error" in actor) return actor
@@ -222,7 +222,7 @@ export async function setUserRoleAction(
     parsed.data.role === "admin" &&
     !parsed.data.on
   ) {
-    return { ok: false, error: "You can't remove your own admin role." }
+    return { ok: false, error: "admin.errors.cantRemoveOwnAdmin" }
   }
 
   if (parsed.data.on) {
@@ -253,7 +253,7 @@ export async function requestRefundAction(
 ): Promise<ActionResult & { needsApproval?: boolean }> {
   const parsed = requestRefundSchema.safeParse(input)
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid" }
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "errors.invalid" }
   }
   const actor = await adminActor()
   if ("error" in actor) return actor
@@ -266,13 +266,13 @@ export async function requestRefundAction(
     .from(bookings)
     .where(eq(bookings.id, bookingId))
     .limit(1)
-  if (!booking) return { ok: false, error: "Booking not found." }
+  if (!booking) return { ok: false, error: "booking.errors.notFound" }
   if (
     !["confirmed", "payment_pending", "held", "completed", "cancelled"].includes(
       booking.status
     )
   ) {
-    return { ok: false, error: "This booking can't be refunded." }
+    return { ok: false, error: "admin.errors.notRefundable" }
   }
 
   // Stage the request row (always — audit trail).
@@ -309,7 +309,7 @@ export async function approveRefundAction(
 ): Promise<ActionResult> {
   const parsed = approveRefundSchema.safeParse(input)
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid" }
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "errors.invalid" }
   }
   const actor = await adminActor()
   if ("error" in actor) return actor
@@ -319,15 +319,15 @@ export async function approveRefundAction(
     .from(refundRequests)
     .where(eq(refundRequests.id, parsed.data.refundRequestId))
     .limit(1)
-  if (!req) return { ok: false, error: "Refund request not found." }
+  if (!req) return { ok: false, error: "admin.errors.refundNotFound" }
   if (req.status !== "pending") {
-    return { ok: false, error: "Refund request is no longer pending." }
+    return { ok: false, error: "admin.errors.refundNotPending" }
   }
   // H4: dual-control — the requester cannot approve their own request.
   if (req.requestedBy === actor.id) {
     return {
       ok: false,
-      error: "Dual-control: the requesting admin can't approve their own refund.",
+      error: "admin.errors.refundSelfApprove",
     }
   }
 
@@ -352,7 +352,7 @@ export async function rejectRefundAction(
 ): Promise<ActionResult> {
   const parsed = rejectRefundSchema.safeParse(input)
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid" }
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "errors.invalid" }
   }
   const actor = await adminActor()
   if ("error" in actor) return actor
@@ -368,7 +368,7 @@ export async function rejectRefundAction(
     )
     .returning({ id: refundRequests.id })
   if (updated.length === 0) {
-    return { ok: false, error: "Refund request not found or no longer pending." }
+    return { ok: false, error: "admin.errors.refundNotFoundOrPending" }
   }
   revalidatePath("/admin/bookings")
   return { ok: true, id: updated[0].id }
@@ -383,7 +383,7 @@ export async function resolveMatchDisputeAction(
 ): Promise<ActionResult> {
   const parsed = resolveMatchDisputeSchema.safeParse(input)
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid" }
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "errors.invalid" }
   }
   const actor = await adminActor()
   if ("error" in actor) return actor
@@ -395,9 +395,9 @@ export async function resolveMatchDisputeAction(
     .from(matches)
     .where(eq(matches.id, matchId))
     .limit(1)
-  if (!match) return { ok: false, error: "Match not found." }
+  if (!match) return { ok: false, error: "matches.errors.matchNotFound" }
   if (match.resultStatus !== "disputed" && match.state !== "disputed") {
-    return { ok: false, error: "Match isn't in a disputed state." }
+    return { ok: false, error: "admin.errors.notDisputed" }
   }
 
   if (decision === "scratch") {
@@ -440,7 +440,7 @@ export async function updateReportStatusAction(
 ): Promise<ActionResult> {
   const parsed = updateReportStatusSchema.safeParse(input)
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid" }
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "errors.invalid" }
   }
   const actor = await adminActor()
   if ("error" in actor) return actor

@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import Link from "next/link"
 import { AlertTriangleIcon, ShieldAlertIcon } from "lucide-react"
 
@@ -5,12 +6,20 @@ import { EmptyState } from "@/components/shared"
 import { KpiTile } from "@/components/turfs"
 import { PayoutsPanel } from "@/components/bookings/payouts-panel"
 import { getAdminKPIs, listDisputedMatches, listRefundRequests, listReports } from "@/features/admin/queries"
+import { getT } from "@/i18n/server"
+import { buildMetadata } from "@/i18n/metadata"
+
+export async function generateMetadata(): Promise<Metadata> {
+  return buildMetadata({ titleKey: "metadata.adminTitle" })
+}
 
 function fmtBdt(n: number) {
   return `৳${n.toLocaleString()}`
 }
 
 export default async function AdminOverviewPage() {
+  const t = await getT()
+
   // This week's payout window (Mon–Sun, UTC date strings).
   const now = new Date()
   const day = now.getUTCDay()
@@ -36,39 +45,39 @@ export default async function AdminOverviewPage() {
     <div className="space-y-8">
       <section className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
         <KpiTile
-          label="Users"
+          label={t("admin.overview.kpiUsers")}
           value={kpis.totalUsers}
-          hint="Active + suspended"
+          hint={t("admin.overview.kpiUsersHint")}
         />
         <KpiTile
-          label="Turfs"
+          label={t("admin.overview.kpiTurfs")}
           value={`${kpis.totalTurfs}`}
-          hint={`${kpis.pendingTurfs} pending verification`}
+          hint={t("admin.overview.kpiPendingVerification", { count: kpis.pendingTurfs })}
         />
         <KpiTile
-          label="Teams"
+          label={t("admin.overview.kpiTeams")}
           value={kpis.totalTeams}
         />
         <KpiTile
-          label="Active bookings"
+          label={t("admin.overview.kpiActiveBookings")}
           value={kpis.activeBookings}
-          hint="Held → confirmed"
+          hint={t("admin.overview.kpiActiveBookingsHint")}
         />
         <KpiTile
-          label="Revenue (30d)"
+          label={t("admin.overview.kpiRevenue")}
           value={fmtBdt(kpis.revenue30d)}
-          hint="Gross transaction volume"
+          hint={t("admin.overview.kpiRevenueHint")}
         />
         <KpiTile
-          label="Failed txns (30d)"
+          label={t("admin.overview.kpiFailedTxns")}
           value={kpis.failedTransactions}
         />
         <KpiTile
-          label="Pending payouts"
+          label={t("admin.overview.kpiPendingPayouts")}
           value={`${kpis.pendingPayoutsCount} · ${fmtBdt(kpis.pendingPayoutsAmount)}`}
         />
         <KpiTile
-          label="Open reports"
+          label={t("admin.overview.kpiOpenReports")}
           value={kpis.openReports}
         />
       </section>
@@ -76,7 +85,7 @@ export default async function AdminOverviewPage() {
       {/* Attention queue: refunds over disputes over reports. */}
       {(pendingRefunds.length > 0 || disputes.length > 0 || openReports.length > 0) && (
         <section className="space-y-3">
-          <h2 className="font-heading text-lg font-semibold">Needs attention</h2>
+          <h2 className="font-heading text-lg font-semibold">{t("admin.overview.needsAttention")}</h2>
           <ul className="grid gap-2 sm:grid-cols-3">
             {pendingRefunds.length > 0 ? (
               <li className="rounded-lg border border-border bg-card p-4">
@@ -86,12 +95,13 @@ export default async function AdminOverviewPage() {
                     href="/admin/bookings"
                     className="font-heading text-sm font-semibold hover:underline"
                   >
-                    {pendingRefunds.length} pending refund request
-                    {pendingRefunds.length === 1 ? "" : "s"}
+                    {t(pendingRefunds.length === 1 ? "admin.overview.pendingRefundsOne" : "admin.overview.pendingRefundsMany", {
+                      count: pendingRefunds.length,
+                    })}
                   </Link>
                 </div>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Refunds over ৳5,000 need a second admin.
+                  {t("admin.overview.refundsSecondAdminHint")}
                 </p>
               </li>
             ) : null}
@@ -103,12 +113,13 @@ export default async function AdminOverviewPage() {
                     href="/admin/matches"
                     className="font-heading text-sm font-semibold hover:underline"
                   >
-                    {disputes.length} disputed match
-                    {disputes.length === 1 ? "" : "es"}
+                    {t(disputes.length === 1 ? "admin.overview.disputedOne" : "admin.overview.disputedMany", {
+                      count: disputes.length,
+                    })}
                   </Link>
                 </div>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Confirm or scratch each result.
+                  {t("admin.overview.disputedHint")}
                 </p>
               </li>
             ) : null}
@@ -120,8 +131,9 @@ export default async function AdminOverviewPage() {
                     href="/admin/reports"
                     className="font-heading text-sm font-semibold hover:underline"
                   >
-                    {openReports.length} open report
-                    {openReports.length === 1 ? "" : "s"}
+                    {t(openReports.length === 1 ? "admin.overview.openReportsOne" : "admin.overview.openReportsMany", {
+                      count: openReports.length,
+                    })}
                   </Link>
                 </div>
               </li>
@@ -138,8 +150,8 @@ export default async function AdminOverviewPage() {
 
       {kpis.totalTurfs === 0 && kpis.totalUsers === 0 ? (
         <EmptyState
-          title="Nothing to oversee yet"
-          description="Once users sign up and turfs are listed, KPIs and oversight queues will appear here."
+          title={t("admin.overview.emptyTitle")}
+          description={t("admin.overview.emptyDesc")}
         />
       ) : null}
     </div>

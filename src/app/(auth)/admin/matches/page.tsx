@@ -1,22 +1,27 @@
+import type { Metadata } from "next"
 import Link from "next/link"
 
 import { StatusBadge } from "@/components/shared"
 import { ResolveDisputeButtons } from "@/components/admin"
 import { listDisputedMatches } from "@/features/admin/queries"
+import { getT } from "@/i18n/server"
+import { buildMetadata } from "@/i18n/metadata"
+
+export async function generateMetadata(): Promise<Metadata> {
+  return buildMetadata({ titleKey: "metadata.adminMatchesTitle" })
+}
 
 export default async function AdminMatchesPage() {
+  const t = await getT()
   const matches = await listDisputedMatches()
 
   return (
     <div className="space-y-4">
-      <h2 className="font-heading text-lg font-semibold">Disputed matches</h2>
-      <p className="text-sm text-muted-foreground">
-        Confirm the result (optionally overriding the score) or scratch the
-        match entirely. Decision set per audit B4.
-      </p>
+      <h2 className="font-heading text-lg font-semibold">{t("admin.matches.title")}</h2>
+      <p className="text-sm text-muted-foreground">{t("admin.matches.desc")}</p>
       {matches.length === 0 ? (
         <p className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-          No matches are currently disputed.
+          {t("admin.matches.empty")}
         </p>
       ) : (
         <ul className="space-y-2">
@@ -34,18 +39,18 @@ export default async function AdminMatchesPage() {
                     {m.turfName}
                   </Link>
                   <StatusBadge status="danger" showIcon={false}>
-                    {m.state.replace(/_/g, " ")}
+                    {t(`matches.state.${m.state}`)}
                   </StatusBadge>
                 </div>
                 <p className="font-mono text-xs text-muted-foreground">
                   {m.createdAt.toISOString().slice(0, 10)}
                   {m.kickoffAt
-                    ? ` · kickoff ${m.kickoffAt.toISOString().slice(0, 16)}`
+                    ? ` · ${t("admin.matches.kickoff", { time: m.kickoffAt.toISOString().slice(0, 16) })}`
                     : ""}
                 </p>
                 {m.homeScore != null && m.awayScore != null ? (
                   <p className="text-sm tabular-nums">
-                    Submitted score: {m.homeScore}–{m.awayScore}
+                    {t("admin.matches.submittedScore", { home: m.homeScore, away: m.awayScore })}
                   </p>
                 ) : null}
               </div>

@@ -22,8 +22,8 @@ export const requestRefundSchema = z.object({
   bookingId: z.string().uuid(),
   amount: z
     .number()
-    .min(0, "Refund amount must be positive")
-    .max(1_000_000, "Refund amount is unreasonably large"),
+    .min(0, "admin.errors.refundAmountPositive")
+    .max(1_000_000, "admin.errors.refundAmountTooHigh"),
   reason: z.string().max(500).optional(),
 })
 export type RequestRefundValues = z.infer<typeof requestRefundSchema>

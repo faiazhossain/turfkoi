@@ -121,7 +121,7 @@ export async function createClaimInviteAction(input: {
   const turf = turfRows[0]
   if (!turf) return { ok: false, error: "turfs.errors.turfNotFound" }
   if (turf.ownerId !== null) {
-    return { ok: false, error: "That turf has already been claimed." }
+    return { ok: false, error: "turfs.errors.alreadyClaimed" }
   }
 
   // Phone the admin typed wins; otherwise fall back to the phone the owner

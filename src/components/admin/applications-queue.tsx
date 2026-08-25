@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select"
 import { LocationPicker } from "@/components/map"
 import type { GeoPoint } from "@/db/geo"
+import { useI18n } from "@/i18n/client"
 
 import { InvitePanel } from "./invite-panel"
 import {
@@ -61,6 +62,7 @@ export type PendingApplication = {
  * appears mints the claim link for the owner.
  */
 export function ApproveApplicationPanel({ application }: { application: PendingApplication }) {
+  const { t } = useI18n()
   const [serverError, setServerError] = useState<string | null>(null)
   const [open, setOpen] = useState(false)
   const [turfId, setTurfId] = useState<string | null>(null)
@@ -106,7 +108,7 @@ export function ApproveApplicationPanel({ application }: { application: PendingA
       <div className="flex gap-2">
         <Button size="sm" variant="outline" onClick={() => setOpen(true)}>
           <CheckIcon className="size-3.5" aria-hidden />
-          Approve
+          {t("admin.applications.approve")}
         </Button>
         <RejectApplicationButton applicationId={application.id} />
       </div>
@@ -117,14 +119,14 @@ export function ApproveApplicationPanel({ application }: { application: PendingA
     <div className="w-full space-y-4 rounded-lg border border-border bg-muted/40 p-3">
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
         <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Turf name" error={form.formState.errors.name?.message}>
+          <Field label={t("ownATurf.turfName")} error={form.formState.errors.name?.message}>
             <Input {...form.register("name")} />
           </Field>
-          <Field label="Slug" error={form.formState.errors.slug?.message}>
+          <Field label={t("team.form.slugLabel")} error={form.formState.errors.slug?.message}>
             <Input {...form.register("slug")} placeholder="my-turf" />
           </Field>
         </div>
-        <Field label="Format">
+        <Field label={t("claim.format")}>
           <Select
             value={form.watch("format")}
             onValueChange={(v) => form.setValue("format", v as TurfFormat)}
@@ -143,7 +145,7 @@ export function ApproveApplicationPanel({ application }: { application: PendingA
             </SelectContent>
           </Select>
         </Field>
-        <Field label="Verify pin on map" error={form.formState.errors.coords?.message}>
+        <Field label={t("admin.applications.verifyPin")} error={form.formState.errors.coords?.message}>
           <LocationPicker
             value={form.watch("coords") ?? null}
             label="turf"
@@ -167,20 +169,20 @@ export function ApproveApplicationPanel({ application }: { application: PendingA
           />
         </Field>
         <div className="grid gap-3 sm:grid-cols-3">
-          <Field label="Area" error={form.formState.errors.area?.message}>
-            <Input {...form.register("area")} placeholder="Dhanmondi" />
+          <Field label={t("ownATurf.area")} error={form.formState.errors.area?.message}>
+            <Input {...form.register("area")} placeholder={t("ownATurf.areaPlaceholder")} />
           </Field>
-          <Field label="City" error={form.formState.errors.city?.message}>
-            <Input {...form.register("city")} placeholder="Dhaka" />
+          <Field label={t("ownATurf.city")} error={form.formState.errors.city?.message}>
+            <Input {...form.register("city")} placeholder={t("ownATurf.cityPlaceholder")} />
           </Field>
-          <Field label="Address" error={form.formState.errors.address?.message}>
-            <Input {...form.register("address")} placeholder="House, road" />
+          <Field label={t("admin.seed.address")} error={form.formState.errors.address?.message}>
+            <Input {...form.register("address")} placeholder={t("ownATurf.addressPlaceholder")} />
           </Field>
         </div>
-        {serverError ? <StatusBadge status="danger">{serverError}</StatusBadge> : null}
+        {serverError ? <StatusBadge status="danger">{t(serverError)}</StatusBadge> : null}
         <div className="flex gap-2">
           <Button size="sm" type="submit" loading={form.formState.isSubmitting}>
-            {form.formState.isSubmitting ? "Approving" : "Approve and seed turf"}
+            {form.formState.isSubmitting ? t("admin.applications.approving") : t("admin.applications.approveAndSeed")}
           </Button>
           <Button
             size="sm"
@@ -189,7 +191,7 @@ export function ApproveApplicationPanel({ application }: { application: PendingA
             onClick={() => setOpen(false)}
             disabled={form.formState.isSubmitting}
           >
-            Cancel
+            {t("common.cancel")}
           </Button>
         </div>
       </form>
@@ -198,6 +200,7 @@ export function ApproveApplicationPanel({ application }: { application: PendingA
 }
 
 function RejectApplicationButton({ applicationId }: { applicationId: string }) {
+  const { t } = useI18n()
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -219,13 +222,13 @@ function RejectApplicationButton({ applicationId }: { applicationId: string }) {
         variant="ghost"
         onClick={onReject}
         loading={pending}
-        aria-label="Reject application"
+        aria-label={t("admin.applications.rejectAria")}
       >
         <XIcon className="size-3.5" aria-hidden />
-        Reject
+        {t("common.reject")}
       </Button>
       {error ? (
-        <StatusBadge status="danger">{error}</StatusBadge>
+        <StatusBadge status="danger">{t(error)}</StatusBadge>
       ) : null}
     </div>
   )

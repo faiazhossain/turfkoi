@@ -8,6 +8,7 @@ import { AlertTriangleIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { useI18n } from "@/i18n/client"
 import {
   requestRefundAction,
   approveRefundAction,
@@ -30,6 +31,7 @@ export function RefundRequestButton({
   maxAmount: number
 }) {
   const router = useRouter()
+  const { t } = useI18n()
   const [pending, start] = useTransition()
   const [open, setOpen] = useState(false)
   const [amount, setAmount] = useState(String(maxAmount))
@@ -45,13 +47,11 @@ export function RefundRequestButton({
         reason: reason.trim() || undefined,
       })
       if (!res.ok) {
-        toast.error(res.error)
+        toast.error(t(res.error))
         return
       }
       toast.success(
-        res.needsApproval
-          ? "Refund staged — a second admin must approve (over ৳5,000)."
-          : "Refund executed."
+        t(res.needsApproval ? "admin.refunds.stagedToast" : "admin.refunds.executedToast")
       )
       setOpen(false)
       setReason("")
@@ -62,7 +62,7 @@ export function RefundRequestButton({
   if (!open) {
     return (
       <Button size="sm" variant="outline" onClick={() => setOpen(true)}>
-        Refund
+        {t("admin.refunds.refund")}
       </Button>
     )
   }
@@ -70,7 +70,7 @@ export function RefundRequestButton({
   return (
     <div className="flex flex-col gap-2 rounded-lg border border-border bg-muted/30 p-3 text-sm">
       <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-        Refund amount (৳)
+        {t("admin.refunds.amountLabel")}
       </label>
       <Input
         type="number"
@@ -84,14 +84,14 @@ export function RefundRequestButton({
       <Textarea
         value={reason}
         onChange={(e) => setReason(e.target.value)}
-        placeholder="Reason (visible to other admins)"
+        placeholder={t("admin.refunds.reasonPlaceholder")}
         rows={2}
         className="bg-background"
       />
       {needsApproval ? (
         <p className="flex items-center gap-1.5 text-xs text-warning">
           <AlertTriangleIcon className="size-3.5" aria-hidden />
-          Over ৳5,000 — requires a second admin to approve.
+          {t("admin.refunds.overThreshold")}
         </p>
       ) : null}
       <div className="flex items-center gap-1">
@@ -101,7 +101,7 @@ export function RefundRequestButton({
           disabled={Number(amount) <= 0}
           loading={pending}
         >
-          {needsApproval ? "Stage refund" : "Execute refund"}
+          {t(needsApproval ? "admin.refunds.stage" : "admin.refunds.execute")}
         </Button>
         <Button
           size="sm"
@@ -112,7 +112,7 @@ export function RefundRequestButton({
           }}
           disabled={pending}
         >
-          Cancel
+          {t("common.cancel")}
         </Button>
       </div>
     </div>
@@ -129,16 +129,17 @@ export function RefundReviewActions({
   canApprove: boolean
 }) {
   const router = useRouter()
+  const { t } = useI18n()
   const [pending, start] = useTransition()
 
   function approve() {
     start(async () => {
       const res = await approveRefundAction({ refundRequestId })
       if (!res.ok) {
-        toast.error(res.error)
+        toast.error(t(res.error))
         return
       }
-      toast.success("Refund approved + executed.")
+      toast.success(t("admin.refunds.approvedToast"))
       router.refresh()
     })
   }
@@ -147,10 +148,10 @@ export function RefundReviewActions({
     start(async () => {
       const res = await rejectRefundAction({ refundRequestId })
       if (!res.ok) {
-        toast.error(res.error)
+        toast.error(t(res.error))
         return
       }
-      toast.success("Refund request rejected.")
+      toast.success(t("admin.refunds.rejectedToast"))
       router.refresh()
     })
   }
@@ -162,16 +163,12 @@ export function RefundReviewActions({
         onClick={approve}
         disabled={!canApprove}
         loading={pending}
-        title={
-          canApprove
-            ? "Approve and execute"
-            : "Dual-control: you requested this refund, so you can't approve it"
-        }
+        title={t(canApprove ? "admin.refunds.approveTitle" : "admin.refunds.selfApproveTitle")}
       >
-        Approve
+        {t("admin.applications.approve")}
       </Button>
       <Button size="sm" variant="outline" onClick={reject} loading={pending}>
-        Reject
+        {t("common.reject")}
       </Button>
     </div>
   )

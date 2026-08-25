@@ -1,8 +1,15 @@
+import type { Metadata } from "next"
 import Link from "next/link"
 
 import { StatusBadge } from "@/components/shared"
 import { ApproveApplicationPanel } from "@/components/admin"
 import { listTurfApplications } from "@/features/turf-applications/queries"
+import { getT } from "@/i18n/server"
+import { buildMetadata } from "@/i18n/metadata"
+
+export async function generateMetadata(): Promise<Metadata> {
+  return buildMetadata({ titleKey: "metadata.adminApplicationsTitle" })
+}
 
 const FILTERS = ["pending", "approved", "rejected", "all"] as const
 
@@ -16,6 +23,7 @@ export default async function AdminApplicationsPage({
 }: {
   searchParams: Promise<{ status?: (typeof FILTERS)[number] }>
 }) {
+  const t = await getT()
   const { status } = await searchParams
   const filter = status ?? "pending"
   const applications = await listTurfApplications(filter)
@@ -23,7 +31,7 @@ export default async function AdminApplicationsPage({
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="font-heading text-lg font-semibold">Turf applications</h2>
+        <h2 className="font-heading text-lg font-semibold">{t("admin.applications.title")}</h2>
         <div className="flex gap-1 text-sm">
           {FILTERS.map((f) => (
             <Link
@@ -36,7 +44,7 @@ export default async function AdminApplicationsPage({
                   : "border-transparent text-muted-foreground hover:bg-muted/50")
               }
             >
-              {f}
+              {t(`admin.applications.filters.${f}`)}
             </Link>
           ))}
         </div>
@@ -44,7 +52,7 @@ export default async function AdminApplicationsPage({
 
       {applications.length === 0 ? (
         <p className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-          No applications.
+          {t("admin.applications.empty")}
         </p>
       ) : (
         <ul className="space-y-2">
@@ -60,15 +68,15 @@ export default async function AdminApplicationsPage({
                   </span>
                   {app.status === "pending" ? (
                     <StatusBadge status="warning" showIcon={false}>
-                      pending
+                      {t("admin.applications.filters.pending")}
                     </StatusBadge>
                   ) : app.status === "approved" ? (
                     <StatusBadge status="success" showIcon={false}>
-                      approved
+                      {t("admin.applications.filters.approved")}
                     </StatusBadge>
                   ) : (
                     <StatusBadge status="neutral" showIcon={false}>
-                      rejected
+                      {t("admin.applications.filters.rejected")}
                     </StatusBadge>
                   )}
                   {app.turfSlug ? (
@@ -76,7 +84,7 @@ export default async function AdminApplicationsPage({
                       href={`/turfs/${app.turfSlug}`}
                       className="text-xs text-muted-foreground hover:underline"
                     >
-                      view turf
+                      {t("admin.applications.viewTurf")}
                     </Link>
                   ) : null}
                 </div>
@@ -84,7 +92,7 @@ export default async function AdminApplicationsPage({
                   {app.contactName} · {app.phone}
                   {app.email ? ` · ${app.email}` : ""}
                   {" · "}
-                  {[app.area, app.city].filter(Boolean).join(", ") || "Location TBD"}
+                  {[app.area, app.city].filter(Boolean).join(", ") || t("turfs.locationTbd")}
                 </p>
                 {app.address ? (
                   <p className="truncate text-xs text-muted-foreground">{app.address}</p>
@@ -92,7 +100,7 @@ export default async function AdminApplicationsPage({
                 {app.notes ? (
                   <p className="mt-1 max-w-xl whitespace-pre-line text-xs text-muted-foreground">
                     <span className="font-medium text-foreground">
-                      Directions:
+                      {t("admin.applications.directions")}
                     </span>{" "}
                     {app.notes}
                   </p>

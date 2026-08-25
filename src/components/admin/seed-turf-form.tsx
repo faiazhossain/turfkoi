@@ -19,6 +19,7 @@ import {
 import { LocationPicker } from "@/components/map"
 import { InvitePanel } from "./invite-panel"
 import { isValidPhone } from "@/features/auth/phone"
+import { useI18n } from "@/i18n/client"
 
 import { seedTurfAction } from "@/features/turf-claims/actions"
 import {
@@ -44,6 +45,7 @@ const FORMAT_OPTIONS = TURF_FORMATS
  * invite link that appears right after seeding.
  */
 export function SeedTurfForm() {
+  const { t } = useI18n()
   const [serverError, setServerError] = useState<string | null>(null)
   const [seededId, setSeededId] = useState<string | null>(null)
   // Owner phone is required so every invite gets the OTP login flow — the
@@ -69,11 +71,11 @@ export function SeedTurfForm() {
     setServerError(null)
     const trimmed = ownerPhone.trim()
     if (!trimmed) {
-      setPhoneError("Enter the owner's WhatsApp phone — it enables OTP sign-in.")
+      setPhoneError(t("admin.invite.phoneRequired"))
       return
     }
     if (!isValidPhone(trimmed)) {
-      setPhoneError("Enter a valid Bangladeshi number, e.g. 01XXXXXXXXX")
+      setPhoneError(t("auth.errors.phone_invalid"))
       return
     }
     setPhoneError(null)
@@ -89,7 +91,7 @@ export function SeedTurfForm() {
     return (
       <div className="space-y-4">
         <StatusBadge status="success">
-          Turf seeded. Send the claim link to the owner.
+          {t("admin.seed.seededBadge")}
         </StatusBadge>
         <InvitePanel turfId={seededId} defaultOpen defaultPhone={ownerPhone.trim()} />
       </div>
@@ -99,9 +101,9 @@ export function SeedTurfForm() {
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
       <section className="space-y-3">
-        <h3 className="font-heading text-sm font-semibold">Basics</h3>
+        <h3 className="font-heading text-sm font-semibold">{t("admin.seed.basics")}</h3>
         <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Turf name" error={form.formState.errors.name?.message}>
+          <Field label={t("ownATurf.turfName")} error={form.formState.errors.name?.message}>
             <Input
               {...form.register("name")}
               onChange={(e) => {
@@ -110,18 +112,18 @@ export function SeedTurfForm() {
               }}
             />
           </Field>
-          <Field label="Slug" error={form.formState.errors.slug?.message}>
+          <Field label={t("team.form.slugLabel")} error={form.formState.errors.slug?.message}>
             <Input {...form.register("slug")} placeholder="my-turf" />
           </Field>
         </div>
-        <Field label="Description (optional)">
+        <Field label={t("admin.seed.descriptionOptional")}>
           <Textarea
             {...form.register("description")}
             rows={3}
-            placeholder="Floodlit 7-a-side turf with artificial grass, changing room, parking… the owner completes the full listing after claiming."
+            placeholder={t("admin.seed.descriptionPlaceholder")}
           />
         </Field>
-        <Field label="Format">
+        <Field label={t("claim.format")}>
           <Select
             value={form.watch("format")}
             onValueChange={(v) => form.setValue("format", v as TurfFormat)}
@@ -140,7 +142,7 @@ export function SeedTurfForm() {
             </SelectContent>
           </Select>
         </Field>
-        <Field label="Owner WhatsApp phone" error={phoneError ?? undefined}>
+        <Field label={t("admin.seed.ownerPhone")} error={phoneError ?? undefined}>
           <Input
             inputMode="tel"
             value={ownerPhone}
@@ -153,8 +155,8 @@ export function SeedTurfForm() {
       </section>
 
       <section className="space-y-3">
-        <h3 className="font-heading text-sm font-semibold">Location</h3>
-        <Field label="Pin on map" error={form.formState.errors.coords?.message}>
+        <h3 className="font-heading text-sm font-semibold">{t("admin.seed.location")}</h3>
+        <Field label={t("admin.seed.pinOnMap")} error={form.formState.errors.coords?.message}>
           <LocationPicker
             value={form.watch("coords") ?? null}
             label="turf"
@@ -178,24 +180,24 @@ export function SeedTurfForm() {
           />
         </Field>
         <div className="grid gap-3 sm:grid-cols-3">
-          <Field label="Area" error={form.formState.errors.area?.message}>
-            <Input {...form.register("area")} placeholder="Dhanmondi" />
+          <Field label={t("ownATurf.area")} error={form.formState.errors.area?.message}>
+            <Input {...form.register("area")} placeholder={t("ownATurf.areaPlaceholder")} />
           </Field>
-          <Field label="City" error={form.formState.errors.city?.message}>
-            <Input {...form.register("city")} placeholder="Dhaka" />
+          <Field label={t("ownATurf.city")} error={form.formState.errors.city?.message}>
+            <Input {...form.register("city")} placeholder={t("ownATurf.cityPlaceholder")} />
           </Field>
-          <Field label="Address" error={form.formState.errors.address?.message}>
-            <Input {...form.register("address")} placeholder="House, road" />
+          <Field label={t("admin.seed.address")} error={form.formState.errors.address?.message}>
+            <Input {...form.register("address")} placeholder={t("ownATurf.addressPlaceholder")} />
           </Field>
         </div>
       </section>
 
       {serverError ? (
-        <StatusBadge status="danger">{serverError}</StatusBadge>
+        <StatusBadge status="danger">{t(serverError)}</StatusBadge>
       ) : null}
 
       <Button type="submit" size="lg" loading={form.formState.isSubmitting}>
-        {form.formState.isSubmitting ? "Seeding" : "Seed turf"}
+        {form.formState.isSubmitting ? t("admin.seed.seeding") : t("admin.seed.submit")}
       </Button>
     </form>
   )

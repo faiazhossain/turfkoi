@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { isValidPhone } from "@/features/auth/phone"
+import { useI18n } from "@/i18n/client"
 
 import { createClaimInviteAction } from "@/features/turf-claims/actions"
 
@@ -19,19 +20,6 @@ type CreatedInvite = {
   otp: string | null
   phone: string | null
   turfName: string
-}
-
-function whatsappMessage(invite: CreatedInvite): string {
-  const lines = [
-    `Hi! Claim your turf "${invite.turfName}" on Turfkoi:`,
-    invite.url,
-  ]
-  if (invite.otp) {
-    lines.push(`Your verification code: ${invite.otp}`)
-    lines.push(`The link expires ${invite.expiresAt.toDateString()}.`)
-  }
-  lines.push("See you on the pitch! — Turfkoi team")
-  return lines.join("\n")
 }
 
 /**
@@ -51,6 +39,7 @@ export function InvitePanel({
   defaultEmail?: string
   defaultPhone?: string
 }) {
+  const { t } = useI18n()
   const [open, setOpen] = useState(defaultOpen)
   const [email, setEmail] = useState(defaultEmail)
   const [phone, setPhone] = useState(defaultPhone)
@@ -58,14 +47,27 @@ export function InvitePanel({
   const [pending, setPending] = useState(false)
   const [invite, setInvite] = useState<CreatedInvite | null>(null)
 
+  function whatsappMessage(inv: CreatedInvite): string {
+    const lines = [
+      t("admin.invite.whatsappHi", { name: inv.turfName }),
+      inv.url,
+    ]
+    if (inv.otp) {
+      lines.push(t("admin.invite.whatsappCode", { code: inv.otp }))
+      lines.push(t("admin.invite.whatsappExpires", { date: inv.expiresAt.toDateString() }))
+    }
+    lines.push(t("admin.invite.whatsappSignoff"))
+    return lines.join("\n")
+  }
+
   async function onCreate() {
     const trimmedPhone = phone.trim()
     if (!trimmedPhone) {
-      setPhoneError("Enter the owner's WhatsApp phone — it enables OTP sign-in.")
+      setPhoneError(t("admin.invite.phoneRequired"))
       return
     }
     if (!isValidPhone(trimmedPhone)) {
-      setPhoneError("Enter a valid Bangladeshi number, e.g. 01XXXXXXXXX")
+      setPhoneError(t("auth.errors.phone_invalid"))
       return
     }
     setPhoneError(null)
@@ -77,7 +79,7 @@ export function InvitePanel({
         targetPhone: trimmedPhone ? trimmedPhone : undefined,
       })
       if (!res.ok) {
-        toast.error(res.error)
+        toast.error(t(res.error))
         return
       }
       setInvite({
@@ -90,7 +92,7 @@ export function InvitePanel({
       })
       setOpen(true)
       toast.success(
-        res.emailed ? "Invite emailed." : "Invite link created."
+        t(res.emailed ? "admin.invite.inviteEmailedToast" : "admin.invite.inviteCreatedToast")
       )
     } finally {
       setPending(false)
@@ -102,14 +104,14 @@ export function InvitePanel({
       await navigator.clipboard.writeText(text)
       toast.success(successMessage)
     } catch {
-      toast.error("Couldn't copy. Select the text and copy manually.")
+      toast.error(t("admin.invite.copyFailToast"))
     }
   }
 
   if (!open) {
     return (
       <Button size="sm" variant="outline" onClick={() => setOpen(true)}>
-        Invite owner
+        {t("admin.invite.owner")}
       </Button>
     )
   }
@@ -121,8 +123,9 @@ export function InvitePanel({
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <LinkIcon className="size-3.5" aria-hidden />
             <span>
-              Expires {invite.expiresAt.toDateString()}
-              {invite.emailed ? " · emailed" : " · not emailed"}
+              {t("admin.invite.expires", { date: invite.expiresAt.toDateString() })}
+              {" · "}
+              {t(invite.emailed ? "admin.invite.emailedSuffix" : "admin.invite.notEmailedSuffix")}
             </span>
           </div>
           <div className="flex items-center gap-2">
@@ -131,7 +134,7 @@ export function InvitePanel({
               value={invite.url}
               onFocus={(e) => e.currentTarget.select()}
               className="text-xs"
-              aria-label="Claim link"
+              aria-label={t("admin.invite.claimLinkAria")}
             />
             <Button
               size="sm"
@@ -139,23 +142,19 @@ export function InvitePanel({
               onClick={() =>
                 copyText(
                   invite.url,
-                  "Link copied — paste it to the owner (WhatsApp works)."
+                  t("admin.invite.linkCopiedToast")
                 )
               }
-              aria-label="Copy claim link"
+              aria-label={t("admin.invite.copyClaimLinkAria")}
             >
               <CopyIcon className="size-3.5" aria-hidden />
-              Copy
+              {t("common.copy")}
             </Button>
           </div>
           {invite.otp ? (
             <div className="space-y-2">
               <p className="text-xs text-muted-foreground">
-                OTP sign-in enabled for{" "}
-                <span className="font-medium text-foreground">
-                  {invite.phone}
-                </span>{" "}
-                (from the application).
+                {t("admin.invite.otpEnabled", { phone: invite.phone ?? "" })}
               </p>
               <div className="flex items-center gap-2">
                 <Input
@@ -163,24 +162,24 @@ export function InvitePanel({
                   value={invite.otp}
                   onFocus={(e) => e.currentTarget.select()}
                   className="text-center text-sm tracking-[0.5em]"
-                  aria-label="Verification code"
+                  aria-label={t("admin.invite.codeAria")}
                 />
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={() =>
-                    copyText(invite.otp ?? "", "Code copied.")
+                    copyText(invite.otp ?? "", t("admin.invite.codeCopiedToast"))
                   }
-                  aria-label="Copy verification code"
+                  aria-label={t("admin.invite.copyCodeAria")}
                 >
                   <CopyIcon className="size-3.5" aria-hidden />
-                  Copy
+                  {t("common.copy")}
                 </Button>
               </div>
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between gap-2">
                   <Label className="text-xs text-muted-foreground">
-                    WhatsApp message (link + code)
+                    {t("admin.invite.whatsappLabel")}
                   </Label>
                   <Button
                     size="xs"
@@ -188,12 +187,12 @@ export function InvitePanel({
                     onClick={() =>
                       copyText(
                         whatsappMessage(invite),
-                        "Message copied — paste it in WhatsApp."
+                        t("admin.invite.messageCopiedToast")
                       )
                     }
                   >
                     <MessageCircleIcon className="size-3.5" aria-hidden />
-                    Copy message
+                    {t("admin.invite.copyMessage")}
                   </Button>
                 </div>
                 <Textarea
@@ -202,25 +201,23 @@ export function InvitePanel({
                   value={whatsappMessage(invite)}
                   onFocus={(e) => e.currentTarget.select()}
                   className="text-xs"
-                  aria-label="WhatsApp message"
+                  aria-label={t("admin.invite.whatsappMessageAria")}
                 />
               </div>
             </div>
           ) : null}
           <p className="text-xs text-muted-foreground">
-            Link and code are shown only once. Creating a new invite
-            invalidates them.
+            {t("admin.invite.shownOnce")}
           </p>
         </div>
       ) : (
         <p className="text-xs text-muted-foreground">
-          The link is single-use and shown only once. Creating a new invite
-          invalidates any previous link.
+          {t("admin.invite.singleUse")}
         </p>
       )}
       <div className="space-y-1.5">
         <Label htmlFor={`invite-email-${turfId}`} className="text-xs">
-          Owner email (optional)
+          {t("admin.invite.ownerEmail")}
         </Label>
         <div className="flex items-center gap-2">
           <Input
@@ -233,7 +230,7 @@ export function InvitePanel({
           />
         </div>
         <Label htmlFor={`invite-phone-${turfId}`} className="text-xs">
-          Owner WhatsApp phone
+          {t("admin.invite.ownerPhone")}
         </Label>
         <div className="flex items-center gap-2">
           <Input
@@ -247,7 +244,7 @@ export function InvitePanel({
             required
           />
           <Button size="sm" onClick={onCreate} loading={pending}>
-            {invite ? "New link" : "Create link"}
+            {t(invite ? "admin.invite.newLink" : "admin.invite.createLink")}
           </Button>
         </div>
         {phoneError ? (

@@ -129,9 +129,9 @@ export async function approveTurfApplicationAction(
     .where(eq(turfApplications.id, parsed.data.applicationId))
     .limit(1)
   const app = appRows[0]
-  if (!app) return { ok: false, error: "Application not found." }
+  if (!app) return { ok: false, error: "admin.errors.applicationNotFound" }
   if (app.status !== "pending") {
-    return { ok: false, error: "This application was already handled." }
+    return { ok: false, error: "admin.errors.applicationHandled" }
   }
 
   const { applicationId, coords, ...turfValues } = parsed.data
@@ -144,7 +144,7 @@ export async function approveTurfApplicationAction(
     turfId = created.id
   } catch (err) {
     if (String(err).includes("unique")) {
-      return { ok: false, error: "That slug is already taken." }
+      return { ok: false, error: "turfs.errors.slugTaken" }
     }
     throw err
   }
@@ -168,7 +168,7 @@ export async function approveTurfApplicationAction(
     )
     .returning({ id: turfApplications.id })
   if (flipped.length === 0) {
-    return { ok: false, error: "This application was already handled." }
+    return { ok: false, error: "admin.errors.applicationHandled" }
   }
 
   // Tell the applicant the good news (in-app when we can resolve an account).
@@ -214,9 +214,9 @@ export async function rejectTurfApplicationAction(input: {
     .where(eq(turfApplications.id, parsed.data.applicationId))
     .limit(1)
   const app = appRows[0]
-  if (!app) return { ok: false, error: "Application not found." }
+  if (!app) return { ok: false, error: "admin.errors.applicationNotFound" }
   if (app.status !== "pending") {
-    return { ok: false, error: "This application was already handled." }
+    return { ok: false, error: "admin.errors.applicationHandled" }
   }
 
   const flipped = await db
@@ -230,7 +230,7 @@ export async function rejectTurfApplicationAction(input: {
     )
     .returning({ id: turfApplications.id })
   if (flipped.length === 0) {
-    return { ok: false, error: "This application was already handled." }
+    return { ok: false, error: "admin.errors.applicationHandled" }
   }
 
   const recipient = await resolveApplicantRecipient(app.submittedBy, app.email)

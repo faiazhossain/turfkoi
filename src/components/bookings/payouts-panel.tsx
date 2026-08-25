@@ -52,7 +52,7 @@ export function PayoutsPanel({
         toast.error(t(res.error ?? "errors.generic"))
         return
       }
-      toast.success(`Generated ${res.count} payout row(s).`)
+      toast.success(t("admin.payouts.generatedToast", { count: res.count ?? 0 }))
       router.refresh()
     })
   }
@@ -64,7 +64,7 @@ export function PayoutsPanel({
         toast.error(t(res.error ?? "errors.generic"))
         return
       }
-      toast.success("Marked paid.")
+      toast.success(t("admin.payouts.markedPaidToast"))
       setPayingId(null)
       setRef("")
       router.refresh()
@@ -75,19 +75,19 @@ export function PayoutsPanel({
     <section className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h2 className="font-heading text-lg font-semibold">Weekly payouts</h2>
+          <h2 className="font-heading text-lg font-semibold">{t("admin.payouts.title")}</h2>
           <p className="text-sm text-muted-foreground">
-            Period: {periodStart} → {periodEnd}
+            {t("admin.payouts.period", { start: periodStart, end: periodEnd })}
           </p>
         </div>
         <Button onClick={generate} loading={pending}>
-          Generate this week&apos;s payouts
+          {t("admin.payouts.generate")}
         </Button>
       </div>
 
       {payouts.length === 0 ? (
         <p className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-          No payouts yet. Click generate to sweep settled bookings.
+          {t("admin.payouts.empty")}
         </p>
       ) : (
         <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border">
@@ -114,7 +114,7 @@ export function PayoutsPanel({
                   status={p.status === "paid" ? "success" : "warning"}
                   showIcon={false}
                 >
-                  {p.status}
+                  {t(`admin.payouts.status.${p.status}`)}
                 </StatusBadge>
                 {p.status === "pending" ? (
                   payingId === p.id ? (
@@ -122,7 +122,7 @@ export function PayoutsPanel({
                       <Input
                         value={ref}
                         onChange={(e) => setRef(e.target.value)}
-                        placeholder="bKash trxId"
+                        placeholder={t("admin.payouts.trxIdPlaceholder")}
                         className="w-32"
                       />
                       <Button
@@ -131,7 +131,7 @@ export function PayoutsPanel({
                         loading={pending}
                         disabled={ref.length < 4}
                       >
-                        Confirm
+                        {t("common.confirm")}
                       </Button>
                       <Button
                         size="sm"
@@ -142,7 +142,7 @@ export function PayoutsPanel({
                         }}
                         disabled={pending}
                       >
-                        Cancel
+                        {t("common.cancel")}
                       </Button>
                     </div>
                   ) : (
@@ -151,7 +151,7 @@ export function PayoutsPanel({
                       variant="outline"
                       onClick={() => setPayingId(p.id)}
                     >
-                      Mark paid
+                      {t("admin.payouts.markPaid")}
                     </Button>
                   )
                 ) : null}

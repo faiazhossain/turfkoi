@@ -14,17 +14,18 @@ import {
   FlagIcon,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useI18n } from "@/i18n/client"
 
 const NAV = [
-  { href: "/admin", label: "Overview", icon: LayoutDashboardIcon },
-  { href: "/admin/users", label: "Users", icon: UsersIcon },
-  { href: "/admin/turfs", label: "Turfs", icon: MapPinIcon },
-  { href: "/admin/applications", label: "Applications", icon: InboxIcon },
-  { href: "/admin/teams", label: "Teams", icon: ShieldIcon },
-  { href: "/admin/bookings", label: "Bookings", icon: CalendarIcon },
-  { href: "/admin/matches", label: "Matches", icon: SwordsIcon },
-  { href: "/admin/transactions", label: "Transactions", icon: CreditCardIcon },
-  { href: "/admin/reports", label: "Reports", icon: FlagIcon },
+  { href: "/admin", labelKey: "admin.sections.overview", icon: LayoutDashboardIcon },
+  { href: "/admin/users", labelKey: "admin.sections.users", icon: UsersIcon },
+  { href: "/admin/turfs", labelKey: "admin.sections.turfs", icon: MapPinIcon },
+  { href: "/admin/applications", labelKey: "admin.sections.applications", icon: InboxIcon },
+  { href: "/admin/teams", labelKey: "admin.sections.teams", icon: ShieldIcon },
+  { href: "/admin/bookings", labelKey: "admin.sections.bookings", icon: CalendarIcon },
+  { href: "/admin/matches", labelKey: "admin.sections.matches", icon: SwordsIcon },
+  { href: "/admin/transactions", labelKey: "admin.sections.transactions", icon: CreditCardIcon },
+  { href: "/admin/reports", labelKey: "admin.sections.reports", icon: FlagIcon },
 ]
 
 export function AdminSubNav({
@@ -33,9 +34,10 @@ export function AdminSubNav({
   pendingApplications?: number
 }) {
   const pathname = usePathname()
+  const { t } = useI18n()
   return (
     <nav
-      aria-label="Admin sections"
+      aria-label={t("admin.navAria")}
       className="-mx-4 mb-2 overflow-x-auto px-4 pb-2"
     >
       <ul className="flex min-w-max gap-1">
@@ -63,7 +65,7 @@ export function AdminSubNav({
                 )}
               >
                 <Icon className="size-4" aria-hidden />
-                {item.label}
+                {t(item.labelKey)}
                 {badge ? (
                   <span className="ml-0.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] leading-none font-semibold text-primary-foreground">
                     {badge}
