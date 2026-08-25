@@ -22,6 +22,7 @@ import { logger } from "@/lib/logger"
 
 import {
   approveRefundSchema,
+  deleteTurfSchema,
   rejectRefundSchema,
   requestRefundSchema,
   resolveMatchDisputeSchema,
@@ -242,6 +243,66 @@ export async function setTurfActiveAction(
     parsed.data.isActive ? "admin.turf_activated" : "admin.turf_deactivated",
     { turfId: parsed.data.turfId }
   )
+  revalidatePath("/admin/turfs")
+  revalidatePath("/turfs")
+  return { ok: true, id: parsed.data.turfId }
+}
+
+/**
+ * Hard-delete a turf that has never taken a booking. Bookings (and the
+ * transactions/payouts behind them) reference turfs with onDelete restrict,
+ * so anything with booking history must be deactivated instead — checked
+ * with a count up front, then enforced by the FK if a booking races in
+ * between. Cascades clean up slots, photos, claim invites, and owner
+ * links; turf application rows survive with turfId nulled.
+ */
+export async function deleteTurfAction(
+  input: z.infer<typeof deleteTurfSchema>
+): Promise<ActionResult> {
+  const parsed = deleteTurfSchema.safeParse(input)
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid" }
+  }
+  const actor = await adminActor()
+  if ("error" in actor) return actor
+
+  const [agg] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(bookings)
+    .where(eq(bookings.turfId, parsed.data.turfId))
+  const bookingCount = agg?.count ?? 0
+  if (bookingCount > 0) {
+    return {
+      ok: false,
+      error: `This turf has ${bookingCount} booking${bookingCount === 1 ? "" : "s"} — booking history can't be deleted. Deactivate the turf instead.`,
+    }
+  }
+
+  try {
+    const deleted = await db
+      .delete(turfs)
+      .where(eq(turfs.id, parsed.data.turfId))
+      .returning({ id: turfs.id })
+    if (deleted.length === 0) {
+      return { ok: false, error: "Turf not found." }
+    }
+  } catch (err) {
+    // A booking landed between the count and the delete — the FK restrict
+    // is the real guard; surface it with the same friendly guidance.
+    if (
+      String(err).includes("foreign key") ||
+      (err as { code?: string }).code === "23503"
+    ) {
+      return {
+        ok: false,
+        error:
+          "A booking came in while deleting — this turf now has history. Deactivate it instead.",
+      }
+    }
+    throw err
+  }
+
+  logger.info("admin.turf_deleted", { turfId: parsed.data.turfId })
   revalidatePath("/admin/turfs")
   revalidatePath("/turfs")
   return { ok: true, id: parsed.data.turfId }

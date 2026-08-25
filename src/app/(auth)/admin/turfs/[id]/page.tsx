@@ -3,6 +3,7 @@ import { notFound } from "next/navigation"
 
 import { StatusBadge } from "@/components/shared"
 import {
+  DeleteTurfControl,
   InvitePanel,
   TurfActiveToggle,
   UnverifyTurfButton,
@@ -226,19 +227,19 @@ export default async function AdminTurfCockpitPage({ params }: PageProps) {
         <CardHeader>
           <CardTitle className="font-heading text-lg">Danger zone</CardTitle>
           <CardDescription>
-            Deletion ships with a booking-history guard; this turf has{" "}
-            {bookingCount === 0
-              ? "no bookings"
-              : `${bookingCount} booking${bookingCount === 1 ? "" : "s"}`}
-            .
+            Deletion is permanent and blocked once a turf has bookings.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">
-            {bookingCount === 0
-              ? "This turf will be deletable once guarded delete ships."
-              : "This turf can never be deleted — deactivate it instead."}
-          </p>
+          {bookingCount === 0 ? (
+            <DeleteTurfControl turfId={turf.id} name={turf.name} />
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              This turf has {bookingCount} booking
+              {bookingCount === 1 ? "" : "s"} — booking history can&apos;t be
+              deleted. Deactivate the turf instead.
+            </p>
+          )}
         </CardContent>
       </Card>
     </div>

@@ -15,6 +15,9 @@ let selectQueue: Rows[] = []
 let updateReturnQueue: Rows[] = []
 let updateCalls: { table: unknown; set: unknown }[] = []
 let insertValues: unknown[] = []
+let deleteReturnQueue: Rows[] = []
+let deleteError: Error | null = null
+let deleteCalls: { table: unknown }[] = []
 let revalidateCalls: string[] = []
 let logCalls: { evt: string; ctx: unknown }[] = []
 // Signed-in identity for getCurrentUser; tests swap this per case.
@@ -23,6 +26,10 @@ let currentUser: { id: string; roles: string[] } | null = null
 function queryFor(rows: Rows) {
   const q: Record<string, unknown> = {}
   const end = () => Promise.resolve(rows)
+  // Drizzle query builders are thenable — the bookings count awaits the
+  // chain without calling .limit(), so the mock must be awaitable too.
+  const promise = end()
+  q.then = promise.then.bind(promise)
   q.from = vi.fn(() => q)
   q.innerJoin = vi.fn(() => q)
   q.where = vi.fn(() => q)
@@ -52,6 +59,17 @@ vi.mock("@/db", () => ({
         insertValues.push({ table, values: v })
         return q
       })
+      return q
+    }),
+    delete: vi.fn((table: unknown) => {
+      const q: Record<string, unknown> = {}
+      deleteCalls.push({ table })
+      q.where = vi.fn(() => q)
+      q.returning = vi.fn(() =>
+        deleteError
+          ? Promise.reject(deleteError)
+          : Promise.resolve(deleteReturnQueue.shift() ?? [{ id: "deleted" }])
+      )
       return q
     }),
   },
@@ -88,7 +106,7 @@ vi.mock("@/features/notifications/create", () => ({
   createNotifications: vi.fn(async () => {}),
 }))
 
-import { setTurfActiveAction, unverifyTurfAction } from "../actions"
+import { setTurfActiveAction, unverifyTurfAction, deleteTurfAction } from "../actions"
 import { holdSlotAction } from "@/features/bookings/actions"
 
 const ADMIN = { id: "admin-1", roles: ["admin"] }
@@ -115,6 +133,9 @@ beforeEach(() => {
   updateReturnQueue = []
   updateCalls = []
   insertValues = []
+  deleteReturnQueue = []
+  deleteError = null
+  deleteCalls = []
   revalidateCalls = []
   logCalls = []
   currentUser = null
@@ -233,5 +254,58 @@ describe("holdSlotAction turf-status gate", () => {
     if (res.ok) expect(res.bookingId).toMatch(
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
     )
+  })
+})
+
+describe("deleteTurfAction", () => {
+  it("rejects callers without the admin role", async () => {
+    currentUser = PLAYER
+    const res = await deleteTurfAction({ turfId: TURF_ID })
+    expect(res).toEqual({ ok: false, error: "Admins only." })
+    expect(deleteCalls.length).toBe(0)
+  })
+
+  it("blocks deletion when the turf has bookings, without deleting", async () => {
+    currentUser = ADMIN
+    selectQueue = [[{ count: 3 }]]
+    const res = await deleteTurfAction({ turfId: TURF_ID })
+    expect(res.ok).toBe(false)
+    if (!res.ok) {
+      expect(res.error).toContain("3 bookings")
+      expect(res.error).toContain("Deactivate")
+    }
+    expect(deleteCalls.length).toBe(0)
+    expect(logCalls.length).toBe(0)
+  })
+
+  it("deletes a booking-less turf, logs it, and revalidates", async () => {
+    currentUser = ADMIN
+    selectQueue = [[{ count: 0 }]]
+    deleteReturnQueue = [[{ id: TURF_ID }]]
+    const res = await deleteTurfAction({ turfId: TURF_ID })
+    expect(res).toEqual({ ok: true, id: TURF_ID })
+    expect(deleteCalls[0]?.table).toBe(turfs)
+    expect(logCalls.map((l) => l.evt)).toContain("admin.turf_deleted")
+    expect(revalidateCalls).toContain("/admin/turfs")
+    expect(revalidateCalls).toContain("/turfs")
+  })
+
+  it("errors on a missing turf", async () => {
+    currentUser = ADMIN
+    selectQueue = [[{ count: 0 }]]
+    deleteReturnQueue = [[]]
+    const res = await deleteTurfAction({ turfId: TURF_ID })
+    expect(res).toEqual({ ok: false, error: "Turf not found." })
+    expect(logCalls.length).toBe(0)
+  })
+
+  it("surfaces the FK race (booking landed mid-delete) as a friendly block", async () => {
+    currentUser = ADMIN
+    selectQueue = [[{ count: 0 }]]
+    deleteError = new Error('db error: foreign key constraint "bookings_turf_id" violated')
+    const res = await deleteTurfAction({ turfId: TURF_ID })
+    expect(res.ok).toBe(false)
+    if (!res.ok) expect(res.error).toContain("Deactivate")
+    expect(logCalls.length).toBe(0)
   })
 })

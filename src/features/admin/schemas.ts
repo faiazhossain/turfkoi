@@ -16,6 +16,11 @@ export const setTurfActiveSchema = z.object({
 })
 export type SetTurfActiveValues = z.infer<typeof setTurfActiveSchema>
 
+export const deleteTurfSchema = z.object({
+  turfId: z.string().uuid(),
+})
+export type DeleteTurfValues = z.infer<typeof deleteTurfSchema>
+
 export const setUserStatusSchema = z.object({
   userId: z.string().uuid(),
   status: z.enum(["active", "suspended"]),
