@@ -144,6 +144,14 @@ export const saveScheduleSchema = z
   })
 export type SaveScheduleValues = z.infer<typeof saveScheduleSchema>
 
+// Per-turf booking window: how far ahead the schedule keeps bookable slots
+// materialized. The weekly schedule repeats forever regardless.
+export const BOOKING_HORIZON_CHOICES = [7, 14, 30, 60, 90] as const
+export const bookingHorizonSchema = z.union(
+  BOOKING_HORIZON_CHOICES.map((d) => z.literal(d))
+)
+export type BookingHorizonDays = z.infer<typeof bookingHorizonSchema>
+
 // Custom single-slot add (Layer 3): one hand-placed slot on one date.
 export const addSlotSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD"),

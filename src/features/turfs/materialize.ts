@@ -1,5 +1,5 @@
 import "server-only"
-import { and, desc, eq, gte, lte, sql } from "drizzle-orm"
+import { and, desc, eq, gt, gte, lte, sql } from "drizzle-orm"
 
 import { db } from "@/db"
 import {
@@ -7,6 +7,7 @@ import {
   turfScheduleSections,
   turfSchedules,
   turfSlots,
+  turfs,
 } from "@/db/schema"
 import {
   addDays,
@@ -21,8 +22,22 @@ import {
   type ExistingSlotRow,
 } from "@/lib/slot-planning"
 
-/** How far ahead the nightly job keeps inventory materialized. */
+/**
+ * Fallback booking horizon (days ahead) when a turf row predates the
+ * per-turf `booking_horizon_days` column semantics — the column itself
+ * defaults to 30, so this only guards direct SQL consumers.
+ */
 export const SCHEDULE_HORIZON_DAYS = 30
+
+/** This turf's booking window: how far ahead bookable slots are kept. */
+export async function getBookingHorizon(turfId: string): Promise<number> {
+  const [row] = await db
+    .select({ horizon: turfs.bookingHorizonDays })
+    .from(turfs)
+    .where(eq(turfs.id, turfId))
+    .limit(1)
+  return row?.horizon ?? SCHEDULE_HORIZON_DAYS
+}
 
 // Chunk size for multi-row inserts (Neon HTTP parameter limits are generous,
 // but a 7-day Ramadan schedule can produce 300+ rows per run).
@@ -186,7 +201,7 @@ export async function materializeTurfSchedule(
   }
 
   const from = range?.from ?? todayInDhaka()
-  const to = range?.to ?? addDays(from, SCHEDULE_HORIZON_DAYS)
+  const to = range?.to ?? addDays(from, await getBookingHorizon(turfId))
   // One day past `to`: the last date's wrapping sections spill into it,
   // and a closed exception there must suppress that spillover.
   const exceptions = await listDateExceptions(turfId, {
@@ -274,11 +289,26 @@ export async function materializeTurfSchedule(
       .onConflictDoNothing()
   }
 
+  // Shrunken horizons: the planner only reconciles [from, to], so a smaller
+  // booking window would otherwise leave stale bookable slots past `to`.
+  // Booked/held/manual rows are never touched (safety contract).
+  const trimmed = await db
+    .delete(turfSlots)
+    .where(
+      and(
+        eq(turfSlots.turfId, turfId),
+        gt(turfSlots.date, addDays(to, 1)),
+        eq(turfSlots.status, "available"),
+        eq(turfSlots.source, "template")
+      )
+    )
+    .returning({ id: turfSlots.turfId })
+
   return {
     applied: true,
     inserted: plan.inserts.length,
     updated: plan.updates.length,
-    deleted: plan.deletes.length,
+    deleted: plan.deletes.length + trimmed.length,
     conflicts: plan.conflicts,
     keptManual: plan.keptManual,
   }
@@ -303,7 +333,7 @@ export async function listSlotConflicts(turfId: string): Promise<SlotConflict[]>
   if (!active) return []
 
   const from = todayInDhaka()
-  const to = addDays(from, SCHEDULE_HORIZON_DAYS)
+  const to = addDays(from, await getBookingHorizon(turfId))
   const desired = expandScheduleRange(active.sections, from, to)
   const desiredKeys = new Set(
     desired.map((d) => `${d.date}|${d.startTime}`)

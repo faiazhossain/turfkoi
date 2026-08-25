@@ -74,6 +74,10 @@ export const turfs = pgTable("turfs", {
     .notNull()
     .default("flexible"),
   cancellationPolicyConfig: jsonb("cancellation_policy_config").$type<CancellationPolicyConfig>(),
+  // How far ahead the schedule keeps bookable slots materialized — the
+  // owner decides (booking window). The weekly schedule itself repeats
+  // forever; this only bounds the concrete slot horizon.
+  bookingHorizonDays: integer("booking_horizon_days").notNull().default(30),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),

@@ -22,8 +22,20 @@ import { addSlotSchema, type AddSlotValues } from "@/features/turfs/schemas"
 
 const DURATIONS = [30, 45, 60, 75, 90, 120, 180]
 
-/** Hand-place one custom slot on a specific date (slot system P1). */
-export function AddSlotForm({ turfId }: { turfId: string }) {
+/**
+ * Hand-place one custom slot on a specific date (slot system P1). When opened
+ * from a day in the calendar, `defaultDate` prefills (and hides) the date
+ * field; `onSuccess` lets the hosting sheet close after the add.
+ */
+export function AddSlotForm({
+  turfId,
+  defaultDate,
+  onSuccess,
+}: {
+  turfId: string
+  defaultDate?: string
+  onSuccess?: () => void
+}) {
   const router = useRouter()
   const [serverError, setServerError] = useState<string | null>(null)
   const [info, setInfo] = useState<string | null>(null)
@@ -31,7 +43,7 @@ export function AddSlotForm({ turfId }: { turfId: string }) {
   const form = useForm<AddSlotValues>({
     resolver: zodResolver(addSlotSchema),
     defaultValues: {
-      date: new Date().toISOString().slice(0, 10),
+      date: defaultDate ?? new Date().toISOString().slice(0, 10),
       startTime: "21:00",
       durationMinutes: 60,
       price: 1500,
@@ -48,6 +60,7 @@ export function AddSlotForm({ turfId }: { turfId: string }) {
     }
     setInfo(`Custom slot added for ${values.date} at ${values.startTime}.`)
     router.refresh()
+    onSuccess?.()
   }
 
   return (
@@ -55,7 +68,13 @@ export function AddSlotForm({ turfId }: { turfId: string }) {
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1.5">
           <Label className="text-xs font-medium text-muted-foreground">Date</Label>
-          <Input type="date" {...form.register("date")} />
+          {defaultDate ? (
+            <p className="rounded-lg border border-border bg-muted px-3 py-2 text-sm">
+              {defaultDate}
+            </p>
+          ) : (
+            <Input type="date" {...form.register("date")} />
+          )}
         </div>
         <div className="space-y-1.5">
           <Label className="text-xs font-medium text-muted-foreground">

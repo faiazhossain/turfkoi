@@ -24,6 +24,7 @@ import {
 import {
   activateScheduleSchema,
   addSlotSchema,
+  bookingHorizonSchema,
   clearDateExceptionSchema,
   dateExceptionSchema,
   generateSlotsSchema,
@@ -390,6 +391,50 @@ export async function saveScheduleAction(
       }
     }
     throw err
+  }
+}
+
+/**
+ * Per-turf booking window: how far ahead players can book. Saving remate-
+ * rializes immediately — extending fills further ahead; shrinking trims
+ * unbooked template slots past the new horizon (bookings stay untouched).
+ */
+export async function updateBookingHorizonAction(
+  turfId: string,
+  days: number
+): Promise<ActionResult & { materialized?: ScheduleMaterializeSummary }> {
+  const parsed = bookingHorizonSchema.safeParse(days)
+  if (!parsed.success) {
+    return { ok: false, error: "Choose 7, 14, 30, 60, or 90 days." }
+  }
+  const user = await getCurrentUser()
+  if (!user) return unauthorized()
+
+  const existing = await db
+    .select({ ownerId: turfs.ownerId })
+    .from(turfs)
+    .where(eq(turfs.id, turfId))
+    .limit(1)
+  if (!existing[0]) return { ok: false, error: "Turf not found." }
+  if (!can(user, "turf.update", { ownerId: existing[0].ownerId })) {
+    return forbidden()
+  }
+
+  await db
+    .update(turfs)
+    .set({ bookingHorizonDays: parsed.data, updatedAt: new Date() })
+    .where(eq(turfs.id, turfId))
+
+  const res = await materializeTurfSchedule(turfId)
+  revalidatePath(`/turf-owner/turfs/${turfId}`)
+  return {
+    ok: true,
+    materialized: {
+      inserted: res.inserted,
+      updated: res.updated,
+      deleted: res.deleted,
+      conflicts: res.conflicts,
+    },
   }
 }
 

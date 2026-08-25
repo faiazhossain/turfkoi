@@ -18,16 +18,19 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs"
-import { Button } from "@/components/ui/button"
 import { StatusBadge } from "@/components/shared"
 import {
-  AddSlotForm,
-  DayExceptionForm,
+  AdvancedTools,
+  BookingHorizonSelect,
+  DayAdjustments,
+  DayPanel,
+  EmptyDayState,
   GenerateSlotsForm,
+  HowSlotsWork,
   SavedSchedulesCard,
   ScheduleBuilderForm,
+  ScheduleWizardDialog,
   SlotConflictsCard,
-  SlotGrid,
   TurfDayCalendar,
   TurfForm,
   type DayMarker,
@@ -105,11 +108,6 @@ export default async function EditTurfPage({
   }
 
   const today = new Date()
-  const fromDate = today.toISOString().slice(0, 10)
-  const toDate = new Date(today.getTime() + 14 * 86400000)
-    .toISOString()
-    .slice(0, 10)
-  const slots = await listTurfSlots(turf.id, { from: fromDate, to: toDate })
   const photos = await listTurfPhotos(turf.id)
   const activeSchedule = await getActiveSchedule(turf.id)
   const slotConflicts = await listSlotConflicts(turf.id)
@@ -163,6 +161,34 @@ export default async function EditTurfPage({
       : undefined)
   const selectedHoliday = selectedDate ? findBdHoliday(selectedDate) : null
 
+  // Weekly-hours form defaults: the active schedule, or the BD preset for
+  // turfs without one. Shared by the "Weekly hours" sheet and the setup CTA.
+  const scheduleDefaults: SaveScheduleValues = activeSchedule
+    ? {
+        scheduleId: activeSchedule.id,
+        name: activeSchedule.name,
+        isActive: true,
+        sections: activeSchedule.sections.map((s) => ({
+          dayOfWeek: s.dayOfWeek,
+          label: s.label ?? undefined,
+          startTime: s.startTime,
+          endTime: s.endTime,
+          slotMinutes: s.slotMinutes,
+          gapMinutes: s.gapMinutes,
+          price: s.price,
+        })),
+      }
+    : bdSchedulePreset()
+
+  // Whether the active weekly hours generate anything on the selected weekday
+  // (drives the day panel's "no slots" explanation).
+  const weekdayHasSections = selectedDate
+    ? (activeSchedule?.sections.some(
+        (s) =>
+          s.dayOfWeek === new Date(`${selectedDate}T00:00:00`).getDay()
+      ) ?? false)
+    : false
+
   const formDefaults: Partial<TurfFormValues> = {
     name: turf.name,
     slug: turf.slug,
@@ -180,7 +206,7 @@ export default async function EditTurfPage({
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 px-4 py-12">
+    <div className="mx-auto max-w-5xl space-y-6 px-4 py-12">
       <nav className="flex items-center justify-between text-sm">
         <Link
           href="/turf-owner"
@@ -209,10 +235,10 @@ export default async function EditTurfPage({
 
       <h1 className="font-heading text-2xl font-semibold">{turf.name}</h1>
 
-      <Tabs defaultValue="edit">
+      <Tabs defaultValue={dateParam || monthParam ? "slots" : "edit"}>
         <TabsList>
           <TabsTrigger value="edit">Details</TabsTrigger>
-          <TabsTrigger value="slots">Slots ({slots.length})</TabsTrigger>
+          <TabsTrigger value="slots">Slots</TabsTrigger>
         </TabsList>
 
         <TabsContent value="edit" className="space-y-6">
@@ -243,115 +269,112 @@ export default async function EditTurfPage({
         </TabsContent>
 
         <TabsContent value="slots" className="space-y-6">
-          <SlotConflictsCard conflicts={slotConflicts} />
-          <Card>
-            <CardHeader>
-              <CardTitle className="font-heading text-lg">
-                Weekly schedule
-              </CardTitle>
-              <CardDescription>
-                {activeSchedule
-                  ? `Editing "${activeSchedule.name}" - the active schedule. Sections set each day's slots, length, turnaround gap, and price. Saving rematerializes the next 30 days; booked slots and hand-edited slots are never touched.`
-                  : "No schedule yet - a typical Dhaka week is prefilled below. Sections set each day's slots, length, turnaround gap, and price. Saving materializes the next 30 days."}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ScheduleBuilderForm
-                turfId={turf.id}
-                defaultValues={
-                  activeSchedule
-                    ? {
-                        scheduleId: activeSchedule.id,
-                        name: activeSchedule.name,
-                        isActive: true,
-                        sections: activeSchedule.sections.map((s) => ({
-                          dayOfWeek: s.dayOfWeek,
-                          label: s.label ?? undefined,
-                          startTime: s.startTime,
-                          endTime: s.endTime,
-                          slotMinutes: s.slotMinutes,
-                          gapMinutes: s.gapMinutes,
-                          price: s.price,
-                        })),
-                      }
-                    : bdSchedulePreset()
-                }
-              />
-            </CardContent>
-          </Card>
+          <HowSlotsWork />
+          {slotConflicts.length > 0 ? (
+            <SlotConflictsCard conflicts={slotConflicts} />
+          ) : null}
 
-          <SavedSchedulesCard
-            turfId={turf.id}
-            schedules={savedSchedules}
-            today={todayIso}
-          />
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="font-heading text-lg">
-                Day calendar
-              </CardTitle>
-              <CardDescription>
-                Click a day to see and edit its slots. Ringed days are public
-                holidays ({`we seed the BD calendar - lunar dates are
-                estimates, always double-check Eid`}).
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <TurfDayCalendar
-                turfId={turf.id}
-                month={month}
-                selectedDate={selectedDate}
-                markers={markers}
-              />
-            </CardContent>
-          </Card>
-
-          {selectedDate ? (
-            <Card id="day-panel">
+          {activeSchedule ? (
+            <Card>
               <CardHeader>
-                <CardTitle className="font-heading text-lg">
-                  {new Date(
-                    `${selectedDate}T00:00:00`
-                  ).toLocaleDateString("en-GB", {
-                    weekday: "long",
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric",
-                  })}
+                <CardTitle className="flex flex-wrap items-center gap-2 font-heading text-lg">
+                  Weekly hours
+                  <span className="text-xs font-normal text-muted-foreground">
+                    Active: {activeSchedule.name}
+                  </span>
                 </CardTitle>
-                <CardDescription className="space-x-2">
-                  {selectedHoliday ? (
-                    <StatusBadge status="warning" showIcon={false}>
-                      {selectedHoliday.name}
-                      {selectedHoliday.approximate ? " (est.)" : ""}
-                    </StatusBadge>
-                  ) : null}
-                  {selectedException?.isClosed ? (
-                    <StatusBadge status="danger" showIcon={false}>
-                      Closed{selectedException.reason ? ` - ${selectedException.reason}` : ""}
-                    </StatusBadge>
-                  ) : null}
-                  {selectedException?.priceMode ? (
-                    <StatusBadge status="success" showIcon={false}>
-                      {selectedException.priceMode === "multiplier"
-                        ? `x${selectedException.priceValue} holiday rate`
-                        : `Flat ${selectedException.priceValue} BDT`}
-                    </StatusBadge>
-                  ) : null}
-                  {isDuringRamadan(selectedDate) ? (
-                    <StatusBadge status="neutral" showIcon={false}>
-                      Ramadan - night hours? Wrap a section past midnight in
-                      the weekly schedule.
-                    </StatusBadge>
-                  ) : null}
+                <CardDescription>
+                  <span className="block">
+                    Set once — it repeats every week forever. Nothing expires
+                    unless you edit it.
+                  </span>
+                  <span lang="bn" className="block">
+                    একবার সেট করুন — এটি সাবার সাপ্তাহ চলতে থাকবে। আপনি না
+                    বদলালে কিছুই পরিবর্তন হয় না।
+                  </span>
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <DayExceptionForm
+              <CardContent className="space-y-4">
+                <BookingHorizonSelect
                   turfId={turf.id}
-                  date={selectedDate}
-                  existing={
+                  defaultDays={turf.bookingHorizonDays}
+                />
+                <ScheduleBuilderForm
+                  turfId={turf.id}
+                  defaultValues={scheduleDefaults}
+                />
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="border-primary/40">
+              <CardHeader>
+                <CardTitle className="font-heading text-lg">
+                  Set up weekly hours
+                </CardTitle>
+                <CardDescription>
+                  <span className="block">
+                    Your turf doesn&apos;t have a weekly schedule yet, so there
+                    are no booking slots available. Answer a few quick
+                    questions about your prices, opening hours, and breaks, and
+                    we&apos;ll set up the whole week for you.
+                  </span>
+                  <span
+                    lang="bn"
+                    className="block pt-1 font-medium text-foreground"
+                  >
+                    সাপ্তাহিক সময়সূচি সেট করুন
+                  </span>
+                  <span lang="bn" className="block">
+                    আপনার টার্ফের সাপ্তাহিক সময়সূচি এখনো সেট করা হয়নি, তাই
+                    বুকিংয়ের জন্য কোনো স্লট নেই। দাম, খোলার সময় এবং বিরতি
+                    সম্পর্কে কয়েকটি সহজ প্রশ্নের উত্তর দিন—আমরা আপনার জন্য
+                    পুরো সপ্তাহের সময়সূচি তৈরি করে দেব।
+                  </span>
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ScheduleWizardDialog turfId={turf.id} />
+              </CardContent>
+            </Card>
+          )}
+
+          <DayAdjustments>
+            <div className="grid gap-6 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:items-start">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="font-heading text-lg">
+                    Availability calendar
+                  </CardTitle>
+                  <CardDescription>
+                    Tap a day to see and edit its slots. Ringed days are public
+                    holidays ({`we seed the BD calendar - lunar dates are
+                    estimates, always double-check Eid`}).
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <TurfDayCalendar
+                    turfId={turf.id}
+                    month={month}
+                    selectedDate={selectedDate}
+                    markers={markers}
+                  />
+                </CardContent>
+              </Card>
+
+              {selectedDate ? (
+                <DayPanel
+                  turfId={turf.id}
+                  month={month}
+                  selectedDate={selectedDate}
+                  holiday={
+                    selectedHoliday
+                      ? {
+                          name: selectedHoliday.name,
+                          approximate: selectedHoliday.approximate,
+                        }
+                      : null
+                  }
+                  exception={
                     selectedException
                       ? {
                           isClosed: selectedException.isClosed,
@@ -361,76 +384,37 @@ export default async function EditTurfPage({
                         }
                       : null
                   }
-                  holidayName={selectedHoliday?.name ?? null}
+                  isRamadan={isDuringRamadan(selectedDate)}
+                  weekdayHasSections={weekdayHasSections}
+                  daySlots={daySlots}
                 />
-                <div className="space-y-2">
-                  <h4 className="text-sm font-semibold">Slots this day</h4>
-                  {daySlots.length > 0 ? (
-                    <SlotGrid turfId={turf.id} slots={daySlots} />
-                  ) : (
-                    <p className="rounded-lg border border-dashed border-border p-4 text-center text-sm text-muted-foreground">
-                      No slots on this date - the weekly schedule has nothing
-                      for this weekday, or the day is closed.
-                    </p>
-                  )}
-                </div>
+              ) : (
+                <EmptyDayState />
+              )}
+            </div>
+          </DayAdjustments>
+
+          <AdvancedTools>
+            <SavedSchedulesCard
+              turfId={turf.id}
+              schedules={savedSchedules}
+              today={todayIso}
+            />
+            <Card>
+              <CardHeader>
+                <CardTitle className="font-heading text-lg">
+                  Bulk generate (legacy)
+                </CardTitle>
+                <CardDescription>
+                  Only for turfs without weekly hours. Prefer weekly hours —
+                  it auto-fills the next 30 days.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <GenerateSlotsForm turfId={turf.id} />
               </CardContent>
             </Card>
-          ) : null}
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="font-heading text-lg">
-                Generate availability
-              </CardTitle>
-              <CardDescription>
-                Bulk-create slots across a date range. You can override
-                individual slots below.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <GenerateSlotsForm turfId={turf.id} />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="font-heading text-lg">
-                Add a custom slot
-              </CardTitle>
-              <CardDescription>
-                Hand-place a single slot on one date — a late-night Ramadan
-                game, a one-off morning session. Overlapping slots are
-                rejected. Custom slots stay put even when you regenerate.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <AddSlotForm turfId={turf.id} />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="font-heading text-lg">
-                Slots · next 14 days
-              </CardTitle>
-              <CardDescription>
-                Edit price or set maintenance / blocked. Booked slots are
-                immutable here — the booking flow owns them (Phase 3).
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <SlotGrid turfId={turf.id} slots={slots} />
-              <Button
-                variant="ghost"
-                size="sm"
-                className="mt-4"
-                render={<Link href="/turf-owner">Done</Link>}
-              >
-                Done
-              </Button>
-            </CardContent>
-          </Card>
+          </AdvancedTools>
         </TabsContent>
       </Tabs>
     </div>

@@ -87,12 +87,14 @@ import {
   clearDateExceptionAction,
   saveScheduleAction,
   setDateExceptionAction,
+  updateBookingHorizonAction,
 } from "@/features/turfs/actions"
 import {
   turfSlots,
   turfSchedules,
   turfScheduleSections,
   turfDateExceptions,
+  turfs,
 } from "@/db/schema"
 
 const TURF_ID = "00000000-0000-0000-0000-000000000001"
@@ -428,5 +430,31 @@ describe("activateScheduleAction", () => {
     })
     expect(failure(res)).toContain("not found")
     expect(materializeMock).not.toHaveBeenCalled()
+  })
+})
+
+describe("updateBookingHorizonAction", () => {
+  it("rejects values outside the allowed choices", async () => {
+    signInAs(["turf_owner"])
+    const res = await updateBookingHorizonAction(TURF_ID, 45)
+    expect(failure(res)).toContain("days")
+    expect(materializeMock).not.toHaveBeenCalled()
+  })
+
+  it("requires the turf owner", async () => {
+    currentUser = null
+    const res = await updateBookingHorizonAction(TURF_ID, 60)
+    expect(failure(res)).toContain("signed in")
+  })
+
+  it("saves the horizon and rematerializes", async () => {
+    signInAs(["turf_owner"])
+    const res = await updateBookingHorizonAction(TURF_ID, 90)
+    expect(res.ok).toBe(true)
+    const update = updateCalls.find((u) => u.table === turfs)
+    expect(update?.set).toMatchObject({ bookingHorizonDays: 90 })
+    expect(materializeMock).toHaveBeenCalledWith(TURF_ID)
+    expect(res.materialized).toBeDefined()
+    expect(revalidateCalls).toContain(`/turf-owner/turfs/${TURF_ID}`)
   })
 })
