@@ -5,6 +5,17 @@ export const verifyTurfSchema = z.object({
 })
 export type VerifyTurfValues = z.infer<typeof verifyTurfSchema>
 
+export const unverifyTurfSchema = z.object({
+  turfId: z.string().uuid(),
+})
+export type UnverifyTurfValues = z.infer<typeof unverifyTurfSchema>
+
+export const setTurfActiveSchema = z.object({
+  turfId: z.string().uuid(),
+  isActive: z.boolean(),
+})
+export type SetTurfActiveValues = z.infer<typeof setTurfActiveSchema>
+
 export const setUserStatusSchema = z.object({
   userId: z.string().uuid(),
   status: z.enum(["active", "suspended"]),

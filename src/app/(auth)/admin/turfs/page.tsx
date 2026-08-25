@@ -1,7 +1,12 @@
 import Link from "next/link"
 
 import { StatusBadge } from "@/components/shared"
-import { InvitePanel, VerifyTurfButton } from "@/components/admin"
+import {
+  InvitePanel,
+  TurfActiveToggle,
+  UnverifyTurfButton,
+  VerifyTurfButton,
+} from "@/components/admin"
 import { listTurfsAdmin } from "@/features/admin/queries"
 import { turfFormatLabel } from "@/features/turfs/formats"
 
@@ -90,11 +95,16 @@ export default async function AdminTurfsPage({
                   {t.ownerId ? `owner ${t.ownerPhone}` : "no owner yet"}
                 </p>
               </div>
-              {t.ownerId === null ? (
-                <InvitePanel turfId={t.id} defaultPhone={t.applicantPhone ?? ""} />
-              ) : !t.isVerified ? (
-                <VerifyTurfButton turfId={t.id} />
-              ) : null}
+              <div className="flex flex-wrap items-center gap-1">
+                {t.ownerId === null ? (
+                  <InvitePanel turfId={t.id} defaultPhone={t.applicantPhone ?? ""} />
+                ) : !t.isVerified ? (
+                  <VerifyTurfButton turfId={t.id} />
+                ) : (
+                  <UnverifyTurfButton turfId={t.id} />
+                )}
+                <TurfActiveToggle turfId={t.id} isActive={t.isActive} />
+              </div>
             </li>
           ))}
         </ul>
