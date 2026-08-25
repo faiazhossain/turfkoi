@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { PencilIcon } from "lucide-react"
 
 import { StatusBadge } from "@/components/shared"
 import {
@@ -67,6 +68,14 @@ export default async function AdminTurfsPage({
                     className="truncate font-heading font-medium hover:underline"
                   >
                     {t.name}
+                  </Link>
+                  <Link
+                    href={`/admin/turfs/${t.id}`}
+                    aria-label={`Edit ${t.name}`}
+                    title="Edit turf"
+                    className="inline-flex size-6 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                  >
+                    <PencilIcon className="size-3.5" aria-hidden />
                   </Link>
                   <Link
                     href={`/turfs/${t.slug}`}
