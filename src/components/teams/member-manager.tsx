@@ -23,6 +23,7 @@ import {
   transferOwnershipAction,
 } from "@/features/teams/actions"
 import { useI18n, translateError } from "@/i18n/client"
+import { teamMemberRoleLabel } from "@/i18n/labels"
 
 interface Member {
   userId: string
@@ -186,7 +187,7 @@ export function MemberManager({
                   </Select>
                 ) : (
                   <StatusBadge status={ROLE_TONE[m.role]} showIcon={false}>
-                    {t(`team.role.${m.role}`)}
+                    {t(teamMemberRoleLabel(m.role))}
                   </StatusBadge>
                 )}
                 {canManage && m.role !== "owner" ? (

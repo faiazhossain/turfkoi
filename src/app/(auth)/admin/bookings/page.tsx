@@ -21,6 +21,7 @@ import {
 } from "@/features/admin/queries"
 import { getT } from "@/i18n/server"
 import { buildMetadata } from "@/i18n/metadata"
+import { bookingStatusLabel } from "@/i18n/labels"
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildMetadata({ titleKey: "metadata.adminBookingsTitle" })
@@ -117,7 +118,7 @@ export default async function AdminBookingsPage({
                 "refunded",
               ].map((s) => (
                 <option key={s} value={s}>
-                  {t(`player.bookingStatus.${s}`)}
+                  {t(bookingStatusLabel(s))}
                 </option>
               ))}
             </select>
@@ -166,7 +167,7 @@ export default async function AdminBookingsPage({
                     </TableCell>
                     <TableCell>
                       <StatusBadge status={TONE[b.status] ?? "neutral"} showIcon={false}>
-                        {t(`player.bookingStatus.${b.status}`)}
+                        {t(bookingStatusLabel(b.status))}
                       </StatusBadge>
                     </TableCell>
                     <TableCell className="tabular-nums">

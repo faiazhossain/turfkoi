@@ -18,6 +18,7 @@ import {
   getPlayerProfile,
 } from "@/features/player/queries"
 import { getOrCreateReferralCode } from "@/features/auth/referrals"
+import { bookingStatusLabel, matchStateLabel } from "@/i18n/labels"
 
 const STATUS_TONE: Record<string, "success" | "warning" | "neutral"> = {
   held: "warning",
@@ -193,7 +194,7 @@ export default async function PlayerDashboardPage() {
                         </span>
                       ) : null}
                       <StatusBadge status={tone} showIcon={false}>
-                        {t(`player.bookingStatus.${b.status}`)}
+                        {t(bookingStatusLabel(b.status))}
                       </StatusBadge>
                     </div>
                   </Link>
@@ -291,7 +292,7 @@ export default async function PlayerDashboardPage() {
                     status={MATCH_STATE_TONE[h.state] ?? "neutral"}
                     showIcon={false}
                   >
-                    {t(`matches.state.${h.state}`)}
+                    {t(matchStateLabel(h.state))}
                   </StatusBadge>
                   {h.state === "completed" && !h.playedConfirmedAt ? (
                     <ConfirmPlayedButton matchId={h.id} />

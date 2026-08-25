@@ -14,6 +14,7 @@ import {
 } from "@/features/admin/actions"
 import { useI18n } from "@/i18n/client"
 import type { reportStatus } from "@/db/schema"
+import { userRoleLabel } from "@/i18n/labels"
 
 type ReportStatus = (typeof reportStatus.enumValues)[number]
 
@@ -91,7 +92,7 @@ export function RoleToggle({
       if (!res.ok) { toast.error(t(res.error)); return }
       toast.success(
         t(!enabled ? "admin.users.roleGrantedToast" : "admin.users.roleRemovedToast", {
-          role: t(`admin.users.roles.${role}`),
+          role: t(userRoleLabel(role)),
         })
       )
       router.refresh()
@@ -105,7 +106,7 @@ export function RoleToggle({
       loading={pending}
       aria-pressed={enabled}
     >
-      {t(`admin.users.roles.${role}`)}
+      {t(userRoleLabel(role))}
     </Button>
   )
 }

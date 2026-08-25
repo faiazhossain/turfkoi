@@ -19,7 +19,7 @@ describe("validateImageFile", () => {
   it("rejects files over the original-size cap", () => {
     const res = validateImageFile({ type: "image/jpeg", size: MAX_ORIGINAL_BYTES + 1 })
     expect(res.ok).toBe(false)
-    if (!res.ok) expect(res.error).toMatch(/too big/i)
+    if (!res.ok) expect(res.error).toBe("images.errors.tooBig")
   })
 
   it("rejects empty files", () => {

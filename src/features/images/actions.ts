@@ -20,7 +20,7 @@ const publicIdSchema = z
   .string()
   .min(1)
   .max(300)
-  .regex(/^[a-zA-Z0-9/_-]+$/, "Invalid image reference")
+  .regex(/^[a-zA-Z0-9/_-]+$/, "images.errors.invalidRef")
 
 async function actor() {
   return getCurrentUser()
@@ -36,9 +36,9 @@ export async function addTurfPhotoAction(
   publicId: string
 ): Promise<ActionResult> {
   const parsed = publicIdSchema.safeParse(publicId)
-  if (!parsed.success) return { ok: false, error: "Invalid image reference." }
+  if (!parsed.success) return { ok: false, error: "images.errors.invalidRef" }
   const user = await actor()
-  if (!user) return { ok: false, error: "You are not signed in." }
+  if (!user) return { ok: false, error: "errors.notSignedIn" }
 
   const rights = await assertImageRights(user, "turf", turfId)
   if (!rights.ok) return { ok: false, error: rights.error }
@@ -50,7 +50,7 @@ export async function addTurfPhotoAction(
     .orderBy(asc(turfPhotos.sortOrder))
   if (existing.length >= MAX_TURF_PHOTOS) {
     await destroyAsset(parsed.data)
-    return { ok: false, error: `A turf can have at most ${MAX_TURF_PHOTOS} photos.` }
+    return { ok: false, error: "images.errors.maxPhotos" }
   }
 
   const maxRow = await db
@@ -78,7 +78,7 @@ export async function addTurfPhotoAction(
     // DB failed after a successful upload — don't orphan the asset.
     await destroyAsset(parsed.data)
     if (String(err).includes("unique")) {
-      return { ok: false, error: "That photo was already added." }
+      return { ok: false, error: "images.errors.alreadyAdded" }
     }
     throw err
   }
@@ -86,7 +86,7 @@ export async function addTurfPhotoAction(
 
 export async function deleteTurfPhotoAction(photoId: string): Promise<ActionResult> {
   const user = await actor()
-  if (!user) return { ok: false, error: "You are not signed in." }
+  if (!user) return { ok: false, error: "errors.notSignedIn" }
 
   const rows = await db
     .select({ id: turfPhotos.id, turfId: turfPhotos.turfId, publicId: turfPhotos.publicId, isCover: turfPhotos.isCover })
@@ -94,7 +94,7 @@ export async function deleteTurfPhotoAction(photoId: string): Promise<ActionResu
     .where(eq(turfPhotos.id, photoId))
     .limit(1)
   const photo = rows[0]
-  if (!photo) return { ok: false, error: "Photo not found." }
+  if (!photo) return { ok: false, error: "images.errors.photoNotFound" }
 
   const rights = await assertImageRights(user, "turf", photo.turfId)
   if (!rights.ok) return { ok: false, error: rights.error }
@@ -125,7 +125,7 @@ export async function deleteTurfPhotoAction(photoId: string): Promise<ActionResu
 
 export async function setCoverTurfPhotoAction(photoId: string): Promise<ActionResult> {
   const user = await actor()
-  if (!user) return { ok: false, error: "You are not signed in." }
+  if (!user) return { ok: false, error: "errors.notSignedIn" }
 
   const rows = await db
     .select({ id: turfPhotos.id, turfId: turfPhotos.turfId })
@@ -133,7 +133,7 @@ export async function setCoverTurfPhotoAction(photoId: string): Promise<ActionRe
     .where(eq(turfPhotos.id, photoId))
     .limit(1)
   const photo = rows[0]
-  if (!photo) return { ok: false, error: "Photo not found." }
+  if (!photo) return { ok: false, error: "images.errors.photoNotFound" }
 
   const rights = await assertImageRights(user, "turf", photo.turfId)
   if (!rights.ok) return { ok: false, error: rights.error }
@@ -162,7 +162,7 @@ export async function moveTurfPhotoAction(
   dir: "earlier" | "later"
 ): Promise<ActionResult> {
   const user = await actor()
-  if (!user) return { ok: false, error: "You are not signed in." }
+  if (!user) return { ok: false, error: "errors.notSignedIn" }
 
   const rows = await db
     .select({ id: turfPhotos.id, turfId: turfPhotos.turfId, sortOrder: turfPhotos.sortOrder })
@@ -170,7 +170,7 @@ export async function moveTurfPhotoAction(
     .where(eq(turfPhotos.id, photoId))
     .limit(1)
   const photo = rows[0]
-  if (!photo) return { ok: false, error: "Photo not found." }
+  if (!photo) return { ok: false, error: "images.errors.photoNotFound" }
 
   const rights = await assertImageRights(user, "turf", photo.turfId)
   if (!rights.ok) return { ok: false, error: rights.error }
@@ -209,9 +209,9 @@ export async function setTeamLogoAction(
   publicId: string
 ): Promise<ActionResult> {
   const parsed = publicIdSchema.safeParse(publicId)
-  if (!parsed.success) return { ok: false, error: "Invalid image reference." }
+  if (!parsed.success) return { ok: false, error: "images.errors.invalidRef" }
   const user = await actor()
-  if (!user) return { ok: false, error: "You are not signed in." }
+  if (!user) return { ok: false, error: "errors.notSignedIn" }
 
   const rights = await assertImageRights(user, "team", teamId)
   if (!rights.ok) {
@@ -226,7 +226,7 @@ export async function setTeamLogoAction(
     .limit(1)
   if (!rows[0]) {
     await destroyAsset(parsed.data)
-    return { ok: false, error: "Team not found." }
+    return { ok: false, error: "images.errors.teamNotFound" }
   }
 
   try {
@@ -253,9 +253,9 @@ export async function setPlayerAvatarAction(publicId: string): Promise<
   { ok: true } | { ok: false; error: string }
 > {
   const parsed = publicIdSchema.safeParse(publicId)
-  if (!parsed.success) return { ok: false, error: "Invalid image reference." }
+  if (!parsed.success) return { ok: false, error: "images.errors.invalidRef" }
   const user = await actor()
-  if (!user) return { ok: false, error: "You are not signed in." }
+  if (!user) return { ok: false, error: "errors.notSignedIn" }
 
   const existing = await db
     .select({ avatarPublicId: playerProfiles.avatarPublicId })

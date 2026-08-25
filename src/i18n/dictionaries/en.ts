@@ -110,6 +110,32 @@ export const en = {
     invalid: "Invalid",
   },
 
+  images: {
+    errors: {
+      invalidRef: "Invalid image reference.",
+      alreadyAdded: "That photo was already added.",
+      photoNotFound: "Photo not found.",
+      maxPhotos: "A turf can have at most 12 photos.",
+      teamNotFound: "Team not found.",
+      ownAvatarOnly: "You can only manage your own avatar.",
+      logoOwnerOnly: "Only the team owner can manage the logo.",
+      turfOwnersOnly: "Turf owners only.",
+      notYourTurf: "You can only manage your own turf's photos.",
+      invalidBody: "Invalid request.",
+      uploadNotAllowed: "Upload not allowed.",
+      uploadFailed: "Upload failed. Check your connection and try again.",
+      confirmFailed: "Upload could not be verified.",
+      uploadNotFound: "Upload not found. Try again.",
+      badFormat: "That file type isn't supported.",
+      tooLarge: "That image is too large after compression. Try a smaller one.",
+      badFolder: "That upload doesn't belong to this resource.",
+      invalidType: "Only JPEG, PNG, WebP, and AVIF images are allowed.",
+      tooBig: "That image is too big (max 10 MB).",
+      emptyFile: "That file looks empty or corrupted.",
+      setupFailed: "Upload setup failed.",
+    },
+  },
+
   turfs: {
     title: "Find a turf",
     subtitle:
@@ -157,6 +183,17 @@ export const en = {
       washroom: "Washroom",
       equipment: "Equipment rental",
     },
+    // BD turf scene uses these in English in both locales — intentional.
+    format: {
+      fives: "5-a-side",
+      sixes: "6-a-side",
+      sevens: "7-a-side",
+      eights: "8-a-side",
+      nines: "9-a-side",
+      tens: "10-a-side",
+      elevens: "11-a-side",
+    },
+
     errors: {
       slotGone: "That slot no longer exists.",
       slotTaken: "That slot was just taken.",
@@ -339,7 +376,10 @@ export const en = {
     teamTbd: "Team TBD",
     breadcrumbMatch: "Match",
     state: {
+      draft: "Draft",
       open: "Open",
+      opponent_found: "Opponent found",
+      payment_pending: "Payment pending",
       confirmed: "Confirmed",
       roster_building: "Roster building",
       ready: "Ready",
@@ -543,6 +583,8 @@ export const en = {
       linkReplaced: "This link was replaced by a newer one.",
       noOtp: "This link doesn't have a code. Ask for a new one.",
       passwordMin: "Password must be at least 8 characters",
+      passwordMax: "Password is too long",
+      codeLength: "Enter the 6-digit code",
     },
   },
 
@@ -575,6 +617,7 @@ export const en = {
     playedLabel: "I played",
     playedToast: "Thanks for confirming!",
     bookingStatus: {
+      available: "Available",
       held: "Held",
       payment_pending: "Payment pending",
       confirmed: "Confirmed",
@@ -609,6 +652,9 @@ export const en = {
   },
 
   notifications: {
+    errors: {
+      invalid: "Invalid notification.",
+    },
     title: "Notifications",
     markAllRead: "Mark all read",
     viewAll: "View all notifications",

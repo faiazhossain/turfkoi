@@ -112,6 +112,32 @@ export const bn: Dictionary = {
     invalid: "তথ্য ঠিক নয়",
   },
 
+  images: {
+    errors: {
+      invalidRef: "ছবির রেফারেন্স সঠিক নয়।",
+      alreadyAdded: "এই ছবিটি আগেই যোগ করা হয়েছে।",
+      photoNotFound: "ছবিটি পাওয়া যায় নি।",
+      maxPhotos: "একটি turf-এ সর্বোচ্চ ১২টি ছবি রাখা যায়।",
+      teamNotFound: "Team পাওয়া যায় নি।",
+      ownAvatarOnly: "আপনি শুধু নিজের avatar পরিচালনা করতে পারবেন।",
+      logoOwnerOnly: "শুধু team owner-ই logo পরিচালনা করতে পারবেন।",
+      turfOwnersOnly: "শুধু turf owner-দের জন্য।",
+      notYourTurf: "শুধু নিজের turf-এর ছবি পরিচালনা করতে পারবেন।",
+      invalidBody: "অনুরোধটি সঠিক নয়।",
+      uploadNotAllowed: "আপলোডের অনুমতি নেই।",
+      uploadFailed: "ছবি আপলোড করা গেল না। আবার চেষ্টা করুন।",
+      confirmFailed: "আপলোড যাচাই করা গেল না।",
+      uploadNotFound: "আপলোড পাওয়া যায় নি। আবার চেষ্টা করুন।",
+      badFormat: "এই ধরনের ফাইল সমর্থিত নয়।",
+      tooLarge: "ছবিটি কম্প্রেস করার পরেও অনেক বড়। ছোট একটি ছবি দিয়ে চেষ্টা করুন।",
+      badFolder: "এই আপলোড এই resource-এর নয়।",
+      invalidType: "শুধু JPEG, PNG, WebP এবং AVIF ছবি গ্রহণ করা হয়।",
+      tooBig: "ছবিটি অনেক বড় (সর্বোচ্চ ১০ MB)।",
+      emptyFile: "ফাইলটি খালি বা নষ্ট মনে হচ্ছে।",
+      setupFailed: "আপলোড প্রস্তুত করা গেল না।",
+    },
+  },
+
   turfs: {
     title: "টার্ফ খুঁজুন",
     subtitle:
@@ -159,6 +185,17 @@ export const bn: Dictionary = {
       washroom: "ওয়াশরুম",
       equipment: "ইকুইপমেন্ট ভাড়া",
     },
+    // BD turf scene uses these in English in both locales — intentional.
+    format: {
+      fives: "5-a-side",
+      sixes: "6-a-side",
+      sevens: "7-a-side",
+      eights: "8-a-side",
+      nines: "9-a-side",
+      tens: "10-a-side",
+      elevens: "11-a-side",
+    },
+
     errors: {
       slotGone: "সেই slot আর নেই।",
       slotTaken: "সেই slotটি এইমাত্র অন্য কেউ নিয়ে নিয়েছে।",
@@ -340,7 +377,10 @@ export const bn: Dictionary = {
     teamTbd: "টিম এখনো নির্ধারিত হয়নি",
     breadcrumbMatch: "ম্যাচ",
     state: {
+      draft: "ড্রাফট",
       open: "ওপেন",
+      opponent_found: "প্রতিপক্ষ ঠিক হয়েছে",
+      payment_pending: "পেমেন্ট বাকি",
       confirmed: "কনফার্মড",
       roster_building: "রোস্টার তৈরি হচ্ছে",
       ready: "প্রস্তুত",
@@ -542,6 +582,8 @@ export const bn: Dictionary = {
       linkReplaced: "নতুন একটি link পাঠানো হয়েছে, এটি আর চলবে না।",
       noOtp: "এই link-এ কোড নেই। নতুন একটি চান।",
       passwordMin: "পাসওয়ার্ড কমপক্ষে ৮ অক্ষরের হতে হবে",
+      passwordMax: "পাসওয়ার্ড অনেক বড়",
+      codeLength: "৬ ডিজিটের কোডটি লিখুন",
     },
   },
 
@@ -574,6 +616,7 @@ export const bn: Dictionary = {
     playedLabel: "খেলেছি",
     playedToast: "নিশ্চিত করার জন্য ধন্যবাদ!",
     bookingStatus: {
+      available: "উন্মুক্ত",
       held: "হোল্ড করা",
       payment_pending: "পেমেন্ট বাকি",
       confirmed: "কনফার্মড",
@@ -608,6 +651,9 @@ export const bn: Dictionary = {
   },
 
   notifications: {
+    errors: {
+      invalid: "নোটিফিকেশনটি সঠিক নয়।",
+    },
     title: "Notifications",
     markAllRead: "সব পড়া হয়েছে",
     viewAll: "সব notification দেখুন",

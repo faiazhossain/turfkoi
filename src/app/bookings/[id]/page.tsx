@@ -16,6 +16,7 @@ import { getCurrentUser } from "@/lib/auth"
 import { getT } from "@/i18n/server"
 import type { Metadata } from "next"
 import { buildMetadata } from "@/i18n/metadata"
+import { bookingStatusLabel } from "@/i18n/labels"
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -77,11 +78,8 @@ export default async function BookingDetailPage({
   const tone = STATUS_TONE[b.status] ?? "neutral"
   const paymentFailed = payment === "failed"
 
-  // Status/policy labels resolve from the dictionary; raw enum values are the
-  // fallback for anything not yet covered (t() returns unknown keys verbatim).
-  const statusKey = `player.bookingStatus.${b.status}`
-  const statusLabel = t(statusKey)
-  const statusText = statusLabel === statusKey ? b.status.replace(/_/g, " ") : statusLabel
+  // Labels resolve from the typed key maps (unknown enum values fail typecheck).
+  const statusText = t(bookingStatusLabel(b.status))
   const policyKey = `booking.policy.${turf.cancellationPolicy}`
   const policyLabel = t(policyKey)
   const policyText =

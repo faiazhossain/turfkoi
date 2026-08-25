@@ -22,14 +22,13 @@ export function validateImageFile(
     file.type === "image/webp" ||
     file.type === "image/avif"
   if (!okType) {
-    return { ok: false, error: "Only JPEG, PNG, WebP, and AVIF images are allowed." }
+    return { ok: false, error: "images.errors.invalidType" }
   }
   if (file.size > maxBytes) {
-    const mb = Math.round(maxBytes / 1024 / 1024)
-    return { ok: false, error: `That image is too big (max ${mb} MB).` }
+    return { ok: false, error: "images.errors.tooBig" }
   }
   if (file.size === 0) {
-    return { ok: false, error: "That file looks empty or corrupted." }
+    return { ok: false, error: "images.errors.emptyFile" }
   }
   return { ok: true }
 }

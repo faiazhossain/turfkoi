@@ -24,11 +24,11 @@ export async function assertImageRights(
   context: ImageContextKind,
   resourceId: string
 ): Promise<RightsResult> {
-  if (!user) return { ok: false, error: "You are not signed in." }
+  if (!user) return { ok: false, error: "errors.notSignedIn" }
 
   if (context === "player") {
     if (resourceId !== user.id) {
-      return { ok: false, error: "You can only manage your own avatar." }
+      return { ok: false, error: "images.errors.ownAvatarOnly" }
     }
     return { ok: true, userId: user.id }
   }
@@ -43,14 +43,14 @@ export async function assertImageRights(
       .limit(1)
     const teamRole = rows[0]?.role ?? null
     if (!can(user, "team.update", { teamRole })) {
-      return { ok: false, error: "Only the team owner can manage the logo." }
+      return { ok: false, error: "images.errors.logoOwnerOnly" }
     }
     return { ok: true, userId: user.id }
   }
 
   // turf
   if (!user.roles.includes("turf_owner") && !user.roles.includes("admin")) {
-    return { ok: false, error: "Turf owners only." }
+    return { ok: false, error: "images.errors.turfOwnersOnly" }
   }
   const rows = await db
     .select({ ownerId: turfs.ownerId })
@@ -58,9 +58,9 @@ export async function assertImageRights(
     .where(eq(turfs.id, resourceId))
     .limit(1)
   const turf = rows[0]
-  if (!turf) return { ok: false, error: "Turf not found." }
+  if (!turf) return { ok: false, error: "turfs.errors.turfNotFound" }
   if (!can(user, "turf.update", { ownerId: turf.ownerId })) {
-    return { ok: false, error: "You can only manage your own turf's photos." }
+    return { ok: false, error: "images.errors.notYourTurf" }
   }
   return { ok: true, userId: user.id }
 }

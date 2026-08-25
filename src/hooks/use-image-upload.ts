@@ -45,7 +45,7 @@ export function useImageUpload() {
           const { error: signError } = (await signRes.json().catch(() => ({}))) as {
             error?: string
           }
-          setError(signError ?? "Upload not allowed.")
+          setError(signError ?? "images.errors.uploadNotAllowed")
           return null
         }
         const signed = (await signRes.json()) as SignedUploadResponse
@@ -69,7 +69,7 @@ export function useImageUpload() {
 
         const put = await fetch(signed.uploadUrl, { method: "POST", body: form })
         if (!put.ok) {
-          setError("Upload failed. Check your connection and try again.")
+          setError("images.errors.uploadFailed")
           return null
         }
 
@@ -86,7 +86,7 @@ export function useImageUpload() {
           const { error: confirmError } = (await confirmRes
             .json()
             .catch(() => ({}))) as { error?: string }
-          setError(confirmError ?? "Upload could not be verified.")
+          setError(confirmError ?? "images.errors.confirmFailed")
           return null
         }
 

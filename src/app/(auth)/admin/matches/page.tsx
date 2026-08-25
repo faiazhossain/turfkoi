@@ -6,6 +6,7 @@ import { ResolveDisputeButtons } from "@/components/admin"
 import { listDisputedMatches } from "@/features/admin/queries"
 import { getT } from "@/i18n/server"
 import { buildMetadata } from "@/i18n/metadata"
+import { matchStateLabel } from "@/i18n/labels"
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildMetadata({ titleKey: "metadata.adminMatchesTitle" })
@@ -39,7 +40,7 @@ export default async function AdminMatchesPage() {
                     {m.turfName}
                   </Link>
                   <StatusBadge status="danger" showIcon={false}>
-                    {t(`matches.state.${m.state}`)}
+                    {t(matchStateLabel(m.state))}
                   </StatusBadge>
                 </div>
                 <p className="font-mono text-xs text-muted-foreground">

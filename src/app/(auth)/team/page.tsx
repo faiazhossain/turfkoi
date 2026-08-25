@@ -9,6 +9,7 @@ import { getCurrentUser } from "@/lib/auth"
 import { listMyTeams } from "@/features/teams/queries"
 import { getT } from "@/i18n/server"
 import { buildMetadata } from "@/i18n/metadata"
+import { teamMemberRoleLabel } from "@/i18n/labels"
 
 const ROLE_TONE: Record<string, "primary" | "success" | "warning" | "neutral"> = {
   owner: "primary",
@@ -69,7 +70,7 @@ export default async function TeamDashboardPage() {
                   <p className="text-xs text-muted-foreground">/team/{tm.slug}</p>
                 </div>
                 <StatusBadge status={ROLE_TONE[tm.role]} showIcon={false}>
-                  {t(`team.role.${tm.role}`)}
+                  {t(teamMemberRoleLabel(tm.role))}
                 </StatusBadge>
               </Link>
             </li>

@@ -42,12 +42,12 @@ export type TurfApplicationValues = z.infer<typeof turfApplicationSchema>
  */
 export const approveApplicationSchema = z.object({
   applicationId: z.string().uuid(),
-  name: z.string().min(2, "Name is too short").max(80),
+  name: z.string().min(2, "turfOwner.errors.nameShort").max(80),
   slug: z
     .string()
     .min(2)
     .max(80)
-    .regex(slugRegex, "Use lowercase letters, digits, and hyphens"),
+    .regex(slugRegex, "team.errors.slugFormat"),
   description: z.string().max(2000).optional(),
   coords: coordsSchema,
   format: z.enum(TURF_FORMAT_VALUES),

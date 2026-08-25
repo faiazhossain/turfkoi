@@ -24,7 +24,7 @@ export async function POST(req: Request) {
   const user = await imageActor()
   const parsed = bodySchema.safeParse(await req.json().catch(() => null))
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid body" }, { status: 400 })
+    return NextResponse.json({ error: "images.errors.invalidBody" }, { status: 400 })
   }
   const { context, resourceId } = parsed.data
 
@@ -41,7 +41,7 @@ export async function POST(req: Request) {
       .where(eq(turfPhotos.turfId, resourceId))
     if (rows.length >= MAX_TURF_PHOTOS) {
       return NextResponse.json(
-        { error: `This turf already has the maximum of ${MAX_TURF_PHOTOS} photos.` },
+        { error: "images.errors.maxPhotos" },
         { status: 400 }
       )
     }
@@ -56,7 +56,7 @@ export async function POST(req: Request) {
     })
   } catch (err) {
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Upload setup failed" },
+      { error: err instanceof Error ? err.message : "images.errors.setupFailed" },
       { status: 400 }
     )
   }

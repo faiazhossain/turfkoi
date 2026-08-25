@@ -17,6 +17,7 @@ import {
 } from "@/features/player/queries"
 import { getTurfLatLng } from "@/features/turfs/queries"
 import { getCurrentUser } from "@/lib/auth"
+import { matchStateLabel } from "@/i18n/labels"
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -135,7 +136,7 @@ export default async function MatchDetailPage({ params }: PageProps) {
             {away ? ` vs ${away.teamName}` : ""}
           </h1>
           <StatusBadge status={STATE_TONE[m.state] ?? "neutral"} showIcon={false}>
-            {tr(`matches.state.${m.state}`)}
+            {tr(matchStateLabel(m.state))}
           </StatusBadge>
         </div>
         <div className="flex items-center gap-1 text-sm text-muted-foreground">

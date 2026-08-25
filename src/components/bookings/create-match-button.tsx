@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select"
 import { createMatchAction } from "@/features/matches/actions"
 import { useI18n } from "@/i18n/client"
+import { teamMemberRoleLabel } from "@/i18n/labels"
 
 interface TeamOption {
   id: string
@@ -72,7 +73,7 @@ export function CreateMatchButton({
         <SelectContent>
           {teams.map((team) => (
             <SelectItem key={team.id} value={team.id}>
-              {team.name} ({t(`team.role.${team.role}`)})
+              {team.name} ({t(teamMemberRoleLabel(team.role))})
             </SelectItem>
           ))}
         </SelectContent>

@@ -24,7 +24,7 @@ export async function POST(req: Request) {
   const user = await imageActor()
   const parsed = bodySchema.safeParse(await req.json().catch(() => null))
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid body" }, { status: 400 })
+    return NextResponse.json({ error: "images.errors.invalidBody" }, { status: 400 })
   }
   const { context, resourceId, publicId } = parsed.data
 
@@ -44,10 +44,10 @@ export async function POST(req: Request) {
       await destroyAsset(publicId)
     }
     const messages = {
-      not_found: "Upload not found. Try again.",
-      bad_format: "That file type isn't supported.",
-      too_large: "That image is too large after compression. Try a smaller one.",
-      bad_folder: "That upload doesn't belong to this resource.",
+      not_found: "images.errors.uploadNotFound",
+      bad_format: "images.errors.badFormat",
+      too_large: "images.errors.tooLarge",
+      bad_folder: "images.errors.badFolder",
     } as const
     return NextResponse.json(
       { error: messages[confirmed.reason] },

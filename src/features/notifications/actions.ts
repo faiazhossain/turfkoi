@@ -22,10 +22,10 @@ export async function markNotificationReadAction(
   id: string
 ): Promise<ActionResult> {
   const parsed = idSchema.safeParse(id)
-  if (!parsed.success) return { ok: false, error: "Invalid notification." }
+  if (!parsed.success) return { ok: false, error: "notifications.errors.invalid" }
 
   const user = await getCurrentUser()
-  if (!user) return { ok: false, error: "You are not signed in." }
+  if (!user) return { ok: false, error: "errors.notSignedIn" }
 
   await db
     .update(notifications)
@@ -45,7 +45,7 @@ export async function markNotificationReadAction(
 /** Mark every unread notification of the current user as read. */
 export async function markAllNotificationsReadAction(): Promise<ActionResult> {
   const user = await getCurrentUser()
-  if (!user) return { ok: false, error: "You are not signed in." }
+  if (!user) return { ok: false, error: "errors.notSignedIn" }
 
   await db
     .update(notifications)
