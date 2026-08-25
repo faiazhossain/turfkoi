@@ -51,39 +51,40 @@ export const bn: Dictionary = {
     adminConsole: "Admin কনসোল",
     bookTurf: "টার্ফ বুক করুন",
     language: "ভাষা",
-    footerTagline: "বুক করুন। ম্যাচ করুন। খেলুন।",
-    footerPayments: "দাম টাকায় (BDT)। পেমেন্ট bKash-এ।",
+    footerTagline: "-তে Turf বুক করুন। Match করুন। খেলুন।",
+    footerPayments: "দাম BDT-তে। bKash-এ Pay করুন।",
   },
 
   home: {
     badge: "বাংলাদেশের টার্ফ খেলার জন্য তৈরি",
     heroBookTurf: "টার্ফ বুক করুন।",
-    heroFindOpponent: "প্রতিপক্ষ খুঁজুন।",
-    heroFillAndPlay: "টিম পূর্ণ করুন। খেলুন।",
+    heroFindOpponent: "Opponent খুঁজুন।",
+    heroFillAndPlay: "Team Create করুন। খেলুন।",
     heroBody:
-      "Turfkoi-তে টার্ফ বুকিং থেকে শুরু করে প্রতিপক্ষ টিম ও অতিরিক্ত খেলোয়াড় খোঁজা—খেলার জন্য যা কিছু দরকার, সব এক জায়গায়। দাম বাংলাদেশি টাকায়, পেমেন্ট bKash-এ।",
+      "Turfkoi-তে Turf Booking করুন, Opponent Team খুঁজুন এবং Team-এর জন্য Extra Player এড করুন—খেলার জন্য যা কিছু দরকার, সব এক জায়গায়। টার্ফ ফি bKash-এ Pay করুন।",
     ctaBook: "টার্ফ বুক করুন",
     ctaFindMatch: "ম্যাচ খুঁজুন",
     featureBookTitle: "টার্ফ বুক করুন",
     featureBookDesc:
-      "কাছের টার্ফ দেখুন, সুবিধামতো slot বেছে নিন, bKash-এ পেমেন্ট করুন। স্বচ্ছ ফি চেকআউটের সময়ই ঠিক হয়ে যায়—পরে কখনো বদলায় না।",
-    featureOpponentTitle: "প্রতিপক্ষ খুঁজুন",
+      "কাছের Turf খুঁজে নিন, পছন্দের Slot বুক করুন আর bKash-এ Pay করে দিন। Checkout-এর সময়ই কত টাকা দিতে হবে দেখে নিতে পারবেন—পরে আর ফি বাড়বে না।",
+    featureOpponentTitle: "Opponent খুঁজুন",
     featureOpponentDesc:
-      "আপনার ম্যাচ পাবলিশ করুন, প্রতিপক্ষ টিম নিজেই accept করবে। WhatsApp-এ খালি slot ভরার জন্য হন্যে হওয়ার দরকার নেই।",
-    featureRosterTitle: "টিম পূর্ণ করুন",
+      "Match Post করুন, Opponent Team খুঁজে নিন—আর Team-এর খালি Slot নিয়ে চিন্তা নেই। WhatsApp-এ Player খুঁজতে আর হন্যে হয়ে ঘুরতে হবে না।",
+    featureRosterTitle: "Team পূর্ণ করুন",
     featureRosterDesc:
-      "খেলোয়াড় কম? কাছের solo player-রা ম্যাচে guest হিসেবে যোগ দেওয়ার রিকোয়েস্ট পাঠাতে পারবে।",
+      "Team-এ Player কম? কাছের Solo Player-রা আপনার Match-এ Guest হিসেবে Join করার জন্য Request পাঠাতে পারবে।",
   },
 
   metadata: {
     rootTitle: "Turfkoi — টার্ফ বুক করুন। প্রতিপক্ষ খুঁজুন। খেলুন।",
     rootDescription:
       "বাংলাদেশে টার্ফ বুক করুন, প্রতিপক্ষ টিম খুঁজুন, টিমের খালি জায়গা পূরণ করে খেলুন। দাম টাকায়, পেমেন্ট bKash-এ।",
-    turfsTitle: "টার্ফ খুঁজুন",
+    turfsTitle: "Turf খুঁজুন",
     turfsDescription:
-      "বাংলাদেশের verified টার্ফ ব্রাউজ করুন — এলাকা দিয়ে ফিল্টার করুন, বা map-এ দেখুন।",
-    matchesTitle: "ম্যাচ খুঁজুন",
-    matchesDescription: "প্রতিপক্ষ খুঁজছে এমন ওপেন ম্যাচ।",
+      "বাংলাদেশের Verified Turf খুঁজে নিন—এলাকা দিয়ে Filter করুন বা Map-এ দেখে নিন।",
+    matchesTitle: "Match খুঁজুন",
+    matchesDescription:
+      "যেসব Open Match-এ এখনো Opponent Team দরকার, সেগুলো এখানে খুঁজে নিন।",
     ownATurfTitle: "আপনার টার্ফ লিস্ট করুন",
     ownATurfDescription:
       "Turfkoi-তে আপনার টার্ফ লিস্ট করার আবেদন করুন। প্রতিটি আবেদন আমরা নিজে দেখে claim link পাঠাই — slot, দাম আর booking ম্যানেজ করার জন্য।",
@@ -176,10 +177,11 @@ export const bn: Dictionary = {
     noPhotosYet: "এখনো কোনো ছবি নেই",
     inactive: "নিষ্ক্রিয়",
     facilities: "সুবিধা",
-    noFacilities: "সুবিধার কোনো বিবরণ দেওয়া হয়নি।",
+    noFacilities: "এই Turf-এর সুবিধাগুলোর কোনো তথ্য দেওয়া হয়নি।",
     surface: "সারফেস: {type}",
-    cancellation: "ক্যান্সেলেশন",
-    cancellationFlexible: "ফ্রি ক্যান্সেলেশন — খেলা শুরুর আগে যেকোনো সময় পুরো টাকা ফেরত।",
+    cancellation: "Cancellation",
+    cancellationFlexible:
+      "Cancellation Policy Turf Owner-এর ওপর নির্ভর করে। বুক করার আগে Cancellation Policy দেখে নিন।",
     cancellationModerate:
       "শুরুর ২৪ ঘণ্টা আগে পর্যন্ত পুরো ফেরত, এর মধ্যে ৫০%, শেষ মুহূর্তে কিছু না।",
     cancellationRebook: "অন্য কোনো player সেই slotটি বুক করলেই ফেরত পাবেন।",
@@ -389,8 +391,8 @@ export const bn: Dictionary = {
   },
 
   matches: {
-    title: "ম্যাচ খুঁজুন",
-    subtitle: "প্রতিপক্ষ খুঁজছে এমন ওপেন ম্যাচ।",
+    title: "Match খুঁজুন",
+    subtitle: "যেসব Open Match-এ এখনো Opponent Team দরকার, সেগুলো এখানে খুঁজে নিন।",
     emptyTitle: "এই মুহূর্তে কোনো ওপেন ম্যাচ নেই",
     emptyDesc: "কনফার্মড booking-এর টিমরা প্রতিপক্ষ খুঁজলে এখানে দেখা যাবে।",
     teamTbd: "টিম এখনো নির্ধারিত হয়নি",
@@ -612,9 +614,9 @@ export const bn: Dictionary = {
     switchHats: "ভূমিকা বদলান",
     turfOwner: "Turf owner",
     admin: "Admin",
-    inviteTitle: "বন্ধুদের আমন্ত্রণ জানান",
+    inviteTitle: "বন্ধুদের Invite করুন",
     inviteDesc:
-      "আপনার link শেয়ার করুন। বন্ধু sign up করলে তিনি আপনার নামে যাবে (P1 referral program-এ রিওয়ার্ড আসবে)।",
+      "আপনার Referral Link শেয়ার করুন। বন্ধু Sign Up করলে Referral Program-এর মাধ্যমে আপনি Reward পাবেন।",
     inviteShareText: "Turfkoi-তে আসুন — turf বুক করুন, ম্যাচ খুঁজুন: {url}",
     shareOnWhatsApp: "WhatsApp-এ শেয়ার করুন",
     accountSettings: "অ্যাকাউন্ট settings →",
@@ -623,9 +625,9 @@ export const bn: Dictionary = {
     noBookingsDesc: "টার্ফ দেখে একটা slot বুক করে শুরু করুন।",
     findTurf: "টার্ফ খুঁজুন →",
     playTonightTitle: "আজ রাতে খেলুন",
-    playTonightDesc: "কাছের যে ম্যাচগুলোতে player দরকার।",
+    playTonightDesc: "কাছাকাছি যেসব Match-এ এখনো Player দরকার, সেগুলো এখানে দেখুন।",
     noNearbyMatches:
-      "এই মুহূর্তে কোনো ম্যাচে player দরকার নেই। একটু পরে আবার দেখুন বা নিজেকে available করে রাখুন।",
+      "এই মুহূর্তে কোনো Match-এ Player দরকার নেই। একটু পরে আবার দেখুন, অথবা নিজেকে Available করে রাখুন।",
     historyTitle: "ম্যাচের ইতিহাস",
     noHistory: "আপনি এখনো কোনো ম্যাচে খেলেননি।",
     vs: "বনাম",
