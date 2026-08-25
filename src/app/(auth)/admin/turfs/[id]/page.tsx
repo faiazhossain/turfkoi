@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
+import { AlertTriangleIcon } from "lucide-react"
 
 import { StatusBadge } from "@/components/shared"
 import {
@@ -221,9 +222,12 @@ export default async function AdminTurfCockpitPage({ params }: PageProps) {
         </TabsContent>
       </Tabs>
 
-      <Card>
+      <Card className="bg-destructive/5 ring-destructive/30">
         <CardHeader>
-          <CardTitle className="font-heading text-lg">Danger zone</CardTitle>
+          <CardTitle className="flex items-center gap-2 font-heading text-lg text-destructive">
+            <AlertTriangleIcon className="size-4" aria-hidden />
+            Danger zone
+          </CardTitle>
           <CardDescription>
             Deletion is permanent and blocked once a turf has bookings.
           </CardDescription>
