@@ -23,7 +23,7 @@ export type SlotStatusValue = EnumValues<typeof slotStatus>
 export type TeamMemberRoleValue = EnumValues<typeof teamMemberRole>
 export type UserRoleValue = EnumValues<typeof userRole>
 
-const BOOKING_STATUS_LABEL: Record<BookingStatusValue, string> = {
+export const BOOKING_STATUS_LABEL: Record<BookingStatusValue, string> = {
   available: "player.bookingStatus.available",
   held: "player.bookingStatus.held",
   payment_pending: "player.bookingStatus.payment_pending",
@@ -35,7 +35,7 @@ const BOOKING_STATUS_LABEL: Record<BookingStatusValue, string> = {
   completed: "player.bookingStatus.completed",
 }
 
-const MATCH_STATE_LABEL: Record<MatchStateValue, string> = {
+export const MATCH_STATE_LABEL: Record<MatchStateValue, string> = {
   draft: "matches.state.draft",
   open: "matches.state.open",
   opponent_found: "matches.state.opponent_found",
@@ -50,7 +50,7 @@ const MATCH_STATE_LABEL: Record<MatchStateValue, string> = {
   disputed: "matches.state.disputed",
 }
 
-const SLOT_STATUS_LABEL: Record<SlotStatusValue, string> = {
+export const SLOT_STATUS_LABEL: Record<SlotStatusValue, string> = {
   available: "turfOwner.slots.status.available",
   held: "turfOwner.slots.status.held",
   booked: "turfOwner.slots.status.booked",
@@ -58,14 +58,14 @@ const SLOT_STATUS_LABEL: Record<SlotStatusValue, string> = {
   blocked: "turfOwner.slots.status.blocked",
 }
 
-const TEAM_MEMBER_ROLE_LABEL: Record<TeamMemberRoleValue, string> = {
+export const TEAM_MEMBER_ROLE_LABEL: Record<TeamMemberRoleValue, string> = {
   owner: "team.role.owner",
   captain: "team.role.captain",
   manager: "team.role.manager",
   player: "team.role.player",
 }
 
-const USER_ROLE_LABEL: Record<UserRoleValue, string> = {
+export const USER_ROLE_LABEL: Record<UserRoleValue, string> = {
   admin: "admin.users.roles.admin",
   turf_owner: "admin.users.roles.turf_owner",
   team_owner: "admin.users.roles.team_owner",
@@ -73,7 +73,7 @@ const USER_ROLE_LABEL: Record<UserRoleValue, string> = {
 }
 
 /** Format labels stay English in BOTH locales (BD turf-scene convention). */
-const TURF_FORMAT_LABEL: Record<TurfFormat, string> = {
+export const TURF_FORMAT_LABEL: Record<TurfFormat, string> = {
   fives: "turfs.format.fives",
   sixes: "turfs.format.sixes",
   sevens: "turfs.format.sevens",

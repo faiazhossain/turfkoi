@@ -405,6 +405,7 @@ export const en = {
       ongoing: "Ongoing",
       completed: "Completed",
       cancelled: "Cancelled",
+      expired: "Expired",
       disputed: "Disputed",
     },
     result: {

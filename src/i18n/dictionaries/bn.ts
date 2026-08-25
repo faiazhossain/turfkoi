@@ -406,6 +406,7 @@ export const bn: Dictionary = {
       ongoing: "চলছে",
       completed: "শেষ",
       cancelled: "বাতিল",
+      expired: "মেয়াদোত্তীর্ণ",
       disputed: "বিতর্কিত",
     },
     result: {
