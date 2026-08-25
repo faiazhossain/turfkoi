@@ -63,10 +63,16 @@ export default async function AdminTurfsPage({
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
                   <Link
-                    href={`/turfs/${t.slug}`}
+                    href={`/admin/turfs/${t.id}`}
                     className="truncate font-heading font-medium hover:underline"
                   >
                     {t.name}
+                  </Link>
+                  <Link
+                    href={`/turfs/${t.slug}`}
+                    className="text-xs text-muted-foreground hover:text-foreground hover:underline"
+                  >
+                    public
                   </Link>
                   {t.ownerId === null ? (
                     <StatusBadge status="neutral" showIcon={false}>
