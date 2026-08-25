@@ -112,7 +112,9 @@ export const scheduleSectionSchema = z
     startTime: hhmmSchema,
     endTime: hhmmSchema,
     slotMinutes: slotMinutesSchema,
-    gapMinutes: z.number().int().min(0).max(30).default(0),
+    // No zod default: RHF's resolver types would split on input/output.
+    // Callers always send an explicit gap (0 for back-to-back).
+    gapMinutes: z.number().int().min(0).max(30),
     price: z
       .number()
       .positive("Price must be positive")
@@ -129,7 +131,7 @@ export const saveScheduleSchema = z
     // Present = edit that schedule; absent = create a new one.
     scheduleId: z.string().uuid().optional(),
     name: z.string().min(1, "Name the schedule").max(60),
-    isActive: z.boolean().default(true),
+    isActive: z.boolean(),
     sections: z
       .array(scheduleSectionSchema)
       .min(1, "Add at least one section")
@@ -153,6 +155,79 @@ export const addSlotSchema = z.object({
     .max(100000, "Price looks too high"),
 })
 export type AddSlotValues = z.infer<typeof addSlotSchema>
+
+// Date exception (Layer 2): close a date (Eid, rain, maintenance) and/or
+// set a holiday price rule for it. isClosed and a price rule are mutually
+// exclusive — a closed turf has nothing to price.
+export const dateExceptionSchema = z
+  .object({
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD"),
+    isClosed: z.boolean(),
+    reason: z.string().max(80, "Keep the reason short").optional(),
+    priceMode: z.enum(["multiplier", "absolute"]).optional(),
+    priceValue: z.number().optional(),
+  })
+  .superRefine((v, ctx) => {
+    if (v.isClosed && (v.priceMode || v.priceValue !== undefined)) {
+      ctx.addIssue({
+        code: "custom",
+        message: "A closed day can't also carry a price rule",
+        path: ["priceMode"],
+      })
+      return
+    }
+    if (!v.isClosed) {
+      if (!v.priceMode && v.priceValue === undefined) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Either close the day or set a price rule",
+          path: ["isClosed"],
+        })
+        return
+      }
+      if (v.priceMode && v.priceValue === undefined) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Provide the value for the price rule",
+          path: ["priceValue"],
+        })
+        return
+      }
+      if (v.priceMode === "multiplier") {
+        if (
+          v.priceValue === undefined ||
+          !Number.isFinite(v.priceValue) ||
+          v.priceValue < 0.5 ||
+          v.priceValue > 3
+        ) {
+          ctx.addIssue({
+            code: "custom",
+            message: "Multiplier must be between 0.5 and 3",
+            path: ["priceValue"],
+          })
+        }
+      }
+      if (v.priceMode === "absolute") {
+        if (
+          v.priceValue === undefined ||
+          !Number.isFinite(v.priceValue) ||
+          v.priceValue < 1 ||
+          v.priceValue > 100000
+        ) {
+          ctx.addIssue({
+            code: "custom",
+            message: "Price must be between 1 and 100000",
+            path: ["priceValue"],
+          })
+        }
+      }
+    }
+  })
+export type DateExceptionValues = z.infer<typeof dateExceptionSchema>
+
+export const clearDateExceptionSchema = z.object({
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD"),
+})
 
 export const slotOverrideSchema = z.object({
   price: z

@@ -4,7 +4,13 @@ import { revalidatePath } from "next/cache"
 import { and, eq, inArray, ne } from "drizzle-orm"
 
 import { db } from "@/db"
-import { turfs, turfSlots, turfSchedules, turfScheduleSections } from "@/db/schema"
+import {
+  turfs,
+  turfSlots,
+  turfSchedules,
+  turfScheduleSections,
+  turfDateExceptions,
+} from "@/db/schema"
 import { can } from "@/lib/capabilities"
 import { getCurrentUser } from "@/lib/auth"
 import {
@@ -16,11 +22,14 @@ import {
 
 import {
   addSlotSchema,
+  clearDateExceptionSchema,
+  dateExceptionSchema,
   generateSlotsSchema,
   saveScheduleSchema,
   slotOverrideSchema,
   turfFormSchema,
   type AddSlotValues,
+  type DateExceptionValues,
   type GenerateSlotsValues,
   type SaveScheduleValues,
   type SlotOverrideValues,
@@ -467,6 +476,101 @@ export async function addSlotAction(
     return { ok: false, error: `A slot already starts at ${startTime} on that date.` }
   }
 
+  revalidatePath(`/turf-owner/turfs/${turfId}`)
+  return { ok: true }
+}
+
+/**
+ * Slot system P2: set (or replace) a date exception — close a date, or apply
+ * a holiday price rule. Re-runs materialization so the change lands
+ * immediately: closing drops that date's available template slots (bookings
+ * stay and surface as conflicts for the owner to work out), a price rule
+ * reprices available template rows. Manual slots keep their hand-set price.
+ */
+export async function setDateExceptionAction(
+  turfId: string,
+  input: DateExceptionValues
+): Promise<ActionResult> {
+  const parsed = dateExceptionSchema.safeParse(input)
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid" }
+  }
+  const user = await getCurrentUser()
+  if (!user) return unauthorized()
+
+  const existing = await db
+    .select({ ownerId: turfs.ownerId })
+    .from(turfs)
+    .where(eq(turfs.id, turfId))
+    .limit(1)
+  if (!existing[0]) return { ok: false, error: "Turf not found." }
+  if (!can(user, "turf.update", { ownerId: existing[0].ownerId })) {
+    return forbidden()
+  }
+
+  const { date, isClosed, reason, priceMode, priceValue } = parsed.data
+  if (date < todayInDhaka()) {
+    return { ok: false, error: "Pick today or a future date." }
+  }
+
+  await db
+    .insert(turfDateExceptions)
+    .values({
+      turfId,
+      date,
+      isClosed,
+      reason: reason?.trim() ? reason.trim() : null,
+      priceMode: isClosed ? null : (priceMode ?? null),
+      priceValue: isClosed ? null : priceValue != null ? priceValue.toFixed(2) : null,
+    })
+    .onConflictDoUpdate({
+      target: [turfDateExceptions.turfId, turfDateExceptions.date],
+      set: {
+        isClosed,
+        reason: reason?.trim() ? reason.trim() : null,
+        priceMode: isClosed ? null : (priceMode ?? null),
+        priceValue: isClosed ? null : priceValue != null ? priceValue.toFixed(2) : null,
+        updatedAt: new Date(),
+      },
+    })
+
+  await materializeTurfSchedule(turfId)
+  revalidatePath(`/turf-owner/turfs/${turfId}`)
+  return { ok: true }
+}
+
+/** Remove a date exception and restore the plain weekly schedule for it. */
+export async function clearDateExceptionAction(
+  turfId: string,
+  input: { date: string }
+): Promise<ActionResult> {
+  const parsed = clearDateExceptionSchema.safeParse(input)
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid" }
+  }
+  const user = await getCurrentUser()
+  if (!user) return unauthorized()
+
+  const existing = await db
+    .select({ ownerId: turfs.ownerId })
+    .from(turfs)
+    .where(eq(turfs.id, turfId))
+    .limit(1)
+  if (!existing[0]) return { ok: false, error: "Turf not found." }
+  if (!can(user, "turf.update", { ownerId: existing[0].ownerId })) {
+    return forbidden()
+  }
+
+  await db
+    .delete(turfDateExceptions)
+    .where(
+      and(
+        eq(turfDateExceptions.turfId, turfId),
+        eq(turfDateExceptions.date, parsed.data.date)
+      )
+    )
+
+  await materializeTurfSchedule(turfId)
   revalidatePath(`/turf-owner/turfs/${turfId}`)
   return { ok: true }
 }

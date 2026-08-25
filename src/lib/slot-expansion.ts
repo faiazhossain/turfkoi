@@ -57,6 +57,17 @@ export type PriceOverride =
   | { mode: "multiplier" | "absolute"; value: number }
   | null
 
+/**
+ * Slot system P2: per-date rule from a turf_date_exceptions row. A closed
+ * date produces no slots — neither from its own sections nor from a previous
+ * evening's wrapping section spilling into it. An override rescales or
+ * replaces section prices for that date only.
+ */
+export type DayRule = {
+  closed?: boolean
+  override?: PriceOverride
+}
+
 const HH_MM = /^\d{2}:\d{2}$/
 
 export function toMinutes(hhmm: string): number {
@@ -218,21 +229,33 @@ export function expandSectionsForDay(
 /**
  * Expand a schedule across a date range. Slots whose start falls past
  * midnight (from a wrapping section) are attributed to the next calendar
- * date — the row belongs to the day it starts on.
+ * date — the row belongs to the day it starts on. `rules` (P2) maps a date
+ * to its exception: closed dates contribute nothing and absorb nothing
+ * (spillover into them is dropped), override dates apply their price rule.
  */
 export function expandScheduleRange(
   sections: ScheduleSection[],
   fromDate: string,
-  toDate: string
+  toDate: string,
+  rules: Map<string, DayRule> = new Map()
 ): DatedSlotDraft[] {
   if (toDate < fromDate) {
     throw new Error(`expandScheduleRange: to (${toDate}) before from (${fromDate})`)
   }
   const out: DatedSlotDraft[] = []
   for (const date of iterateDates(fromDate, toDate)) {
-    for (const draft of expandDayDetailed(sections, dayOfWeekOf(date), null)) {
+    if (rules.get(date)?.closed) continue
+    const rule = rules.get(date)
+    for (const draft of expandDayDetailed(
+      sections,
+      dayOfWeekOf(date),
+      rule?.override ?? null
+    )) {
+      const slotDate = draft.nextDay ? addDays(date, 1) : date
+      // A spilling slot lands on a closed date -> dropped, not moved.
+      if (rules.get(slotDate)?.closed) continue
       out.push({
-        date: draft.nextDay ? addDays(date, 1) : date,
+        date: slotDate,
         startTime: draft.startTime,
         durationMinutes: draft.durationMinutes,
         price: draft.price,
@@ -319,4 +342,34 @@ export function todayInDhaka(now: Date = new Date()): string {
     month: "2-digit",
     day: "2-digit",
   }).format(now)
+}
+
+/**
+ * Owner-facing label of the section covering a slot's start time on a date
+ * (e.g. "Evening"), for peak/off-peak display on the public page. Slots
+ * spilling from a previous evening's wrapping section inherit its label.
+ */
+export function sectionLabelForSlot(
+  sections: ScheduleSection[],
+  date: string,
+  startTime: string
+): string | null {
+  const dow = dayOfWeekOf(date)
+  const start = toMinutes(startTime)
+  const own = sections
+    .filter((s) => s.dayOfWeek === dow)
+    .sort((a, b) => sectionSpan(a).start - sectionSpan(b).start)
+  for (const s of own) {
+    const { start: ss, end: se } = sectionSpan(s)
+    if (start >= ss && start < se) return s.label ?? null
+  }
+  // Midnight spillover: yesterday's wrap section reaching into today.
+  const prevDow = (dow + 6) % 7
+  for (const s of sections.filter((x) => x.dayOfWeek === prevDow)) {
+    const { end: se } = sectionSpan(s)
+    if (se > MINUTES_PER_DAY && start < se - MINUTES_PER_DAY) {
+      return s.label ?? null
+    }
+  }
+  return null
 }

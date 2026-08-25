@@ -4,10 +4,12 @@ import type { Metadata } from "next"
 import { MapPinIcon, CalendarCheckIcon } from "lucide-react"
 
 import { StatusBadge, EmptyState } from "@/components/shared"
-import { BookSlotButton } from "@/components/bookings/book-slot-button"
+import { BookSlotButton, type ClosedDay } from "@/components/bookings/book-slot-button"
 import { getTurfBySlug, listTurfSlots, listTurfPhotos } from "@/features/turfs/queries"
 import { TurfPhotoStrip } from "@/components/turfs/turf-photo-strip"
 import { turfFormatLabel } from "@/features/turfs/formats"
+import { getActiveSchedule, listDateExceptions } from "@/features/turfs/materialize"
+import { sectionLabelForSlot } from "@/lib/slot-expansion"
 import { getCurrentUser } from "@/lib/auth"
 
 interface PageProps {
@@ -73,6 +75,26 @@ export default async function TurfDetailPage({ params }: PageProps) {
     .toISOString()
     .slice(0, 10)
   const slots = await listTurfSlots(turf.id, { from: fromDate, to: toDate })
+
+  // Slot system P2: surface section labels (peak/off-peak) and closed dates
+  // on the public page instead of letting closures render as silent gaps.
+  const [schedule, windowExceptions] = await Promise.all([
+    getActiveSchedule(turf.id),
+    listDateExceptions(turf.id, { from: fromDate, to: toDate }),
+  ])
+  const labeledSlots = schedule
+    ? slots.map((s) => ({
+        ...s,
+        label: sectionLabelForSlot(
+          schedule.sections,
+          s.date,
+          s.startTime.slice(0, 5)
+        ),
+      }))
+    : slots
+  const closedDays: ClosedDay[] = windowExceptions
+    .filter((e) => e.isClosed)
+    .map((e) => ({ date: e.date, reason: e.reason }))
 
   const facilities = turf.facilities ?? {}
   const photos = await listTurfPhotos(turf.id)
@@ -160,14 +182,18 @@ export default async function TurfDetailPage({ params }: PageProps) {
             {slots.length} slot{slots.length === 1 ? "" : "s"}
           </StatusBadge>
         </div>
-        {slots.length === 0 ? (
+        {slots.length === 0 && closedDays.length === 0 ? (
           <EmptyState
             icon={CalendarCheckIcon}
             title="No published slots yet"
             description="The turf owner hasn't published availability."
           />
         ) : (
-          <BookSlotButton turfId={turf.id} slots={slots} />
+          <BookSlotButton
+            turfId={turf.id}
+            slots={labeledSlots}
+            closedDays={closedDays}
+          />
         )}
       </section>
     </div>

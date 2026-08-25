@@ -42,6 +42,7 @@ vi.mock("@/db", () => ({
         insertCalls.push({ table, values })
         return q
       })
+      q.onConflictDoUpdate = vi.fn(() => q)
       return q
     }),
     update: vi.fn((table: unknown) => {
@@ -76,8 +77,18 @@ vi.mock("@/features/turfs/materialize", () => ({
   materializeTurfSchedule: (...args: unknown[]) => materializeMock(...args),
 }))
 
-import { addSlotAction, saveScheduleAction } from "@/features/turfs/actions"
-import { turfSlots, turfSchedules, turfScheduleSections } from "@/db/schema"
+import {
+  addSlotAction,
+  clearDateExceptionAction,
+  saveScheduleAction,
+  setDateExceptionAction,
+} from "@/features/turfs/actions"
+import {
+  turfSlots,
+  turfSchedules,
+  turfScheduleSections,
+  turfDateExceptions,
+} from "@/db/schema"
 
 const TURF_ID = "00000000-0000-0000-0000-000000000001"
 const OWNER_ID = "00000000-0000-0000-0000-000000000002"
@@ -243,5 +254,113 @@ describe("saveScheduleAction", () => {
     const res = await saveScheduleAction(TURF_ID, { ...validSchedule, isActive: false })
     expect(res.ok).toBe(true)
     expect(materializeMock).not.toHaveBeenCalled()
+  })
+})
+
+describe("setDateExceptionAction", () => {
+  it("rejects a closed day that also carries a price rule", async () => {
+    signInAs(["turf_owner"])
+    const res = await setDateExceptionAction(TURF_ID, {
+      date: "2099-03-20",
+      isClosed: true,
+      priceMode: "multiplier",
+      priceValue: 1.25,
+    })
+    expect(failure(res)).toContain("can't also carry")
+    expect(insertCalls).toEqual([])
+  })
+
+  it("rejects a price rule without a value", async () => {
+    signInAs(["turf_owner"])
+    const res = await setDateExceptionAction(TURF_ID, {
+      date: "2099-03-20",
+      isClosed: false,
+      priceMode: "multiplier",
+    })
+    expect(failure(res)).toContain("Provide the value")
+  })
+
+  it("rejects an out-of-range multiplier", async () => {
+    signInAs(["turf_owner"])
+    const res = await setDateExceptionAction(TURF_ID, {
+      date: "2099-03-20",
+      isClosed: false,
+      priceMode: "multiplier",
+      priceValue: 5,
+    })
+    expect(failure(res)).toContain("between 0.5 and 3")
+  })
+
+  it("rejects a past date", async () => {
+    signInAs(["turf_owner"])
+    const res = await setDateExceptionAction(TURF_ID, {
+      date: "2020-01-01",
+      isClosed: true,
+    })
+    expect(failure(res)).toContain("future")
+  })
+
+  it("rejects a non-owner", async () => {
+    signInAs(["player"])
+    const res = await setDateExceptionAction(TURF_ID, {
+      date: "2099-03-20",
+      isClosed: true,
+    })
+    expect(failure(res)).toContain("permission")
+  })
+
+  it("upserts a closure and rematerializes", async () => {
+    signInAs(["turf_owner"])
+    const res = await setDateExceptionAction(TURF_ID, {
+      date: "2099-03-20",
+      isClosed: true,
+      reason: "Eid-ul-Fitr",
+    })
+    expect(res.ok).toBe(true)
+    const insert = insertCalls.find((c) => c.table === turfDateExceptions)
+    expect(insert).toBeDefined()
+    expect(insert!.values).toMatchObject({
+      turfId: TURF_ID,
+      date: "2099-03-20",
+      isClosed: true,
+      reason: "Eid-ul-Fitr",
+      priceMode: null,
+      priceValue: null,
+    })
+    expect(materializeMock).toHaveBeenCalledWith(TURF_ID)
+  })
+
+  it("upserts a holiday multiplier with a numeric-string price", async () => {
+    signInAs(["turf_owner"])
+    const res = await setDateExceptionAction(TURF_ID, {
+      date: "2099-03-26",
+      isClosed: false,
+      priceMode: "multiplier",
+      priceValue: 1.25,
+    })
+    expect(res.ok).toBe(true)
+    const insert = insertCalls.find((c) => c.table === turfDateExceptions)
+    expect(insert!.values).toMatchObject({
+      isClosed: false,
+      priceMode: "multiplier",
+      priceValue: "1.25",
+    })
+  })
+})
+
+describe("clearDateExceptionAction", () => {
+  it("deletes the exception row and rematerializes", async () => {
+    signInAs(["turf_owner"])
+    const res = await clearDateExceptionAction(TURF_ID, { date: "2099-03-20" })
+    expect(res.ok).toBe(true)
+    expect(
+      deleteCalls.some((c) => c.table === turfDateExceptions)
+    ).toBe(true)
+    expect(materializeMock).toHaveBeenCalledWith(TURF_ID)
+  })
+
+  it("rejects when not signed in", async () => {
+    const res = await clearDateExceptionAction(TURF_ID, { date: "2099-03-20" })
+    expect(failure(res)).toContain("signed in")
   })
 })

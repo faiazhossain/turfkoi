@@ -29,7 +29,7 @@ based discovery. Mobile-first, dark-themed.
 | Storage | S3-compatible (R2) presigned PUT uploads + magic-byte verify | `src/features/turfs/storage.ts`, `src/lib/file-validation.ts` |
 | Deploy | Vercel | — |
 
-Schema: **28 tables** across 8 files (`src/db/schema/`) + **20 enums**.
+Schema: **29 tables** across 8 files (`src/db/schema/`) + **21 enums**.
 
 ---
 
@@ -137,8 +137,25 @@ Routes: `/turf-owner`, `/turf-owner/turfs/new`, `/turf-owner/turfs/[id]`.
   are untouchable, and unresolvable rows surface as conflicts instead of
   being forced. Precedence everywhere: **single-slot touch > date exception
   (P2) > weekly schedule**. Slot lengths widened to 30-180 min in 5-min
-  steps. (Backend + custom-slot form shipped in P1; the weekly-builder UI
-  and BD holiday calendar seed are P2.)
+  steps.
+- **Weekly schedule builder (P2)** — day-tabbed section editor with live
+  slot-start preview (computed client-side by the same pure expander the
+  server materializes from), copy-day-to-day, conflict display, and a
+  materialization summary on save. New turfs start from a prefilled typical
+  Dhaka week (Friday opens after jummah, evening peak 90 min + 10-min gap).
+- **Day exceptions + calendar (P2)** — `turf_date_exceptions` closes a date
+  (Eid, rain, maintenance — the reason is shown to players) or sets a
+  holiday price rule (multiplier 0.5-3x, rounded to whole Taka, or a flat
+  day price). The owner Slots tab has a month calendar (markers for closed /
+  special-price / public-holiday days, server-driven via `?month=`/`?date=`)
+  with a per-day panel: slots, closure toggle + reason, holiday pricing, and
+  a remove-exception control. Closures suppress schedule expansion for that
+  date including midnight spillover into it.
+- **BD holiday seed (P2)** — `src/lib/bd-holidays.ts` carries fixed national
+  dates plus moon-dependent estimates (Eid, Durga Puja, Ramadan windows) for
+  2026-2027. It powers calendar markers and prefills closure reasons; it is
+  a suggestion layer, never a mandate — owners decide per date. Lunar dates
+  need a yearly update when the government list lands.
 - **Custom slots** — hand-place a single slot on one date (a late-night
   Ramadan game, a one-off session) via the "Add a custom slot" card.
   Overlaps are rejected across a 3-day window (yesterday's 23:30/90 spills
@@ -215,7 +232,10 @@ locks.
 
 - `/` — landing.
 - `/turfs`, `/turfs/[slug]` — discovery + turf detail (dynamic OG metadata,
-  canonical).
+  canonical). The booking list shows section labels ("Evening",
+  "Ramadan nights") as peak/off-peak markers and renders closed dates
+  explicitly with the owner's reason instead of a silent gap (slot system
+  P2).
 - `/matches`, `/matches/[id]` — public match directory.
 - `/invite/[code]` — referral landing.
 - `/login`, `/register`, `/forgot-password`, `/auth/onboarding` — auth flow.

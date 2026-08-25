@@ -9,6 +9,8 @@ import {
   overlapsAny,
   rangesOverlap,
   resolvePrice,
+  sectionLabelForSlot,
+  spillOverlap,
   toHHMM,
   toMinutes,
   todayInDhaka,
@@ -138,6 +140,67 @@ describe("expandScheduleRange", () => {
       expandScheduleRange([section()], "2026-03-09", "2026-03-02")
     ).toThrow()
   })
+
+  it("skips a closed date entirely (P2 date exception)", () => {
+    const drafts = expandScheduleRange(
+      [section({ dayOfWeek: 5, startTime: "09:00", endTime: "11:00", slotMinutes: 60 })],
+      "2026-03-06",
+      "2026-03-13",
+      new Map([
+        ["2026-03-06", { closed: true }],
+        ["2026-03-13", { closed: false }],
+      ])
+    )
+    // 2026-03-06 closed -> nothing; 2026-03-13 (next Friday) open -> slots.
+    expect(drafts.map((d) => d.date)).toEqual(["2026-03-13", "2026-03-13"])
+  })
+
+  it("drops a wrapping section's spillover into a closed next date", () => {
+    // Thursday night 22:00-03:00 spills into Friday; Friday is closed.
+    const drafts = expandScheduleRange(
+      [section({ dayOfWeek: 4, startTime: "22:00", endTime: "03:00", slotMinutes: 60 })],
+      "2026-03-05", // Thursday
+      "2026-03-05",
+      new Map([["2026-03-06", { closed: true }]])
+    )
+    // Only Thursday-side starts survive; the 00:00/01:00/02:00 spillover is dropped.
+    expect(drafts.map((d) => `${d.date} ${d.startTime}`)).toEqual([
+      "2026-03-05 22:00",
+      "2026-03-05 23:00",
+    ])
+  })
+
+  it("applies a holiday override to that date only", () => {
+    const drafts = expandScheduleRange(
+      [section({ dayOfWeek: 5, startTime: "09:00", endTime: "11:00", slotMinutes: 60, price: 800 })],
+      "2026-03-06",
+      "2026-03-13",
+      new Map([
+        ["2026-03-06", { override: { mode: "multiplier", value: 1.25 } }],
+      ])
+    )
+    const byDate = new Map(drafts.map((d) => [d.date, d.price]))
+    expect(byDate.get("2026-03-06")).toBe(1000) // 800 * 1.25
+    expect(byDate.get("2026-03-13")).toBe(800)
+  })
+
+  it("applies the evening date's override to its post-midnight spillover", () => {
+    // A holiday night rate covers the whole night session, including the
+    // slots that start after midnight on the next calendar date.
+    const drafts = expandScheduleRange(
+      [section({ dayOfWeek: 4, startTime: "22:00", endTime: "01:00", slotMinutes: 60, price: 1000 })],
+      "2026-03-05",
+      "2026-03-05",
+      new Map([
+        ["2026-03-05", { override: { mode: "multiplier", value: 1.5 } }],
+      ])
+    )
+    expect(drafts.map((d) => `${d.date} ${d.startTime} ${d.price}`)).toEqual([
+      "2026-03-05 22:00 1500",
+      "2026-03-05 23:00 1500",
+      "2026-03-06 00:00 1500",
+    ])
+  })
 })
 
 describe("resolvePrice", () => {
@@ -241,5 +304,82 @@ describe("calendar helpers", () => {
   it("labels today in Asia/Dhaka for a known instant", () => {
     // 2026-03-06 20:30 UTC is already 2026-03-07 02:30 in Dhaka (UTC+6).
     expect(todayInDhaka(new Date("2026-03-06T20:30:00Z"))).toBe("2026-03-07")
+  })
+})
+
+describe("spillOverlap", () => {
+  it("flags a proposal under yesterday's midnight spillover", () => {
+    // Yesterday 23:30/90 runs to 01:00 today; today 00:30 collides.
+    expect(
+      spillOverlap(
+        { startTime: "00:30", durationMinutes: 60 },
+        { startTime: "23:30", durationMinutes: 90 },
+        "previous"
+      )
+    ).toBe(true)
+    // Today 01:00 starts exactly when the spill ends - no overlap.
+    expect(
+      spillOverlap(
+        { startTime: "01:00", durationMinutes: 60 },
+        { startTime: "23:30", durationMinutes: 90 },
+        "previous"
+      )
+    ).toBe(false)
+  })
+
+  it("ignores a previous-day slot that ends before midnight", () => {
+    expect(
+      spillOverlap(
+        { startTime: "00:30", durationMinutes: 60 },
+        { startTime: "22:00", durationMinutes: 60 },
+        "previous"
+      )
+    ).toBe(false)
+  })
+
+  it("flags a proposal spilling over tomorrow's early slot", () => {
+    expect(
+      spillOverlap(
+        { startTime: "23:30", durationMinutes: 90 },
+        { startTime: "00:30", durationMinutes: 60 },
+        "next"
+      )
+    ).toBe(true)
+    expect(
+      spillOverlap(
+        { startTime: "23:00", durationMinutes: 60 },
+        { startTime: "00:30", durationMinutes: 60 },
+        "next"
+      )
+    ).toBe(false)
+  })
+})
+
+describe("sectionLabelForSlot", () => {
+  const sections: ScheduleSection[] = [
+    section({ dayOfWeek: 5, label: "Morning", startTime: "08:00", endTime: "12:00" }),
+    section({ dayOfWeek: 5, label: "Evening", startTime: "17:00", endTime: "23:00" }),
+    // Thursday night wrap for the spillover case.
+    section({ dayOfWeek: 4, label: "Ramadan nights", startTime: "22:00", endTime: "02:00" }),
+  ]
+
+  it("returns the covering section's label", () => {
+    expect(sectionLabelForSlot(sections, "2026-03-06", "18:00")).toBe("Evening")
+    expect(sectionLabelForSlot(sections, "2026-03-06", "09:00")).toBe("Morning")
+  })
+
+  it("returns null for unlabeled or uncovered slots", () => {
+    expect(sectionLabelForSlot(sections, "2026-03-06", "14:00")).toBeNull()
+    const unlabeled = sections.map(({ ...s }) => ({ ...s, label: null }))
+    expect(sectionLabelForSlot(unlabeled, "2026-03-06", "18:00")).toBeNull()
+  })
+
+  it("inherits the label of yesterday's wrapping section after midnight", () => {
+    // Friday 00:30 is Thursday night's Ramadan section spilling over.
+    expect(sectionLabelForSlot(sections, "2026-03-06", "00:30")).toBe(
+      "Ramadan nights"
+    )
+    // Past the spill end (02:00) it is uncovered.
+    expect(sectionLabelForSlot(sections, "2026-03-06", "02:30")).toBeNull()
   })
 })

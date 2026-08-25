@@ -47,6 +47,11 @@ export const slotStatus = pgEnum("slot_status", [
 // touched by regeneration (single-slot touch > date exception > schedule).
 export const slotSource = pgEnum("slot_source", ["template", "manual"])
 
+// Slot system P2: how a date-level price exception modifies section prices.
+// multiplier scales them (holiday rate 1.25x, rounded to whole Taka);
+// absolute replaces them.
+export const datePriceMode = pgEnum("date_price_mode", ["multiplier", "absolute"])
+
 // SS27 booking lifecycle
 export const bookingStatus = pgEnum("booking_status", [
   "available",

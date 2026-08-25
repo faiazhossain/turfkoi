@@ -15,7 +15,13 @@ import {
 } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
-import { turfFormat, slotStatus, slotSource, cancellationPolicy } from "./enums"
+import {
+  turfFormat,
+  slotStatus,
+  slotSource,
+  datePriceMode,
+  cancellationPolicy,
+} from "./enums"
 import { geographyPoint } from "../geo"
 import { users } from "./users"
 
@@ -152,6 +158,40 @@ export const turfScheduleSections = pgTable(
     price: numeric("price", { precision: 12, scale: 2 }).notNull(),
   },
   (t) => [index("turf_schedule_sections_schedule_idx").on(t.scheduleId)]
+)
+
+/**
+ * Slot system P2: one exceptional date per turf (Layer 2). Closing a day
+ * (Eid, rain, maintenance) suppresses schedule expansion for that date —
+ * including slots a previous evening's wrapping section would spill into
+ * it. A price rule scales or replaces section prices for the day. Manual
+ * slots and bookings are never affected by either (precedence: single-slot
+ * touch > date exception > schedule).
+ */
+export const turfDateExceptions = pgTable(
+  "turf_date_exceptions",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    turfId: uuid("turf_id")
+      .notNull()
+      .references(() => turfs.id, { onDelete: "cascade" }),
+    date: date("date").notNull(),
+    isClosed: boolean("is_closed").notNull().default(false),
+    // Owner-facing note ("Eid-ul-Fitr", "Monsoon rain", "Turf relay work").
+    reason: text("reason"),
+    // How section prices change that day; null = no price change.
+    priceMode: datePriceMode("price_mode"),
+    priceValue: numeric("price_value", { precision: 12, scale: 2 }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [
+    uniqueIndex("turf_date_exceptions_turf_date_unique").on(t.turfId, t.date),
+  ]
 )
 
 export const turfSlots = pgTable(

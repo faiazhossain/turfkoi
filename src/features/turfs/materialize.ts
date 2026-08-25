@@ -2,11 +2,18 @@ import "server-only"
 import { and, eq, gte, lte } from "drizzle-orm"
 
 import { db } from "@/db"
-import { turfScheduleSections, turfSchedules, turfSlots } from "@/db/schema"
+import {
+  turfDateExceptions,
+  turfScheduleSections,
+  turfSchedules,
+  turfSlots,
+} from "@/db/schema"
 import {
   addDays,
   expandScheduleRange,
   todayInDhaka,
+  type DayRule,
+  type PriceOverride,
   type ScheduleSection,
 } from "@/lib/slot-expansion"
 import {
@@ -25,6 +32,51 @@ export type ActiveSchedule = {
   id: string
   name: string
   sections: ScheduleSection[]
+}
+
+export type DateException = {
+  date: string
+  isClosed: boolean
+  reason: string | null
+  priceMode: "multiplier" | "absolute" | null
+  priceValue: number | null
+}
+
+/** Exception rows for a date window, ascending. */
+export async function listDateExceptions(
+  turfId: string,
+  range: { from: string; to: string }
+): Promise<DateException[]> {
+  const rows = await db
+    .select()
+    .from(turfDateExceptions)
+    .where(
+      and(
+        eq(turfDateExceptions.turfId, turfId),
+        gte(turfDateExceptions.date, range.from),
+        lte(turfDateExceptions.date, range.to)
+      )
+    )
+    .orderBy(turfDateExceptions.date)
+  return rows.map((r) => ({
+    date: r.date,
+    isClosed: r.isClosed,
+    reason: r.reason,
+    priceMode: r.priceMode,
+    priceValue: r.priceValue == null ? null : Number(r.priceValue),
+  }))
+}
+
+function toDayRules(exceptions: DateException[]): Map<string, DayRule> {
+  const rules = new Map<string, DayRule>()
+  for (const ex of exceptions) {
+    const override: PriceOverride =
+      ex.priceMode && ex.priceValue != null
+        ? { mode: ex.priceMode, value: ex.priceValue }
+        : null
+    rules.set(ex.date, { closed: ex.isClosed, override })
+  }
+  return rules
 }
 
 export async function getActiveSchedule(
@@ -96,7 +148,18 @@ export async function materializeTurfSchedule(
 
   const from = range?.from ?? todayInDhaka()
   const to = range?.to ?? addDays(from, SCHEDULE_HORIZON_DAYS)
-  const desired = expandScheduleRange(active.sections, from, to)
+  // One day past `to`: the last date's wrapping sections spill into it,
+  // and a closed exception there must suppress that spillover.
+  const exceptions = await listDateExceptions(turfId, {
+    from,
+    to: addDays(to, 1),
+  })
+  const desired = expandScheduleRange(
+    active.sections,
+    from,
+    to,
+    toDayRules(exceptions)
+  )
 
   // One day past `to`: the last date's wrapping sections spill into it.
   const existing = await db
