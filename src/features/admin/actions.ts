@@ -5,6 +5,7 @@ import { and, eq, isNotNull, isNull, sql } from "drizzle-orm"
 import type { z } from "zod"
 
 import { db } from "@/db"
+import { isForeignKeyViolation } from "@/db/errors"
 import {
   bookings,
   cancellations,
@@ -289,10 +290,7 @@ export async function deleteTurfAction(
   } catch (err) {
     // A booking landed between the count and the delete — the FK restrict
     // is the real guard; surface it with the same friendly guidance.
-    if (
-      String(err).includes("foreign key") ||
-      (err as { code?: string }).code === "23503"
-    ) {
+    if (isForeignKeyViolation(err)) {
       return {
         ok: false,
         error:

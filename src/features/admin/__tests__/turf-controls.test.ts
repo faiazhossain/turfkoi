@@ -302,7 +302,18 @@ describe("deleteTurfAction", () => {
   it("surfaces the FK race (booking landed mid-delete) as a friendly block", async () => {
     currentUser = ADMIN
     selectQueue = [[{ count: 0 }]]
-    deleteError = new Error('db error: foreign key constraint "bookings_turf_id" violated')
+    // Production shape: Drizzle wraps the Neon driver error (SQLSTATE on
+    // `cause`, not in the wrapper's message).
+    const fkError = Object.assign(
+      new Error('db error: foreign key constraint "bookings_turf_id" violated'),
+      { code: "23503" }
+    )
+    const wrapped = new Error(
+      `Failed query: delete from "turfs" where "turfs"."id" = $1 returning "id"\nparams: ${TURF_ID}`
+    )
+    wrapped.name = "DrizzleQueryError"
+    wrapped.cause = fkError
+    deleteError = wrapped
     const res = await deleteTurfAction({ turfId: TURF_ID })
     expect(res.ok).toBe(false)
     if (!res.ok) expect(res.error).toContain("Deactivate")

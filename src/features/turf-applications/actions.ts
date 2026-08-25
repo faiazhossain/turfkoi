@@ -5,6 +5,7 @@ import { headers } from "next/headers"
 import { and, eq } from "drizzle-orm"
 
 import { db } from "@/db"
+import { isUniqueViolation } from "@/db/errors"
 import { turfApplications, turfs, users } from "@/db/schema"
 import { getCurrentUser } from "@/lib/auth"
 import { rateLimit } from "@/lib/ratelimit"
@@ -143,7 +144,7 @@ export async function approveTurfApplicationAction(
       .returning({ id: turfs.id })
     turfId = created.id
   } catch (err) {
-    if (String(err).includes("unique")) {
+    if (isUniqueViolation(err)) {
       return { ok: false, error: "That slug is already taken." }
     }
     throw err

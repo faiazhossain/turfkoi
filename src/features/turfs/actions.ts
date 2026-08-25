@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache"
 import { and, eq, inArray, ne } from "drizzle-orm"
 
 import { db } from "@/db"
+import { isUniqueViolation, pgConstraintName } from "@/db/errors"
 import {
   turfs,
   turfSlots,
@@ -72,7 +73,7 @@ export async function createTurfAction(
     revalidatePath("/turf-owner")
     return { ok: true, id: created.id }
   } catch (err) {
-    if (String(err).includes("unique")) {
+    if (isUniqueViolation(err)) {
       return { ok: false, error: "That slug is already taken." }
     }
     throw err
@@ -382,7 +383,7 @@ export async function saveScheduleAction(
     revalidatePath(`/turf-owner/turfs/${turfId}`)
     return { ok: true, scheduleId: rowId, materialized }
   } catch (err) {
-    if (String(err).includes("turf_schedules_one_active")) {
+    if (pgConstraintName(err) === "turf_schedules_one_active") {
       return {
         ok: false,
         error: "Another schedule just went active — retry in a moment.",
@@ -643,7 +644,7 @@ export async function activateScheduleAction(
       },
     }
   } catch (err) {
-    if (String(err).includes("turf_schedules_one_active")) {
+    if (pgConstraintName(err) === "turf_schedules_one_active") {
       return {
         ok: false,
         error: "Another schedule just went active — retry in a moment.",

@@ -6,6 +6,7 @@ import { randomUUID } from "node:crypto"
 import type { z } from "zod"
 
 import { db } from "@/db"
+import { isUniqueViolation } from "@/db/errors"
 import {
   bookings,
   slotHolds,
@@ -164,7 +165,7 @@ export async function holdSlotAction(
           eq(turfSlots.status, "held")
         )
       )
-    if (String(err).includes("unique")) {
+    if (isUniqueViolation(err)) {
       return { ok: false, error: "That slot was just taken." }
     }
     throw err

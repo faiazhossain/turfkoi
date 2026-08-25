@@ -9,6 +9,7 @@ import { AuthError } from "next-auth"
 
 import { signIn } from "@/auth"
 import { db } from "@/db"
+import { isUniqueViolation } from "@/db/errors"
 import { turfApplications, turfClaimInvites, turfs, userRoles, users } from "@/db/schema"
 import { getCurrentUser } from "@/lib/auth"
 import { rateLimit } from "@/lib/ratelimit"
@@ -76,7 +77,7 @@ export async function seedTurfAction(
     revalidatePath("/admin/turfs")
     return { ok: true, id: created.id }
   } catch (err) {
-    if (String(err).includes("unique")) {
+    if (isUniqueViolation(err)) {
       return { ok: false, error: "That slug is already taken." }
     }
     throw err
