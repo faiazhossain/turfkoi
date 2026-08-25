@@ -11,6 +11,7 @@ import {
   listMyTurfs,
   listOwnerFillableSlots,
 } from "@/features/turfs/queries"
+import { turfFormatLabel } from "@/features/turfs/formats"
 
 function fmtBdt(n: number) {
   return `৳${n.toLocaleString()}`
@@ -122,7 +123,7 @@ export default async function TurfOwnerDashboardPage() {
                   <p className="truncate text-xs text-muted-foreground">
                     {[t.area, t.city].filter(Boolean).join(", ") || "Location TBD"}
                     {" · "}
-                    {t.format === "fives" ? "5-a-side" : "7-a-side"}
+                    {turfFormatLabel(t.format)}
                   </p>
                 </div>
                 <Button

@@ -21,7 +21,16 @@ export const teamMemberRole = pgEnum("team_member_role", [
   "player",
 ])
 
-export const turfFormat = pgEnum("turf_format", ["fives", "sevens"])
+// Turf playing format, 5- through 11-a-side (match_type is separate).
+export const turfFormat = pgEnum("turf_format", [
+  "fives",
+  "sixes",
+  "sevens",
+  "eights",
+  "nines",
+  "tens",
+  "elevens",
+])
 
 // F8: slot status enum
 export const slotStatus = pgEnum("slot_status", [

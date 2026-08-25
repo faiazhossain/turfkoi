@@ -3,6 +3,7 @@ import {
   uuid,
   text,
   timestamp,
+  integer,
   uniqueIndex,
 } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
@@ -19,6 +20,11 @@ import { users } from "./users"
  * One active invite per turf (partial unique index); creating a new invite
  * revokes the previous one so leaked links die. Rows are kept after
  * claim/revoke as an audit trail.
+ *
+ * When target_phone is set, the invite also carries a one-time 6-digit OTP
+ * (sha256-hashed) so the owner can sign in straight from the WhatsApp
+ * message the admin forwards: link + code together are the proof. The OTP
+ * shares the invite's expiry and dies with re-invites/revoke.
  */
 export const turfClaimInvites = pgTable(
   "turf_claim_invites",
@@ -31,6 +37,13 @@ export const turfClaimInvites = pgTable(
     // Optional; only used to pre-fill email delivery. Not a constraint -
     // anyone holding the link may claim (the link itself is the proof).
     targetEmail: text("target_email"),
+    // Normalized (+8801…). When set, an OTP login flow is offered on the
+    // claim page instead of the manual sign-in/register links.
+    targetPhone: text("target_phone"),
+    otpHash: text("otp_hash"),
+    otpAttempts: integer("otp_attempts").notNull().default(0),
+    otpLockedUntil: timestamp("otp_locked_until", { withTimezone: true }),
+    otpConsumedAt: timestamp("otp_consumed_at", { withTimezone: true }),
     invitedBy: uuid("invited_by")
       .notNull()
       .references(() => users.id),

@@ -24,6 +24,7 @@ import {
   approveTurfApplicationAction,
   rejectTurfApplicationAction,
 } from "@/features/turf-applications/actions"
+import { TURF_FORMATS, turfFormatLabel, type TurfFormat } from "@/features/turfs/formats"
 import {
   approveApplicationSchema,
   type ApproveApplicationValues,
@@ -41,14 +42,12 @@ function slugify(s: string) {
 // Dhaka default, same as SeedTurfForm.
 const DHAKA_CENTER = { lat: 23.8103, lng: 90.4125 }
 
-const FORMAT_OPTIONS = [
-  { value: "fives", label: "5-a-side" },
-  { value: "sevens", label: "7-a-side" },
-] as const
+const FORMAT_OPTIONS = TURF_FORMATS
 
 export type PendingApplication = {
   id: string
   turfName: string
+  phone: string
   email: string | null
   city: string | null
   area: string | null
@@ -97,6 +96,7 @@ export function ApproveApplicationPanel({ application }: { application: PendingA
         turfId={turfId}
         defaultOpen
         defaultEmail={application.email ?? ""}
+        defaultPhone={application.phone}
       />
     )
   }
@@ -127,10 +127,12 @@ export function ApproveApplicationPanel({ application }: { application: PendingA
         <Field label="Format">
           <Select
             value={form.watch("format")}
-            onValueChange={(v) => form.setValue("format", v as "fives" | "sevens")}
+            onValueChange={(v) => form.setValue("format", v as TurfFormat)}
           >
             <SelectTrigger className="w-full">
-              <SelectValue />
+              <SelectValue>
+                {(v) => turfFormatLabel(String(v))}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {FORMAT_OPTIONS.map((o) => (

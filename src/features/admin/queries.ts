@@ -6,6 +6,7 @@ import {
   users,
   userRoles,
   turfs,
+  turfApplications,
   teams,
   teamMembers,
   bookings,
@@ -207,7 +208,34 @@ export async function listTurfsAdmin(
     )
     .orderBy(desc(turfs.createdAt))
     .limit(100)
-  return rows
+
+  // For unowned turfs, attach the applicant's WhatsApp phone (latest
+  // application per turf) so the invite panel can prefill the OTP number.
+  const unownedIds = rows.filter((r) => r.ownerId === null).map((r) => r.id)
+  // FK columns infer as nullable in this Drizzle version; keys/values can be null at the type level only.
+  const applicantPhoneByTurf = new Map<string | null, string | null>()
+  if (unownedIds.length > 0) {
+    const apps = await db
+      .select({
+        turfId: turfApplications.turfId,
+        phone: turfApplications.phone,
+        createdAt: turfApplications.createdAt,
+      })
+      .from(turfApplications)
+      .where(inArray(turfApplications.turfId, unownedIds))
+      .orderBy(desc(turfApplications.createdAt))
+    for (const app of apps) {
+      // Ordered newest-first: first write per turf wins.
+      if (!applicantPhoneByTurf.has(app.turfId)) {
+        applicantPhoneByTurf.set(app.turfId, app.phone)
+      }
+    }
+  }
+
+  return rows.map((r) => ({
+    ...r,
+    applicantPhone: r.ownerId === null ? applicantPhoneByTurf.get(r.id) ?? null : null,
+  }))
 }
 
 export async function listTeamsAdmin() {

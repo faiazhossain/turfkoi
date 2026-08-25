@@ -5,7 +5,9 @@ import { MapPinIcon, CalendarCheckIcon } from "lucide-react"
 
 import { StatusBadge, EmptyState } from "@/components/shared"
 import { BookSlotButton } from "@/components/bookings/book-slot-button"
-import { getTurfBySlug, listTurfSlots } from "@/features/turfs/queries"
+import { getTurfBySlug, listTurfSlots, listTurfPhotos } from "@/features/turfs/queries"
+import { TurfPhotoStrip } from "@/components/turfs/turf-photo-strip"
+import { turfFormatLabel } from "@/features/turfs/formats"
 import { getCurrentUser } from "@/lib/auth"
 
 interface PageProps {
@@ -21,7 +23,7 @@ export async function generateMetadata({
   if (!turf || turf.ownerId === null) return {}
   const title = `${turf.name} — Book in Bangladesh`
   const description =
-    `${turf.format === "fives" ? "5-a-side" : "7-a-side"} turf in ` +
+    `${turfFormatLabel(turf.format)} turf in ` +
     `${[turf.area, turf.city].filter(Boolean).join(", ") || "Bangladesh"}. ` +
     `See live availability and book online with bKash.`
   return {
@@ -34,12 +36,23 @@ export async function generateMetadata({
 
 const FACILITY_LABELS: Record<string, string> = {
   indoor: "Indoor",
+  outdoor: "Outdoor",
   lighting: "Floodlights",
   parking: "Parking",
   changingRoom: "Changing room",
   shower: "Shower",
   washroom: "Washroom",
   equipment: "Equipment rental",
+}
+
+/** Player-facing cancellation copy (semantics mirror lib/cancellation.ts). */
+const CANCELLATION_COPY: Record<string, string> = {
+  flexible: "Free cancellation — full refund any time before kickoff.",
+  moderate:
+    "Full refund up to 24h before kickoff, 50% inside 24h, none at the last minute.",
+  rebook_contingent:
+    "Refunded only if the slot is re-booked by another player.",
+  strict: "Non-refundable after booking.",
 }
 
 export default async function TurfDetailPage({ params }: PageProps) {
@@ -62,7 +75,7 @@ export default async function TurfDetailPage({ params }: PageProps) {
   const slots = await listTurfSlots(turf.id, { from: fromDate, to: toDate })
 
   const facilities = turf.facilities ?? {}
-  const photos = turf.photos ?? []
+  const photos = await listTurfPhotos(turf.id)
   const facilityList = Object.entries(facilities).filter(
     ([k, v]) => k !== "grassType" && v === true
   )
@@ -79,14 +92,7 @@ export default async function TurfDetailPage({ params }: PageProps) {
       {/* Hero photo / gallery */}
       <section>
         {photos.length > 0 ? (
-          <div className="aspect-video w-full overflow-hidden rounded-xl bg-muted">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={photos[0]}
-              alt={turf.name}
-              className="size-full object-cover"
-            />
-          </div>
+          <TurfPhotoStrip name={turf.name} photos={photos} />
         ) : (
           <div className="flex aspect-video w-full items-center justify-center rounded-xl border border-dashed border-border text-sm text-muted-foreground">
             No photos yet
@@ -100,7 +106,7 @@ export default async function TurfDetailPage({ params }: PageProps) {
             {turf.name}
           </h1>
           <StatusBadge status="primary" showIcon={false}>
-            {turf.format === "fives" ? "5-a-side" : "7-a-side"}
+            {turfFormatLabel(turf.format)}
           </StatusBadge>
           {turf.isActive ? null : (
             <StatusBadge status="warning">Inactive</StatusBadge>
@@ -139,8 +145,8 @@ export default async function TurfDetailPage({ params }: PageProps) {
         </div>
         <div className="space-y-2">
           <h2 className="font-heading text-sm font-semibold">Cancellation</h2>
-          <p className="text-sm capitalize text-muted-foreground">
-            {turf.cancellationPolicy.replace(/_/g, " ")}
+          <p className="text-sm text-muted-foreground">
+            {CANCELLATION_COPY[turf.cancellationPolicy] ?? turf.cancellationPolicy}
           </p>
         </div>
       </section>

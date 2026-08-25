@@ -12,7 +12,6 @@ import {
   primaryKey,
   index,
 } from "drizzle-orm/pg-core"
-import { sql } from "drizzle-orm"
 
 import { turfFormat, slotStatus, cancellationPolicy } from "./enums"
 import { geographyPoint } from "../geo"
@@ -24,9 +23,12 @@ export type CancellationPolicyConfig = {
 }
 
 // SS24: facilities surfaced on the turf (Phase 2 schema extension).
-// Booleans default false at write time by the form layer.
+// Booleans default false at write time by the form layer. Unknown keys are
+// owner-added custom facilities (name -> true) from the turf form's
+// "add your own" input — jsonb is schemaless, so no migration needed.
 export type Facilities = {
   indoor?: boolean
+  outdoor?: boolean
   grassType?: string
   lighting?: boolean
   parking?: boolean
@@ -34,6 +36,7 @@ export type Facilities = {
   shower?: boolean
   washroom?: boolean
   equipment?: boolean
+  [custom: string]: boolean | string | undefined
 }
 
 export const turfs = pgTable("turfs", {
@@ -51,8 +54,8 @@ export const turfs = pgTable("turfs", {
   area: text("area"),
   address: text("address"),
   // SS24: descriptive + amenity fields (Phase 2 schema extension).
+  // (Photos moved to the turf_photos table — Cloudinary-backed gallery.)
   description: text("description"),
-  photos: text("photos").array().notNull().default(sql`ARRAY[]::text[]`),
   facilities: jsonb("facilities").$type<Facilities>(),
   // Turfs are admin-verified before going live (SS35).
   isVerified: boolean("is_verified").notNull().default(false),

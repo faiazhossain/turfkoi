@@ -1,6 +1,8 @@
 import { z } from "zod"
 
+import { isValidPhone } from "@/features/auth/phone"
 import { coordsSchema } from "@/features/turfs/schemas"
+import { TURF_FORMAT_VALUES } from "@/features/turfs/formats"
 
 const slugRegex = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 
@@ -18,7 +20,7 @@ export const seedTurfSchema = z.object({
     .regex(slugRegex, "Use lowercase letters, digits, and hyphens"),
   description: z.string().max(2000).optional(),
   coords: coordsSchema,
-  format: z.enum(["fives", "sevens"]),
+  format: z.enum(TURF_FORMAT_VALUES),
   city: z.string().max(80).optional(),
   area: z.string().max(80).optional(),
   address: z.string().max(200).optional(),
@@ -28,8 +30,28 @@ export type SeedTurfValues = z.infer<typeof seedTurfSchema>
 export const createInviteSchema = z.object({
   turfId: z.string().uuid(),
   targetEmail: z.string().email().optional(),
+  // When set, the invite carries a one-time OTP and the claim page offers
+  // the WhatsApp OTP login flow.
+  targetPhone: z
+    .string()
+    .refine(isValidPhone, "Enter a valid Bangladeshi number, e.g. 01XXXXXXXXX")
+    .optional(),
 })
 export type CreateInviteValues = z.infer<typeof createInviteSchema>
+
+export const claimOtpSchema = z.object({
+  token: z.string().min(20).max(100),
+  code: z.string().length(6, "Enter the 6-digit code"),
+})
+export type ClaimOtpValues = z.infer<typeof claimOtpSchema>
+
+export const claimPasswordSchema = z.object({
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .max(72, "Password is too long"),
+})
+export type ClaimPasswordValues = z.infer<typeof claimPasswordSchema>
 
 export const claimTurfSchema = z.object({
   token: z.string().min(20).max(100),

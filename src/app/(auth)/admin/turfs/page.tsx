@@ -3,6 +3,7 @@ import Link from "next/link"
 import { StatusBadge } from "@/components/shared"
 import { InvitePanel, VerifyTurfButton } from "@/components/admin"
 import { listTurfsAdmin } from "@/features/admin/queries"
+import { turfFormatLabel } from "@/features/turfs/formats"
 
 export default async function AdminTurfsPage({
   searchParams,
@@ -84,13 +85,13 @@ export default async function AdminTurfsPage({
                 <p className="truncate text-xs text-muted-foreground">
                   {[t.area, t.city].filter(Boolean).join(", ") || "Location TBD"}
                   {" · "}
-                  {t.format === "fives" ? "5-a-side" : "7-a-side"}
+                  {turfFormatLabel(t.format)}
                   {" · "}
                   {t.ownerId ? `owner ${t.ownerPhone}` : "no owner yet"}
                 </p>
               </div>
               {t.ownerId === null ? (
-                <InvitePanel turfId={t.id} />
+                <InvitePanel turfId={t.id} defaultPhone={t.applicantPhone ?? ""} />
               ) : !t.isVerified ? (
                 <VerifyTurfButton turfId={t.id} />
               ) : null}

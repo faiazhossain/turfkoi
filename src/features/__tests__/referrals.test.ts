@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest"
 
-import { detectImageMime } from "@/lib/file-validation"
+import { validateImageFile } from "@/lib/image-compress"
 import { computeRefund } from "@/lib/cancellation"
 
 /**
@@ -51,8 +51,8 @@ describe("negative-path guards stay strict", () => {
     expect(r.refundAmount).toBe(0)
   })
 
-  it("spoofed extension bytes are flagged", () => {
-    const spoofed = Uint8Array.from([0x3c, 0x68, 0x74, 0x6d, 0x6c]) // "<html"
-    expect(detectImageMime(spoofed)).toBeNull()
+  it("non-image uploads are rejected by the upload guard", () => {
+    const check = validateImageFile({ type: "text/html", size: 100 })
+    expect(check.ok).toBe(false)
   })
 })

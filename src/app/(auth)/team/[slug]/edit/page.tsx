@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/lib/auth"
 import { can } from "@/lib/capabilities"
 import { getTeamBySlug, getTeamRole } from "@/features/teams/queries"
 import { TeamForm } from "@/components/teams/team-form"
+import { TeamLogoField } from "@/components/teams/team-logo-field"
 import { EmptyState } from "@/components/shared"
 
 interface PageProps {
@@ -47,6 +48,7 @@ export default async function EditTeamPage({ params }: PageProps) {
         <h1 className="font-heading text-2xl font-semibold">Edit team</h1>
       </header>
       <TeamForm mode="edit" teamId={team.id} initial={{ name: team.name, slug: team.slug }} />
+      <TeamLogoField teamId={team.id} logoPublicId={team.logoPublicId} />
     </div>
   )
 }

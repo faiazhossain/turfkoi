@@ -2,6 +2,7 @@ import { z } from "zod"
 
 import { isValidPhone } from "@/features/auth/phone"
 import { coordsSchema } from "@/features/turfs/schemas"
+import { TURF_FORMAT_VALUES } from "@/features/turfs/formats"
 
 const slugRegex = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 
@@ -49,7 +50,7 @@ export const approveApplicationSchema = z.object({
     .regex(slugRegex, "Use lowercase letters, digits, and hyphens"),
   description: z.string().max(2000).optional(),
   coords: coordsSchema,
-  format: z.enum(["fives", "sevens"]),
+  format: z.enum(TURF_FORMAT_VALUES),
   city: z.string().max(80).optional(),
   area: z.string().max(80).optional(),
   address: z.string().max(200).optional(),

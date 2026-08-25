@@ -1,10 +1,15 @@
 import { z } from "zod"
 
+import { TURF_FORMAT_VALUES } from "./formats"
+
 const slugRegex = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 
+// Preset facility toggles + owner-added custom entries (customName -> true),
+// kept through validation via the catchall so jsonb round-trips them.
 export const facilitiesSchema = z
   .object({
     indoor: z.boolean().optional(),
+    outdoor: z.boolean().optional(),
     grassType: z.string().max(40).optional(),
     lighting: z.boolean().optional(),
     parking: z.boolean().optional(),
@@ -13,6 +18,7 @@ export const facilitiesSchema = z
     washroom: z.boolean().optional(),
     equipment: z.boolean().optional(),
   })
+  .catchall(z.boolean().or(z.string().max(60)))
   .optional()
 
 export const coordsSchema = z.object({
@@ -43,7 +49,7 @@ export const turfFormSchema = z.object({
     .regex(slugRegex, "Use lowercase letters, digits, and hyphens"),
   description: z.string().max(2000).optional(),
   coords: coordsSchema,
-  format: z.enum(["fives", "sevens"]),
+  format: z.enum(TURF_FORMAT_VALUES),
   city: z.string().max(80).optional(),
   area: z.string().max(80).optional(),
   address: z.string().max(200).optional(),
@@ -55,7 +61,6 @@ export const turfFormSchema = z.object({
   ]),
   cancellationPolicyConfig: cancellationPolicyConfigSchema,
   facilities: facilitiesSchema,
-  photos: z.array(z.string().url()).max(12),
 })
 export type TurfFormValues = z.infer<typeof turfFormSchema>
 

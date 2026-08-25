@@ -2,11 +2,13 @@
 
 import { useState } from "react"
 import { toast } from "sonner"
-import { CopyIcon, LinkIcon } from "lucide-react"
+import { CopyIcon, LinkIcon, MessageCircleIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { isValidPhone } from "@/features/auth/phone"
 
 import { createClaimInviteAction } from "@/features/turf-claims/actions"
 
@@ -14,33 +16,65 @@ type CreatedInvite = {
   url: string
   expiresAt: Date
   emailed: boolean
+  otp: string | null
+  phone: string | null
+  turfName: string
+}
+
+function whatsappMessage(invite: CreatedInvite): string {
+  const lines = [
+    `Hi! Claim your turf "${invite.turfName}" on Turfkoi:`,
+    invite.url,
+  ]
+  if (invite.otp) {
+    lines.push(`Your verification code: ${invite.otp}`)
+    lines.push(`The link expires ${invite.expiresAt.toDateString()}.`)
+  }
+  lines.push("See you on the pitch! — Turfkoi team")
+  return lines.join("\n")
 }
 
 /**
- * Mint and deliver a turf-claim invite link. The plaintext link is shown
- * exactly once (only a hash is stored) with a copy button for WhatsApp;
- * a new invite invalidates any previous link for the turf.
+ * Mint and deliver a turf-claim invite link. The plaintext link (and OTP,
+ * when a WhatsApp phone is given) is shown exactly once — only hashes are
+ * stored — with copy buttons for the link and a ready-to-send WhatsApp
+ * message. A new invite invalidates any previous link for the turf.
  */
 export function InvitePanel({
   turfId,
   defaultOpen = false,
   defaultEmail = "",
+  defaultPhone = "",
 }: {
   turfId: string
   defaultOpen?: boolean
   defaultEmail?: string
+  defaultPhone?: string
 }) {
   const [open, setOpen] = useState(defaultOpen)
   const [email, setEmail] = useState(defaultEmail)
+  const [phone, setPhone] = useState(defaultPhone)
+  const [phoneError, setPhoneError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
   const [invite, setInvite] = useState<CreatedInvite | null>(null)
 
   async function onCreate() {
+    const trimmedPhone = phone.trim()
+    if (!trimmedPhone) {
+      setPhoneError("Enter the owner's WhatsApp phone — it enables OTP sign-in.")
+      return
+    }
+    if (!isValidPhone(trimmedPhone)) {
+      setPhoneError("Enter a valid Bangladeshi number, e.g. 01XXXXXXXXX")
+      return
+    }
+    setPhoneError(null)
     setPending(true)
     try {
       const res = await createClaimInviteAction({
         turfId,
         targetEmail: email.trim() ? email.trim() : undefined,
+        targetPhone: trimmedPhone ? trimmedPhone : undefined,
       })
       if (!res.ok) {
         toast.error(res.error)
@@ -50,6 +84,9 @@ export function InvitePanel({
         url: `${window.location.origin}${res.path}`,
         expiresAt: new Date(res.expiresAt),
         emailed: res.emailed,
+        otp: res.otp,
+        phone: res.phone,
+        turfName: res.turfName,
       })
       setOpen(true)
       toast.success(
@@ -60,13 +97,12 @@ export function InvitePanel({
     }
   }
 
-  async function onCopy() {
-    if (!invite) return
+  async function copyText(text: string, successMessage: string) {
     try {
-      await navigator.clipboard.writeText(invite.url)
-      toast.success("Link copied — paste it to the owner (WhatsApp works).")
+      await navigator.clipboard.writeText(text)
+      toast.success(successMessage)
     } catch {
-      toast.error("Couldn't copy. Select the link and copy manually.")
+      toast.error("Couldn't copy. Select the text and copy manually.")
     }
   }
 
@@ -100,15 +136,80 @@ export function InvitePanel({
             <Button
               size="sm"
               variant="outline"
-              onClick={onCopy}
+              onClick={() =>
+                copyText(
+                  invite.url,
+                  "Link copied — paste it to the owner (WhatsApp works)."
+                )
+              }
               aria-label="Copy claim link"
             >
               <CopyIcon className="size-3.5" aria-hidden />
               Copy
             </Button>
           </div>
+          {invite.otp ? (
+            <div className="space-y-2">
+              <p className="text-xs text-muted-foreground">
+                OTP sign-in enabled for{" "}
+                <span className="font-medium text-foreground">
+                  {invite.phone}
+                </span>{" "}
+                (from the application).
+              </p>
+              <div className="flex items-center gap-2">
+                <Input
+                  readOnly
+                  value={invite.otp}
+                  onFocus={(e) => e.currentTarget.select()}
+                  className="text-center text-sm tracking-[0.5em]"
+                  aria-label="Verification code"
+                />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() =>
+                    copyText(invite.otp ?? "", "Code copied.")
+                  }
+                  aria-label="Copy verification code"
+                >
+                  <CopyIcon className="size-3.5" aria-hidden />
+                  Copy
+                </Button>
+              </div>
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between gap-2">
+                  <Label className="text-xs text-muted-foreground">
+                    WhatsApp message (link + code)
+                  </Label>
+                  <Button
+                    size="xs"
+                    variant="outline"
+                    onClick={() =>
+                      copyText(
+                        whatsappMessage(invite),
+                        "Message copied — paste it in WhatsApp."
+                      )
+                    }
+                  >
+                    <MessageCircleIcon className="size-3.5" aria-hidden />
+                    Copy message
+                  </Button>
+                </div>
+                <Textarea
+                  readOnly
+                  rows={5}
+                  value={whatsappMessage(invite)}
+                  onFocus={(e) => e.currentTarget.select()}
+                  className="text-xs"
+                  aria-label="WhatsApp message"
+                />
+              </div>
+            </div>
+          ) : null}
           <p className="text-xs text-muted-foreground">
-            Shown only once. Creating a new invite invalidates this link.
+            Link and code are shown only once. Creating a new invite
+            invalidates them.
           </p>
         </div>
       ) : (
@@ -130,10 +231,28 @@ export function InvitePanel({
             placeholder="owner@example.com"
             className="text-xs"
           />
+        </div>
+        <Label htmlFor={`invite-phone-${turfId}`} className="text-xs">
+          Owner WhatsApp phone
+        </Label>
+        <div className="flex items-center gap-2">
+          <Input
+            id={`invite-phone-${turfId}`}
+            inputMode="tel"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            placeholder="01XXXXXXXXX"
+            className="text-xs"
+            aria-invalid={!!phoneError}
+            required
+          />
           <Button size="sm" onClick={onCreate} loading={pending}>
             {invite ? "New link" : "Create link"}
           </Button>
         </div>
+        {phoneError ? (
+          <p className="text-xs text-destructive">{phoneError}</p>
+        ) : null}
       </div>
     </div>
   )

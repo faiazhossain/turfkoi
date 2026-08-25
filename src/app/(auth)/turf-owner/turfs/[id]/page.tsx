@@ -23,7 +23,8 @@ import {
   SlotGrid,
   TurfForm,
 } from "@/components/turfs"
-import { getTurfById, listTurfSlots } from "@/features/turfs/queries"
+import { TurfPhotoGallery } from "@/components/turfs/turf-photo-gallery"
+import { getTurfById, listTurfSlots, listTurfPhotos } from "@/features/turfs/queries"
 import type { TurfFormValues } from "@/features/turfs/schemas"
 
 interface PageProps {
@@ -47,6 +48,7 @@ export default async function EditTurfPage({ params }: PageProps) {
     .toISOString()
     .slice(0, 10)
   const slots = await listTurfSlots(turf.id, { from: fromDate, to: toDate })
+  const photos = await listTurfPhotos(turf.id)
 
   const formDefaults: Partial<TurfFormValues> = {
     name: turf.name,
@@ -62,7 +64,6 @@ export default async function EditTurfPage({ params }: PageProps) {
       | TurfFormValues["cancellationPolicyConfig"]
       | undefined,
     facilities: (turf.facilities ?? {}) as TurfFormValues["facilities"],
-    photos: turf.photos,
   }
 
   return (
@@ -101,7 +102,7 @@ export default async function EditTurfPage({ params }: PageProps) {
           <TabsTrigger value="slots">Slots ({slots.length})</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="edit">
+        <TabsContent value="edit" className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle className="font-heading text-lg">
@@ -113,6 +114,17 @@ export default async function EditTurfPage({ params }: PageProps) {
             </CardHeader>
             <CardContent>
               <TurfForm mode="edit" turfId={turf.id} defaultValues={formDefaults} />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="font-heading text-lg">Photos</CardTitle>
+              <CardDescription>
+                Added photos appear immediately — no save needed.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <TurfPhotoGallery turfId={turf.id} photos={photos} />
             </CardContent>
           </Card>
         </TabsContent>

@@ -1,9 +1,10 @@
 import "server-only"
-import { and, asc, eq, gte, isNotNull, lte, sql, inArray } from "drizzle-orm"
+import { and, asc, desc, eq, gte, isNotNull, lte, sql, inArray } from "drizzle-orm"
 
 import { db } from "@/db"
-import { turfs, turfSlots, bookings } from "@/db/schema"
+import { turfs, turfSlots, bookings, turfPhotos } from "@/db/schema"
 import type { GeoPoint } from "@/db/geo"
+import type { TurfFormat } from "./formats"
 
 export type TurfListItem = {
   id: string
@@ -11,7 +12,7 @@ export type TurfListItem = {
   name: string
   area: string | null
   city: string | null
-  format: "fives" | "sevens"
+  format: TurfFormat
   photo: string | null
   distanceKm: number | null
   /** Pin position for the discovery map (ST_Y/ST_X of the geography column). */
@@ -23,7 +24,7 @@ export interface ListTurfsFilter {
   area?: string
   coords?: GeoPoint
   radiusKm?: number
-  format?: "fives" | "sevens"
+  format?: TurfFormat
   /** When false, returns unverified turfs too (owner/admin views). */
   onlyPublic?: boolean
   limit?: number
@@ -77,7 +78,13 @@ export async function listTurfs(
       area: turfs.area,
       city: turfs.city,
       format: turfs.format,
-      photo: sql<string | null>`${turfs.photos}[1]`.as("photo"),
+      // Cover photo first, else earliest by sort order (Cloudinary public id).
+      photo: sql<string | null>`(
+        SELECT public_id FROM turf_photos tp
+        WHERE tp.turf_id = ${turfs.id}
+        ORDER BY is_cover DESC, sort_order ASC
+        LIMIT 1
+      )`.as("photo"),
       distanceKm: distanceExpr.as("distance_km"),
       lat: sql<number>`ST_Y(${turfs.coords}::geometry)`.as("lat"),
       lng: sql<number>`ST_X(${turfs.coords}::geometry)`.as("lng"),
@@ -132,6 +139,28 @@ export async function getTurfBySlug(slug: string) {
 export async function getTurfById(id: string) {
   const rows = await db.select().from(turfs).where(eq(turfs.id, id)).limit(1)
   return rows[0] ?? null
+}
+
+export type TurfPhoto = {
+  id: string
+  publicId: string
+  sortOrder: number
+  isCover: boolean
+}
+
+/** Gallery photos in display order (cover first, then manual order). */
+export async function listTurfPhotos(turfId: string): Promise<TurfPhoto[]> {
+  const rows = await db
+    .select({
+      id: turfPhotos.id,
+      publicId: turfPhotos.publicId,
+      sortOrder: turfPhotos.sortOrder,
+      isCover: turfPhotos.isCover,
+    })
+    .from(turfPhotos)
+    .where(eq(turfPhotos.turfId, turfId))
+    .orderBy(desc(turfPhotos.isCover), asc(turfPhotos.sortOrder))
+  return rows
 }
 
 /**

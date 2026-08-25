@@ -4,6 +4,7 @@ import { EmptyState, StatusBadge } from "@/components/shared"
 import { MapView } from "@/components/map"
 import { AreaSearch, TurfCard } from "@/components/turfs"
 import { listTurfs, listTurfAreas, type ListTurfsFilter } from "@/features/turfs/queries"
+import { isTurfFormat } from "@/features/turfs/formats"
 
 interface PageProps {
   searchParams: Promise<{
@@ -26,7 +27,7 @@ function parseFilter(
     filter.coords = { lat, lng }
   }
   if (sp.radius) filter.radiusKm = Number(sp.radius)
-  if (sp.format === "fives" || sp.format === "sevens") filter.format = sp.format
+  if (sp.format && isTurfFormat(sp.format)) filter.format = sp.format
   return filter
 }
 

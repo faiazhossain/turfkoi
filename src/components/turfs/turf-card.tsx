@@ -3,13 +3,16 @@ import { MapPinIcon } from "lucide-react"
 
 import { Card, CardContent } from "@/components/ui/card"
 import { StatusBadge } from "@/components/shared"
+import { turfFormatShort, type TurfFormat } from "@/features/turfs/formats"
+import { clientImageUrl } from "@/features/images/urls"
 
 interface TurfCardProps {
   slug: string
   name: string
   area: string | null
   city: string | null
-  format: "fives" | "sevens"
+  format: TurfFormat
+  /** Cloudinary public id of the cover photo. */
   photo: string | null
   distanceKm: number | null
 }
@@ -30,7 +33,7 @@ export function TurfCard({
           {photo ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={photo}
+              src={clientImageUrl(photo, "card")}
               alt={name}
               className="size-full object-cover transition-transform group-hover:scale-105"
               loading="lazy"
@@ -47,7 +50,7 @@ export function TurfCard({
               {name}
             </h3>
             <StatusBadge status="neutral" showIcon={false}>
-              {format === "fives" ? "5v5" : "7v7"}
+              {turfFormatShort(format)}
             </StatusBadge>
           </div>
           <div className="flex items-center gap-1 text-xs text-muted-foreground">

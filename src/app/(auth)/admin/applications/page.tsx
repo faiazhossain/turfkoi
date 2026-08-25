@@ -103,6 +103,7 @@ export default async function AdminApplicationsPage({
                   application={{
                     id: app.id,
                     turfName: app.turfName,
+                    phone: app.phone,
                     email: app.email,
                     city: app.city,
                     area: app.area,

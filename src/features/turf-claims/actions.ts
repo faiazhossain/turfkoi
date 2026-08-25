@@ -3,10 +3,13 @@
 import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
 import { headers } from "next/headers"
-import { and, eq, isNull } from "drizzle-orm"
+import { and, desc, eq, isNull } from "drizzle-orm"
+import bcrypt from "bcryptjs"
+import { AuthError } from "next-auth"
 
+import { signIn } from "@/auth"
 import { db } from "@/db"
-import { turfClaimInvites, turfs, userRoles } from "@/db/schema"
+import { turfApplications, turfClaimInvites, turfs, userRoles, users } from "@/db/schema"
 import { getCurrentUser } from "@/lib/auth"
 import { rateLimit } from "@/lib/ratelimit"
 
@@ -16,8 +19,12 @@ import {
   claimPath,
   createClaimInvite,
   resolveClaimToken,
+  verifyClaimOtp,
 } from "./invites"
+import { findOrCreateOwnerByPhone, generateSimplePassword } from "./owner-account"
 import {
+  claimOtpSchema,
+  claimPasswordSchema,
   claimTurfSchema,
   createInviteSchema,
   seedTurfSchema,
@@ -78,16 +85,25 @@ export async function seedTurfAction(
 
 /**
  * Mint a single-use claim invite for an unclaimed turf. The plaintext link
- * is returned once (only the hash is stored). Re-invites revoke the previous
- * link. If a target email is given, the link is also emailed; an email
- * failure is surfaced but does not discard the invite — the admin can copy
- * the link manually.
+ * (and, with a phone, the one-time OTP) is returned once — only hashes are
+ * stored. Re-invites revoke the previous link and its OTP. If a target
+ * email is given, the link is also emailed; an email failure is surfaced
+ * but does not discard the invite — the admin can copy the link manually.
  */
 export async function createClaimInviteAction(input: {
   turfId: string
   targetEmail?: string
+  targetPhone?: string
 }): Promise<
-  | { ok: true; path: string; expiresAt: Date; emailed: boolean }
+  | {
+      ok: true
+      path: string
+      expiresAt: Date
+      emailed: boolean
+      otp: string | null
+      phone: string | null
+      turfName: string
+    }
   | { ok: false; error: string }
 > {
   const parsed = createInviteSchema.safeParse(input)
@@ -108,10 +124,25 @@ export async function createClaimInviteAction(input: {
     return { ok: false, error: "That turf has already been claimed." }
   }
 
-  const { token, expiresAt } = await createClaimInvite(
+  // Phone the admin typed wins; otherwise fall back to the phone the owner
+  // gave in their application, so the OTP login flow is on for every turf
+  // that came through /own-a-turf without anyone retyping numbers.
+  let targetPhone = parsed.data.targetPhone
+  if (!targetPhone) {
+    const appRows = await db
+      .select({ phone: turfApplications.phone })
+      .from(turfApplications)
+      .where(eq(turfApplications.turfId, turf.id))
+      .orderBy(desc(turfApplications.createdAt))
+      .limit(1)
+    targetPhone = appRows[0]?.phone
+  }
+
+  const { token, otp, expiresAt } = await createClaimInvite(
     actor.id,
     turf.id,
-    parsed.data.targetEmail
+    parsed.data.targetEmail,
+    targetPhone
   )
   revalidatePath("/admin/turfs")
 
@@ -123,17 +154,34 @@ export async function createClaimInviteAction(input: {
         parsed.data.targetEmail,
         turf.name,
         `${base}${claimPath(token)}`,
-        expiresAt
+        expiresAt,
+        otp ?? undefined
       )
       emailed = true
     } catch (err) {
       console.error("[turf-claims] invite email failed:", err)
       // Deliberate partial success: the link works, email didn't go out.
-      return { ok: true, path: claimPath(token), expiresAt, emailed: false }
+      return {
+        ok: true,
+        path: claimPath(token),
+        expiresAt,
+        emailed: false,
+        otp,
+        phone: targetPhone ?? null,
+        turfName: turf.name,
+      }
     }
   }
 
-  return { ok: true, path: claimPath(token), expiresAt, emailed }
+  return {
+    ok: true,
+    path: claimPath(token),
+    expiresAt,
+    emailed,
+    otp,
+    phone: targetPhone ?? null,
+    turfName: turf.name,
+  }
 }
 
 /**
@@ -196,4 +244,147 @@ export async function claimTurfAction(token: string): Promise<ActionResult> {
   revalidatePath("/admin/turfs")
   revalidatePath("/turf-owner")
   return { ok: true, id: resolved.turfId }
+}
+
+/**
+ * WhatsApp OTP first-login for turf owners. The claim link + the 6-digit
+ * code from the admin's WhatsApp message jointly prove control of the
+ * phone, so this signs the owner straight in — finding or creating their
+ * account — and the client then walks them through the password modal +
+ * claim. The one-time password exists only inside this request.
+ */
+export async function claimOtpLoginAction(
+  token: string,
+  code: string
+): Promise<ActionResult> {
+  const parsed = claimOtpSchema.safeParse({ token, code })
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid" }
+  }
+
+  const h = await headers()
+  const ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown"
+  const allowIp = await rateLimit(`claim-otp:ip:${ip}`, 10, 300)
+  if (!allowIp) {
+    return { ok: false, error: "Too many attempts. Try again later." }
+  }
+
+  const verified = await verifyClaimOtp(parsed.data.token, parsed.data.code)
+  if (!verified.ok) {
+    // A malformed token surfaces as `invalid` without attemptsLeft — give
+    // it link-level copy instead of the wrong-code message.
+    if (verified.reason === "invalid" && verified.attemptsLeft === undefined) {
+      return { ok: false, error: "This link isn't valid. Ask for a new one." }
+    }
+    const messages: Record<typeof verified.reason, string> = {
+      invalid:
+        verified.attemptsLeft !== undefined
+          ? `Wrong code. ${verified.attemptsLeft} attempt${verified.attemptsLeft === 1 ? "" : "s"} left.`
+          : "Wrong code. Try again.",
+      locked: "Too many wrong codes. Try again in 15 minutes.",
+      consumed: "This code was already used. Ask for a new link.",
+      expired: "This link has expired. Ask the Turfkoi team for a new one.",
+      claimed: "This turf has already been claimed.",
+      revoked: "This link was replaced by a newer one.",
+      turf_claimed: "This turf has already been claimed.",
+      no_otp: "This link doesn't have a code. Ask for a new one.",
+      rate_limited: "Too many attempts. Try again later.",
+    }
+    return { ok: false, error: messages[verified.reason] }
+  }
+
+  const allowInvite = await rateLimit(
+    `claim-otp:invite:${verified.inviteId}`,
+    10,
+    300
+  )
+  if (!allowInvite) {
+    return { ok: false, error: "Too many attempts. Try again later." }
+  }
+
+  // Best-effort identity hints from the application that produced this
+  // turf (contact name + email); manual seeds simply skip them.
+  const appRows = await db
+    .select({
+      contactName: turfApplications.contactName,
+      email: turfApplications.email,
+    })
+    .from(turfApplications)
+    .where(
+      and(
+        eq(turfApplications.turfId, verified.turfId),
+        eq(turfApplications.status, "approved")
+      )
+    )
+    .orderBy(desc(turfApplications.createdAt))
+    .limit(1)
+  const app = appRows[0]
+
+  const owner = await findOrCreateOwnerByPhone({
+    phone: verified.phone,
+    email: app?.email ?? null,
+    name: app?.contactName ?? null,
+  })
+
+  try {
+    // Reuses the hardened credentials provider: the one-time password is
+    // garbage after this request and the modal replaces it right away.
+    await signIn("credentials", {
+      identifier: owner.phone,
+      password: owner.oneTimePassword,
+      redirect: false,
+    })
+  } catch (err) {
+    if (err instanceof AuthError) {
+      console.error("[turf-claims] OTP sign-in failed:", err)
+      return { ok: false, error: "Couldn't sign you in. Try again." }
+    }
+    throw err
+  }
+
+  return { ok: true }
+}
+
+/**
+ * Set the owner's password after the claim OTP login. Auth-gated — the
+ * caller is whoever just signed in via the OTP flow (or any signed-in user
+ * changing their own password through the claim modal).
+ */
+export async function setClaimPasswordAction(
+  password: string
+): Promise<ActionResult> {
+  const parsed = claimPasswordSchema.safeParse({ password })
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid" }
+  }
+
+  const user = await getCurrentUser()
+  if (!user) return unauthorized()
+
+  const passwordHash = await bcrypt.hash(parsed.data.password, 10)
+  await db
+    .update(users)
+    .set({ passwordHash, updatedAt: new Date() })
+    .where(eq(users.id, user.id))
+  return { ok: true }
+}
+
+/**
+ * Skip path for the password modal: save a generated simple password and
+ * return it once so the modal can show it to the owner. Nothing extra is
+ * stored — this IS the account password until changed in settings.
+ */
+export async function skipClaimPasswordAction(): Promise<
+  { ok: true; password: string } | { ok: false; error: string }
+> {
+  const user = await getCurrentUser()
+  if (!user) return { ok: false, error: "You are not signed in." }
+
+  const password = generateSimplePassword()
+  const passwordHash = await bcrypt.hash(password, 10)
+  await db
+    .update(users)
+    .set({ passwordHash, updatedAt: new Date() })
+    .where(eq(users.id, user.id))
+  return { ok: true, password }
 }

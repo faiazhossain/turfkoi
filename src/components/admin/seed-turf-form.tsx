@@ -18,12 +18,14 @@ import {
 } from "@/components/ui/select"
 import { LocationPicker } from "@/components/map"
 import { InvitePanel } from "./invite-panel"
+import { isValidPhone } from "@/features/auth/phone"
 
 import { seedTurfAction } from "@/features/turf-claims/actions"
 import {
   seedTurfSchema,
   type SeedTurfValues,
 } from "@/features/turf-claims/schemas"
+import { TURF_FORMATS, turfFormatLabel, type TurfFormat } from "@/features/turfs/formats"
 
 function slugify(s: string) {
   return s
@@ -34,10 +36,7 @@ function slugify(s: string) {
     .replace(/^-+|-+$/g, "")
 }
 
-const FORMAT_OPTIONS = [
-  { value: "fives", label: "5-a-side" },
-  { value: "sevens", label: "7-a-side" },
-] as const
+const FORMAT_OPTIONS = TURF_FORMATS
 
 /**
  * Admin concierge seeding: capture just enough to identify the turf (name,
@@ -47,6 +46,10 @@ const FORMAT_OPTIONS = [
 export function SeedTurfForm() {
   const [serverError, setServerError] = useState<string | null>(null)
   const [seededId, setSeededId] = useState<string | null>(null)
+  // Owner phone is required so every invite gets the OTP login flow — the
+  // claim link is always delivered to a known WhatsApp number.
+  const [ownerPhone, setOwnerPhone] = useState("")
+  const [phoneError, setPhoneError] = useState<string | null>(null)
 
   const form = useForm<SeedTurfValues>({
     resolver: zodResolver(seedTurfSchema),
@@ -64,6 +67,16 @@ export function SeedTurfForm() {
 
   async function onSubmit(values: SeedTurfValues) {
     setServerError(null)
+    const trimmed = ownerPhone.trim()
+    if (!trimmed) {
+      setPhoneError("Enter the owner's WhatsApp phone — it enables OTP sign-in.")
+      return
+    }
+    if (!isValidPhone(trimmed)) {
+      setPhoneError("Enter a valid Bangladeshi number, e.g. 01XXXXXXXXX")
+      return
+    }
+    setPhoneError(null)
     const res = await seedTurfAction(values)
     if (!res.ok) {
       setServerError(res.error)
@@ -78,7 +91,7 @@ export function SeedTurfForm() {
         <StatusBadge status="success">
           Turf seeded. Send the claim link to the owner.
         </StatusBadge>
-        <InvitePanel turfId={seededId} defaultOpen />
+        <InvitePanel turfId={seededId} defaultOpen defaultPhone={ownerPhone.trim()} />
       </div>
     )
   }
@@ -102,15 +115,21 @@ export function SeedTurfForm() {
           </Field>
         </div>
         <Field label="Description (optional)">
-          <Textarea {...form.register("description")} rows={3} />
+          <Textarea
+            {...form.register("description")}
+            rows={3}
+            placeholder="Floodlit 7-a-side turf with artificial grass, changing room, parking… the owner completes the full listing after claiming."
+          />
         </Field>
         <Field label="Format">
           <Select
             value={form.watch("format")}
-            onValueChange={(v) => form.setValue("format", v as "fives" | "sevens")}
+            onValueChange={(v) => form.setValue("format", v as TurfFormat)}
           >
             <SelectTrigger className="w-full">
-              <SelectValue />
+              <SelectValue>
+                {(v) => turfFormatLabel(String(v))}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {FORMAT_OPTIONS.map((o) => (
@@ -120,6 +139,16 @@ export function SeedTurfForm() {
               ))}
             </SelectContent>
           </Select>
+        </Field>
+        <Field label="Owner WhatsApp phone" error={phoneError ?? undefined}>
+          <Input
+            inputMode="tel"
+            value={ownerPhone}
+            onChange={(e) => setOwnerPhone(e.target.value)}
+            placeholder="01XXXXXXXXX"
+            aria-invalid={!!phoneError}
+            required
+          />
         </Field>
       </section>
 

@@ -3,6 +3,7 @@ import Link from "next/link"
 
 import { getCurrentUser } from "@/lib/auth"
 import { getTurfById } from "@/features/turfs/queries"
+import { turfFormatLabel } from "@/features/turfs/formats"
 import { Button } from "@/components/ui/button"
 
 import {
@@ -10,6 +11,7 @@ import {
   resolveClaimToken,
 } from "@/features/turf-claims/invites"
 import { ClaimTurfButton } from "@/components/turf-claims/claim-turf-button"
+import { ClaimOtpFlow } from "@/components/turf-claims/claim-otp-flow"
 import {
   Card,
   CardContent,
@@ -80,6 +82,10 @@ export default async function ClaimTurfPage({
   if (!turf) redirect("/login")
 
   const place = [turf.area, turf.city].filter(Boolean).join(", ")
+  // +8801•••••1234 — enough for the owner to recognize their own number.
+  const maskedPhone = resolved.targetPhone
+    ? resolved.targetPhone.slice(0, 6) + "•••••" + resolved.targetPhone.slice(-4)
+    : null
 
   return (
     <div className="mx-auto flex max-w-md flex-col gap-6 px-4 py-16">
@@ -96,7 +102,7 @@ export default async function ClaimTurfPage({
           <dl className="space-y-2 text-sm">
             <div className="flex justify-between gap-4">
               <dt className="text-muted-foreground">Format</dt>
-              <dd>{turf.format === "fives" ? "5-a-side" : "7-a-side"}</dd>
+              <dd>{turfFormatLabel(turf.format)}</dd>
             </div>
             {place ? (
               <div className="flex justify-between gap-4">
@@ -113,6 +119,8 @@ export default async function ClaimTurfPage({
           </dl>
           {user ? (
             <ClaimTurfButton token={token} />
+          ) : maskedPhone ? (
+            <ClaimOtpFlow token={token} maskedPhone={maskedPhone} />
           ) : (
             <div className="space-y-3">
               <p className="text-sm text-muted-foreground">
