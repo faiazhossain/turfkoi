@@ -41,12 +41,12 @@ export const cancellationPolicyConfigSchema = z
   .optional()
 
 export const turfFormSchema = z.object({
-  name: z.string().min(2, "Name is too short").max(80),
+  name: z.string().min(2, "turfOwner.errors.nameShort").max(80),
   slug: z
     .string()
     .min(2)
     .max(80)
-    .regex(slugRegex, "Use lowercase letters, digits, and hyphens"),
+    .regex(slugRegex, "team.errors.slugFormat"),
   description: z.string().max(2000).optional(),
   coords: coordsSchema,
   format: z.enum(TURF_FORMAT_VALUES),
@@ -69,22 +69,22 @@ export type TurfFormValues = z.infer<typeof turfFormSchema>
 // per (date, startTime) into turf_slots.
 export const generateSlotsSchema = z
   .object({
-    dateFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD"),
-    dateTo: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD"),
+    dateFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "booking.errors.dateFormat"),
+    dateTo: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "booking.errors.dateFormat"),
     weekdays: z
       .array(z.number().int().min(0).max(6))
-      .min(1, "Pick at least one day")
+      .min(1, "turfOwner.errors.pickAtLeastOneDay")
       .max(7),
-    startTime: z.string().regex(/^\d{2}:\d{2}$/, "Use HH:mm (24h)"),
+    startTime: z.string().regex(/^\d{2}:\d{2}$/, "booking.errors.timeFormat"),
     durationMinutes: z.union([z.literal(60), z.literal(90)]),
     slotsPerDay: z.number().int().min(1).max(24),
     basePrice: z
       .number()
-      .positive("Price must be positive")
-      .max(100000, "Price looks too high"),
+      .positive("turfOwner.errors.pricePositive")
+      .max(100000, "turfOwner.errors.priceTooHigh"),
   })
   .refine((v) => v.dateTo >= v.dateFrom, {
-    message: "End date must be on or after the start date",
+    message: "turfOwner.errors.endDateAfter",
     path: ["dateTo"],
   })
 export type GenerateSlotsValues = z.infer<typeof generateSlotsSchema>

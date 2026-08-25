@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Loader } from "@/components/ui/loader"
 import { cn } from "@/lib/utils"
+import { useI18n } from "@/i18n/client"
 import {
   photonAutocompleteUrl,
   photonReverseUrl,
@@ -41,13 +42,15 @@ export function LocationPicker({
   value,
   onChange,
   className,
-  label = "Location",
+  label,
 }: {
   value: GeoPoint | null
   onChange: (point: GeoPoint, place: PickedPlace | null) => void
   className?: string
   label?: string
 }) {
+  const { t } = useI18n()
+  const labelOrDefault = label ?? t("map.location")
   const [query, setQuery] = useState("")
   const [results, setResults] = useState<PhotonFeature[]>([])
   const [searchStatus, setSearchStatus] = useState<SearchStatus>("idle")
@@ -289,9 +292,9 @@ export function LocationPicker({
             setQuery(e.target.value)
           }}
           onFocus={() => results.length > 0 && setOpen(true)}
-          placeholder={`Search a place to set your ${label.toLowerCase()}`}
+          placeholder={t("map.searchPlaceholder", { label: labelOrDefault })}
           className="pl-8"
-          aria-label={`Search for ${label.toLowerCase()}`}
+          aria-label={t("map.searchAria", { label: labelOrDefault })}
           autoComplete="off"
         />
         {searchStatus === "searching" ? (
@@ -304,7 +307,7 @@ export function LocationPicker({
         {open && results.length > 0 ? (
           <ul
             role="listbox"
-            aria-label="Search results"
+            aria-label={t("map.resultsAria")}
             className="absolute z-20 mt-1 w-full overflow-hidden rounded-lg border border-border bg-card shadow-lg"
           >
             {results.map((f, i) => {
@@ -353,7 +356,7 @@ export function LocationPicker({
               {value.lat.toFixed(4)}, {value.lng.toFixed(4)}
             </>
           ) : (
-            "Tap the map or search to set your location."
+            t("map.hint")
           )}
         </span>
         <Button
@@ -364,7 +367,7 @@ export function LocationPicker({
           loading={geoLoading}
         >
           <CrosshairIcon data-icon="inline-start" aria-hidden />
-          Use my location
+          {t("map.useMyLocation")}
         </Button>
       </div>
     </div>

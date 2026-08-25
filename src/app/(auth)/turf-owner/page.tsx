@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
+import type { Metadata } from "next"
 import { CalendarClockIcon, PlusIcon, MegaphoneIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -12,20 +13,27 @@ import {
   listOwnerFillableSlots,
 } from "@/features/turfs/queries"
 import { turfFormatLabel } from "@/features/turfs/formats"
+import { getT } from "@/i18n/server"
+import { buildMetadata } from "@/i18n/metadata"
+
+export async function generateMetadata(): Promise<Metadata> {
+  return buildMetadata({ titleKey: "metadata.turfOwnerDashboardTitle" })
+}
 
 function fmtBdt(n: number) {
   return `৳${n.toLocaleString()}`
 }
 
 export default async function TurfOwnerDashboardPage() {
+  const t = await getT()
   const user = await getCurrentUser()
   if (!user) redirect("/login")
   if (!user.roles.includes("turf_owner")) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-16">
         <EmptyState
-          title="You don't have a turf-owner account"
-          description="Contact an admin to be granted the turf_owner role, then refresh this page."
+          title={t("turfOwner.notOwnerTitle")}
+          description={t("turfOwner.notOwnerDesc")}
         />
       </div>
     )
@@ -42,96 +50,104 @@ export default async function TurfOwnerDashboardPage() {
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="font-heading text-2xl font-semibold">
-            Turf owner dashboard
+            {t("turfOwner.title")}
           </h1>
           <p className="text-sm text-muted-foreground">
-            {myTurfs.length} turf{myTurfs.length === 1 ? "" : "s"} under
-            management
+            {myTurfs.length === 1
+              ? t("turfOwner.turfCountOne")
+              : t("turfOwner.turfCountMany", { count: myTurfs.length })}
           </p>
         </div>
         <Button render={<Link href="/turf-owner/turfs/new" />}>
           <PlusIcon aria-hidden />
-          Add turf
+          {t("turfOwner.addTurf")}
         </Button>
       </header>
 
       <section className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
         <KpiTile
-          label="Today's revenue"
+          label={t("turfOwner.kpis.todaysRevenue")}
           value={fmtBdt(kpis.todaysRevenue)}
-          hint={`${kpis.todaysBookings} confirmed booking${
-            kpis.todaysBookings === 1 ? "" : "s"
-          }`}
+          hint={
+            kpis.todaysBookings === 1
+              ? t("turfOwner.kpis.todaysBookingsOne")
+              : t("turfOwner.kpis.todaysBookingsMany", {
+                  count: kpis.todaysBookings,
+                })
+          }
         />
         <KpiTile
-          label="Upcoming (7d)"
+          label={t("turfOwner.kpis.upcoming7")}
           value={kpis.upcomingBookings}
-          hint="Confirmed bookings"
+          hint={t("turfOwner.kpis.confirmedBookings")}
         />
         <KpiTile
-          label="Open slots (7d)"
+          label={t("turfOwner.kpis.openSlots7")}
           value={kpis.availableSlots}
-          hint="Available to book"
+          hint={t("turfOwner.kpis.availableToBook")}
         />
         <KpiTile
-          label="Occupancy (7d)"
+          label={t("turfOwner.kpis.occupancy7")}
           value={`${kpis.occupancyPct}%`}
-          hint="Booked / (booked + open)"
+          hint={t("turfOwner.kpis.occupancyHint")}
         />
       </section>
 
       <section className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="font-heading text-lg font-semibold">My turfs</h2>
+          <h2 className="font-heading text-lg font-semibold">
+            {t("turfOwner.myTurfs")}
+          </h2>
         </div>
         {myTurfs.length === 0 ? (
           <EmptyState
             icon={PlusIcon}
-            title="List your first turf"
-            description="Add a turf to start generating slots."
+            title={t("turfOwner.listFirstTurf")}
+            description={t("turfOwner.listFirstDesc")}
             action={
               <Button render={<Link href="/turf-owner/turfs/new" />}>
-                Add turf
+                {t("turfOwner.addTurf")}
               </Button>
             }
           />
         ) : (
           <ul className="grid gap-3 sm:grid-cols-2">
-            {myTurfs.map((t) => (
+            {myTurfs.map((turf) => (
               <li
-                key={t.id}
+                key={turf.id}
                 className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card p-4"
               >
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <Link
-                      href={`/turf-owner/turfs/${t.id}`}
+                      href={`/turf-owner/turfs/${turf.id}`}
                       className="truncate font-heading text-sm font-semibold hover:underline"
                     >
-                      {t.name}
+                      {turf.name}
                     </Link>
-                    {t.isVerified ? (
+                    {turf.isVerified ? (
                       <StatusBadge status="success" showIcon={false}>
-                        Verified
+                        {t("turfOwner.verified")}
                       </StatusBadge>
                     ) : (
                       <StatusBadge status="warning" showIcon={false}>
-                        Pending verification
+                        {t("turfOwner.pendingVerification")}
                       </StatusBadge>
                     )}
                   </div>
                   <p className="truncate text-xs text-muted-foreground">
-                    {[t.area, t.city].filter(Boolean).join(", ") || "Location TBD"}
+                    {[turf.area, turf.city].filter(Boolean).join(", ") ||
+                      t("turfs.locationTbd")}
                     {" · "}
-                    {turfFormatLabel(t.format)}
+                    {turfFormatLabel(turf.format)}
                   </p>
                 </div>
                 <Button
                   size="sm"
                   variant="outline"
-                  render={<Link href={`/turf-owner/turfs/${t.id}`} />}
+                  render={<Link href={`/turf-owner/turfs/${turf.id}`} />}
                 >
-                  Manage
+                  {t("turfOwner.manage")}
                 </Button>
               </li>
             ))}
@@ -142,17 +158,16 @@ export default async function TurfOwnerDashboardPage() {
       <section className="space-y-3">
         <div className="flex items-center gap-2">
           <MegaphoneIcon className="size-5 text-primary" aria-hidden />
-          <h2 className="font-heading text-lg font-semibold">Fill this slot</h2>
+          <h2 className="font-heading text-lg font-semibold">
+            {t("turfOwner.fillThisSlot")}
+          </h2>
         </div>
-        <p className="text-sm text-muted-foreground">
-          Unsold inventory in the next 7 days. Promote it to nearby teams once
-          matchmaking launches.
-        </p>
+        <p className="text-sm text-muted-foreground">{t("turfOwner.fillDesc")}</p>
         {fillable.length === 0 ? (
           <EmptyState
             icon={CalendarClockIcon}
-            title="No fillable slots"
-            description="Generate availability for one of your turfs to see opportunities here."
+            title={t("turfOwner.noFillableTitle")}
+            description={t("turfOwner.noFillableDesc")}
           />
         ) : (
           <ul className="grid gap-3 sm:grid-cols-2">
@@ -169,7 +184,7 @@ export default async function TurfOwnerDashboardPage() {
                     {s.date} · {s.startTime.slice(0, 5)} ({s.durationMinutes}m)
                   </p>
                   <p className="mt-1 text-sm">
-                    Potential revenue:{" "}
+                    {t("turfOwner.potentialRevenue")}{" "}
                     <span className="font-semibold tabular-nums">
                       {fmtBdt(Number(s.price))}
                     </span>

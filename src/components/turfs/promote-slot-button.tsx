@@ -4,6 +4,7 @@ import { toast } from "sonner"
 import { MegaphoneIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { useI18n } from "@/i18n/client"
 
 /**
  * Phase 2 stub for the "Fill This Slot" headline feature. The button is
@@ -12,19 +13,20 @@ import { Button } from "@/components/ui/button"
  * about what's coming instead of silently missing.
  */
 export function PromoteSlotButton({ slotLabel }: { slotLabel: string }) {
+  const { t } = useI18n()
   return (
     <Button
       type="button"
       size="sm"
       variant="outline"
       onClick={() =>
-        toast.info("Team matchmaking arrives in Phase 5", {
-          description: `${slotLabel} will be promotable to nearby teams then.`,
+        toast.info(t("turfOwner.promoteToastTitle"), {
+          description: t("turfOwner.promoteToastDesc", { label: slotLabel }),
         })
       }
     >
       <MegaphoneIcon aria-hidden />
-      Promote slot
+      {t("turfOwner.promoteSlot")}
     </Button>
   )
 }

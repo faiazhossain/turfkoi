@@ -23,6 +23,7 @@ import {
 } from "@/features/images/actions"
 import { MAX_TURF_PHOTOS } from "@/features/images/constants"
 import type { TurfPhoto } from "@/features/turfs/queries"
+import { useI18n } from "@/i18n/client"
 
 /**
  * Owner's turf gallery. Every operation persists immediately (server
@@ -37,6 +38,7 @@ export function TurfPhotoGallery({
   photos: TurfPhoto[]
 }) {
   const router = useRouter()
+  const { t } = useI18n()
   const inputRef = React.useRef<HTMLInputElement>(null)
   const { upload, uploading, error: uploadError } = useImageUpload()
   const [error, setError] = React.useState<string | null>(null)
@@ -50,7 +52,7 @@ export function TurfPhotoGallery({
       if (!publicId) break // hook error shown below
       const res = await addTurfPhotoAction(turfId, publicId)
       if (!res.ok) {
-        setError(res.error)
+        setError(t(res.error))
         break
       }
     }
@@ -63,7 +65,7 @@ export function TurfPhotoGallery({
     setError(null)
     try {
       const res = await op()
-      if (!res.ok && res.error) setError(res.error)
+      if (!res.ok && res.error) setError(t(res.error))
       router.refresh()
     } finally {
       setBusyId(null)
@@ -83,13 +85,17 @@ export function TurfPhotoGallery({
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={clientImageUrl(photo.publicId, "thumb")}
-              alt={photo.isCover ? "Cover photo" : "Turf photo"}
+              alt={
+                photo.isCover
+                  ? t("turfOwner.photosUi.coverAlt")
+                  : t("turfOwner.photosUi.photoAlt")
+              }
               className="size-full object-cover"
             />
             {photo.isCover ? (
               <span className="absolute left-0.5 top-0.5 inline-flex items-center gap-0.5 rounded-full bg-background/80 px-1.5 py-0.5 text-[10px] font-medium">
                 <StarIcon className="size-3" aria-hidden />
-                Cover
+                {t("turfOwner.photosUi.coverBadge")}
               </span>
             ) : null}
             {busyId === photo.id ? (
@@ -99,7 +105,7 @@ export function TurfPhotoGallery({
             ) : null}
             <div className="absolute bottom-0.5 right-0.5 flex items-center gap-0.5">
               <GalleryButton
-                label="Move earlier"
+                label={t("turfOwner.photosUi.moveEarlier")}
                 disabled={i === 0 || busyId === photo.id}
                 onClick={() =>
                   run(photo.id, () => moveTurfPhotoAction(photo.id, "earlier"))
@@ -108,7 +114,7 @@ export function TurfPhotoGallery({
                 <ChevronLeftIcon className="size-3" aria-hidden />
               </GalleryButton>
               <GalleryButton
-                label="Move later"
+                label={t("turfOwner.photosUi.moveLater")}
                 disabled={i === photos.length - 1 || busyId === photo.id}
                 onClick={() =>
                   run(photo.id, () => moveTurfPhotoAction(photo.id, "later"))
@@ -117,7 +123,7 @@ export function TurfPhotoGallery({
                 <ChevronRightIcon className="size-3" aria-hidden />
               </GalleryButton>
               <GalleryButton
-                label="Set as cover"
+                label={t("turfOwner.photosUi.setCover")}
                 disabled={photo.isCover || busyId === photo.id}
                 onClick={() =>
                   run(photo.id, () => setCoverTurfPhotoAction(photo.id))
@@ -126,7 +132,7 @@ export function TurfPhotoGallery({
                 <StarIcon className="size-3" aria-hidden />
               </GalleryButton>
               <GalleryButton
-                label="Delete photo"
+                label={t("turfOwner.photosUi.deletePhoto")}
                 disabled={busyId === photo.id}
                 danger
                 onClick={() => run(photo.id, () => deleteTurfPhotoAction(photo.id))}
@@ -147,7 +153,11 @@ export function TurfPhotoGallery({
           ) : (
             <PlusIcon className="size-4" aria-hidden />
           )}
-          {uploading ? "Uploading" : full ? "Max 12" : "Add"}
+          {uploading
+            ? t("turfOwner.photosUi.uploading")
+            : full
+              ? t("turfOwner.photosUi.maxPhotos")
+              : t("common.add")}
         </button>
       </div>
       <input
@@ -159,10 +169,11 @@ export function TurfPhotoGallery({
         onChange={(e) => handleFiles(e.target.files)}
       />
       <p className="text-xs text-muted-foreground">
-        Photos are resized and compressed automatically — a normal phone photo
-        is fine. The cover photo is shown on your turf&apos;s public page.
+        {t("turfOwner.photosUi.help")}
       </p>
-      {uploadError ? <StatusBadge status="danger">{uploadError}</StatusBadge> : null}
+      {uploadError ? (
+        <StatusBadge status="danger">{t(uploadError)}</StatusBadge>
+      ) : null}
       {error ? <StatusBadge status="danger">{error}</StatusBadge> : null}
     </div>
   )

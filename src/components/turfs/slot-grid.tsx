@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { StatusBadge } from "@/components/shared"
+import { useI18n } from "@/i18n/client"
 
 import {
   deleteSlotAction,
@@ -63,6 +64,7 @@ function fmtDate(iso: string) {
 
 export function SlotGrid({ turfId, slots }: SlotGridProps) {
   const router = useRouter()
+  const { t } = useI18n()
   const [busyKey, setBusyKey] = useState<string | null>(null)
 
   // Group by date
@@ -80,7 +82,7 @@ export function SlotGrid({ turfId, slots }: SlotGridProps) {
       const res = await updateSlotAction(turfId, slot.date, slot.startTime, {
         status,
       })
-      if (!res.ok) alert(res.error)
+      if (!res.ok) alert(t(res.error))
       else router.refresh()
     } finally {
       setBusyKey(null)
@@ -97,7 +99,7 @@ export function SlotGrid({ turfId, slots }: SlotGridProps) {
       const res = await updateSlotAction(turfId, slot.date, slot.startTime, {
         price: val,
       })
-      if (!res.ok) alert(res.error)
+      if (!res.ok) alert(t(res.error))
       else router.refresh()
     } finally {
       setBusyKey(null)
@@ -105,11 +107,11 @@ export function SlotGrid({ turfId, slots }: SlotGridProps) {
   }
 
   async function remove(slot: Slot) {
-    if (!confirm("Delete this available slot?")) return
+    if (!confirm(t("turfOwner.slots.deleteConfirm"))) return
     setBusyKey(`${slot.date}|${slot.startTime}`)
     try {
       const res = await deleteSlotAction(turfId, slot.date, slot.startTime)
-      if (!res.ok) alert(res.error)
+      if (!res.ok) alert(t(res.error))
       else router.refresh()
     } finally {
       setBusyKey(null)
@@ -119,7 +121,7 @@ export function SlotGrid({ turfId, slots }: SlotGridProps) {
   if (byDate.size === 0) {
     return (
       <p className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-        No slots in this range. Generate some above.
+        {t("turfOwner.slots.empty")}
       </p>
     )
   }
@@ -141,18 +143,20 @@ export function SlotGrid({ turfId, slots }: SlotGridProps) {
                   <div className="w-20 font-mono text-xs">
                     {slot.startTime}
                     <span className="ml-1 text-muted-foreground">
-                      ({slot.durationMinutes}m)
+                      {t("turfOwner.slots.minutesShort", {
+                        count: slot.durationMinutes,
+                      })}
                     </span>
                   </div>
                   <StatusBadge status={STATUS_BADGE[slot.status]}>
-                    {slot.status}
+                    {t(`turfOwner.slots.status.${slot.status}`)}
                   </StatusBadge>
                   <form
                     onSubmit={changePrice.bind(null, slot)}
                     className="flex items-center gap-1"
                   >
                     <Label htmlFor={`price-${key}`} className="sr-only">
-                      Price
+                      {t("turfOwner.slots.priceLabel")}
                     </Label>
                     <Input
                       id={`price-${key}`}
@@ -170,7 +174,7 @@ export function SlotGrid({ turfId, slots }: SlotGridProps) {
                       variant="ghost"
                       disabled={busyKey === key || isImmutable}
                     >
-                      Save
+                      {t("common.save")}
                     </Button>
                   </form>
                   <div className="ml-auto flex items-center gap-2">
@@ -183,12 +187,20 @@ export function SlotGrid({ turfId, slots }: SlotGridProps) {
                         disabled={busyKey === key}
                       >
                         <SelectTrigger size="sm" className="w-32">
-                          <SelectValue />
+                          <SelectValue>
+                            {(v) => t(`turfOwner.slots.status.${String(v)}`)}
+                          </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="available">Available</SelectItem>
-                          <SelectItem value="maintenance">Maintenance</SelectItem>
-                          <SelectItem value="blocked">Blocked</SelectItem>
+                          <SelectItem value="available">
+                            {t("turfOwner.slots.status.available")}
+                          </SelectItem>
+                          <SelectItem value="maintenance">
+                            {t("turfOwner.slots.status.maintenance")}
+                          </SelectItem>
+                          <SelectItem value="blocked">
+                            {t("turfOwner.slots.status.blocked")}
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     ) : null}
@@ -197,7 +209,7 @@ export function SlotGrid({ turfId, slots }: SlotGridProps) {
                         type="button"
                         size="icon-sm"
                         variant="ghost"
-                        aria-label="Delete slot"
+                        aria-label={t("turfOwner.slots.deleteAria")}
                         onClick={() => remove(slot)}
                         disabled={busyKey === key}
                       >

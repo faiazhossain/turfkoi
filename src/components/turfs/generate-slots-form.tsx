@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { StatusBadge } from "@/components/shared"
+import { useI18n, fieldError } from "@/i18n/client"
 
 import { generateSlotsAction } from "@/features/turfs/actions"
 import {
@@ -28,6 +29,7 @@ const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 
 export function GenerateSlotsForm({ turfId }: { turfId: string }) {
   const router = useRouter()
+  const { t } = useI18n()
   const [serverError, setServerError] = useState<string | null>(null)
   const [info, setInfo] = useState<string | null>(null)
 
@@ -51,10 +53,10 @@ export function GenerateSlotsForm({ turfId }: { turfId: string }) {
     setInfo(null)
     const res = await generateSlotsAction(turfId, values)
     if (!res.ok) {
-      setServerError(res.error)
+      setServerError(t(res.error))
       return
     }
-    setInfo(`Generated ${res.inserted ?? 0} slots.`)
+    setInfo(t("turfOwner.generate.generated", { count: res.inserted ?? 0 }))
     router.refresh()
   }
 
@@ -65,20 +67,20 @@ export function GenerateSlotsForm({ turfId }: { turfId: string }) {
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1.5">
           <Label className="text-xs font-medium text-muted-foreground">
-            Start date
+            {t("turfOwner.generate.startDate")}
           </Label>
           <Input type="date" {...form.register("dateFrom")} />
         </div>
         <div className="space-y-1.5">
           <Label className="text-xs font-medium text-muted-foreground">
-            End date
+            {t("turfOwner.generate.endDate")}
           </Label>
           <Input type="date" {...form.register("dateTo")} />
         </div>
       </div>
 
       <div className="space-y-1.5">
-        <Label className="text-xs font-medium text-muted-foreground">Days of week</Label>
+        <Label className="text-xs font-medium text-muted-foreground">{t("turfOwner.generate.daysOfWeek")}</Label>
         <div className="flex flex-wrap gap-3">
           {WEEKDAYS.map((label, idx) => {
             const checked = watchedWeekdays.includes(idx)
@@ -98,7 +100,7 @@ export function GenerateSlotsForm({ turfId }: { turfId: string }) {
                     })
                   }}
                 />
-                {label}
+                {t(`turfOwner.generate.day${idx}`)}
               </label>
             )
           })}
@@ -108,13 +110,13 @@ export function GenerateSlotsForm({ turfId }: { turfId: string }) {
       <div className="grid gap-3 sm:grid-cols-3">
         <div className="space-y-1.5">
           <Label className="text-xs font-medium text-muted-foreground">
-            First slot
+            {t("turfOwner.generate.firstSlot")}
           </Label>
           <Input type="time" {...form.register("startTime")} />
         </div>
         <div className="space-y-1.5">
           <Label className="text-xs font-medium text-muted-foreground">
-            Duration
+            {t("turfOwner.generate.duration")}
           </Label>
           <Select
             value={String(form.watch("durationMinutes"))}
@@ -128,14 +130,14 @@ export function GenerateSlotsForm({ turfId }: { turfId: string }) {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="60">60 min</SelectItem>
-              <SelectItem value="90">90 min</SelectItem>
+              <SelectItem value="60">{t("turfOwner.generate.minutes", { count: 60 })}</SelectItem>
+              <SelectItem value="90">{t("turfOwner.generate.minutes", { count: 90 })}</SelectItem>
             </SelectContent>
           </Select>
         </div>
         <div className="space-y-1.5">
           <Label className="text-xs font-medium text-muted-foreground">
-            Slots per day
+            {t("turfOwner.generate.slotsPerDay")}
           </Label>
           <Input
             type="number"
@@ -149,7 +151,7 @@ export function GenerateSlotsForm({ turfId }: { turfId: string }) {
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1.5">
           <Label className="text-xs font-medium text-muted-foreground">
-            Base price (BDT)
+            {t("turfOwner.generate.basePrice")}
           </Label>
           <Input
             type="number"
@@ -159,7 +161,7 @@ export function GenerateSlotsForm({ turfId }: { turfId: string }) {
           />
           {form.formState.errors.basePrice?.message ? (
             <p className="text-xs text-destructive">
-              {form.formState.errors.basePrice.message}
+              {fieldError(form.formState.errors.basePrice.message, t)}
             </p>
           ) : null}
         </div>
@@ -175,7 +177,9 @@ export function GenerateSlotsForm({ turfId }: { turfId: string }) {
         size="lg"
         loading={form.formState.isSubmitting}
       >
-        {form.formState.isSubmitting ? "Generating" : "Generate slots"}
+        {form.formState.isSubmitting
+          ? t("turfOwner.generate.generating")
+          : t("turfOwner.generate.submit")}
       </Button>
     </form>
   )

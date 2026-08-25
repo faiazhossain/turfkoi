@@ -22,11 +22,11 @@ export type ActionResult =
   | { ok: false; error: string }
 
 function unauthorized(): ActionResult {
-  return { ok: false, error: "You are not signed in." }
+  return { ok: false, error: "errors.notSignedIn" }
 }
 
 function forbidden(): ActionResult {
-  return { ok: false, error: "You don't have permission to do that." }
+  return { ok: false, error: "errors.noPermission" }
 }
 
 export async function createTurfAction(
@@ -34,7 +34,7 @@ export async function createTurfAction(
 ): Promise<ActionResult> {
   const parsed = turfFormSchema.safeParse(input)
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid" }
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "errors.invalid" }
   }
   const user = await getCurrentUser()
   if (!user) return unauthorized()
@@ -51,7 +51,7 @@ export async function createTurfAction(
     return { ok: true, id: created.id }
   } catch (err) {
     if (String(err).includes("unique")) {
-      return { ok: false, error: "That slug is already taken." }
+      return { ok: false, error: "turfs.errors.slugTaken" }
     }
     throw err
   }
@@ -63,7 +63,7 @@ export async function updateTurfAction(
 ): Promise<ActionResult> {
   const parsed = turfFormSchema.safeParse(input)
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid" }
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "errors.invalid" }
   }
   const user = await getCurrentUser()
   if (!user) return unauthorized()
@@ -73,7 +73,7 @@ export async function updateTurfAction(
     .from(turfs)
     .where(eq(turfs.id, turfId))
     .limit(1)
-  if (!existing[0]) return { ok: false, error: "Turf not found." }
+  if (!existing[0]) return { ok: false, error: "turfs.errors.turfNotFound" }
   if (!can(user, "turf.update", { ownerId: existing[0].ownerId })) {
     return forbidden()
   }
@@ -101,7 +101,7 @@ export async function generateSlotsAction(
 ): Promise<ActionResult & { inserted?: number }> {
   const parsed = generateSlotsSchema.safeParse(input)
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid" }
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "errors.invalid" }
   }
   const user = await getCurrentUser()
   if (!user) return unauthorized()
@@ -111,7 +111,7 @@ export async function generateSlotsAction(
     .from(turfs)
     .where(eq(turfs.id, turfId))
     .limit(1)
-  if (!existing[0]) return { ok: false, error: "Turf not found." }
+  if (!existing[0]) return { ok: false, error: "turfs.errors.turfNotFound" }
   if (!can(user, "turf.update", { ownerId: existing[0].ownerId })) {
     return forbidden()
   }
@@ -154,7 +154,7 @@ export async function generateSlotsAction(
   }
 
   if (rows.length === 0) {
-    return { ok: false, error: "No slots fall in that range." }
+    return { ok: false, error: "turfOwner.errors.noSlotsInRange" }
   }
 
   await db
@@ -173,7 +173,7 @@ export async function updateSlotAction(
 ): Promise<ActionResult> {
   const parsed = slotOverrideSchema.safeParse(input)
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid" }
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "errors.invalid" }
   }
   const user = await getCurrentUser()
   if (!user) return unauthorized()
@@ -183,7 +183,7 @@ export async function updateSlotAction(
     .from(turfs)
     .where(eq(turfs.id, turfId))
     .limit(1)
-  if (!existing[0]) return { ok: false, error: "Turf not found." }
+  if (!existing[0]) return { ok: false, error: "turfs.errors.turfNotFound" }
   if (!can(user, "turf.update", { ownerId: existing[0].ownerId })) {
     return forbidden()
   }
@@ -198,7 +198,7 @@ export async function updateSlotAction(
     if (parsed.data.status === "booked" || parsed.data.status === "held") {
       return {
         ok: false,
-        error: "Can't set that status manually — it's controlled by bookings.",
+        error: "turfOwner.errors.manualStatus",
       }
     }
     patch.status = parsed.data.status
@@ -232,7 +232,7 @@ export async function deleteSlotAction(
     .from(turfs)
     .where(eq(turfs.id, turfId))
     .limit(1)
-  if (!existing[0]) return { ok: false, error: "Turf not found." }
+  if (!existing[0]) return { ok: false, error: "turfs.errors.turfNotFound" }
   if (!can(user, "turf.update", { ownerId: existing[0].ownerId })) {
     return forbidden()
   }

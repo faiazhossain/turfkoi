@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/select";
 import { StatusBadge } from "@/components/shared";
 import { LocationPicker } from "@/components/map";
+import { useI18n, fieldError } from "@/i18n/client";
 
 import { createTurfAction, updateTurfAction } from "@/features/turfs/actions";
 import { turfFormSchema, type TurfFormValues } from "@/features/turfs/schemas";
@@ -54,28 +55,28 @@ const FORMAT_OPTIONS = TURF_FORMATS;
 const CANCELLATION_OPTIONS = [
   {
     value: "flexible",
-    label: "Flexible",
-    hint: "Player gets a full refund any time before kickoff. Easiest to book, most refunds.",
+    labelKey: "turfOwner.form.policyFlexible",
+    hintKey: "turfOwner.form.policyFlexibleHint",
   },
   {
     value: "moderate",
-    label: "Balanced",
-    hint: "Full refund up to 24h before kickoff, 50% inside 24h, nothing at the last minute.",
+    labelKey: "turfOwner.form.policyBalanced",
+    hintKey: "turfOwner.form.policyBalancedHint",
   },
   {
     value: "rebook_contingent",
-    label: "Refund only if re-booked",
-    hint: "Player is refunded only when someone else books the empty slot. You keep the payment otherwise.",
+    labelKey: "turfOwner.form.policyRebook",
+    hintKey: "turfOwner.form.policyRebookHint",
   },
   {
     value: "strict",
-    label: "No refunds",
-    hint: "No refund after booking. Fewest cancellations, hardest on players.",
+    labelKey: "turfOwner.form.policyStrict",
+    hintKey: "turfOwner.form.policyStrictHint",
   },
 ] as const;
 
-const CANCELLATION_LABELS: Record<string, string> = Object.fromEntries(
-  CANCELLATION_OPTIONS.map((o) => [o.value, o.label]),
+const CANCELLATION_LABEL_KEYS: Record<string, string> = Object.fromEntries(
+  CANCELLATION_OPTIONS.map((o) => [o.value, o.labelKey]),
 );
 
 const FACILITY_TOGGLE_KEYS = [
@@ -103,6 +104,7 @@ function initialCustomFacilities(
 
 export function TurfForm({ mode, turfId, defaultValues }: TurfFormProps) {
   const router = useRouter();
+  const { t } = useI18n();
   const [serverError, setServerError] = useState<string | null>(null);
   // Owner-added custom facilities live outside RHF (arbitrary keys would
   // fight the typed form paths); merged into the payload at submit.
@@ -116,18 +118,18 @@ export function TurfForm({ mode, turfId, defaultValues }: TurfFormProps) {
     const name = customInput.trim().replace(/[.[\]]/g, "");
     if (!name) return;
     if (name.length > 30) {
-      setCustomError("Keep it under 30 letters.");
+      setCustomError("turfOwner.form.customTooLong");
       return;
     }
     const taken =
       customFacilities.some((c) => c.toLowerCase() === name.toLowerCase()) ||
       PRESET_FACILITY_KEYS.includes(name.toLowerCase() as never);
     if (taken) {
-      setCustomError("That one is already in the list.");
+      setCustomError("turfOwner.form.customDuplicate");
       return;
     }
     if (customFacilities.length >= MAX_CUSTOM_FACILITIES) {
-      setCustomError("You can add up to 12 of your own.");
+      setCustomError("turfOwner.form.customMax");
       return;
     }
     setCustomError(null);
@@ -183,7 +185,7 @@ export function TurfForm({ mode, turfId, defaultValues }: TurfFormProps) {
           router.push("/turf-owner");
           return;
         }
-        if (res.error === "That slug is already taken.") {
+        if (res.error === "turfs.errors.slugTaken") {
           payload.slug = `${slugify(values.name)}-${Math.random()
             .toString(36)
             .slice(2, 5)}`;
@@ -192,9 +194,7 @@ export function TurfForm({ mode, turfId, defaultValues }: TurfFormProps) {
         setServerError(res.error);
         return;
       }
-      setServerError(
-        "Couldn't create the turf. Try a slightly different name.",
-      );
+      setServerError("turfOwner.form.createFailed");
       return;
     }
     const res = await updateTurfAction(turfId!, payload);
@@ -209,9 +209,9 @@ export function TurfForm({ mode, turfId, defaultValues }: TurfFormProps) {
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
       <section className="space-y-3">
-        <h3 className="font-heading text-sm font-semibold">Basics</h3>
+        <h3 className="font-heading text-sm font-semibold">{t("turfOwner.form.basics")}</h3>
         <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Turf name" error={form.formState.errors.name?.message}>
+          <Field label={t("ownATurf.turfName")} error={form.formState.errors.name?.message}>
             <Input
               {...form.register("name")}
               onChange={(e) => {
@@ -224,26 +224,22 @@ export function TurfForm({ mode, turfId, defaultValues }: TurfFormProps) {
             />
           </Field>
           {mode === "edit" && defaultValues?.slug ? (
-            <Field label="Your Turfkoi link (automatic)">
+            <Field label={t("turfOwner.form.autoLink")}>
               <Input readOnly value={`/turfs/${defaultValues.slug}`} />
             </Field>
           ) : null}
         </div>
         <Field
-          label="Description"
+          label={t("turfOwner.form.description")}
           error={form.formState.errors.description?.message}
         >
           <Textarea
             {...form.register("description")}
             rows={4}
-            placeholder={
-              "e.g. " +
-              "We have two courts, book both for a big group.\n" +
-              "A referee can be arranged for 500 taka per match."
-            }
+            placeholder={t("turfOwner.form.descriptionPlaceholder")}
           />
         </Field>
-        <Field label="Format">
+        <Field label={t("turfOwner.form.format")}>
           <Select
             value={form.watch("format")}
             onValueChange={(v) => form.setValue("format", v as TurfFormat)}
@@ -263,11 +259,11 @@ export function TurfForm({ mode, turfId, defaultValues }: TurfFormProps) {
       </section>
 
       <section className="space-y-3">
-        <h3 className="font-heading text-sm font-semibold">Location</h3>
-        <Field label="Pin on map" error={form.formState.errors.coords?.message}>
+        <h3 className="font-heading text-sm font-semibold">{t("map.location")}</h3>
+        <Field label={t("ownATurf.pinMap")} error={form.formState.errors.coords?.message}>
           <LocationPicker
             value={form.watch("coords") ?? null}
-            label="turf"
+            label={t("map.turfLabel")}
             onChange={(point, place) => {
               form.setValue("coords", point, { shouldDirty: true });
               // Autofill location fields the user hasn't typed in themselves
@@ -288,20 +284,20 @@ export function TurfForm({ mode, turfId, defaultValues }: TurfFormProps) {
           />
         </Field>
         <div className="grid gap-3 sm:grid-cols-3">
-          <Field label="Area" error={form.formState.errors.area?.message}>
-            <Input {...form.register("area")} placeholder="Dhanmondi" />
+          <Field label={t("ownATurf.area")} error={form.formState.errors.area?.message}>
+            <Input {...form.register("area")} placeholder={t("ownATurf.areaPlaceholder")} />
           </Field>
-          <Field label="City" error={form.formState.errors.city?.message}>
-            <Input {...form.register("city")} placeholder="Dhaka" />
+          <Field label={t("ownATurf.city")} error={form.formState.errors.city?.message}>
+            <Input {...form.register("city")} placeholder={t("ownATurf.cityPlaceholder")} />
           </Field>
-          <Field label="Address" error={form.formState.errors.address?.message}>
-            <Input {...form.register("address")} placeholder="House, road" />
+          <Field label={t("turfOwner.form.address")} error={form.formState.errors.address?.message}>
+            <Input {...form.register("address")} placeholder={t("ownATurf.addressPlaceholder")} />
           </Field>
         </div>
       </section>
 
       <section className="space-y-3">
-        <h3 className="font-heading text-sm font-semibold">Facilities</h3>
+        <h3 className="font-heading text-sm font-semibold">{t("turfs.facilities")}</h3>
         <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3">
           {FACILITY_TOGGLE_KEYS.map((key) => (
             <label key={key} className="flex items-center gap-2 text-sm">
@@ -315,15 +311,13 @@ export function TurfForm({ mode, turfId, defaultValues }: TurfFormProps) {
                   )
                 }
               />
-              <span className="capitalize">
-                {key.replace(/([A-Z])/g, " $1").toLowerCase()}
-              </span>
+              <span>{t(`turfs.facility.${key}`)}</span>
             </label>
           ))}
         </div>
         <div className="space-y-2">
           <Label className="text-xs font-medium text-muted-foreground">
-            Anything else you offer?
+            {t("turfOwner.form.anythingElse")}
           </Label>
           <div className="flex items-center gap-2">
             <Input
@@ -338,8 +332,8 @@ export function TurfForm({ mode, turfId, defaultValues }: TurfFormProps) {
                   addCustomFacility();
                 }
               }}
-              placeholder="e.g. Cafe, Wi-Fi, First aid"
-              aria-label="Add your own facility"
+              placeholder={t("turfOwner.form.customPlaceholder")}
+              aria-label={t("turfOwner.form.customAria")}
             />
             <Button
               type="button"
@@ -348,11 +342,11 @@ export function TurfForm({ mode, turfId, defaultValues }: TurfFormProps) {
               onClick={addCustomFacility}
             >
               <PlusIcon className="size-4" aria-hidden />
-              Add
+              {t("common.add")}
             </Button>
           </div>
           {customError ? (
-            <p className="text-xs text-destructive">{customError}</p>
+            <p className="text-xs text-destructive">{t(customError)}</p>
           ) : null}
           {customFacilities.length > 0 ? (
             <ul className="flex flex-wrap gap-2">
@@ -366,7 +360,7 @@ export function TurfForm({ mode, turfId, defaultValues }: TurfFormProps) {
                     type="button"
                     onClick={() => removeCustomFacility(name)}
                     className="text-muted-foreground hover:text-foreground"
-                    aria-label={`Remove ${name}`}
+                    aria-label={t("turfOwner.form.removeAria", { name })}
                   >
                     <XIcon className="size-3.5" aria-hidden />
                   </button>
@@ -375,17 +369,17 @@ export function TurfForm({ mode, turfId, defaultValues }: TurfFormProps) {
             </ul>
           ) : null}
         </div>
-        <Field label="Grass type (optional)">
+        <Field label={t("turfOwner.form.grassType")}>
           <Input
             {...form.register("facilities.grassType")}
-            placeholder="Artificial turf"
+            placeholder={t("turfOwner.form.grassPlaceholder")}
           />
         </Field>
       </section>
 
       <section className="space-y-3">
         <h3 className="font-heading text-sm font-semibold">
-          Cancellations &amp; refunds
+          {t("turfOwner.form.cancellations")}
         </h3>
         <Select
           value={form.watch("cancellationPolicy")}
@@ -398,16 +392,16 @@ export function TurfForm({ mode, turfId, defaultValues }: TurfFormProps) {
         >
           <SelectTrigger className="w-full">
             <SelectValue>
-              {(v) => CANCELLATION_LABELS[String(v)] ?? String(v)}
+              {(v) => t(CANCELLATION_LABEL_KEYS[String(v)] ?? String(v))}
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
             {CANCELLATION_OPTIONS.map((o) => (
               <SelectItem key={o.value} value={o.value}>
                 <span>
-                  <span className="font-medium">{o.label}</span>
+                  <span className="font-medium">{t(o.labelKey)}</span>
                   <span className="block text-xs font-normal text-muted-foreground">
-                    {o.hint}
+                    {t(o.hintKey)}
                   </span>
                 </span>
               </SelectItem>
@@ -415,22 +409,21 @@ export function TurfForm({ mode, turfId, defaultValues }: TurfFormProps) {
           </SelectContent>
         </Select>
         <p className="text-xs text-muted-foreground">
-          When a player cancels a booking, the refund comes out of your earnings
-          — this choice sets how much they get back.
+          {t("turfOwner.form.policyNote")}
         </p>
       </section>
 
       {serverError ? (
-        <StatusBadge status="danger">{serverError}</StatusBadge>
+        <StatusBadge status="danger">{t(serverError)}</StatusBadge>
       ) : null}
 
       <div className="flex items-center gap-2">
         <Button type="submit" size="lg" loading={form.formState.isSubmitting}>
           {form.formState.isSubmitting
-            ? "Saving"
+            ? t("turfOwner.form.saving")
             : mode === "create"
-              ? "Create turf"
-              : "Save changes"}
+              ? t("turfOwner.form.createTurf")
+              : t("common.saveChanges")}
         </Button>
         <Button
           type="button"
@@ -438,7 +431,7 @@ export function TurfForm({ mode, turfId, defaultValues }: TurfFormProps) {
           variant="ghost"
           onClick={() => router.push("/turf-owner")}
         >
-          Cancel
+          {t("common.cancel")}
         </Button>
       </div>
     </form>
@@ -454,13 +447,16 @@ function Field({
   error?: string;
   children: React.ReactNode;
 }) {
+  const { t } = useI18n();
   return (
     <div className="space-y-1.5">
       <Label className="text-xs font-medium text-muted-foreground">
         {label}
       </Label>
       {children}
-      {error ? <p className="text-xs text-destructive">{error}</p> : null}
+      {error ? (
+        <p className="text-xs text-destructive">{fieldError(error, t)}</p>
+      ) : null}
     </div>
   );
 }

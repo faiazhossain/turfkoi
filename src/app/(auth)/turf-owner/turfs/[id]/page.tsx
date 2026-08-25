@@ -1,7 +1,10 @@
 import Link from "next/link"
 import { notFound, redirect } from "next/navigation"
+import type { Metadata } from "next"
 
 import { getCurrentUser } from "@/lib/auth"
+import { getT } from "@/i18n/server"
+import { buildMetadata } from "@/i18n/metadata"
 import { can } from "@/lib/capabilities"
 import {
   Card,
@@ -31,8 +34,13 @@ interface PageProps {
   params: Promise<{ id: string }>
 }
 
+export async function generateMetadata(): Promise<Metadata> {
+  return buildMetadata({ titleKey: "metadata.turfOwnerEditTitle" })
+}
+
 export default async function EditTurfPage({ params }: PageProps) {
   const { id } = await params
+  const t = await getT()
   const user = await getCurrentUser()
   if (!user) redirect("/login")
 
@@ -73,22 +81,22 @@ export default async function EditTurfPage({ params }: PageProps) {
           href="/turf-owner"
           className="text-muted-foreground hover:text-foreground"
         >
-          ← Back to dashboard
+          ← {t("turfOwner.backToDashboard")}
         </Link>
         <div className="flex items-center gap-2">
           <Link
             href={`/turfs/${turf.slug}`}
             className="text-primary hover:underline"
           >
-            Public view
+            {t("turfOwner.publicView")}
           </Link>
           {turf.isVerified ? (
             <StatusBadge status="success" showIcon={false}>
-              Verified
+              {t("turfOwner.verified")}
             </StatusBadge>
           ) : (
             <StatusBadge status="warning" showIcon={false}>
-              Pending verification
+              {t("turfOwner.pendingVerification")}
             </StatusBadge>
           )}
         </div>
@@ -98,18 +106,20 @@ export default async function EditTurfPage({ params }: PageProps) {
 
       <Tabs defaultValue="edit">
         <TabsList>
-          <TabsTrigger value="edit">Details</TabsTrigger>
-          <TabsTrigger value="slots">Slots ({slots.length})</TabsTrigger>
+          <TabsTrigger value="edit">{t("turfOwner.tabDetails")}</TabsTrigger>
+          <TabsTrigger value="slots">
+            {t("turfOwner.tabSlots", { count: slots.length })}
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="edit" className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle className="font-heading text-lg">
-                Turf details
+                {t("turfOwner.turfDetails")}
               </CardTitle>
               <CardDescription>
-                Changes appear on the public page after saving.
+                {t("turfOwner.detailsDesc")}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -118,9 +128,11 @@ export default async function EditTurfPage({ params }: PageProps) {
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle className="font-heading text-lg">Photos</CardTitle>
+              <CardTitle className="font-heading text-lg">
+                {t("turfOwner.photos")}
+              </CardTitle>
               <CardDescription>
-                Added photos appear immediately — no save needed.
+                {t("turfOwner.photosDesc")}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -133,11 +145,10 @@ export default async function EditTurfPage({ params }: PageProps) {
           <Card>
             <CardHeader>
               <CardTitle className="font-heading text-lg">
-                Generate availability
+                {t("turfOwner.generateAvailability")}
               </CardTitle>
               <CardDescription>
-                Bulk-create slots across a date range. You can override
-                individual slots below.
+                {t("turfOwner.generateDesc")}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -148,11 +159,10 @@ export default async function EditTurfPage({ params }: PageProps) {
           <Card>
             <CardHeader>
               <CardTitle className="font-heading text-lg">
-                Slots · next 14 days
+                {t("turfOwner.slotsNext14")}
               </CardTitle>
               <CardDescription>
-                Edit price or set maintenance / blocked. Booked slots are
-                immutable here — the booking flow owns them (Phase 3).
+                {t("turfOwner.slotsDesc")}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -161,9 +171,9 @@ export default async function EditTurfPage({ params }: PageProps) {
                 variant="ghost"
                 size="sm"
                 className="mt-4"
-                render={<Link href="/turf-owner">Done</Link>}
+                render={<Link href="/turf-owner">{t("turfOwner.done")}</Link>}
               >
-                Done
+                {t("turfOwner.done")}
               </Button>
             </CardContent>
           </Card>
