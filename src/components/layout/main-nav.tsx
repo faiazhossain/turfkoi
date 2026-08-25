@@ -4,6 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 
 import { cn } from "@/lib/utils"
+import { useI18n } from "@/i18n/client"
 import { primaryNav } from "./nav-data"
 import { LinkPendingIndicator } from "./link-pending-indicator"
 
@@ -14,6 +15,7 @@ function isActive(pathname: string, href: string) {
 
 export function MainNav({ variant }: { variant: "desktop" | "mobile" }) {
   const pathname = usePathname()
+  const { t } = useI18n()
 
   if (variant === "mobile") {
     return (
@@ -32,7 +34,7 @@ export function MainNav({ variant }: { variant: "desktop" | "mobile" }) {
               )}
             >
               <Icon className="size-5" aria-hidden />
-              {item.label}
+              {t(item.labelKey)}
               <LinkPendingIndicator className="absolute top-0.5 right-1/4" />
             </Link>
           )
@@ -57,7 +59,7 @@ export function MainNav({ variant }: { variant: "desktop" | "mobile" }) {
                 : "text-muted-foreground hover:bg-muted hover:text-foreground"
             )}
           >
-            {item.label}
+            {t(item.labelKey)}
             <LinkPendingIndicator />
           </Link>
         )

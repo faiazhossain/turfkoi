@@ -2,7 +2,8 @@ import type { ComponentType } from "react"
 import { HomeIcon, CompassIcon, SwordsIcon, UserIcon } from "lucide-react"
 
 export interface NavItem {
-  label: string
+  /** Dictionary key (nav.* namespace) resolved at render time. */
+  labelKey: string
   href: string
   icon: ComponentType<{ className?: string }>
 }
@@ -12,8 +13,8 @@ export interface NavItem {
  * admin) lands with auth in Phase 1.
  */
 export const primaryNav: NavItem[] = [
-  { label: "Home", href: "/", icon: HomeIcon },
-  { label: "Turfs", href: "/turfs", icon: CompassIcon },
-  { label: "Matches", href: "/matches", icon: SwordsIcon },
-  { label: "Profile", href: "/app", icon: UserIcon },
+  { labelKey: "nav.home", href: "/", icon: HomeIcon },
+  { labelKey: "nav.turfs", href: "/turfs", icon: CompassIcon },
+  { labelKey: "nav.matches", href: "/matches", icon: SwordsIcon },
+  { labelKey: "nav.profile", href: "/app", icon: UserIcon },
 ]

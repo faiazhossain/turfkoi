@@ -138,6 +138,20 @@
 }
 
 /*
+ * Bangla-first typography: when the document locale is bn, Bengali script
+ * leads the stack (Latin runs like "bKash"/"Turfkoi" fall back to Geist).
+ * Bangla conjuncts and matras need extra leading, so body copy gets a
+ * taller line-height.
+ */
+html[lang="bn"] {
+  --font-sans: var(--font-bengali), var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+html[lang="bn"] body {
+  line-height: 1.65;
+}
+
+/*
  * Hero animation. Scoped styles for the illustrated sequence:
  *  - Per-phase color journey through the brand palette: soccer uses the
  *    container's pitch green, soccer2 shifts to the purple accent, and the

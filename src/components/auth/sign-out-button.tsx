@@ -4,9 +4,11 @@ import { useTransition } from "react"
 import { LogOutIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { useI18n } from "@/i18n/client"
 import { signOutAction } from "@/features/auth/actions"
 
 export function SignOutButton() {
+  const { t } = useI18n()
   const [pending, startTransition] = useTransition()
   return (
     <Button
@@ -16,7 +18,7 @@ export function SignOutButton() {
       onClick={() => startTransition(async () => await signOutAction())}
     >
       <LogOutIcon />
-      Sign out
+      {t("nav.signOut")}
     </Button>
   )
 }

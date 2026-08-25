@@ -4,48 +4,35 @@ import { CalendarCheckIcon, SwordsIcon, UsersIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { HeroAnimation } from "@/components/home/hero-animation"
 import { StatusBadge } from "@/components/shared"
+import { getT } from "@/i18n/server"
 
-const features = [
-  {
-    icon: CalendarCheckIcon,
-    title: "Book a turf",
-    desc: "Browse turfs near you, pick a slot, and pay by bKash. A transparent fee is locked at checkout - never changed after.",
-  },
-  {
-    icon: SwordsIcon,
-    title: "Find an opponent",
-    desc: "Publish your match and let rival teams accept. No more scrambling on WhatsApp to fill a booked slot.",
-  },
-  {
-    icon: UsersIcon,
-    title: "Fill your roster",
-    desc: "Short on players? Solo players nearby can request to join your match as guests for the game.",
-  },
+const featureMeta = [
+  { icon: CalendarCheckIcon, titleKey: "home.featureBookTitle", descKey: "home.featureBookDesc" },
+  { icon: SwordsIcon, titleKey: "home.featureOpponentTitle", descKey: "home.featureOpponentDesc" },
+  { icon: UsersIcon, titleKey: "home.featureRosterTitle", descKey: "home.featureRosterDesc" },
 ]
 
-export default function HomePage() {
+export default async function HomePage() {
+  const t = await getT()
   return (
     <>
       <section className="mx-auto max-w-6xl px-4 py-16 md:py-24">
         <div className="grid items-center gap-10 md:grid-cols-2">
           <div>
             <StatusBadge status="primary" className="mb-4">
-              Made for turf sports in Bangladesh
+              {t("home.badge")}
             </StatusBadge>
             <h1 className="max-w-3xl text-4xl font-bold leading-tight tracking-tight md:text-5xl">
-              Book a turf. <span className="text-primary">Find an opponent.</span> Fill the
-              gap. Play.
+              {t("home.heroBookTurf")} <span className="text-primary">{t("home.heroFindOpponent")}</span>{" "}
+              {t("home.heroFillAndPlay")}
             </h1>
-            <p className="mt-4 max-w-xl text-base text-muted-foreground">
-              Turfkoi brings turf booking, team matchmaking, and filling missing roster spots
-              into one place. Prices in Taka, payments via bKash.
-            </p>
+            <p className="mt-4 max-w-xl text-base text-muted-foreground">{t("home.heroBody")}</p>
             <div className="mt-6 flex flex-wrap gap-3">
               <Button size="lg" render={<Link href="/turfs" />}>
-                Book a turf
+                {t("home.ctaBook")}
               </Button>
               <Button size="lg" variant="outline" render={<Link href="/matches" />}>
-                Find a match
+                {t("home.ctaFindMatch")}
               </Button>
             </div>
           </div>
@@ -55,16 +42,16 @@ export default function HomePage() {
 
       <section className="mx-auto max-w-6xl px-4 pb-20">
         <div className="grid gap-4 sm:grid-cols-3">
-          {features.map((f) => (
+          {featureMeta.map((f) => (
             <div
-              key={f.title}
+              key={f.titleKey}
               className="rounded-lg border border-border bg-card p-5 shadow-low"
             >
               <div className="mb-3 inline-flex size-10 items-center justify-center rounded-md bg-primary/15 text-primary">
                 <f.icon className="size-5" aria-hidden />
               </div>
-              <h2 className="font-heading text-base font-semibold">{f.title}</h2>
-              <p className="mt-1 text-sm text-muted-foreground">{f.desc}</p>
+              <h2 className="font-heading text-base font-semibold">{t(f.titleKey)}</h2>
+              <p className="mt-1 text-sm text-muted-foreground">{t(f.descKey)}</p>
             </div>
           ))}
         </div>
