@@ -1,5 +1,7 @@
 import { z } from "zod"
 
+import { findSectionConflicts } from "@/lib/slot-expansion"
+
 import { TURF_FORMAT_VALUES } from "./formats"
 
 const slugRegex = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
@@ -64,6 +66,18 @@ export const turfFormSchema = z.object({
 })
 export type TurfFormValues = z.infer<typeof turfFormSchema>
 
+// Slot system P1: shared slot length validation. BD turfs run 45/60/75/90/120
+// min games; anything from 30 to 180 minutes in 5-minute steps fits a real
+// venue (Jamuna Future Park's first slot starts 11:05 — odd shapes are normal).
+export const slotMinutesSchema = z
+  .number()
+  .int("Use whole minutes")
+  .min(30, "Minimum 30 minutes")
+  .max(180, "Maximum 180 minutes")
+  .refine((v) => v % 5 === 0, "Use a multiple of 5 minutes")
+
+const hhmmSchema = z.string().regex(/^\d{2}:\d{2}$/, "Use HH:mm (24h)")
+
 // Slot generation: pick a date range + weekdays + a window of N back-to-back
 // slots of equal duration at a base price. The action materializes one row
 // per (date, startTime) into turf_slots.
@@ -75,8 +89,8 @@ export const generateSlotsSchema = z
       .array(z.number().int().min(0).max(6))
       .min(1, "Pick at least one day")
       .max(7),
-    startTime: z.string().regex(/^\d{2}:\d{2}$/, "Use HH:mm (24h)"),
-    durationMinutes: z.union([z.literal(60), z.literal(90)]),
+    startTime: hhmmSchema,
+    durationMinutes: slotMinutesSchema,
     slotsPerDay: z.number().int().min(1).max(24),
     basePrice: z
       .number()
@@ -88,6 +102,57 @@ export const generateSlotsSchema = z
     path: ["dateTo"],
   })
 export type GenerateSlotsValues = z.infer<typeof generateSlotsSchema>
+
+// One section of a weekly schedule day: "Evening 17:00-23:00, 90 min +10 gap,
+// 1200". endTime before startTime wraps past midnight (Ramadan night hours).
+export const scheduleSectionSchema = z
+  .object({
+    dayOfWeek: z.number().int().min(0).max(6),
+    label: z.string().max(30, "Keep labels short").optional(),
+    startTime: hhmmSchema,
+    endTime: hhmmSchema,
+    slotMinutes: slotMinutesSchema,
+    gapMinutes: z.number().int().min(0).max(30).default(0),
+    price: z
+      .number()
+      .positive("Price must be positive")
+      .max(100000, "Price looks too high"),
+  })
+  .refine((v) => v.endTime !== v.startTime, {
+    message: "End time must differ from start time (wrap earlier for night hours)",
+    path: ["endTime"],
+  })
+export type ScheduleSectionValues = z.infer<typeof scheduleSectionSchema>
+
+export const saveScheduleSchema = z
+  .object({
+    // Present = edit that schedule; absent = create a new one.
+    scheduleId: z.string().uuid().optional(),
+    name: z.string().min(1, "Name the schedule").max(60),
+    isActive: z.boolean().default(true),
+    sections: z
+      .array(scheduleSectionSchema)
+      .min(1, "Add at least one section")
+      .max(70, "Too many sections (max 10 per day)"),
+  })
+  .superRefine((v, ctx) => {
+    for (const conflict of findSectionConflicts(v.sections)) {
+      ctx.addIssue({ code: "custom", message: conflict, path: ["sections"] })
+    }
+  })
+export type SaveScheduleValues = z.infer<typeof saveScheduleSchema>
+
+// Custom single-slot add (Layer 3): one hand-placed slot on one date.
+export const addSlotSchema = z.object({
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD"),
+  startTime: hhmmSchema,
+  durationMinutes: slotMinutesSchema,
+  price: z
+    .number()
+    .positive("Price must be positive")
+    .max(100000, "Price looks too high"),
+})
+export type AddSlotValues = z.infer<typeof addSlotSchema>
 
 export const slotOverrideSchema = z.object({
   price: z

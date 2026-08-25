@@ -20,7 +20,7 @@ based discovery. Mobile-first, dark-themed.
 | Data fetching | RSC for SSR reads, TanStack Query for client reads, Server Actions for mutations | `src/features/*/` |
 | Forms | react-hook-form + zod | `src/components/*/` |
 | DB | Neon Postgres + PostGIS, Drizzle ORM | `src/db/`, `drizzle/` |
-| Background jobs | Inngest (`slot-hold-expire`, `settle-at-kickoff`, `account-hard-anonymize`) | `src/lib/inngest.ts` |
+| Background jobs | Inngest (`slot-hold-expire`, `settle-at-kickoff`, `account-hard-anonymize`, `schedule-materialize-nightly`) | `src/lib/inngest.ts` |
 | Realtime | Pusher (provider wired, called from match + team flows) | `src/lib/realtime.ts` |
 | Rate limit / cache | Upstash Redis | `src/lib/ratelimit.ts` |
 | Analytics | PostHog (P1 — provider imported, calls deferred) | — |
@@ -29,7 +29,7 @@ based discovery. Mobile-first, dark-themed.
 | Storage | S3-compatible (R2) presigned PUT uploads + magic-byte verify | `src/features/turfs/storage.ts`, `src/lib/file-validation.ts` |
 | Deploy | Vercel | — |
 
-Schema: **26 tables** across 8 files (`src/db/schema/`) + **19 enums**.
+Schema: **28 tables** across 8 files (`src/db/schema/`) + **20 enums**.
 
 ---
 
@@ -118,8 +118,33 @@ Routes: `/turf-owner`, `/turf-owner/turfs/new`, `/turf-owner/turfs/[id]`.
 - **Turf CRUD** — name, location (PostGIS point), format (5-a-side / 7-a-side),
   facilities, photos (presigned R2 upload + magic-byte verify), per-turf-owner
   cancellation policy.
-- **Slot generation** — owner-configurable slot length (60 / 90 min, Q5);
-  bulk-generate a week+ of slots with peak/holiday pricing.
+- **Slot generation** — legacy bulk generator: pick a date range + weekdays,
+  back-to-back slots of one length at one base price (superseded for new
+  setups by the weekly schedule above; still useful for one-off ranges).
+- **Weekly schedule + section pricing (slot system P1)** — a turf's normal
+  week is a named schedule of **sections** ("Morning 06:00-12:00 at 800",
+  "Evening 17:00-23:00, 90 min + 10-min turnaround gap, 1200"), so
+  peak/off-peak pricing is structural, matching how BD venues actually price
+  (Dugout/AnField-style day vs night tiers). Sections may wrap past midnight
+  for Ramadan hours (22:00-03:00); post-midnight slots belong to the date
+  they start on. Saving an active schedule materializes the next 30 days
+  immediately, and the Inngest `schedule-materialize-nightly` job (00:17
+  Asia/Dhaka) extends the horizon nightly. Materialized `turf_slots` stays
+  the runtime source of truth — bookings, holds, and KPIs keep reading it.
+  Regeneration is diff-based with a hard safety contract: only
+  `source=template AND status=available` rows are ever mutated or deleted;
+  booked/held slots and anything the owner hand-touched (`source=manual`)
+  are untouchable, and unresolvable rows surface as conflicts instead of
+  being forced. Precedence everywhere: **single-slot touch > date exception
+  (P2) > weekly schedule**. Slot lengths widened to 30-180 min in 5-min
+  steps. (Backend + custom-slot form shipped in P1; the weekly-builder UI
+  and BD holiday calendar seed are P2.)
+- **Custom slots** — hand-place a single slot on one date (a late-night
+  Ramadan game, a one-off session) via the "Add a custom slot" card.
+  Overlaps are rejected across a 3-day window (yesterday's 23:30/90 spills
+  into today). Custom slots carry `source=manual` and survive every
+  regeneration; any price/status edit on an existing slot promotes it to
+  manual too.
 - **Owner dashboard** — KPI tiles (today's revenue, upcoming bookings, open
   slots, 7-day occupancy), "my turfs" list, **"Fill This Slot"** surface
   (unsold inventory in the next 7 days, promotable once matchmaking

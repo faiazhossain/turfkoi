@@ -11,9 +11,11 @@ import {
   jsonb,
   primaryKey,
   index,
+  uniqueIndex,
 } from "drizzle-orm/pg-core"
+import { sql } from "drizzle-orm"
 
-import { turfFormat, slotStatus, cancellationPolicy } from "./enums"
+import { turfFormat, slotStatus, slotSource, cancellationPolicy } from "./enums"
 import { geographyPoint } from "../geo"
 import { users } from "./users"
 
@@ -87,6 +89,71 @@ export const turfOwners = pgTable(
   (t) => [primaryKey({ columns: [t.turfId, t.userId] })]
 )
 
+/**
+ * Slot system P1: a named weekly schedule ("Regular week", "Ramadan hours").
+ * One active schedule per turf (partial unique index below). Multiple saved
+ * schedules + effective range is the seasonal-switch mechanism — activate a
+ * Ramadan schedule for a month, switch back after Eid.
+ */
+export const turfSchedules = pgTable(
+  "turf_schedules",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    turfId: uuid("turf_id")
+      .notNull()
+      .references(() => turfs.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    isActive: boolean("is_active").notNull().default(true),
+    // Null bounds mean unbounded; ignored until the schedule is activated.
+    effectiveFrom: date("effective_from"),
+    effectiveTo: date("effective_to"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [
+    // Exactly one active schedule per turf — materialization reads one.
+    uniqueIndex("turf_schedules_one_active")
+      .on(t.turfId)
+      .where(sql`${t.isActive}`),
+    index("turf_schedules_turf_idx").on(t.turfId),
+  ]
+)
+
+/**
+ * One "section" of a day in a schedule — the BD owner's mental unit:
+ * "Morning 06:00-12:00 at 800", "Evening 17:00-23:00 at 1200". A section
+ * carries its own slot duration, turnaround gap, and price, so peak/non-peak
+ * pricing is structural, not a post-hoc modifier.
+ *
+ * endTime <= startTime means the window wraps past midnight (Ramadan night
+ * hours like 22:00-03:00); slots starting after midnight are attributed to
+ * the next calendar date.
+ */
+export const turfScheduleSections = pgTable(
+  "turf_schedule_sections",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    scheduleId: uuid("schedule_id")
+      .notNull()
+      .references(() => turfSchedules.id, { onDelete: "cascade" }),
+    // 0 = Sunday ... 6 = Saturday, matching Date#getUTCDay.
+    dayOfWeek: integer("day_of_week").notNull(),
+    label: text("label"),
+    startTime: time("start_time").notNull(),
+    endTime: time("end_time").notNull(),
+    // 30-180 in multiples of 5 (BD turfs run 45/60/75/90/120 min slots).
+    slotMinutes: integer("slot_minutes").notNull().default(60),
+    // Turnaround between consecutive slots (Team Ground runs 10 min).
+    gapMinutes: integer("gap_minutes").notNull().default(0),
+    price: numeric("price", { precision: 12, scale: 2 }).notNull(),
+  },
+  (t) => [index("turf_schedule_sections_schedule_idx").on(t.scheduleId)]
+)
+
 export const turfSlots = pgTable(
   "turf_slots",
   {
@@ -95,10 +162,18 @@ export const turfSlots = pgTable(
       .references(() => turfs.id, { onDelete: "cascade" }),
     date: date("date").notNull(),
     startTime: time("start_time").notNull(),
-    // Owner-configurable slot length (Q5): 60 or 90 minutes.
+    // Owner-configurable slot length (Q5): any multiple of 5, 30-180 minutes.
     durationMinutes: integer("duration_minutes").notNull().default(60),
     status: slotStatus("status").notNull().default("available"),
     price: numeric("price", { precision: 12, scale: 2 }).notNull(),
+    // Slot system P1: template rows are regenerable; manual rows are the
+    // owner's hand work and outrank the schedule forever.
+    source: slotSource("source").notNull().default("template"),
+    // Lineage: which schedule materialized this row. Null for manual adds
+    // and legacy rows predating the schedule system.
+    scheduleId: uuid("schedule_id").references(() => turfSchedules.id, {
+      onDelete: "set null",
+    }),
   },
   (t) => [
     // F8: formalize the "PK-ish" - composite PK on (turf, date, start_time).

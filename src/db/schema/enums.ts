@@ -41,6 +41,12 @@ export const slotStatus = pgEnum("slot_status", [
   "blocked",
 ])
 
+// Slot system P1: how a materialized row came to exist. "template" rows are
+// owned by the schedule and may be updated/deleted by materialization;
+// "manual" rows were hand-added or hand-edited by the owner and are never
+// touched by regeneration (single-slot touch > date exception > schedule).
+export const slotSource = pgEnum("slot_source", ["template", "manual"])
+
 // SS27 booking lifecycle
 export const bookingStatus = pgEnum("booking_status", [
   "available",

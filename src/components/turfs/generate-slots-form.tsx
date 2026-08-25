@@ -119,7 +119,7 @@ export function GenerateSlotsForm({ turfId }: { turfId: string }) {
           <Select
             value={String(form.watch("durationMinutes"))}
             onValueChange={(v) =>
-              form.setValue("durationMinutes", Number(v) as 60 | 90, {
+              form.setValue("durationMinutes", Number(v), {
                 shouldValidate: true,
               })
             }
@@ -128,8 +128,11 @@ export function GenerateSlotsForm({ turfId }: { turfId: string }) {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="60">60 min</SelectItem>
-              <SelectItem value="90">90 min</SelectItem>
+              {[30, 45, 60, 75, 90, 120, 180].map((d) => (
+                <SelectItem key={d} value={String(d)}>
+                  {d} min
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>

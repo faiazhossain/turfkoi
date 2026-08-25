@@ -19,6 +19,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { StatusBadge } from "@/components/shared"
 import {
+  AddSlotForm,
   GenerateSlotsForm,
   SlotGrid,
   TurfForm,
@@ -142,6 +143,22 @@ export default async function EditTurfPage({ params }: PageProps) {
             </CardHeader>
             <CardContent>
               <GenerateSlotsForm turfId={turf.id} />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="font-heading text-lg">
+                Add a custom slot
+              </CardTitle>
+              <CardDescription>
+                Hand-place a single slot on one date — a late-night Ramadan
+                game, a one-off morning session. Overlapping slots are
+                rejected. Custom slots stay put even when you regenerate.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <AddSlotForm turfId={turf.id} />
             </CardContent>
           </Card>
 

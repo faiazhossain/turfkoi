@@ -3,7 +3,8 @@ import { eq, and } from "drizzle-orm"
 import { Inngest } from "inngest"
 
 import { db } from "@/db"
-import { bookings, slotHolds } from "@/db/schema"
+import { bookings, slotHolds, turfSchedules } from "@/db/schema"
+import { materializeTurfSchedule } from "@/features/turfs/materialize"
 
 /**
  * Durable background jobs (audit G3). The money-flow model relies on two
@@ -150,4 +151,51 @@ export async function scheduleAccountAnonymization(userId: string) {
   })
 }
 
-export const inngestFunctions = [expireSlotHold, settleAtKickoff, hardAnonymizeAccount]
+/**
+ * Slot system P1: extend every turf's materialized slot horizon from its
+ * active weekly schedule, nightly at 00:17 Asia/Dhaka (off the :00 mark to
+ * avoid synchronized load with other scheduled jobs). Inngest cron runs in
+ * UTC; Bangladesh is fixed UTC+6 with no DST, so 18:17 UTC IS 00:17 Dhaka
+ * permanently. Re-runs are safe — materializeTurfSchedule is a diff that
+ * only touches available template rows, so booked/held/manual inventory is
+ * never disturbed.
+ */
+export const materializeSchedulesNightly = inngest.createFunction(
+  {
+    id: "schedule-materialize-nightly",
+    name: "Extend slot horizon from active weekly schedules",
+    triggers: [{ cron: "17 18 * * *" }],
+  },
+  async ({ step }) => {
+    const turfIds = await step.run("collect-turfs", async () => {
+      const rows = await db
+        .selectDistinct({ turfId: turfSchedules.turfId })
+        .from(turfSchedules)
+        .where(eq(turfSchedules.isActive, true))
+      return rows.map((r) => r.turfId)
+    })
+    if (!turfIds || turfIds.length === 0) return { turfs: 0 }
+
+    for (const turfId of turfIds) {
+      // One step per turf so a partial failure retries only that turf.
+      await step.run(`materialize-${turfId}`, async () => {
+        const res = await materializeTurfSchedule(turfId)
+        return {
+          turfId,
+          inserted: res.inserted,
+          updated: res.updated,
+          deleted: res.deleted,
+          conflicts: res.conflicts.length,
+        }
+      })
+    }
+    return { turfs: turfIds.length }
+  }
+)
+
+export const inngestFunctions = [
+  expireSlotHold,
+  settleAtKickoff,
+  hardAnonymizeAccount,
+  materializeSchedulesNightly,
+]
