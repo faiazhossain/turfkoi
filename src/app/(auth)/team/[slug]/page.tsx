@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import Link from "next/link"
 import { notFound, redirect } from "next/navigation"
 import { PencilIcon } from "lucide-react"
@@ -14,9 +15,18 @@ import {
 } from "@/features/teams/queries"
 import { MemberManager } from "@/components/teams/member-manager"
 import { clientImageUrl } from "@/features/images/urls"
+import { getT } from "@/i18n/server"
 
 interface PageProps {
   params: Promise<{ slug: string }>
+}
+
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
+  const { slug } = await params
+  const team = await getTeamBySlug(slug)
+  return { title: team?.name ?? slug }
 }
 
 export default async function TeamDetailPage({ params }: PageProps) {
@@ -24,6 +34,7 @@ export default async function TeamDetailPage({ params }: PageProps) {
   const user = await getCurrentUser()
   if (!user) redirect("/login")
 
+  const t = await getT()
   const team = await getTeamBySlug(slug)
   if (!team) notFound()
 
@@ -32,8 +43,8 @@ export default async function TeamDetailPage({ params }: PageProps) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-16">
         <EmptyState
-          title="Not a member"
-          description="You're not a member of this team."
+          title={t("team.notMemberTitle")}
+          description={t("team.notMemberDesc")}
         />
       </div>
     )
@@ -54,7 +65,7 @@ export default async function TeamDetailPage({ params }: PageProps) {
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-12">
       <nav className="text-sm text-muted-foreground">
         <Link href="/team" className="hover:text-foreground">
-          Teams
+          {t("team.title")}
         </Link>{" "}
         / <span className="text-foreground">{team.name}</span>
       </nav>
@@ -65,7 +76,7 @@ export default async function TeamDetailPage({ params }: PageProps) {
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={clientImageUrl(team.logoPublicId, "thumb")}
-              alt={`${team.name} logo`}
+              alt={t("team.logoAlt", { name: team.name })}
               className="size-12 rounded-lg object-cover"
             />
           ) : null}
@@ -81,7 +92,7 @@ export default async function TeamDetailPage({ params }: PageProps) {
             render={<Link href={`/team/${team.slug}/edit`} />}
           >
             <PencilIcon aria-hidden />
-            Edit
+            {t("common.edit")}
           </Button>
         ) : null}
       </header>
@@ -96,8 +107,8 @@ export default async function TeamDetailPage({ params }: PageProps) {
       />
 
       <EmptyState
-        title="Matches coming in Phase 5"
-        description="Team matchmaking — create matches, find opponents, and track results — arrives next."
+        title={t("team.matchesSoonTitle")}
+        description={t("team.matchesSoonDesc")}
       />
     </div>
   )

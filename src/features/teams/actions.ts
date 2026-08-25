@@ -23,10 +23,10 @@ export type ActionResult =
   | { ok: false; error: string }
 
 function unauthorized(): ActionResult {
-  return { ok: false, error: "You are not signed in." }
+  return { ok: false, error: "errors.notSignedIn" }
 }
 function forbidden(): ActionResult {
-  return { ok: false, error: "You don't have permission to do that." }
+  return { ok: false, error: "errors.noPermission" }
 }
 
 /** Look up slug for revalidation; returns "" if team not found. */
@@ -40,7 +40,7 @@ export async function createTeamAction(
 ): Promise<ActionResult & { slug?: string }> {
   const parsed = teamFormSchema.safeParse(input)
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid" }
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "errors.invalid" }
   }
   const user = await getCurrentUser()
   if (!user) return unauthorized()
@@ -63,7 +63,7 @@ export async function createTeamAction(
     return { ok: true, id: created.id, slug: created.slug }
   } catch (err) {
     if (String(err).includes("unique")) {
-      return { ok: false, error: "That slug is already taken." }
+      return { ok: false, error: "team.errors.slugTaken" }
     }
     throw err
   }
@@ -75,7 +75,7 @@ export async function updateTeamAction(
 ): Promise<ActionResult> {
   const parsed = teamFormSchema.safeParse(input)
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid" }
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "errors.invalid" }
   }
   const user = await getCurrentUser()
   if (!user) return unauthorized()
@@ -94,7 +94,7 @@ export async function updateTeamAction(
     return { ok: true }
   } catch (err) {
     if (String(err).includes("unique")) {
-      return { ok: false, error: "That slug is already taken." }
+      return { ok: false, error: "team.errors.slugTaken" }
     }
     throw err
   }
@@ -111,7 +111,7 @@ export async function addMemberAction(
 ): Promise<ActionResult> {
   const parsed = addMemberSchema.safeParse(input)
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid" }
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "errors.invalid" }
   }
   const user = await getCurrentUser()
   if (!user) return unauthorized()
@@ -159,7 +159,7 @@ export async function updateMemberRoleAction(
 ): Promise<ActionResult> {
   const parsed = updateMemberRoleSchema.safeParse(input)
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid" }
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "errors.invalid" }
   }
   const user = await getCurrentUser()
   if (!user) return unauthorized()
@@ -173,17 +173,17 @@ export async function updateMemberRoleAction(
   if (role === "owner") {
     return {
       ok: false,
-      error: "Use transfer ownership to change the team owner.",
+      error: "team.errors.useTransfer",
     }
   }
   if (requesterRole !== "owner" && role === "captain") {
-    return { ok: false, error: "Only the owner can assign captains." }
+    return { ok: false, error: "team.errors.onlyOwnerCaptains" }
   }
   // Demoting yourself from owner is blocked — transfer first.
   if (userId === user.id && requesterRole === "owner") {
     return {
       ok: false,
-      error: "Transfer ownership first, then change your role.",
+      error: "team.errors.transferFirstRole",
     }
   }
 
@@ -205,7 +205,7 @@ export async function transferOwnershipAction(
 ): Promise<ActionResult> {
   const parsed = transferOwnershipSchema.safeParse(input)
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid" }
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "errors.invalid" }
   }
   const user = await getCurrentUser()
   if (!user) return unauthorized()
@@ -215,7 +215,7 @@ export async function transferOwnershipAction(
   if (requesterRole !== "owner") return forbidden()
 
   const targetRole = await getTeamRole(teamId, newOwnerId)
-  if (!targetRole) return { ok: false, error: "That person isn't a team member." }
+  if (!targetRole) return { ok: false, error: "team.errors.notAMember" }
 
   // Two conditional updates — idempotent; safe without a transaction.
   await db
@@ -248,10 +248,10 @@ export async function removeMemberAction(
 
   const targetRole = await getTeamRole(teamId, userId)
   if (targetRole === "owner") {
-    return { ok: false, error: "Can't remove the owner — transfer ownership first." }
+    return { ok: false, error: "team.errors.cantRemoveOwner" }
   }
   if (targetRole === "captain" && requesterRole !== "owner") {
-    return { ok: false, error: "Only the owner can remove captains." }
+    return { ok: false, error: "team.errors.onlyOwnerRemoveCaptains" }
   }
 
   await db

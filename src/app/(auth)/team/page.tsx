@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import Link from "next/link"
 import { redirect } from "next/navigation"
 import { PlusIcon, UsersIcon } from "lucide-react"
@@ -6,6 +7,8 @@ import { Button } from "@/components/ui/button"
 import { EmptyState, StatusBadge } from "@/components/shared"
 import { getCurrentUser } from "@/lib/auth"
 import { listMyTeams } from "@/features/teams/queries"
+import { getT } from "@/i18n/server"
+import { buildMetadata } from "@/i18n/metadata"
 
 const ROLE_TONE: Record<string, "primary" | "success" | "warning" | "neutral"> = {
   owner: "primary",
@@ -14,52 +17,59 @@ const ROLE_TONE: Record<string, "primary" | "success" | "warning" | "neutral"> =
   player: "neutral",
 }
 
+export async function generateMetadata(): Promise<Metadata> {
+  return buildMetadata({ titleKey: "metadata.teamTitle" })
+}
+
 export default async function TeamDashboardPage() {
   const user = await getCurrentUser()
   if (!user) redirect("/login")
 
+  const t = await getT()
   const myTeams = await listMyTeams(user.id)
 
   return (
     <div className="mx-auto max-w-4xl space-y-8 px-4 py-12">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="font-heading text-2xl font-semibold">Teams</h1>
+          <h1 className="font-heading text-2xl font-semibold">{t("team.title")}</h1>
           <p className="text-sm text-muted-foreground">
-            {myTeams.length} team{myTeams.length === 1 ? "" : "s"}
+            {myTeams.length === 1
+              ? t("team.countOne")
+              : t("team.countMany", { count: myTeams.length })}
           </p>
         </div>
         <Button render={<Link href="/team/new" />}>
           <PlusIcon aria-hidden />
-          Create team
+          {t("team.createTeam")}
         </Button>
       </header>
 
       {myTeams.length === 0 ? (
         <EmptyState
           icon={UsersIcon}
-          title="You're not in any teams yet"
-          description="Create a team to start booking matches and finding opponents."
+          title={t("team.emptyTitle")}
+          description={t("team.emptyDesc")}
           action={
             <Button render={<Link href="/team/new" />}>
-              Create your first team
+              {t("team.createFirstTeam")}
             </Button>
           }
         />
       ) : (
         <ul className="grid gap-3 sm:grid-cols-2">
-          {myTeams.map((t) => (
-            <li key={t.id}>
+          {myTeams.map((tm) => (
+            <li key={tm.id}>
               <Link
-                href={`/team/${t.slug}`}
+                href={`/team/${tm.slug}`}
                 className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card p-4 hover:bg-muted/40"
               >
                 <div className="min-w-0">
-                  <p className="truncate font-heading font-semibold">{t.name}</p>
-                  <p className="text-xs text-muted-foreground">/team/{t.slug}</p>
+                  <p className="truncate font-heading font-semibold">{tm.name}</p>
+                  <p className="text-xs text-muted-foreground">/team/{tm.slug}</p>
                 </div>
-                <StatusBadge status={ROLE_TONE[t.role]} showIcon={false}>
-                  {t.role}
+                <StatusBadge status={ROLE_TONE[tm.role]} showIcon={false}>
+                  {t(`team.role.${tm.role}`)}
                 </StatusBadge>
               </Link>
             </li>

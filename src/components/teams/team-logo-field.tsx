@@ -9,6 +9,7 @@ import { StatusBadge } from "@/components/shared"
 import { useImageUpload } from "@/hooks/use-image-upload"
 import { clientImageUrl } from "@/features/images/urls"
 import { setTeamLogoAction } from "@/features/images/actions"
+import { useI18n } from "@/i18n/client"
 
 /**
  * Team logo picker (single image, immediate persist). Replacing the logo
@@ -22,6 +23,7 @@ export function TeamLogoField({
   logoPublicId: string | null
 }) {
   const router = useRouter()
+  const { t } = useI18n()
   const inputRef = React.useRef<HTMLInputElement>(null)
   const { upload, uploading, error: uploadError } = useImageUpload()
 
@@ -38,14 +40,14 @@ export function TeamLogoField({
 
   return (
     <div className="space-y-2">
-      <label className="block text-sm font-medium">Team logo</label>
+      <label className="block text-sm font-medium">{t("team.logoLabel")}</label>
       <div className="flex items-center gap-3">
         <div className="flex size-16 items-center justify-center overflow-hidden rounded-lg bg-muted">
           {logoPublicId ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={clientImageUrl(logoPublicId, "thumb")}
-              alt="Team logo"
+              alt={t("team.logoAltText")}
               className="size-full object-cover"
             />
           ) : (
@@ -61,7 +63,7 @@ export function TeamLogoField({
           {uploading ? (
             <Loader size={14} className="size-3.5" aria-hidden />
           ) : null}
-          {uploading ? "Uploading" : logoPublicId ? "Change logo" : "Upload logo"}
+          {uploading ? t("team.uploading") : logoPublicId ? t("team.changeLogo") : t("team.uploadLogo")}
         </button>
       </div>
       <input
@@ -74,7 +76,7 @@ export function TeamLogoField({
           if (inputRef.current) inputRef.current.value = ""
         }}
       />
-      {uploadError ? <StatusBadge status="danger">{uploadError}</StatusBadge> : null}
+      {uploadError ? <StatusBadge status="danger">{t(uploadError)}</StatusBadge> : null}
     </div>
   )
 }

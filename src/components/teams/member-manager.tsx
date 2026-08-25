@@ -22,6 +22,7 @@ import {
   removeMemberAction,
   transferOwnershipAction,
 } from "@/features/teams/actions"
+import { useI18n, translateError } from "@/i18n/client"
 
 interface Member {
   userId: string
@@ -63,6 +64,7 @@ export function MemberManager({
   currentUserId,
 }: MemberManagerProps) {
   const router = useRouter()
+  const { t } = useI18n()
   const [pending, start] = useTransition()
   const [phone, setPhone] = useState("")
   const [transferTarget, setTransferTarget] = useState<string | null>(null)
@@ -71,10 +73,10 @@ export function MemberManager({
     start(async () => {
       const res = await addMemberAction(teamId, { phone, role: "player" })
       if (!res.ok) {
-        toast.error(res.error)
+        toast.error(translateError(res.error, t))
         return
       }
-      toast.success("Member added.")
+      toast.success(t("team.memberAdded"))
       setPhone("")
       router.refresh()
     })
@@ -84,23 +86,23 @@ export function MemberManager({
     start(async () => {
       const res = await updateMemberRoleAction({ teamId, userId, role: role as "player" | "captain" | "manager" })
       if (!res.ok) {
-        toast.error(res.error)
+        toast.error(translateError(res.error, t))
         return
       }
-      toast.success("Role updated.")
+      toast.success(t("team.roleUpdated"))
       router.refresh()
     })
   }
 
   function remove(userId: string) {
-    if (!confirm("Remove this member from the team?")) return
+    if (!confirm(t("team.removeMemberConfirm"))) return
     start(async () => {
       const res = await removeMemberAction(teamId, userId)
       if (!res.ok) {
-        toast.error(res.error)
+        toast.error(translateError(res.error, t))
         return
       }
-      toast.success("Member removed.")
+      toast.success(t("team.memberRemoved"))
       router.refresh()
     })
   }
@@ -109,10 +111,10 @@ export function MemberManager({
     start(async () => {
       const res = await transferOwnershipAction({ teamId, newOwnerId })
       if (!res.ok) {
-        toast.error(res.error)
+        toast.error(translateError(res.error, t))
         return
       }
-      toast.success("Ownership transferred.")
+      toast.success(t("team.ownershipTransferred"))
       setTransferTarget(null)
       router.refresh()
     })
@@ -122,15 +124,12 @@ export function MemberManager({
     <div className="space-y-6">
       {canManage ? (
         <section className="space-y-2">
-          <h3 className="font-heading text-sm font-semibold">Add member</h3>
-          <p className="text-sm text-muted-foreground">
-            Enter their phone number. If they haven&apos;t signed up yet,
-            they&apos;ll be added automatically when they do.
-          </p>
+          <h3 className="font-heading text-sm font-semibold">{t("team.addMemberTitle")}</h3>
+          <p className="text-sm text-muted-foreground">{t("team.addMemberDesc")}</p>
           <div className="flex items-end gap-2">
             <div className="flex-1 space-y-1.5">
               <Label htmlFor="phone" className="sr-only">
-                Phone number
+                {t("team.phoneLabel")}
               </Label>
               <Input
                 id="phone"
@@ -140,7 +139,7 @@ export function MemberManager({
               />
             </div>
             <Button onClick={add} loading={pending} disabled={phone.length < 6}>
-              Add
+              {t("common.add")}
             </Button>
           </div>
         </section>
@@ -148,7 +147,7 @@ export function MemberManager({
 
       <section className="space-y-2">
         <h3 className="font-heading text-sm font-semibold">
-          Members ({members.length})
+          {t("team.membersCount", { count: members.length })}
         </h3>
         <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border">
           {members.map((m) => (
@@ -160,7 +159,7 @@ export function MemberManager({
                 <p className="truncate font-medium">
                   {m.name ?? m.phone}
                   {m.userId === currentUserId ? (
-                    <span className="ml-1 text-xs text-muted-foreground">(you)</span>
+                    <span className="ml-1 text-xs text-muted-foreground">{t("team.you")}</span>
                   ) : null}
                 </p>
                 {m.name ? (
@@ -180,21 +179,21 @@ export function MemberManager({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="player">Player</SelectItem>
-                      <SelectItem value="captain">Captain</SelectItem>
-                      <SelectItem value="manager">Manager</SelectItem>
+                      <SelectItem value="player">{t("team.role.player")}</SelectItem>
+                      <SelectItem value="captain">{t("team.role.captain")}</SelectItem>
+                      <SelectItem value="manager">{t("team.role.manager")}</SelectItem>
                     </SelectContent>
                   </Select>
                 ) : (
                   <StatusBadge status={ROLE_TONE[m.role]} showIcon={false}>
-                    {m.role}
+                    {t(`team.role.${m.role}`)}
                   </StatusBadge>
                 )}
                 {canManage && m.role !== "owner" ? (
                   <Button
                     size="icon-sm"
                     variant="ghost"
-                    aria-label="Remove member"
+                    aria-label={t("team.removeMemberAria")}
                     onClick={() => remove(m.userId)}
                     loading={pending}
                   >
@@ -211,12 +210,9 @@ export function MemberManager({
         <section className="space-y-2">
           <h3 className="font-heading text-sm font-semibold">
             <CrownIcon className="mr-1 inline size-4 text-primary" aria-hidden />
-            Transfer ownership
+            {t("team.transferTitle")}
           </h3>
-          <p className="text-sm text-muted-foreground">
-            You&apos;ll become a captain. Required before you can change your
-            own role or leave the team.
-          </p>
+          <p className="text-sm text-muted-foreground">{t("team.transferDesc")}</p>
           {transferTarget ? (
             <div className="flex items-center gap-2">
               <Button
@@ -225,7 +221,11 @@ export function MemberManager({
                 onClick={() => { if (transferTarget) transfer(transferTarget) }}
                 loading={pending}
               >
-                Transfer to {members.find((m) => m.userId === transferTarget)?.name ?? "this member"}?
+                {t("team.transferTo", {
+                  name:
+                    members.find((m) => m.userId === transferTarget)?.name ??
+                    t("team.thisMember"),
+                })}
               </Button>
               <Button
                 size="sm"
@@ -233,7 +233,7 @@ export function MemberManager({
                 onClick={() => setTransferTarget(null)}
                 disabled={pending}
               >
-                Cancel
+                {t("common.cancel")}
               </Button>
             </div>
           ) : (
@@ -258,7 +258,7 @@ export function MemberManager({
       {invitations.length > 0 ? (
         <section className="space-y-2">
           <h3 className="font-heading text-sm font-semibold">
-            Pending invitations ({invitations.length})
+            {t("team.pendingInvites", { count: invitations.length })}
           </h3>
           <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border border-dashed">
             {invitations.map((inv) => (
@@ -268,14 +268,12 @@ export function MemberManager({
               >
                 <span className="font-mono text-xs">{inv.phone}</span>
                 <StatusBadge status="warning" showIcon={false}>
-                  pending
+                  {t("team.pending")}
                 </StatusBadge>
               </li>
             ))}
           </ul>
-          <p className="text-xs text-muted-foreground">
-            These players will be added automatically when they sign up.
-          </p>
+          <p className="text-xs text-muted-foreground">{t("team.pendingNote")}</p>
         </section>
       ) : null}
     </div>

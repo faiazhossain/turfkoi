@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { teamFormSchema, type TeamFormValues } from "@/features/teams/schemas"
 import { createTeamAction, updateTeamAction } from "@/features/teams/actions"
+import { useI18n, translateError, fieldError } from "@/i18n/client"
 
 interface TeamFormProps {
   mode: "create" | "edit"
@@ -30,6 +31,7 @@ function slugify(name: string): string {
 
 export function TeamForm({ mode, teamId, initial }: TeamFormProps) {
   const router = useRouter()
+  const { t } = useI18n()
   const [pending, setPending] = useState(false)
 
   const form = useForm<TeamFormValues>({
@@ -43,18 +45,18 @@ export function TeamForm({ mode, teamId, initial }: TeamFormProps) {
       if (mode === "create") {
         const res = await createTeamAction(values)
         if (!res.ok) {
-          toast.error(res.error)
+          toast.error(translateError(res.error, t))
           return
         }
-        toast.success("Team created.")
+        toast.success(t("team.teamCreated"))
         router.push(`/team/${res.slug}`)
       } else if (mode === "edit" && teamId) {
         const res = await updateTeamAction(teamId, values)
         if (!res.ok) {
-          toast.error(res.error)
+          toast.error(translateError(res.error, t))
           return
         }
-        toast.success("Team updated.")
+        toast.success(t("team.teamUpdated"))
         router.push(`/team/${values.slug}`)
         router.refresh()
       }
@@ -66,7 +68,7 @@ export function TeamForm({ mode, teamId, initial }: TeamFormProps) {
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
       <div className="space-y-1.5">
-        <Label htmlFor="name">Team name</Label>
+        <Label htmlFor="name">{t("team.form.nameLabel")}</Label>
         <Input
           id="name"
           {...form.register("name")}
@@ -79,28 +81,30 @@ export function TeamForm({ mode, teamId, initial }: TeamFormProps) {
         />
         {form.formState.errors.name ? (
           <p className="text-xs text-destructive">
-            {form.formState.errors.name.message}
+            {fieldError(form.formState.errors.name.message, t)}
           </p>
         ) : null}
       </div>
       <div className="space-y-1.5">
-        <Label htmlFor="slug">Slug</Label>
+        <Label htmlFor="slug">{t("team.form.slugLabel")}</Label>
         <Input id="slug" {...form.register("slug")} />
         {form.formState.errors.slug ? (
           <p className="text-xs text-destructive">
-            {form.formState.errors.slug.message}
+            {fieldError(form.formState.errors.slug.message, t)}
           </p>
         ) : null}
         <p className="text-xs text-muted-foreground">
-          URL: /team/{form.watch("slug") || "your-slug"}
+          {t("team.form.urlHint", {
+            slug: form.watch("slug") || t("team.form.slugPlaceholder"),
+          })}
         </p>
       </div>
       <Button type="submit" loading={pending}>
         {pending
-          ? "Saving…"
+          ? t("team.form.saving")
           : mode === "create"
-            ? "Create team"
-            : "Save changes"}
+            ? t("team.createTeam")
+            : t("common.saveChanges")}
       </Button>
     </form>
   )
