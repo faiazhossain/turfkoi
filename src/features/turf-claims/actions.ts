@@ -36,7 +36,7 @@ export type ActionResult =
   | { ok: false; error: string }
 
 function unauthorized(): ActionResult {
-  return { ok: false, error: "You are not signed in." }
+  return { ok: false, error: "errors.notSignedIn" }
 }
 
 // Local mirror of the admin gate in features/admin/actions.ts (not exported
@@ -45,9 +45,9 @@ async function adminActor(): Promise<
   { ok: true; id: string } | { ok: false; error: string }
 > {
   const user = await getCurrentUser()
-  if (!user) return { ok: false, error: "You are not signed in." }
+  if (!user) return { ok: false, error: "errors.notSignedIn" }
   if (!user.roles.includes("admin")) {
-    return { ok: false, error: "Admins only." }
+    return { ok: false, error: "errors.adminOnly" }
   }
   return { ok: true, id: user.id }
 }
@@ -62,7 +62,7 @@ export async function seedTurfAction(
 ): Promise<ActionResult> {
   const parsed = seedTurfSchema.safeParse(input)
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid" }
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "errors.invalid" }
   }
   const actor = await adminActor()
   if (!actor.ok) return actor
@@ -77,7 +77,7 @@ export async function seedTurfAction(
     return { ok: true, id: created.id }
   } catch (err) {
     if (String(err).includes("unique")) {
-      return { ok: false, error: "That slug is already taken." }
+      return { ok: false, error: "turfs.errors.slugTaken" }
     }
     throw err
   }
@@ -108,7 +108,7 @@ export async function createClaimInviteAction(input: {
 > {
   const parsed = createInviteSchema.safeParse(input)
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid" }
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "errors.invalid" }
   }
   const actor = await adminActor()
   if (!actor.ok) return actor
@@ -119,7 +119,7 @@ export async function createClaimInviteAction(input: {
     .where(eq(turfs.id, parsed.data.turfId))
     .limit(1)
   const turf = turfRows[0]
-  if (!turf) return { ok: false, error: "Turf not found." }
+  if (!turf) return { ok: false, error: "turfs.errors.turfNotFound" }
   if (turf.ownerId !== null) {
     return { ok: false, error: "That turf has already been claimed." }
   }
@@ -191,7 +191,7 @@ export async function createClaimInviteAction(input: {
  */
 export async function claimTurfAction(token: string): Promise<ActionResult> {
   const parsed = claimTurfSchema.safeParse({ token })
-  if (!parsed.success) return { ok: false, error: "Invalid claim link." }
+  if (!parsed.success) return { ok: false, error: "claim.errors.invalidLink" }
 
   const user = await getCurrentUser()
   if (!user) return unauthorized()
@@ -199,16 +199,16 @@ export async function claimTurfAction(token: string): Promise<ActionResult> {
   const h = await headers()
   const ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown"
   const allow = await rateLimit(`claim:ip:${ip}`, 10, 300) // 10 / 5min / IP
-  if (!allow) return { ok: false, error: "Too many attempts. Try again later." }
+  if (!allow) return { ok: false, error: "errors.rateLimited" }
 
   const resolved = await resolveClaimToken(parsed.data.token)
   if (!resolved.ok) {
     const messages: Record<typeof resolved.reason, string> = {
-      invalid: "This claim link isn't valid. Ask the admin for a new one.",
-      expired: "This claim link has expired. Ask the admin for a new one.",
-      claimed: "This turf has already been claimed.",
-      revoked: "This claim link was replaced by a newer one.",
-      turf_claimed: "This turf has already been claimed.",
+      invalid: "claim.errors.invalidLink",
+      expired: "claim.errors.linkExpired",
+      claimed: "turfs.errors.alreadyClaimed",
+      revoked: "claim.errors.linkReplaced",
+      turf_claimed: "turfs.errors.alreadyClaimed",
     }
     return { ok: false, error: messages[resolved.reason] }
   }
@@ -220,7 +220,7 @@ export async function claimTurfAction(token: string): Promise<ActionResult> {
     .where(and(eq(turfs.id, resolved.turfId), isNull(turfs.ownerId)))
     .returning({ id: turfs.id })
   if (claimedTurf.length === 0) {
-    return { ok: false, error: "This turf has already been claimed." }
+    return { ok: false, error: "turfs.errors.alreadyClaimed" }
   }
 
   // Grant the turf_owner role (idempotent; same pattern as setUserRoleAction).
@@ -259,14 +259,14 @@ export async function claimOtpLoginAction(
 ): Promise<ActionResult> {
   const parsed = claimOtpSchema.safeParse({ token, code })
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid" }
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "errors.invalid" }
   }
 
   const h = await headers()
   const ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown"
   const allowIp = await rateLimit(`claim-otp:ip:${ip}`, 10, 300)
   if (!allowIp) {
-    return { ok: false, error: "Too many attempts. Try again later." }
+    return { ok: false, error: "errors.rateLimited" }
   }
 
   const verified = await verifyClaimOtp(parsed.data.token, parsed.data.code)
@@ -274,21 +274,23 @@ export async function claimOtpLoginAction(
     // A malformed token surfaces as `invalid` without attemptsLeft — give
     // it link-level copy instead of the wrong-code message.
     if (verified.reason === "invalid" && verified.attemptsLeft === undefined) {
-      return { ok: false, error: "This link isn't valid. Ask for a new one." }
+      return { ok: false, error: "claim.errors.invalidLink" }
     }
     const messages: Record<typeof verified.reason, string> = {
       invalid:
         verified.attemptsLeft !== undefined
-          ? `Wrong code. ${verified.attemptsLeft} attempt${verified.attemptsLeft === 1 ? "" : "s"} left.`
-          : "Wrong code. Try again.",
-      locked: "Too many wrong codes. Try again in 15 minutes.",
-      consumed: "This code was already used. Ask for a new link.",
-      expired: "This link has expired. Ask the Turfkoi team for a new one.",
-      claimed: "This turf has already been claimed.",
-      revoked: "This link was replaced by a newer one.",
-      turf_claimed: "This turf has already been claimed.",
-      no_otp: "This link doesn't have a code. Ask for a new one.",
-      rate_limited: "Too many attempts. Try again later.",
+          ? verified.attemptsLeft === 1
+            ? "claim.errors.wrongCodeOne"
+            : "claim.errors.wrongCode"
+          : "claim.errors.wrongCode",
+      locked: "claim.errors.locked",
+      consumed: "claim.errors.consumed",
+      expired: "claim.errors.linkExpired",
+      claimed: "turfs.errors.alreadyClaimed",
+      revoked: "claim.errors.linkReplaced",
+      turf_claimed: "turfs.errors.alreadyClaimed",
+      no_otp: "claim.errors.noOtp",
+      rate_limited: "errors.rateLimited",
     }
     return { ok: false, error: messages[verified.reason] }
   }
@@ -299,7 +301,7 @@ export async function claimOtpLoginAction(
     300
   )
   if (!allowInvite) {
-    return { ok: false, error: "Too many attempts. Try again later." }
+    return { ok: false, error: "errors.rateLimited" }
   }
 
   // Best-effort identity hints from the application that produced this
@@ -337,7 +339,7 @@ export async function claimOtpLoginAction(
   } catch (err) {
     if (err instanceof AuthError) {
       console.error("[turf-claims] OTP sign-in failed:", err)
-      return { ok: false, error: "Couldn't sign you in. Try again." }
+      return { ok: false, error: "claim.errors.signinFailed" }
     }
     throw err
   }
@@ -355,7 +357,7 @@ export async function setClaimPasswordAction(
 ): Promise<ActionResult> {
   const parsed = claimPasswordSchema.safeParse({ password })
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid" }
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "errors.invalid" }
   }
 
   const user = await getCurrentUser()
@@ -378,7 +380,7 @@ export async function skipClaimPasswordAction(): Promise<
   { ok: true; password: string } | { ok: false; error: string }
 > {
   const user = await getCurrentUser()
-  if (!user) return { ok: false, error: "You are not signed in." }
+  if (!user) return { ok: false, error: "errors.notSignedIn" }
 
   const password = generateSimplePassword()
   const passwordHash = await bcrypt.hash(password, 10)

@@ -26,10 +26,10 @@ export type ActionResult =
   | { ok: false; error: string }
 
 function unauthorized(): ActionResult {
-  return { ok: false, error: "You are not signed in." }
+  return { ok: false, error: "errors.notSignedIn" }
 }
 function forbidden(): ActionResult {
-  return { ok: false, error: "You don't have permission to do that." }
+  return { ok: false, error: "errors.noPermission" }
 }
 
 /**
@@ -44,7 +44,7 @@ export async function createMatchAction(
 ): Promise<ActionResult & { matchId?: string }> {
   const parsed = createMatchSchema.safeParse(input)
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid" }
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "errors.invalid" }
   }
   const user = await getCurrentUser()
   if (!user) return unauthorized()
@@ -61,9 +61,9 @@ export async function createMatchAction(
     .from(bookings)
     .where(eq(bookings.id, bookingId))
     .limit(1)
-  if (!booking) return { ok: false, error: "Booking not found." }
+  if (!booking) return { ok: false, error: "matches.errors.bookingNotFound" }
   if (booking.status !== "confirmed") {
-    return { ok: false, error: "Booking must be confirmed first." }
+    return { ok: false, error: "matches.errors.bookingConfirmedFirst" }
   }
 
   // Booking must not already have a match (1:1).
@@ -73,7 +73,7 @@ export async function createMatchAction(
     .where(eq(matches.bookingId, bookingId))
     .limit(1)
   if (existing.length > 0) {
-    return { ok: false, error: "A match already exists for this booking." }
+    return { ok: false, error: "matches.errors.matchExists" }
   }
 
   // Compute kickoff timestamp.
@@ -122,9 +122,9 @@ export async function acceptAsOpponentAction(
     .from(matches)
     .where(eq(matches.id, matchId))
     .limit(1)
-  if (!match) return { ok: false, error: "Match not found." }
+  if (!match) return { ok: false, error: "matches.errors.matchNotFound" }
   if (match.state !== "open") {
-    return { ok: false, error: "This match is no longer open." }
+    return { ok: false, error: "matches.errors.matchNotOpen" }
   }
 
   // Can't accept your own match.
@@ -134,7 +134,7 @@ export async function acceptAsOpponentAction(
     .where(and(eq(matchTeams.matchId, matchId), eq(matchTeams.side, "home")))
     .limit(1)
   if (homeSide[0]?.teamId === teamId) {
-    return { ok: false, error: "You can't accept your own match." }
+    return { ok: false, error: "matches.errors.ownMatch" }
   }
 
   // Conditional update: only transition if still 'open'. Prevents races
@@ -146,7 +146,7 @@ export async function acceptAsOpponentAction(
     .returning({ id: matches.id })
 
   if (updated.length === 0) {
-    return { ok: false, error: "This match was just taken." }
+    return { ok: false, error: "matches.errors.matchJustTaken" }
   }
 
   // Add the away team.
@@ -188,9 +188,9 @@ export async function addPlayerAction(
     .from(matches)
     .where(eq(matches.id, matchId))
     .limit(1)
-  if (!match) return { ok: false, error: "Match not found." }
+  if (!match) return { ok: false, error: "matches.errors.matchNotFound" }
   if (!["confirmed", "roster_building"].includes(match.state)) {
-    return { ok: false, error: "Roster isn't open for this match yet." }
+    return { ok: false, error: "matches.errors.rosterNotOpen" }
   }
 
   // Verify the player is a member of the team.
@@ -199,14 +199,14 @@ export async function addPlayerAction(
     .from(teamMembers)
     .where(and(eq(teamMembers.teamId, teamId), eq(teamMembers.userId, playerId)))
     .limit(1)
-  if (!membership) return { ok: false, error: "That player isn't on the team." }
+  if (!membership) return { ok: false, error: "matches.errors.playerNotOnTeam" }
 
   // Roster limit check.
   const { countRoster } = await import("./queries")
   const count = await countRoster(matchId, teamId)
   const limits = ROSTER_LIMITS[match.matchType] ?? ROSTER_LIMITS.fives
   if (count >= limits.max) {
-    return { ok: false, error: `Roster is full (max ${limits.max}).` }
+    return { ok: false, error: "matches.errors.rosterFull" }
   }
 
   // Transition to roster_building if still confirmed.
@@ -241,7 +241,7 @@ export async function removePlayerAction(
       and(eq(matchPlayers.matchId, matchId), eq(matchPlayers.userId, playerId))
     )
     .limit(1)
-  if (!player || !player.teamId) return { ok: false, error: "Player not on roster." }
+  if (!player || !player.teamId) return { ok: false, error: "matches.errors.playerNotOnRoster" }
 
   const role = await getTeamRole(player.teamId, user.id)
   if (role !== "owner" && role !== "captain") return forbidden()
@@ -265,7 +265,7 @@ export async function submitResultAction(
 ): Promise<ActionResult> {
   const parsed = submitResultSchema.safeParse(input)
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid" }
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "errors.invalid" }
   }
   const user = await getCurrentUser()
   if (!user) return unauthorized()
@@ -276,9 +276,9 @@ export async function submitResultAction(
     .from(matches)
     .where(eq(matches.id, matchId))
     .limit(1)
-  if (!match) return { ok: false, error: "Match not found." }
+  if (!match) return { ok: false, error: "matches.errors.matchNotFound" }
   if (!["ongoing", "completed"].includes(match.state)) {
-    return { ok: false, error: "Match isn't ready for results." }
+    return { ok: false, error: "matches.errors.notReadyForResults" }
   }
 
   // Must be captain/owner of one of the teams.
@@ -327,9 +327,9 @@ export async function confirmResultAction(matchId: string): Promise<ActionResult
     .from(matches)
     .where(eq(matches.id, matchId))
     .limit(1)
-  if (!match) return { ok: false, error: "Match not found." }
+  if (!match) return { ok: false, error: "matches.errors.matchNotFound" }
   if (match.resultStatus !== "pending") {
-    return { ok: false, error: "Result isn't pending confirmation." }
+    return { ok: false, error: "matches.errors.resultNotPending" }
   }
 
   // Must be captain/owner of a team in this match, but NOT the submitter.
@@ -348,7 +348,7 @@ export async function confirmResultAction(matchId: string): Promise<ActionResult
     }
   }
   if (!isAuthorized) {
-    return { ok: false, error: "Only the opposing captain can confirm." }
+    return { ok: false, error: "matches.errors.onlyOpponentConfirm" }
   }
 
   await db

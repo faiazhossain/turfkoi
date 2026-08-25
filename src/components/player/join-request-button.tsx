@@ -4,6 +4,8 @@ import { useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
+import { useI18n } from "@/i18n/client"
+
 import { Button } from "@/components/ui/button"
 import { requestToJoinAction } from "@/features/player/actions"
 
@@ -21,6 +23,7 @@ export function JoinRequestButton({
   spots: TeamSpot[]
 }) {
   const router = useRouter()
+  const { t } = useI18n()
   const [pending, start] = useTransition()
 
   if (spots.length === 0) return null
@@ -29,10 +32,10 @@ export function JoinRequestButton({
     start(async () => {
       const res = await requestToJoinAction(matchId)
       if (!res.ok) {
-        toast.error(res.error)
+        toast.error(t(res.error ?? "errors.generic"))
         return
       }
-      toast.success(`Requested to join ${teamName}.`)
+      toast.success(t("matches.requestedJoin", { team: teamName }))
       router.refresh()
     })
   }
@@ -47,7 +50,7 @@ export function JoinRequestButton({
           onClick={() => join(s.teamName)}
           loading={pending}
         >
-          Request to join {s.teamName} ({s.open} spots)
+          {t("matches.requestToJoin", { team: s.teamName, count: s.open })}
         </Button>
       ))}
     </div>

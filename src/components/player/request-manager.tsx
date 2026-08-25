@@ -3,6 +3,8 @@
 import { useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
+
+import { useI18n } from "@/i18n/client"
 import { CheckIcon, XIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -25,6 +27,7 @@ interface RequestManagerProps {
 
 export function RequestManager({ teamId, requests }: RequestManagerProps) {
   const router = useRouter()
+  const { t } = useI18n()
   const [pending, start] = useTransition()
 
   if (requests.length === 0) return null
@@ -33,10 +36,10 @@ export function RequestManager({ teamId, requests }: RequestManagerProps) {
     start(async () => {
       const res = await acceptPlayerRequestAction(matchId, userId, teamId)
       if (!res.ok) {
-        toast.error(res.error)
+        toast.error(t(res.error ?? "errors.generic"))
         return
       }
-      toast.success("Player added to roster.")
+      toast.success(t("matches.playerAdded"))
       router.refresh()
     })
   }
@@ -45,10 +48,10 @@ export function RequestManager({ teamId, requests }: RequestManagerProps) {
     start(async () => {
       const res = await rejectPlayerRequestAction(matchId, userId)
       if (!res.ok) {
-        toast.error(res.error)
+        toast.error(t(res.error ?? "errors.generic"))
         return
       }
-      toast.success("Request rejected.")
+      toast.success(t("matches.requestRejected"))
       router.refresh()
     })
   }
@@ -56,7 +59,7 @@ export function RequestManager({ teamId, requests }: RequestManagerProps) {
   return (
     <section className="space-y-2">
       <h3 className="font-heading text-sm font-semibold">
-        Join requests ({requests.length})
+        {t("matches.joinRequests", { count: requests.length })}
       </h3>
       <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border">
         {requests.map((r) => (
@@ -78,7 +81,7 @@ export function RequestManager({ teamId, requests }: RequestManagerProps) {
               <Button
                 size="icon-sm"
                 variant="outline"
-                aria-label="Accept"
+                aria-label={t("common.accept")}
                 onClick={() => accept(r.matchId, r.userId)}
                 loading={pending}
               >
@@ -87,7 +90,7 @@ export function RequestManager({ teamId, requests }: RequestManagerProps) {
               <Button
                 size="icon-sm"
                 variant="ghost"
-                aria-label="Reject"
+                aria-label={t("common.reject")}
                 onClick={() => reject(r.matchId, r.userId)}
                 loading={pending}
               >

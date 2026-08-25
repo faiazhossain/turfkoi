@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation"
 import { CopyIcon } from "lucide-react"
 import { toast } from "sonner"
 
+import { useI18n } from "@/i18n/client"
+
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -38,6 +40,7 @@ export function ClaimOtpFlow({
   maskedPhone: string
 }) {
   const router = useRouter()
+  const { t } = useI18n()
   const [code, setCode] = useState("")
   const [verifying, setVerifying] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -60,7 +63,7 @@ export function ClaimOtpFlow({
     try {
       const res = await claimOtpLoginAction(token, code)
       if (!res.ok) {
-        setError(res.error)
+        setError(t(res.error ?? "errors.generic"))
         return
       }
       setModalOpen(true)
@@ -72,14 +75,14 @@ export function ClaimOtpFlow({
   async function onSavePassword() {
     setModalError(null)
     if (password !== confirm) {
-      setModalError("Passwords do not match")
+      setModalError(t("auth.passwordsNoMatch"))
       return
     }
     setSaving(true)
     try {
       const res = await setClaimPasswordAction(password)
       if (!res.ok) {
-        setModalError(res.error)
+        setModalError(t(res.error ?? "errors.generic"))
         return
       }
       await claimAndGo()
@@ -94,7 +97,7 @@ export function ClaimOtpFlow({
     try {
       const res = await skipClaimPasswordAction()
       if (!res.ok) {
-        setModalError(res.error)
+        setModalError(t(res.error ?? "errors.generic"))
         return
       }
       setGenerated(res.password)
@@ -108,7 +111,7 @@ export function ClaimOtpFlow({
     try {
       const res = await claimTurfAction(token)
       if (!res.ok) {
-        toast.error(res.error)
+        toast.error(t(res.error ?? "errors.generic"))
         setClaiming(false)
         setModalOpen(false)
         return
@@ -123,17 +126,16 @@ export function ClaimOtpFlow({
     if (!generated) return
     try {
       await navigator.clipboard.writeText(generated)
-      toast.success("Password copied — keep it somewhere safe.")
+      toast.success(t("claim.copiedToast"))
     } catch {
-      toast.error("Couldn't copy. Write it down manually.")
+      toast.error(t("claim.copyFailToast"))
     }
   }
 
   return (
     <div className="space-y-3">
       <p className="text-sm text-muted-foreground">
-        We sent a 6-digit code to your WhatsApp ({maskedPhone}). Enter it to
-        sign in and claim this turf.
+        {t("claim.otpSentTo", { phone: maskedPhone })}
       </p>
       <form
         onSubmit={(e) => {
@@ -143,7 +145,7 @@ export function ClaimOtpFlow({
         className="space-y-3"
       >
         <div className="space-y-2">
-          <Label htmlFor="claim-otp">WhatsApp code</Label>
+          <Label htmlFor="claim-otp">{t("claim.codeLabel")}</Label>
           <Input
             id="claim-otp"
             inputMode="numeric"
@@ -157,7 +159,7 @@ export function ClaimOtpFlow({
         </div>
         {error ? <StatusBadge status="danger">{error}</StatusBadge> : null}
         <Button type="submit" size="lg" className="w-full" loading={verifying}>
-          {verifying ? "Verifying" : "Verify and continue"}
+          {verifying ? t("claim.verifying") : t("claim.verify")}
         </Button>
       </form>
 
@@ -165,12 +167,10 @@ export function ClaimOtpFlow({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {generated ? "Your password" : "Set a password"}
+              {generated ? t("claim.yourPasswordTitle") : t("claim.setPasswordTitle")}
             </DialogTitle>
             <DialogDescription>
-              {generated
-                ? "Use this to sign in with your phone number. You can change it later in settings."
-                : "You're signed in. Choose a password for next time — or skip and we'll generate one for you."}
+              {generated ? t("claim.passwordGeneratedDesc") : t("claim.passwordChooseDesc")}
             </DialogDescription>
           </DialogHeader>
 
@@ -181,20 +181,19 @@ export function ClaimOtpFlow({
                   readOnly
                   value={generated}
                   onFocus={(e) => e.currentTarget.select()}
-                  aria-label="Generated password"
+                  aria-label={t("claim.generatedAria")}
                 />
                 <Button
                   variant="outline"
                   onClick={onCopyGenerated}
-                  aria-label="Copy password"
+                  aria-label={t("claim.copyAria")}
                 >
                   <CopyIcon className="size-4" aria-hidden />
-                  Copy
+                  {t("common.copy")}
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">
-                Shown only once — save it now. Signing in uses your phone
-                number ({maskedPhone}) and this password.
+                {t("claim.shownOnce", { phone: maskedPhone })}
               </p>
               {modalError ? (
                 <StatusBadge status="danger">{modalError}</StatusBadge>
@@ -203,23 +202,23 @@ export function ClaimOtpFlow({
           ) : (
             <div className="space-y-3">
               <div className="space-y-2">
-                <Label htmlFor="claim-password">New password</Label>
+                <Label htmlFor="claim-password">{t("auth.newPassword")}</Label>
                 <Input
                   id="claim-password"
                   type="password"
                   autoComplete="new-password"
-                  placeholder="At least 8 characters"
+                  placeholder={t("auth.passwordPlaceholder")}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="claim-confirm">Confirm password</Label>
+                <Label htmlFor="claim-confirm">{t("auth.confirmPassword")}</Label>
                 <Input
                   id="claim-confirm"
                   type="password"
                   autoComplete="new-password"
-                  placeholder="Same password again"
+                  placeholder={t("claim.confirmPlaceholder")}
                   value={confirm}
                   onChange={(e) => setConfirm(e.target.value)}
                 />
@@ -233,7 +232,7 @@ export function ClaimOtpFlow({
           <DialogFooter>
             {generated ? (
               <Button loading={claiming} onClick={claimAndGo}>
-                {claiming ? "Claiming your turf" : "Continue"}
+                {claiming ? t("claim.claimingYourTurf") : t("common.continue")}
               </Button>
             ) : (
               <>
@@ -243,14 +242,14 @@ export function ClaimOtpFlow({
                   loading={skipping}
                   disabled={saving}
                 >
-                  Skip — generate one for me
+                  {t("claim.skipGenerate")}
                 </Button>
                 <Button
                   onClick={onSavePassword}
                   loading={saving}
                   disabled={skipping}
                 >
-                  Save password
+                  {t("claim.savePassword")}
                 </Button>
               </>
             )}

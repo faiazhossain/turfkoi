@@ -4,6 +4,8 @@ import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
+import { useI18n } from "@/i18n/client"
+
 import { Button } from "@/components/ui/button"
 import { holdSlotAction } from "@/features/bookings/actions"
 
@@ -21,15 +23,14 @@ interface Slot {
  */
 export function BookSlotButton({ turfId, slots }: { turfId: string; slots: Slot[] }) {
   const router = useRouter()
+  const { t } = useI18n()
   const [pending, start] = useTransition()
   const [selected, setSelected] = useState<string | null>(null)
 
   const available = slots.filter((s) => s.status === "available")
   if (available.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground">
-        No bookable slots right now — check back later.
-      </p>
+      <p className="text-sm text-muted-foreground">{t("turfs.noBookable")}</p>
     )
   }
 
@@ -42,7 +43,7 @@ export function BookSlotButton({ turfId, slots }: { turfId: string; slots: Slot[
         startTime: slot.startTime,
       })
       if (!res.ok || !res.bookingId) {
-        toast.error(!res.ok ? res.error : "Couldn't hold that slot.")
+        toast.error(!res.ok ? t(res.error ?? "errors.generic") : t("turfs.holdFailed"))
         setSelected(null)
         return
       }
@@ -72,7 +73,7 @@ export function BookSlotButton({ turfId, slots }: { turfId: string; slots: Slot[
                 onClick={() => book(s)}
                 loading={pending}
               >
-                {busy ? "Holding…" : "Book"}
+                {busy ? t("turfs.holding") : t("turfs.book")}
               </Button>
             </div>
           </li>

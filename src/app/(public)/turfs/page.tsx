@@ -1,10 +1,19 @@
 import { MapPinIcon } from "lucide-react"
 
+import { getT } from "@/i18n/server"
+import { buildMetadata } from "@/i18n/metadata"
 import { EmptyState, StatusBadge } from "@/components/shared"
 import { MapView } from "@/components/map"
 import { AreaSearch, TurfCard } from "@/components/turfs"
 import { listTurfs, listTurfAreas, type ListTurfsFilter } from "@/features/turfs/queries"
 import { isTurfFormat } from "@/features/turfs/formats"
+
+export async function generateMetadata() {
+  return buildMetadata({
+    titleKey: "metadata.turfsTitle",
+    descriptionKey: "metadata.turfsDescription",
+  })
+}
 
 interface PageProps {
   searchParams: Promise<{
@@ -34,19 +43,20 @@ function parseFilter(
 export default async function TurfsPage({ searchParams }: PageProps) {
   const sp = await searchParams
   const filter = parseFilter(sp)
-  const [turfs, areas] = await Promise.all([listTurfs(filter), listTurfAreas()])
+  const [turfs, areas, t] = await Promise.all([
+    listTurfs(filter),
+    listTurfAreas(),
+    getT(),
+  ])
   const hasFilter = Boolean(sp.area || sp.lat || sp.format)
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 px-4 py-12">
       <header className="space-y-2">
         <h1 className="font-heading text-3xl font-semibold tracking-tight">
-          Find a turf
+          {t("turfs.title")}
         </h1>
-        <p className="text-sm text-muted-foreground">
-          Browse verified turfs across Bangladesh — filter by area, or see them
-          on the map.
-        </p>
+        <p className="text-sm text-muted-foreground">{t("turfs.subtitle")}</p>
       </header>
 
       <AreaSearch
@@ -58,22 +68,22 @@ export default async function TurfsPage({ searchParams }: PageProps) {
       {turfs.length === 0 ? (
         <EmptyState
           icon={MapPinIcon}
-          title="No turfs match your search"
+          title={t("turfs.emptyTitle")}
           description={
-            hasFilter
-              ? "Try a wider area or clear the filters."
-              : "Verified turfs will appear here once turf owners list them."
+            hasFilter ? t("turfs.emptyFiltered") : t("turfs.emptyDefault")
           }
         />
       ) : (
         <>
           <div className="flex items-center gap-2">
             <StatusBadge status="neutral" showIcon={false}>
-              {turfs.length} turf{turfs.length === 1 ? "" : "s"}
+              {t(turfs.length === 1 ? "turfs.countOne" : "turfs.countMany", {
+                count: turfs.length,
+              })}
             </StatusBadge>
           </div>
           <MapView
-            ariaLabel="Turf locations"
+            ariaLabel={t("turfs.mapAria")}
             className="h-80"
             markers={turfs.map((t) => ({
               id: t.id,

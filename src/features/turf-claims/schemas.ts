@@ -48,7 +48,7 @@ export type ClaimOtpValues = z.infer<typeof claimOtpSchema>
 export const claimPasswordSchema = z.object({
   password: z
     .string()
-    .min(8, "Password must be at least 8 characters")
+    .min(8, "claim.errors.passwordMin")
     .max(72, "Password is too long"),
 })
 export type ClaimPasswordValues = z.infer<typeof claimPasswordSchema>

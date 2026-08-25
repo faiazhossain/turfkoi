@@ -2,6 +2,7 @@ import { redirect } from "next/navigation"
 import Link from "next/link"
 
 import { getCurrentUser } from "@/lib/auth"
+import { getT } from "@/i18n/server"
 import { getTurfById } from "@/features/turfs/queries"
 import { turfFormatLabel } from "@/features/turfs/formats"
 import { Button } from "@/components/ui/button"
@@ -20,27 +21,12 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 
-const FAILURE_COPY: Record<string, { title: string; body: string }> = {
-  invalid: {
-    title: "This claim link isn't valid",
-    body: "Check that you opened the full link, or ask the Turfkoi team for a new one.",
-  },
-  expired: {
-    title: "This claim link has expired",
-    body: `Claim links stay valid for ${CLAIM_INVITE_TTL_DAYS} days. Ask the Turfkoi team to send a fresh one.`,
-  },
-  claimed: {
-    title: "This turf has already been claimed",
-    body: "If that wasn't you, contact the Turfkoi team.",
-  },
-  revoked: {
-    title: "This claim link was replaced",
-    body: "A newer invite was sent for this turf — use the most recent link.",
-  },
-  turf_claimed: {
-    title: "This turf has already been claimed",
-    body: "If that wasn't you, contact the Turfkoi team.",
-  },
+const FAILURE_KEYS: Record<string, { titleKey: string; bodyKey: string }> = {
+  invalid: { titleKey: "claim.invalidTitle", bodyKey: "claim.invalidBody" },
+  expired: { titleKey: "claim.expiredTitle", bodyKey: "claim.expiredBody" },
+  claimed: { titleKey: "claim.claimedTitle", bodyKey: "claim.claimedBody" },
+  revoked: { titleKey: "claim.revokedTitle", bodyKey: "claim.revokedBody" },
+  turf_claimed: { titleKey: "claim.claimedTitle", bodyKey: "claim.claimedBody" },
 }
 
 /**
@@ -56,16 +42,18 @@ export default async function ClaimTurfPage({
   params: Promise<{ token: string }>
 }) {
   const { token } = await params
-  const resolved = await resolveClaimToken(token)
+  const [resolved, t] = await Promise.all([resolveClaimToken(token), getT()])
 
   if (!resolved.ok) {
-    const copy = FAILURE_COPY[resolved.reason]!
+    const copy = FAILURE_KEYS[resolved.reason]!
     return (
       <div className="mx-auto flex max-w-md flex-col gap-6 px-4 py-16">
         <Card>
           <CardHeader>
-            <CardTitle className="font-heading text-2xl">{copy.title}</CardTitle>
-            <CardDescription>{copy.body}</CardDescription>
+            <CardTitle className="font-heading text-2xl">
+              {t(copy.titleKey, resolved.reason === "expired" ? { days: CLAIM_INVITE_TTL_DAYS } : undefined)}
+            </CardTitle>
+            <CardDescription>{t(copy.bodyKey, resolved.reason === "expired" ? { days: CLAIM_INVITE_TTL_DAYS } : undefined)}</CardDescription>
           </CardHeader>
         </Card>
       </div>
@@ -92,27 +80,25 @@ export default async function ClaimTurfPage({
       <Card>
         <CardHeader>
           <CardTitle className="font-heading text-2xl">
-            Claim &ldquo;{turf.name}&rdquo;
+            {t("claim.claimTitle", { name: turf.name })}
           </CardTitle>
-          <CardDescription>
-            You&apos;ve been invited to manage this turf on Turfkoi.
-          </CardDescription>
+          <CardDescription>{t("claim.claimDesc")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <dl className="space-y-2 text-sm">
             <div className="flex justify-between gap-4">
-              <dt className="text-muted-foreground">Format</dt>
+              <dt className="text-muted-foreground">{t("claim.format")}</dt>
               <dd>{turfFormatLabel(turf.format)}</dd>
             </div>
             {place ? (
               <div className="flex justify-between gap-4">
-                <dt className="text-muted-foreground">Location</dt>
+                <dt className="text-muted-foreground">{t("claim.location")}</dt>
                 <dd className="text-right">{place}</dd>
               </div>
             ) : null}
             {turf.address ? (
               <div className="flex justify-between gap-4">
-                <dt className="text-muted-foreground">Address</dt>
+                <dt className="text-muted-foreground">{t("claim.address")}</dt>
                 <dd className="text-right">{turf.address}</dd>
               </div>
             ) : null}
@@ -123,16 +109,13 @@ export default async function ClaimTurfPage({
             <ClaimOtpFlow token={token} maskedPhone={maskedPhone} />
           ) : (
             <div className="space-y-3">
-              <p className="text-sm text-muted-foreground">
-                Sign in or create a free account to claim this turf — you&apos;ll
-                come straight back here.
-              </p>
+              <p className="text-sm text-muted-foreground">{t("claim.signInNote")}</p>
               <div className="flex gap-2">
                 <Button size="lg" render={<Link href="/login" />}>
-                  Sign in
+                  {t("nav.signIn")}
                 </Button>
                 <Button size="lg" variant="outline" render={<Link href="/register" />}>
-                  Create account
+                  {t("auth.createAccount")}
                 </Button>
               </div>
             </div>

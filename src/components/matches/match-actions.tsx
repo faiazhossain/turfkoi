@@ -4,6 +4,8 @@ import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
+import { useI18n } from "@/i18n/client"
+
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -60,6 +62,7 @@ interface MatchActionsProps {
 
 export function MatchActions(props: MatchActionsProps) {
   const router = useRouter()
+  const { t } = useI18n()
   const [pending, start] = useTransition()
   const [home, setHome] = useState(String(props.homeScore ?? 0))
   const [away, setAway] = useState(String(props.awayScore ?? 0))
@@ -82,10 +85,10 @@ export function MatchActions(props: MatchActionsProps) {
     start(async () => {
       const res = await acceptAsOpponentAction(props.matchId, teamId)
       if (!res.ok) {
-        toast.error(res.error)
+        toast.error(t(res.error ?? "errors.generic"))
         return
       }
-      toast.success("You're the opponent!")
+      toast.success(t("matches.youAreOpponent"))
       router.refresh()
     })
   }
@@ -95,10 +98,10 @@ export function MatchActions(props: MatchActionsProps) {
     start(async () => {
       const res = await addPlayerAction(props.matchId, addTeamId, addPlayerId)
       if (!res.ok) {
-        toast.error(res.error)
+        toast.error(t(res.error ?? "errors.generic"))
         return
       }
-      toast.success("Player added to roster.")
+      toast.success(t("matches.playerAdded"))
       setAddPlayerId("")
       router.refresh()
     })
@@ -108,10 +111,10 @@ export function MatchActions(props: MatchActionsProps) {
     start(async () => {
       const res = await removePlayerAction(props.matchId, playerId)
       if (!res.ok) {
-        toast.error(res.error)
+        toast.error(t(res.error ?? "errors.generic"))
         return
       }
-      toast.success("Player removed.")
+      toast.success(t("matches.playerRemoved"))
       router.refresh()
     })
   }
@@ -124,10 +127,10 @@ export function MatchActions(props: MatchActionsProps) {
         awayScore: Number(away),
       })
       if (!res.ok) {
-        toast.error(res.error)
+        toast.error(t(res.error ?? "errors.generic"))
         return
       }
-      toast.success("Result submitted — awaiting opponent confirmation.")
+      toast.success(t("matches.resultSubmitted"))
       router.refresh()
     })
   }
@@ -136,10 +139,10 @@ export function MatchActions(props: MatchActionsProps) {
     start(async () => {
       const res = await confirmResultAction(props.matchId)
       if (!res.ok) {
-        toast.error(res.error)
+        toast.error(t(res.error ?? "errors.generic"))
         return
       }
-      toast.success("Result confirmed.")
+      toast.success(t("matches.resultConfirmed"))
       router.refresh()
     })
   }
@@ -149,15 +152,15 @@ export function MatchActions(props: MatchActionsProps) {
       {/* Accept as opponent */}
       {canAccept ? (
         <section className="space-y-2">
-          <h3 className="font-heading text-sm font-semibold">Accept as opponent</h3>
+          <h3 className="font-heading text-sm font-semibold">{t("matches.acceptAsOpponent")}</h3>
           <div className="flex flex-wrap gap-2">
-            {props.myTeams.map((t) => (
+            {props.myTeams.map((tm) => (
               <Button
-                key={t.teamId}
-                onClick={() => accept(t.teamId)}
+                key={tm.teamId}
+                onClick={() => accept(tm.teamId)}
                 loading={pending}
               >
-                Accept as {t.teamName}
+                {t("matches.acceptAs", { team: tm.teamName })}
               </Button>
             ))}
           </div>
@@ -167,20 +170,20 @@ export function MatchActions(props: MatchActionsProps) {
       {/* Roster building */}
       {canBuildRoster ? (
         <section className="space-y-3">
-          <h3 className="font-heading text-sm font-semibold">Roster</h3>
-          {props.myTeams.map((t) => {
-            const players = props.roster.filter((p) => p.teamId === t.teamId)
+          <h3 className="font-heading text-sm font-semibold">{t("matches.roster")}</h3>
+          {props.myTeams.map((tm) => {
+            const players = props.roster.filter((p) => p.teamId === tm.teamId)
             return (
-              <div key={t.teamId} className="space-y-2">
+              <div key={tm.teamId} className="space-y-2">
                 <p className="text-sm font-medium">
-                  {t.teamName}{" "}
+                  {tm.teamName}{" "}
                   <span className="text-muted-foreground">
-                    ({t.side})
+                    ({t("matches.side" + (tm.side === "home" ? "Home" : "Away"))})
                   </span>
                 </p>
                 {players.length === 0 ? (
                   <p className="text-xs text-muted-foreground">
-                    No players added yet.
+                    {t("matches.noPlayers")}
                   </p>
                 ) : (
                   <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border">
@@ -196,7 +199,7 @@ export function MatchActions(props: MatchActionsProps) {
                           onClick={() => removePlayer(p.userId)}
                           loading={pending}
                         >
-                          Remove
+                          {t("common.remove")}
                         </Button>
                       </li>
                     ))}
@@ -208,7 +211,7 @@ export function MatchActions(props: MatchActionsProps) {
                     onValueChange={(v) => v && setAddPlayerId(v)}
                   >
                     <SelectTrigger size="sm" className="flex-1">
-                      <SelectValue placeholder="Add player…" />
+                      <SelectValue placeholder={t("matches.addPlayer")} />
                     </SelectTrigger>
                     <SelectContent>
                       {props.teamMembers.map((m) => (
@@ -221,13 +224,13 @@ export function MatchActions(props: MatchActionsProps) {
                   <Button
                     size="sm"
                     onClick={() => {
-                      setAddTeamId(t.teamId)
+                      setAddTeamId(tm.teamId)
                       addPlayer()
                     }}
                     disabled={!addPlayerId}
                     loading={pending}
                   >
-                    Add
+                    {t("common.add")}
                   </Button>
                 </div>
               </div>
@@ -239,11 +242,11 @@ export function MatchActions(props: MatchActionsProps) {
       {/* Result submission */}
       {canSubmitResult ? (
         <section className="space-y-2">
-          <h3 className="font-heading text-sm font-semibold">Submit result</h3>
+          <h3 className="font-heading text-sm font-semibold">{t("matches.submitResult")}</h3>
           <div className="flex items-end gap-2">
             <div className="space-y-1">
               <Label className="text-xs">
-                {props.sides.find((s) => s.side === "home")?.teamName ?? "Home"}
+                {props.sides.find((s) => s.side === "home")?.teamName ?? t("matches.home")}
               </Label>
               <Input
                 type="number"
@@ -257,7 +260,7 @@ export function MatchActions(props: MatchActionsProps) {
             <span className="pb-2 text-muted-foreground">–</span>
             <div className="space-y-1">
               <Label className="text-xs">
-                {props.sides.find((s) => s.side === "away")?.teamName ?? "Away"}
+                {props.sides.find((s) => s.side === "away")?.teamName ?? t("matches.away")}
               </Label>
               <Input
                 type="number"
@@ -269,7 +272,7 @@ export function MatchActions(props: MatchActionsProps) {
               />
             </div>
             <Button onClick={submitResult} loading={pending}>
-              Submit
+              {t("common.submit")}
             </Button>
           </div>
         </section>
@@ -278,13 +281,13 @@ export function MatchActions(props: MatchActionsProps) {
       {/* Result confirmation */}
       {canConfirm ? (
         <section className="space-y-2">
-          <h3 className="font-heading text-sm font-semibold">Confirm result</h3>
+          <h3 className="font-heading text-sm font-semibold">{t("matches.confirmResult")}</h3>
           <p className="text-sm text-muted-foreground">
-            Score: {props.homeScore} – {props.awayScore}
+            {t("matches.score", { score: `${props.homeScore} – ${props.awayScore}` })}
           </p>
           <div className="flex gap-2">
             <Button onClick={confirmResult} loading={pending}>
-              Confirm result
+              {t("matches.confirmResult")}
             </Button>
           </div>
         </section>

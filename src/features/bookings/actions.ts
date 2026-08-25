@@ -40,10 +40,10 @@ export type ActionResult =
   | { ok: false; error: string }
 
 function unauthorized(): ActionResult {
-  return { ok: false, error: "You are not signed in." }
+  return { ok: false, error: "errors.notSignedIn" }
 }
 function forbidden(): ActionResult {
-  return { ok: false, error: "You don't have permission to do that." }
+  return { ok: false, error: "errors.noPermission" }
 }
 
 /** Compute slot end (HH:MM) from start + duration, wrapping at 24h. */
@@ -74,7 +74,7 @@ export async function holdSlotAction(
 ): Promise<ActionResult & { bookingId?: string }> {
   const parsed = holdSlotSchema.safeParse(input)
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid" }
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "errors.invalid" }
   }
   const user = await getCurrentUser()
   if (!user) return unauthorized()
@@ -82,7 +82,7 @@ export async function holdSlotAction(
   // Brute-force guard: max 5 holds/min per user.
   const allowed = await rateLimit(`hold:${user.id}`, 5, 60)
   if (!allowed) {
-    return { ok: false, error: "Too many attempts — wait a minute and retry." }
+    return { ok: false, error: "errors.rateLimited" }
   }
 
   const { turfId, date, startTime } = parsed.data
@@ -100,9 +100,9 @@ export async function holdSlotAction(
     )
     .limit(1)
   const slot = slotRows[0]
-  if (!slot) return { ok: false, error: "That slot no longer exists." }
+  if (!slot) return { ok: false, error: "turfs.errors.slotGone" }
   if (slot.status !== "available") {
-    return { ok: false, error: "That slot was just taken." }
+    return { ok: false, error: "turfs.errors.slotTaken" }
   }
 
   const bookingId = randomUUID()
@@ -127,7 +127,7 @@ export async function holdSlotAction(
     .returning({ turfId: turfSlots.turfId })
 
   if (claimed.length === 0) {
-    return { ok: false, error: "That slot was just taken." }
+    return { ok: false, error: "turfs.errors.slotTaken" }
   }
 
   try {
@@ -155,7 +155,7 @@ export async function holdSlotAction(
         )
       )
     if (String(err).includes("unique")) {
-      return { ok: false, error: "That slot was just taken." }
+      return { ok: false, error: "turfs.errors.slotTaken" }
     }
     throw err
   }
@@ -378,7 +378,7 @@ export async function cancelBookingAction(
 ): Promise<ActionResult & { refundAmount?: number }> {
   const parsed = cancelBookingSchema.safeParse(input)
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid" }
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "errors.invalid" }
   }
   const user = await getCurrentUser()
   if (!user) return unauthorized()
@@ -552,7 +552,7 @@ export async function markPayoutPaidAction(
 ): Promise<ActionResult> {
   const parsed = markPayoutPaidSchema.safeParse(input)
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid" }
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "errors.invalid" }
   }
   const user = await getCurrentUser()
   if (!user) return unauthorized()

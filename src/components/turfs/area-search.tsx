@@ -5,6 +5,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { MapPinIcon, SearchIcon } from "lucide-react"
 
+import { useI18n } from "@/i18n/client"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -64,6 +65,7 @@ export function AreaSearch({
   hasFilter: boolean
 }) {
   const router = useRouter()
+  const { t } = useI18n()
   const [query, setQuery] = useState(defaultValue)
   const [open, setOpen] = useState(false)
   const [activeIndex, setActiveIndex] = useState(-1)
@@ -149,9 +151,9 @@ export function AreaSearch({
           }}
           onFocus={() => setOpen(true)}
           onKeyDown={onKeyDown}
-          placeholder="Area, e.g. Dhanmondi"
+          placeholder={t("turfs.searchPlaceholder")}
           className="pl-8"
-          aria-label="Search turfs by area"
+          aria-label={t("turfs.searchAria")}
           role="combobox"
           aria-autocomplete="list"
           aria-expanded={open && suggestions.length > 0}
@@ -167,7 +169,7 @@ export function AreaSearch({
           <ul
             id={LISTBOX_ID}
             role="listbox"
-            aria-label="Available areas"
+            aria-label={t("turfs.areasAria")}
             className="absolute z-20 mt-1 w-full overflow-hidden rounded-lg border border-border bg-card shadow-lg"
           >
             {suggestions.map((option, i) => (
@@ -202,11 +204,11 @@ export function AreaSearch({
         ) : null}
       </div>
       <Button type="submit" variant="outline">
-        Search
+        {t("common.search")}
       </Button>
       {hasFilter ? (
         <Button type="button" variant="destructive" render={<Link href="/turfs" />}>
-          Clear
+          {t("common.clear")}
         </Button>
       ) : null}
     </form>

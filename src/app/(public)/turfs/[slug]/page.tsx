@@ -3,6 +3,7 @@ import { notFound } from "next/navigation"
 import type { Metadata } from "next"
 import { MapPinIcon, CalendarCheckIcon } from "lucide-react"
 
+import { getT } from "@/i18n/server"
 import { StatusBadge, EmptyState } from "@/components/shared"
 import { BookSlotButton } from "@/components/bookings/book-slot-button"
 import { getTurfBySlug, listTurfSlots, listTurfPhotos } from "@/features/turfs/queries"
@@ -18,14 +19,14 @@ export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
   const { slug } = await params
-  const turf = await getTurfBySlug(slug)
+  const [turf, t] = await Promise.all([getTurfBySlug(slug), getT()])
   // Seeded-but-unclaimed turfs are not public — don't leak them in metadata.
   if (!turf || turf.ownerId === null) return {}
-  const title = `${turf.name} — Book in Bangladesh`
-  const description =
-    `${turfFormatLabel(turf.format)} turf in ` +
-    `${[turf.area, turf.city].filter(Boolean).join(", ") || "Bangladesh"}. ` +
-    `See live availability and book online with bKash.`
+  const title = t("turfs.detailTitle", { name: turf.name })
+  const description = t("turfs.detailDescription", {
+    format: turfFormatLabel(turf.format),
+    place: [turf.area, turf.city].filter(Boolean).join(", ") || "Bangladesh",
+  })
   return {
     title,
     description,
@@ -34,30 +35,28 @@ export async function generateMetadata({
   }
 }
 
-const FACILITY_LABELS: Record<string, string> = {
-  indoor: "Indoor",
-  outdoor: "Outdoor",
-  lighting: "Floodlights",
-  parking: "Parking",
-  changingRoom: "Changing room",
-  shower: "Shower",
-  washroom: "Washroom",
-  equipment: "Equipment rental",
+const FACILITY_KEYS: Record<string, string> = {
+  indoor: "turfs.facility.indoor",
+  outdoor: "turfs.facility.outdoor",
+  lighting: "turfs.facility.lighting",
+  parking: "turfs.facility.parking",
+  changingRoom: "turfs.facility.changingRoom",
+  shower: "turfs.facility.shower",
+  washroom: "turfs.facility.washroom",
+  equipment: "turfs.facility.equipment",
 }
 
 /** Player-facing cancellation copy (semantics mirror lib/cancellation.ts). */
-const CANCELLATION_COPY: Record<string, string> = {
-  flexible: "Free cancellation — full refund any time before kickoff.",
-  moderate:
-    "Full refund up to 24h before kickoff, 50% inside 24h, none at the last minute.",
-  rebook_contingent:
-    "Refunded only if the slot is re-booked by another player.",
-  strict: "Non-refundable after booking.",
+const CANCELLATION_KEYS: Record<string, string> = {
+  flexible: "turfs.cancellationFlexible",
+  moderate: "turfs.cancellationModerate",
+  rebook_contingent: "turfs.cancellationRebook",
+  strict: "turfs.cancellationStrict",
 }
 
 export default async function TurfDetailPage({ params }: PageProps) {
   const { slug } = await params
-  const turf = await getTurfBySlug(slug)
+  const [turf, t] = await Promise.all([getTurfBySlug(slug), getT()])
   if (!turf) notFound()
 
   // Seeded-but-unclaimed turfs stay hidden; admins can still preview them
@@ -84,7 +83,7 @@ export default async function TurfDetailPage({ params }: PageProps) {
     <div className="mx-auto max-w-4xl space-y-8 px-4 py-12">
       <nav className="text-sm text-muted-foreground">
         <Link href="/turfs" className="hover:text-foreground">
-          Turfs
+          {t("nav.turfs")}
         </Link>{" "}
         / <span className="text-foreground">{turf.name}</span>
       </nav>
@@ -95,7 +94,7 @@ export default async function TurfDetailPage({ params }: PageProps) {
           <TurfPhotoStrip name={turf.name} photos={photos} />
         ) : (
           <div className="flex aspect-video w-full items-center justify-center rounded-xl border border-dashed border-border text-sm text-muted-foreground">
-            No photos yet
+            {t("turfs.noPhotosYet")}
           </div>
         )}
       </section>
@@ -109,12 +108,12 @@ export default async function TurfDetailPage({ params }: PageProps) {
             {turfFormatLabel(turf.format)}
           </StatusBadge>
           {turf.isActive ? null : (
-            <StatusBadge status="warning">Inactive</StatusBadge>
+            <StatusBadge status="warning">{t("turfs.inactive")}</StatusBadge>
           )}
         </div>
         <div className="flex items-center gap-1 text-sm text-muted-foreground">
           <MapPinIcon className="size-4" aria-hidden />
-          {[turf.area, turf.city].filter(Boolean).join(", ") || "Location TBD"}
+          {[turf.area, turf.city].filter(Boolean).join(", ") || t("turfs.locationTbd")}
         </div>
         {turf.description ? (
           <p className="max-w-2xl text-sm text-foreground/90">
@@ -125,28 +124,28 @@ export default async function TurfDetailPage({ params }: PageProps) {
 
       <section className="grid gap-6 md:grid-cols-2">
         <div className="space-y-2">
-          <h2 className="font-heading text-sm font-semibold">Facilities</h2>
+          <h2 className="font-heading text-sm font-semibold">{t("turfs.facilities")}</h2>
           {facilityList.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              No facility details provided.
+              {t("turfs.noFacilities")}
             </p>
           ) : (
             <ul className="grid grid-cols-2 gap-1 text-sm">
               {facilityList.map(([k]) => (
-                <li key={k}>{FACILITY_LABELS[k] ?? k}</li>
+                <li key={k}>{t(FACILITY_KEYS[k] ?? k)}</li>
               ))}
             </ul>
           )}
           {facilities.grassType ? (
             <p className="text-sm text-muted-foreground">
-              Surface: {facilities.grassType}
+              {t("turfs.surface", { type: facilities.grassType })}
             </p>
           ) : null}
         </div>
         <div className="space-y-2">
-          <h2 className="font-heading text-sm font-semibold">Cancellation</h2>
+          <h2 className="font-heading text-sm font-semibold">{t("turfs.cancellation")}</h2>
           <p className="text-sm text-muted-foreground">
-            {CANCELLATION_COPY[turf.cancellationPolicy] ?? turf.cancellationPolicy}
+            {t(CANCELLATION_KEYS[turf.cancellationPolicy] ?? turf.cancellationPolicy)}
           </p>
         </div>
       </section>
@@ -154,17 +153,19 @@ export default async function TurfDetailPage({ params }: PageProps) {
       <section className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="font-heading text-sm font-semibold">
-            Next 7 days
+            {t("turfs.next7Days")}
           </h2>
           <StatusBadge status="neutral" showIcon={false}>
-            {slots.length} slot{slots.length === 1 ? "" : "s"}
+            {t(slots.length === 1 ? "turfs.slotCountOne" : "turfs.slotCountMany", {
+              count: slots.length,
+            })}
           </StatusBadge>
         </div>
         {slots.length === 0 ? (
           <EmptyState
             icon={CalendarCheckIcon}
-            title="No published slots yet"
-            description="The turf owner hasn't published availability."
+            title={t("turfs.noSlotsTitle")}
+            description={t("turfs.noSlotsDesc")}
           />
         ) : (
           <BookSlotButton turfId={turf.id} slots={slots} />

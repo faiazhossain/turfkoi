@@ -2,6 +2,7 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { MapPinIcon, ClockIcon } from "lucide-react"
 
+import { getT } from "@/i18n/server"
 import { StatusBadge, EmptyState } from "@/components/shared"
 import { MapView } from "@/components/map"
 import { MatchActions } from "@/components/matches/match-actions"
@@ -34,7 +35,8 @@ const STATE_TONE: Record<string, "success" | "warning" | "neutral" | "primary"> 
 
 export default async function MatchDetailPage({ params }: PageProps) {
   const { id } = await params
-  const match = await getMatch(id)
+  // `tr` (translator) — `t` is already bound to the turf in this page.
+  const [match, tr] = await Promise.all([getMatch(id), getT()])
   if (!match) notFound()
 
   const user = await getCurrentUser()
@@ -121,9 +123,9 @@ export default async function MatchDetailPage({ params }: PageProps) {
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-12">
       <nav className="text-sm text-muted-foreground">
         <Link href="/matches" className="hover:text-foreground">
-          Matches
+          {tr("nav.matches")}
         </Link>{" "}
-        / <span className="text-foreground">Match</span>
+        / <span className="text-foreground">{tr("matches.breadcrumbMatch")}</span>
       </nav>
 
       <header className="space-y-2">
@@ -133,7 +135,7 @@ export default async function MatchDetailPage({ params }: PageProps) {
             {away ? ` vs ${away.teamName}` : ""}
           </h1>
           <StatusBadge status={STATE_TONE[m.state] ?? "neutral"} showIcon={false}>
-            {m.state.replace(/_/g, " ")}
+            {tr(`matches.state.${m.state}`)}
           </StatusBadge>
         </div>
         <div className="flex items-center gap-1 text-sm text-muted-foreground">
@@ -163,7 +165,7 @@ export default async function MatchDetailPage({ params }: PageProps) {
           </span>
           {m.resultStatus !== "confirmed" ? (
             <StatusBadge status="warning" showIcon={false}>
-              {m.resultStatus}
+              {tr(`matches.result.${m.resultStatus}`)}
             </StatusBadge>
           ) : null}
         </div>
@@ -182,21 +184,17 @@ export default async function MatchDetailPage({ params }: PageProps) {
       {myTeamOptions.length > 0 && openSpots.length > 0 ? (
         <section className="space-y-3">
           <h2 className="font-heading text-lg font-semibold">
-            Players available nearby
+            {tr("matches.nearbyTitle")}
           </h2>
-          <p className="text-sm text-muted-foreground">
-            Solo players marked available within 10 km of this turf. Locations
-            are approximate (within ~100m).
-          </p>
+          <p className="text-sm text-muted-foreground">{tr("matches.nearbyDesc")}</p>
           {nearbyPlayers.length === 0 ? (
             <p className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
-              No available players nearby right now. Your open spots are still
-              visible to players searching this area.
+              {tr("matches.nearbyEmpty")}
             </p>
           ) : (
             <>
               <MapView
-                ariaLabel="Available players near this turf"
+                ariaLabel={tr("matches.nearbyMapAria")}
                 className="h-72"
                 markers={[
                   ...(turfLatLng
@@ -214,7 +212,7 @@ export default async function MatchDetailPage({ params }: PageProps) {
                     id: p.userId,
                     lat: p.lat,
                     lng: p.lng,
-                    label: `${p.name ?? "Player"}${p.position ? ` · ${p.position}` : ""}`,
+                    label: `${p.name ?? tr("matches.player")}${p.position ? ` · ${p.position}` : ""}`,
                     kind: "player" as const,
                   })),
                 ]}
@@ -227,16 +225,16 @@ export default async function MatchDetailPage({ params }: PageProps) {
                   >
                     <div className="min-w-0">
                       <p className="truncate font-heading font-medium">
-                        {p.name ?? "Player"}
+                        {p.name ?? tr("matches.player")}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {[p.position, p.skill].filter(Boolean).join(" · ") ||
-                          "Position not set"}
+                          tr("matches.positionNotSet")}
                       </p>
                     </div>
                     <div className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
                       <MapPinIcon className="size-3" aria-hidden />
-                      {p.area || "Nearby"}
+                      {p.area || tr("matches.nearby")}
                       <span className="tabular-nums">
                         {p.distanceKm.toFixed(1)} km
                       </span>
@@ -275,11 +273,11 @@ export default async function MatchDetailPage({ params }: PageProps) {
         />
       ) : (
         <EmptyState
-          title="Sign in to interact"
+          title={tr("matches.signInTitle")}
           description={
             m.state === "open"
-              ? "Sign in to accept this match as an opponent."
-              : "Sign in to view full match details."
+              ? tr("matches.signInAccept")
+              : tr("matches.signInView")
           }
         />
       )}

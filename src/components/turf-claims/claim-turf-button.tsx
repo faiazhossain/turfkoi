@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 
+import { useI18n } from "@/i18n/client"
 import { Button } from "@/components/ui/button"
 import { StatusBadge } from "@/components/shared"
 
@@ -10,6 +11,7 @@ import { claimTurfAction } from "@/features/turf-claims/actions"
 
 export function ClaimTurfButton({ token }: { token: string }) {
   const router = useRouter()
+  const { t } = useI18n()
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -18,7 +20,7 @@ export function ClaimTurfButton({ token }: { token: string }) {
     setPending(true)
     const res = await claimTurfAction(token)
     if (!res.ok) {
-      setError(res.error)
+      setError(t(res.error ?? "errors.generic"))
       setPending(false)
       return
     }
@@ -29,12 +31,9 @@ export function ClaimTurfButton({ token }: { token: string }) {
     <div className="space-y-3">
       {error ? <StatusBadge status="danger">{error}</StatusBadge> : null}
       <Button size="lg" loading={pending} onClick={onClaim}>
-        {pending ? "Claiming" : "Claim this turf"}
+        {pending ? t("claim.claiming") : t("claim.claimButton")}
       </Button>
-      <p className="text-xs text-muted-foreground">
-        Claiming makes you this turf&apos;s owner on Turfkoi — you&apos;ll set
-        up slots, pricing, and photos next.
-      </p>
+      <p className="text-xs text-muted-foreground">{t("claim.claimNote")}</p>
     </div>
   )
 }

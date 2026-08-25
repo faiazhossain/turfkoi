@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { MapPinIcon } from "lucide-react"
 
+import { getT } from "@/i18n/server"
 import { Card, CardContent } from "@/components/ui/card"
 import { StatusBadge } from "@/components/shared"
 import { turfFormatShort, type TurfFormat } from "@/features/turfs/formats"
@@ -17,7 +18,7 @@ interface TurfCardProps {
   distanceKm: number | null
 }
 
-export function TurfCard({
+export async function TurfCard({
   slug,
   name,
   area,
@@ -26,6 +27,7 @@ export function TurfCard({
   photo,
   distanceKm,
 }: TurfCardProps) {
+  const t = await getT()
   return (
     <Link href={`/turfs/${slug}`} className="group block">
       <Card size="sm" className="overflow-hidden">
@@ -40,7 +42,7 @@ export function TurfCard({
             />
           ) : (
             <div className="flex size-full items-center justify-center text-xs text-muted-foreground">
-              No photo
+              {t("turfs.noPhoto")}
             </div>
           )}
         </div>
@@ -56,7 +58,7 @@ export function TurfCard({
           <div className="flex items-center gap-1 text-xs text-muted-foreground">
             <MapPinIcon className="size-3 shrink-0" aria-hidden />
             <span className="truncate">
-              {[area, city].filter(Boolean).join(", ") || "Location TBD"}
+              {[area, city].filter(Boolean).join(", ") || t("turfs.locationTbd")}
             </span>
             {distanceKm != null && (
               <span className="ml-auto shrink-0">{distanceKm.toFixed(1)} km</span>

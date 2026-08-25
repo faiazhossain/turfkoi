@@ -25,7 +25,7 @@ export type ActionResult =
   | { ok: false; error: string }
 
 function unauthorized(): ActionResult {
-  return { ok: false, error: "You are not signed in." }
+  return { ok: false, error: "errors.notSignedIn" }
 }
 
 /** Toggle the "Available tonight" flag (SS18). */
@@ -62,7 +62,7 @@ export async function updateProfileAction(
 ): Promise<ActionResult> {
   const parsed = updateProfileSchema.safeParse(input)
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid" }
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "errors.invalid" }
   }
   const user = await getCurrentUser()
   if (!user) return unauthorized()
@@ -105,9 +105,9 @@ export async function requestToJoinAction(
     .from(matches)
     .where(eq(matches.id, matchId))
     .limit(1)
-  if (!match) return { ok: false, error: "Match not found." }
+  if (!match) return { ok: false, error: "matches.errors.matchNotFound" }
   if (!["roster_building", "confirmed"].includes(match.state)) {
-    return { ok: false, error: "This match isn't open for join requests." }
+    return { ok: false, error: "matches.errors.joinNotOpen" }
   }
 
   // Can't request if already on the roster.
@@ -118,7 +118,7 @@ export async function requestToJoinAction(
       and(eq(matchPlayers.matchId, matchId), eq(matchPlayers.userId, user.id))
     )
     .limit(1)
-  if (existing) return { ok: false, error: "You're already on the roster." }
+  if (existing) return { ok: false, error: "matches.errors.alreadyOnRoster" }
 
   // Idempotent: if a pending request already exists, no-op.
   await db
@@ -145,7 +145,7 @@ export async function acceptPlayerRequestAction(
 
   const role = await getTeamRole(teamId, user.id)
   if (role !== "owner" && role !== "captain") {
-    return { ok: false, error: "You don't have permission to do that." }
+    return { ok: false, error: "errors.noPermission" }
   }
 
   const [req] = await db
@@ -158,9 +158,9 @@ export async function acceptPlayerRequestAction(
       )
     )
     .limit(1)
-  if (!req) return { ok: false, error: "Request not found." }
+  if (!req) return { ok: false, error: "matches.errors.requestNotFound" }
   if (req.status !== "pending") {
-    return { ok: false, error: "Request is no longer pending." }
+    return { ok: false, error: "matches.errors.requestNotPending" }
   }
 
   const [match] = await db
@@ -168,13 +168,13 @@ export async function acceptPlayerRequestAction(
     .from(matches)
     .where(eq(matches.id, matchId))
     .limit(1)
-  if (!match) return { ok: false, error: "Match not found." }
+  if (!match) return { ok: false, error: "matches.errors.matchNotFound" }
 
   // Roster limit check.
   const count = await countRoster(matchId, teamId)
   const limits = ROSTER_LIMITS[match.matchType] ?? ROSTER_LIMITS.fives
   if (count >= limits.max) {
-    return { ok: false, error: `Roster is full (max ${limits.max}).` }
+    return { ok: false, error: "matches.errors.rosterFull" }
   }
 
   // Add as guest player.
@@ -215,7 +215,7 @@ export async function rejectPlayerRequestAction(
       )
     )
     .limit(1)
-  if (!req) return { ok: false, error: "Request not found." }
+  if (!req) return { ok: false, error: "matches.errors.requestNotFound" }
 
   // Verify the user is captain/owner of a team in this match.
   const sides = await db
@@ -230,7 +230,7 @@ export async function rejectPlayerRequestAction(
       break
     }
   }
-  if (!isCaptain) return { ok: false, error: "Not authorized." }
+  if (!isCaptain) return { ok: false, error: "matches.errors.notAuthorized" }
 
   await db
     .update(playerRequests)
@@ -262,7 +262,7 @@ export async function confirmPlayedAction(matchId: string): Promise<ActionResult
       and(eq(matchPlayers.matchId, matchId), eq(matchPlayers.userId, user.id))
     )
     .limit(1)
-  if (!mp) return { ok: false, error: "You're not on this match roster." }
+  if (!mp) return { ok: false, error: "matches.errors.notOnMatchRoster" }
 
   if (mp.playedConfirmedAt) return { ok: true }
 

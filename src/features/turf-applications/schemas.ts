@@ -12,11 +12,11 @@ const slugRegex = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
  * everything before the turf goes live.
  */
 export const turfApplicationSchema = z.object({
-  turfName: z.string().min(2, "Turf name is too short").max(80),
-  contactName: z.string().min(2, "Your name is too short").max(60),
+  turfName: z.string().min(2, "ownATurf.errors.turfNameShort").max(80),
+  contactName: z.string().min(2, "ownATurf.errors.contactShort").max(60),
   phone: z
     .string()
-    .refine(isValidPhone, "Enter a valid Bangladeshi number, e.g. 01XXXXXXXXX"),
+    .refine(isValidPhone, "auth.errors.phone_invalid"),
   // Optional, but the input submits "" when left blank — normalize that to
   // undefined before validating so an empty field doesn't fail email parsing.
   email: z
@@ -25,7 +25,7 @@ export const turfApplicationSchema = z.object({
     .toLowerCase()
     .optional()
     .transform((v) => (v === "" || v === undefined ? undefined : v))
-    .pipe(z.email("Enter a valid email address").optional()),
+    .pipe(z.email("auth.errors.email_invalid").optional()),
   city: z.string().max(80).optional(),
   area: z.string().max(80).optional(),
   address: z.string().max(200).optional(),

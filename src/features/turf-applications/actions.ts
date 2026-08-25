@@ -28,9 +28,9 @@ async function adminActor(): Promise<
   { ok: true; id: string } | { ok: false; error: string }
 > {
   const user = await getCurrentUser()
-  if (!user) return { ok: false, error: "You are not signed in." }
+  if (!user) return { ok: false, error: "errors.notSignedIn" }
   if (!user.roles.includes("admin")) {
-    return { ok: false, error: "Admins only." }
+    return { ok: false, error: "errors.adminOnly" }
   }
   return { ok: true, id: user.id }
 }
@@ -64,7 +64,7 @@ export async function submitTurfApplicationAction(
 ): Promise<ActionResult> {
   const parsed = turfApplicationSchema.safeParse(input)
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid" }
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "errors.invalid" }
   }
 
   const h = await headers()
@@ -73,7 +73,7 @@ export async function submitTurfApplicationAction(
   if (!allow) {
     return {
       ok: false,
-      error: "Too many applications. Try again later.",
+      error: "ownATurf.errors.tooManyApplications",
     }
   }
 
@@ -113,7 +113,7 @@ export async function approveTurfApplicationAction(
 ): Promise<ActionResult> {
   const parsed = approveApplicationSchema.safeParse(input)
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid" }
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "errors.invalid" }
   }
   const actor = await adminActor()
   if (!actor.ok) return actor
@@ -198,7 +198,7 @@ export async function rejectTurfApplicationAction(input: {
   applicationId: string
 }): Promise<ActionResult> {
   const parsed = rejectApplicationSchema.safeParse(input)
-  if (!parsed.success) return { ok: false, error: "Invalid application." }
+  if (!parsed.success) return { ok: false, error: "ownATurf.errors.invalidApplication" }
   const actor = await adminActor()
   if (!actor.ok) return actor
 
