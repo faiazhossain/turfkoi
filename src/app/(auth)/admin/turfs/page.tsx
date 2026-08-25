@@ -2,6 +2,7 @@ import Link from "next/link"
 import { PencilIcon } from "lucide-react"
 
 import { StatusBadge } from "@/components/shared"
+import { Button } from "@/components/ui/button"
 import {
   InvitePanel,
   TurfActiveToggle,
@@ -70,14 +71,6 @@ export default async function AdminTurfsPage({
                     {t.name}
                   </Link>
                   <Link
-                    href={`/admin/turfs/${t.id}`}
-                    aria-label={`Edit ${t.name}`}
-                    title="Edit turf"
-                    className="inline-flex size-6 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-                  >
-                    <PencilIcon className="size-3.5" aria-hidden />
-                  </Link>
-                  <Link
                     href={`/turfs/${t.slug}`}
                     className="text-xs text-muted-foreground hover:text-foreground hover:underline"
                   >
@@ -111,6 +104,15 @@ export default async function AdminTurfsPage({
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  aria-label={`Edit ${t.name}`}
+                  title="Edit turf"
+                  render={<Link href={`/admin/turfs/${t.id}`} />}
+                >
+                  <PencilIcon aria-hidden />
+                </Button>
                 {t.ownerId === null ? (
                   <InvitePanel turfId={t.id} defaultPhone={t.applicantPhone ?? ""} />
                 ) : !t.isVerified ? (
