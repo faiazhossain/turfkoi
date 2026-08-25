@@ -13,6 +13,9 @@ import { matches } from "@/db/schema"
 import { eq } from "drizzle-orm"
 import { computeFees } from "@/lib/pricing"
 import { getCurrentUser } from "@/lib/auth"
+import { getT } from "@/i18n/server"
+import type { Metadata } from "next"
+import { buildMetadata } from "@/i18n/metadata"
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -30,10 +33,15 @@ const STATUS_TONE: Record<string, "success" | "warning" | "neutral" | "primary">
   payment_failed: "warning",
 }
 
+export async function generateMetadata(): Promise<Metadata> {
+  return buildMetadata({ titleKey: "metadata.bookingTitle" })
+}
+
 export default async function BookingDetailPage({
   params,
   searchParams,
 }: PageProps) {
+  const t = await getT()
   const { id } = await params
   const { payment } = await searchParams
 
@@ -46,8 +54,8 @@ export default async function BookingDetailPage({
     return (
       <div className="mx-auto max-w-2xl px-4 py-16">
         <EmptyState
-          title="Booking not found"
-          description="You don't have access to this booking."
+          title={t("booking.notFoundTitle")}
+          description={t("booking.notFoundDesc")}
         />
       </div>
     )
@@ -65,9 +73,19 @@ export default async function BookingDetailPage({
     : Number(b.totalAmount ?? 0) - turfAmount
   const total = Number(b.totalAmount ?? computeFees(turfAmount).total)
 
-  const fmt = (t: string) => t.slice(0, 5)
+  const fmt = (time: string) => time.slice(0, 5)
   const tone = STATUS_TONE[b.status] ?? "neutral"
   const paymentFailed = payment === "failed"
+
+  // Status/policy labels resolve from the dictionary; raw enum values are the
+  // fallback for anything not yet covered (t() returns unknown keys verbatim).
+  const statusKey = `player.bookingStatus.${b.status}`
+  const statusLabel = t(statusKey)
+  const statusText = statusLabel === statusKey ? b.status.replace(/_/g, " ") : statusLabel
+  const policyKey = `booking.policy.${turf.cancellationPolicy}`
+  const policyLabel = t(policyKey)
+  const policyText =
+    policyLabel === policyKey ? turf.cancellationPolicy.replace(/_/g, " ") : policyLabel
 
   // For confirmed bookings: check if a match already exists + load teams.
   let existingMatch: { id: string } | null = null
@@ -91,21 +109,21 @@ export default async function BookingDetailPage({
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-12">
       <nav className="text-sm text-muted-foreground">
         <Link href="/app" className="hover:text-foreground">
-          Your bookings
+          {t("player.bookingsTitle")}
         </Link>{" "}
-        / <span className="text-foreground">Booking</span>
+        / <span className="text-foreground">{t("booking.breadcrumb")}</span>
       </nav>
 
       <header className="space-y-2">
         <div className="flex flex-wrap items-center gap-2">
           <h1 className="font-heading text-2xl font-semibold">{turf.name}</h1>
           <StatusBadge status={tone} showIcon={false}>
-            {b.status.replace(/_/g, " ")}
+            {statusText}
           </StatusBadge>
         </div>
         <div className="flex items-center gap-1 text-sm text-muted-foreground">
           <MapPinIcon className="size-4" aria-hidden />
-          {[turf.area, turf.city].filter(Boolean).join(", ") || "Location TBD"}
+          {[turf.area, turf.city].filter(Boolean).join(", ") || t("turfs.locationTbd")}
         </div>
         <div className="flex items-center gap-1 text-sm text-muted-foreground">
           <ClockIcon className="size-4" aria-hidden />
@@ -119,13 +137,13 @@ export default async function BookingDetailPage({
         <div className="flex items-center gap-2 rounded-lg border border-border bg-card p-3 text-sm">
           <CheckCircle2Icon className="size-4 text-primary" aria-hidden />
           {b.status === "completed"
-            ? "Match played — settlement complete."
-            : "Booking confirmed. See you at kickoff!"}
+            ? t("booking.playedSettled")
+            : t("booking.confirmedNote")}
         </div>
       ) : null}
 
       <section className="space-y-2">
-        <h2 className="font-heading text-sm font-semibold">Payment</h2>
+        <h2 className="font-heading text-sm font-semibold">{t("booking.payment")}</h2>
         <FeeBreakdown
           turfAmount={Math.round(turfAmount)}
           platformFee={Math.round(platformFee)}
@@ -145,7 +163,7 @@ export default async function BookingDetailPage({
             href={`/matches/${existingMatch.id}`}
             className="text-primary hover:underline"
           >
-            View match →
+            {t("booking.viewMatch")}
           </a>
         </div>
       ) : null}
@@ -156,13 +174,13 @@ export default async function BookingDetailPage({
 
       <section className="space-y-1 text-xs text-muted-foreground">
         <p>
-          Cancellation policy:{" "}
+          {t("booking.cancellationPolicy")}{" "}
           <span className="capitalize text-foreground">
-            {turf.cancellationPolicy.replace(/_/g, " ")}
+            {policyText}
           </span>
         </p>
         {transaction ? (
-          <p>Provider reference: {transaction.providerReference ?? "—"}</p>
+          <p>{t("booking.providerRef", { ref: transaction.providerReference ?? "—" })}</p>
         ) : null}
       </section>
     </div>

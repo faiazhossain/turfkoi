@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { createMatchAction } from "@/features/matches/actions"
+import { useI18n } from "@/i18n/client"
 
 interface TeamOption {
   id: string
@@ -29,6 +30,7 @@ export function CreateMatchButton({
   teams: TeamOption[]
 }) {
   const router = useRouter()
+  const { t } = useI18n()
   const [pending, start] = useTransition()
   const [teamId, setTeamId] = useState(teams[0]?.id ?? "")
   const [expanded, setExpanded] = useState(false)
@@ -39,10 +41,10 @@ export function CreateMatchButton({
     start(async () => {
       const res = await createMatchAction({ bookingId, teamId })
       if (!res.ok) {
-        toast.error(res.error)
+        toast.error(t(res.error ?? "errors.generic"))
         return
       }
-      toast.success("Match created!")
+      toast.success(t("matches.createdToast"))
       if (res.matchId) router.push(`/matches/${res.matchId}`)
     })
   }
@@ -55,29 +57,29 @@ export function CreateMatchButton({
         onClick={() => setExpanded(true)}
       >
         <SwordsIcon aria-hidden />
-        Create match — find opponent
+        {t("matches.createCta")}
       </Button>
     )
   }
 
   return (
     <div className="space-y-2 rounded-lg border border-border bg-card p-3">
-      <p className="text-sm font-medium">Pick your team</p>
+      <p className="text-sm font-medium">{t("matches.pickTeam")}</p>
       <Select value={teamId} onValueChange={(v) => v && setTeamId(v)}>
         <SelectTrigger className="w-full">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          {teams.map((t) => (
-            <SelectItem key={t.id} value={t.id}>
-              {t.name} ({t.role})
+          {teams.map((team) => (
+            <SelectItem key={team.id} value={team.id}>
+              {team.name} ({t(`team.role.${team.role}`)})
             </SelectItem>
           ))}
         </SelectContent>
       </Select>
       <div className="flex gap-2">
         <Button onClick={create} loading={pending} disabled={!teamId} size="sm">
-          {pending ? "Creating…" : "Create match"}
+          {pending ? t("matches.creating") : t("matches.create")}
         </Button>
         <Button
           onClick={() => setExpanded(false)}
@@ -85,7 +87,7 @@ export function CreateMatchButton({
           size="sm"
           disabled={pending}
         >
-          Cancel
+          {t("common.cancel")}
         </Button>
       </div>
     </div>

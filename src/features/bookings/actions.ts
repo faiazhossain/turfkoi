@@ -209,10 +209,10 @@ export async function initiatePaymentAction(
     .where(eq(bookings.id, bookingId))
     .limit(1)
   const row = rows[0]
-  if (!row) return { ok: false, error: "Booking not found." }
+  if (!row) return { ok: false, error: "booking.errors.notFound" }
   if (row.booking.bookerId !== user.id) return forbidden()
   if (row.booking.status !== "held") {
-    return { ok: false, error: "This booking can no longer be paid." }
+    return { ok: false, error: "booking.errors.notPayable" }
   }
 
   const slotPrice = Number(row.slotPrice)
@@ -255,13 +255,8 @@ export async function initiatePaymentAction(
       .update(transactions)
       .set({ status: "failed", updatedAt: new Date() })
       .where(eq(transactions.id, txn.id))
-    return {
-      ok: false,
-      error:
-        err instanceof Error
-          ? `Payment initiation failed: ${err.message}`
-          : "Payment initiation failed.",
-    }
+    if (err instanceof Error) logger.warn("payment.initiation_failed", { bookingId, reason: err.message })
+    return { ok: false, error: "payments.errors.initFailed" }
   }
 
   await db
@@ -292,7 +287,7 @@ export async function confirmPaymentAction(
     .where(eq(transactions.providerReference, providerReference))
     .limit(1)
   const txn = txnRows[0]
-  if (!txn) return { ok: false, error: "Unknown transaction." }
+  if (!txn) return { ok: false, error: "payments.errors.unknownTransaction" }
   if (txn.status === "success") return { ok: true }
 
   // Mark transaction success (only if currently pending).
@@ -395,7 +390,7 @@ export async function cancelBookingAction(
     .where(eq(bookings.id, bookingId))
     .limit(1)
   const row = rows[0]
-  if (!row) return { ok: false, error: "Booking not found." }
+  if (!row) return { ok: false, error: "booking.errors.notFound" }
 
   if (!can(user, "booking.cancel", {
     bookerId: row.booking.bookerId,
@@ -405,7 +400,7 @@ export async function cancelBookingAction(
   }
 
   if (!["confirmed", "payment_pending", "held"].includes(row.booking.status)) {
-    return { ok: false, error: "This booking can't be cancelled." }
+    return { ok: false, error: "booking.errors.notCancellable" }
   }
 
   // Compute hours-to-kickoff for the policy.
@@ -529,7 +524,7 @@ export async function generateWeeklyPayoutsAction(
   const { listSettledForPayout } = await import("./queries")
   const candidates = await listSettledForPayout(periodStart, periodEnd)
   if (candidates.length === 0) {
-    return { ok: false, error: "No new payouts to generate for this period." }
+    return { ok: false, error: "booking.errors.noPayouts" }
   }
 
   // Insert one payout row per owner.
@@ -571,7 +566,7 @@ export async function markPayoutPaidAction(
     .returning({ id: payouts.id })
 
   if (updated.length === 0) {
-    return { ok: false, error: "Payout not found or already paid." }
+    return { ok: false, error: "booking.errors.payoutAlreadyPaid" }
   }
   revalidatePath("/admin")
   return { ok: true }

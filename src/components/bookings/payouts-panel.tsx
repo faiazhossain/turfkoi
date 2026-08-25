@@ -11,6 +11,7 @@ import {
   generateWeeklyPayoutsAction,
   markPayoutPaidAction,
 } from "@/features/bookings/actions"
+import { useI18n } from "@/i18n/client"
 
 interface Payout {
   id: string
@@ -39,6 +40,7 @@ export function PayoutsPanel({
   periodEnd: string
 }) {
   const router = useRouter()
+  const { t } = useI18n()
   const [pending, start] = useTransition()
   const [payingId, setPayingId] = useState<string | null>(null)
   const [ref, setRef] = useState("")
@@ -47,7 +49,7 @@ export function PayoutsPanel({
     start(async () => {
       const res = await generateWeeklyPayoutsAction(periodStart, periodEnd)
       if (!res.ok) {
-        toast.error(res.error)
+        toast.error(t(res.error ?? "errors.generic"))
         return
       }
       toast.success(`Generated ${res.count} payout row(s).`)
@@ -59,7 +61,7 @@ export function PayoutsPanel({
     start(async () => {
       const res = await markPayoutPaidAction({ payoutId, providerReference: ref })
       if (!res.ok) {
-        toast.error(res.error)
+        toast.error(t(res.error ?? "errors.generic"))
         return
       }
       toast.success("Marked paid.")

@@ -4,6 +4,8 @@ import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
+import { useI18n } from "@/i18n/client"
+
 import { Button } from "@/components/ui/button"
 import {
   initiatePaymentAction,
@@ -27,6 +29,7 @@ export function BookingActions({
   paymentFailed,
 }: BookingActionsProps) {
   const router = useRouter()
+  const { t } = useI18n()
   const [pending, start] = useTransition()
   const [confirmingCancel, setConfirmingCancel] = useState(false)
 
@@ -34,7 +37,7 @@ export function BookingActions({
     start(async () => {
       const res = await initiatePaymentAction(bookingId)
       if (!res.ok) {
-        toast.error(res.error)
+        toast.error(t(res.error ?? "errors.generic"))
         return
       }
       if (res.paymentUrl) {
@@ -48,14 +51,16 @@ export function BookingActions({
     start(async () => {
       const res = await cancelBookingAction({ bookingId })
       if (!res.ok) {
-        toast.error(res.error)
+        toast.error(t(res.error ?? "errors.generic"))
         setConfirmingCancel(false)
         return
       }
       toast.success(
         typeof res.refundAmount === "number" && res.refundAmount > 0
-          ? `Cancelled — refund of ৳${res.refundAmount.toLocaleString()} queued.`
-          : "Booking cancelled."
+          ? t("booking.cancelledRefundToast", {
+              amount: res.refundAmount.toLocaleString(),
+            })
+          : t("booking.cancelledToast")
       )
       router.refresh()
     })
@@ -68,22 +73,22 @@ export function BookingActions({
     <div className="space-y-3">
       {paymentFailed ? (
         <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
-          Your payment didn&apos;t go through. You can retry below.
+          {t("booking.payFailedBanner")}
         </div>
       ) : null}
 
       {canPay ? (
         <Button onClick={pay} loading={pending} size="lg" className="w-full">
-          {pending ? "Preparing payment…" : "Pay with bKash"}
+          {pending ? t("booking.preparingPayment") : t("booking.payWithBkash")}
         </Button>
       ) : null}
 
       {canCancel ? (
         confirmingCancel ? (
           <div className="space-y-2 rounded-lg border border-border bg-card p-3 text-sm">
-            <p className="font-medium">Cancel this booking?</p>
+            <p className="font-medium">{t("booking.cancelTitle")}</p>
             <p className="text-muted-foreground">
-              The refund depends on the turf&apos;s cancellation policy.
+              {t("booking.cancelPolicyNote")}
             </p>
             <div className="flex gap-2">
               <Button
@@ -92,7 +97,7 @@ export function BookingActions({
                 variant="destructive"
                 size="sm"
               >
-                Yes, cancel
+                {t("booking.yesCancel")}
               </Button>
               <Button
                 onClick={() => setConfirmingCancel(false)}
@@ -100,7 +105,7 @@ export function BookingActions({
                 variant="ghost"
                 size="sm"
               >
-                Keep booking
+                {t("booking.keepBooking")}
               </Button>
             </div>
           </div>
@@ -111,7 +116,7 @@ export function BookingActions({
             variant="ghost"
             className="w-full"
           >
-            Cancel booking
+            {t("booking.cancelBooking")}
           </Button>
         )
       ) : null}
