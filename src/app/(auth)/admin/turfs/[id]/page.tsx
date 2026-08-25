@@ -222,7 +222,7 @@ export default async function AdminTurfCockpitPage({ params }: PageProps) {
         </TabsContent>
       </Tabs>
 
-      <Card className="bg-destructive/5 ring-destructive/30">
+      <Card className="bg-destructive/10 ring-destructive/40">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 font-heading text-lg text-destructive">
             <AlertTriangleIcon className="size-4" aria-hidden />
