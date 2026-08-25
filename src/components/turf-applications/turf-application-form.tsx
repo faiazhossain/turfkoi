@@ -143,7 +143,7 @@ export function TurfApplicationForm() {
       </div>
       <div className="space-y-2">
         <Label htmlFor="address">{t("ownATurf.addressOptional")}</Label>
-        <Input id="address" autoComplete="street-address" placeholder="House, road" {...form.register("address")} />
+        <Input id="address" autoComplete="street-address" placeholder={t("ownATurf.addressPlaceholder")} {...form.register("address")} />
         {form.formState.errors.address && (
           <p className="text-sm text-destructive">{fieldError(form.formState.errors.address.message, t)}</p>
         )}

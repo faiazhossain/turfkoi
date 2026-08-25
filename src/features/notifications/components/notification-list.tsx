@@ -1,6 +1,5 @@
 "use client"
 
-import { formatDistanceToNow } from "date-fns"
 import { BellIcon } from "lucide-react"
 import type { ComponentType } from "react"
 
@@ -8,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { EmptyState } from "@/components/shared"
 import { useI18n } from "@/i18n/client"
 import type { Translator } from "@/i18n/translate"
+import { formatDistanceToNowIn } from "@/lib/format-date"
 import { cn } from "@/lib/utils"
 
 import type { NotificationDTO, NotificationsFeed } from "../hooks"
@@ -58,7 +58,7 @@ export function NotificationRow({
   item: NotificationDTO
   onOpen: (item: NotificationDTO, href?: string) => void
 }) {
-  const { t } = useI18n()
+  const { locale, t } = useI18n()
   const { Icon, title, body, href } = renderNotification(item, t)
   const unread = !item.readAt
   return (
@@ -101,7 +101,7 @@ export function NotificationRow({
           </span>
         ) : null}
         <span className="block text-xs text-muted-foreground/70">
-          {formatDistanceToNow(new Date(item.createdAt), { addSuffix: true })}
+          {formatDistanceToNowIn(new Date(item.createdAt), locale, { addSuffix: true })}
         </span>
       </span>
     </button>

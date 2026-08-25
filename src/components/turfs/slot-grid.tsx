@@ -17,6 +17,8 @@ import {
 } from "@/components/ui/select"
 import { StatusBadge } from "@/components/shared"
 import { useI18n } from "@/i18n/client"
+import type { Locale } from "@/i18n/config"
+import { formatSlotDate } from "@/lib/format-date"
 
 import {
   deleteSlotAction,
@@ -51,20 +53,13 @@ const STATUS_BADGE: Record<SlotStatus, "success" | "warning" | "danger" | "neutr
   blocked: "neutral",
 }
 
-function fmtDate(iso: string) {
-  const [y, m, d] = iso.split("-").map(Number)
-  if (!y || !m || !d) return iso
-  const date = new Date(y, m - 1, d)
-  return date.toLocaleDateString(undefined, {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-  })
+function fmtDate(iso: string, locale: Locale) {
+  return formatSlotDate(iso, locale)
 }
 
 export function SlotGrid({ turfId, slots }: SlotGridProps) {
   const router = useRouter()
-  const { t } = useI18n()
+  const { locale, t } = useI18n()
   const [busyKey, setBusyKey] = useState<string | null>(null)
 
   // Group by date
@@ -130,7 +125,7 @@ export function SlotGrid({ turfId, slots }: SlotGridProps) {
     <div className="space-y-4">
       {Array.from(byDate.entries()).map(([date, daySlots]) => (
         <section key={date} className="space-y-2">
-          <h4 className="font-heading text-sm font-semibold">{fmtDate(date)}</h4>
+          <h4 className="font-heading text-sm font-semibold">{fmtDate(date, locale)}</h4>
           <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border">
             {daySlots.map((slot) => {
               const key = `${slot.date}|${slot.startTime}`

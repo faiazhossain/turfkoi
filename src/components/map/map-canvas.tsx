@@ -5,6 +5,7 @@ import type { Map as MLMap } from "maplibre-gl"
 import "maplibre-gl/dist/maplibre-gl.css"
 
 import { Loader } from "@/components/ui/loader"
+import { useI18n } from "@/i18n/client"
 import { MAP_TILES_URL } from "@/lib/map"
 import { cn } from "@/lib/utils"
 
@@ -38,6 +39,7 @@ export function MapCanvas({
   fullscreen?: boolean
 }) {
   const containerRef = useRef<HTMLDivElement>(null)
+  const { t } = useI18n()
   // Capture initial view only — later prop changes are ignored by design.
   const initialView = useRef({ center, zoom })
   const onReadyRef = useRef(onReady)
@@ -109,7 +111,7 @@ export function MapCanvas({
     >
       {!ready && !failed ? (
         <div className="absolute inset-0 z-10 flex items-center justify-center bg-muted/60">
-          <Loader size={96} className="max-h-24 max-w-24" label="Loading map" />
+          <Loader size={96} className="max-h-24 max-w-24" label={t("map.loading")} />
         </div>
       ) : null}
       {failed ? (
@@ -117,7 +119,7 @@ export function MapCanvas({
           role="status"
           className="absolute inset-0 z-10 flex items-center justify-center bg-muted/80 p-4 text-center text-sm text-muted-foreground"
         >
-          The map failed to load. Check your connection and refresh.
+          {t("map.loadFailed")}
         </div>
       ) : null}
     </div>

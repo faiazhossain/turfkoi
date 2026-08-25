@@ -19,7 +19,7 @@ export function MainNav({ variant }: { variant: "desktop" | "mobile" }) {
 
   if (variant === "mobile") {
     return (
-      <nav aria-label="Primary" className="flex w-full items-stretch">
+      <nav aria-label={t("common.primaryNavAria")} className="flex w-full items-stretch">
         {primaryNav.map((item) => {
           const active = isActive(pathname, item.href)
           const Icon = item.icon
@@ -44,7 +44,7 @@ export function MainNav({ variant }: { variant: "desktop" | "mobile" }) {
   }
 
   return (
-    <nav aria-label="Primary" className="ml-2 hidden items-center gap-1 md:flex">
+    <nav aria-label={t("common.primaryNavAria")} className="ml-2 hidden items-center gap-1 md:flex">
       {primaryNav.map((item) => {
         const active = isActive(pathname, item.href)
         return (

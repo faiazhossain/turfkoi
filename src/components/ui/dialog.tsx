@@ -6,6 +6,7 @@ import { Dialog as DialogPrimitive } from "@base-ui/react/dialog"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { XIcon } from "lucide-react"
+import { useI18n } from "@/i18n/client"
 
 function Dialog({ ...props }: DialogPrimitive.Root.Props) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />
@@ -72,7 +73,7 @@ function DialogContent({
           >
             <XIcon
             />
-            <span className="sr-only">Close</span>
+            <CloseLabel />
           </DialogPrimitive.Close>
         )}
       </DialogPrimitive.Popup>
@@ -144,6 +145,11 @@ function DialogDescription({
       {...props}
     />
   )
+}
+
+function CloseLabel() {
+  const { t } = useI18n()
+  return <span className="sr-only">{t("common.close")}</span>
 }
 
 export {

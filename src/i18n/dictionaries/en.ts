@@ -30,6 +30,12 @@ export const en = {
     reject: "Reject",
     copy: "Copy",
     skip: "Skip",
+    backHome: "Back home",
+    morePages: "More pages",
+    previousPage: "Go to previous page",
+    nextPage: "Go to next page",
+    paginationAria: "Pagination",
+    primaryNavAria: "Primary",
   },
 
   nav: {
@@ -99,6 +105,17 @@ export const en = {
     adminTransactionsTitle: "Admin · Transactions",
     adminReportsTitle: "Admin · Reports",
     adminSeedTurfTitle: "Admin · Seed a turf",
+    notFoundTitle: "Page not found",
+  },
+
+  notFound: {
+    title: "Page not found",
+    description: "The page you're looking for doesn't exist or may have moved.",
+  },
+
+  errorPage: {
+    title: "Something went wrong",
+    description: "An unexpected error occurred while loading this page.",
   },
 
   errors: {
@@ -211,6 +228,8 @@ export const en = {
     resultsAria: "Search results",
     hint: "Tap the map or search to set your location.",
     useMyLocation: "Use my location",
+    loading: "Loading map…",
+    loadFailed: "The map failed to load. Check your connection and refresh.",
   },
 
   turfOwner: {

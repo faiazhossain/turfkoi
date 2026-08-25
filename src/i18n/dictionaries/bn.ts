@@ -32,6 +32,12 @@ export const bn: Dictionary = {
     reject: "বাতিল করুন",
     copy: "কপি",
     skip: "Skip",
+    backHome: "হোমে ফিরে যান",
+    morePages: "আরও পেজ",
+    previousPage: "আগের পেজে যান",
+    nextPage: "পরের পেজে যান",
+    paginationAria: "পেজিনেশন",
+    primaryNavAria: "প্রধান নেভিগেশন",
   },
 
   nav: {
@@ -101,6 +107,17 @@ export const bn: Dictionary = {
     adminTransactionsTitle: "অ্যাডমিন · লেনদেন",
     adminReportsTitle: "অ্যাডমিন · রিপোর্ট",
     adminSeedTurfTitle: "অ্যাডমিন · Turf সীড",
+    notFoundTitle: "পেজটি খুঁজে পাওয়া যায়নি",
+  },
+
+  notFound: {
+    title: "পেজটি খুঁজে পাওয়া যায়নি",
+    description: "পেজটি হয়তো নেই, নয়তো সরিয়ে ফেলা হয়েছে।",
+  },
+
+  errorPage: {
+    title: "কিছু একটা সমস্যা হয়েছে",
+    description: "পেজটি লোড করার সময় অপ্রত্যাশিত একটি সমস্যা দেখা দিয়েছে।",
   },
 
   errors: {
@@ -213,6 +230,8 @@ export const bn: Dictionary = {
     resultsAria: "সার্চ রেজাল্ট",
     hint: "ম্যাপে ট্যাপ করে বা সার্চ করে লোকেশন সেট করুন।",
     useMyLocation: "আমার লোকেশন ব্যবহার করুন",
+    loading: "ম্যাপ লোড হচ্ছে…",
+    loadFailed: "ম্যাপ লোড করা যায়নি। ইন্টারনেট কানেকশন দেখে আবার রিফ্রেশ করুন।",
   },
 
   turfOwner: {
