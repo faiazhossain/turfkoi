@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "embedded",
+  "dolt_database": "turfkoi",
+  "project_id": "f2ef4836-99fa-40ae-a89f-aa073f3543a0"
+}
