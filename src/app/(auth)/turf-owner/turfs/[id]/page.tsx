@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { notFound, redirect } from "next/navigation"
 import type { Metadata } from "next"
+import { CalendarClockIcon, InfoIcon } from "lucide-react"
 
 import { getCurrentUser } from "@/lib/auth"
 import { getT } from "@/i18n/server"
@@ -23,12 +24,10 @@ import {
 } from "@/components/ui/tabs"
 import { StatusBadge } from "@/components/shared"
 import {
-  AdvancedTools,
   BookingHorizonSelect,
   DayAdjustments,
   DayPanel,
   EmptyDayState,
-  GenerateSlotsForm,
   HowSlotsWork,
   SavedSchedulesCard,
   ScheduleBuilderForm,
@@ -244,9 +243,15 @@ export default async function EditTurfPage({
       <h1 className="font-heading text-2xl font-semibold">{turf.name}</h1>
 
       <Tabs defaultValue={dateParam || monthParam ? "slots" : "edit"}>
-        <TabsList>
-          <TabsTrigger value="edit">{t("turfOwner.tabDetails")}</TabsTrigger>
-          <TabsTrigger value="slots">{t("turfOwner.tabSlots")}</TabsTrigger>
+        <TabsList className="h-auto w-full rounded-xl p-1 group-data-horizontal/tabs:h-auto sm:w-auto">
+          <TabsTrigger value="edit" className="h-10 gap-2 px-4">
+            <InfoIcon aria-hidden />
+            {t("turfOwner.tabDetails")}
+          </TabsTrigger>
+          <TabsTrigger value="slots" className="h-10 gap-2 px-4">
+            <CalendarClockIcon aria-hidden />
+            {t("turfOwner.tabSlots")}
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="edit" className="space-y-6">
@@ -264,15 +269,19 @@ export default async function EditTurfPage({
             </CardContent>
           </Card>
           <Card>
-            <CardHeader>
-              <CardTitle className="font-heading text-lg">
+            <CardHeader className={photos.length === 0 ? "gap-0.5 pb-3" : undefined}>
+              <CardTitle
+                className={`font-heading ${photos.length === 0 ? "text-sm" : "text-lg"}`}
+              >
                 {t("turfOwner.photos")}
               </CardTitle>
-              <CardDescription>
+              <CardDescription
+                className={photos.length === 0 ? "text-xs" : undefined}
+              >
                 {t("turfOwner.photosDesc")}
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className={photos.length === 0 ? "pb-3" : undefined}>
               <TurfPhotoGallery turfId={turf.id} photos={photos} />
             </CardContent>
           </Card>
@@ -378,26 +387,11 @@ export default async function EditTurfPage({
             </div>
           </DayAdjustments>
 
-          <AdvancedTools>
-            <SavedSchedulesCard
-              turfId={turf.id}
-              schedules={savedSchedules}
-              today={todayIso}
-            />
-            <Card>
-              <CardHeader>
-                <CardTitle className="font-heading text-lg">
-                  {t("turfOwner.schedule.bulkTitle")}
-                </CardTitle>
-                <CardDescription>
-                  {t("turfOwner.schedule.bulkDesc")}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <GenerateSlotsForm turfId={turf.id} />
-              </CardContent>
-            </Card>
-          </AdvancedTools>
+          <SavedSchedulesCard
+            turfId={turf.id}
+            schedules={savedSchedules}
+            today={todayIso}
+          />
         </TabsContent>
       </Tabs>
     </div>

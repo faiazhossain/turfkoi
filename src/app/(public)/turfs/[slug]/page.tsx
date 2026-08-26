@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import type { Metadata } from "next"
-import { MapPinIcon, CalendarCheckIcon } from "lucide-react"
+import { MapPinIcon, CalendarCheckIcon, ImageOffIcon } from "lucide-react"
 
 import { getT } from "@/i18n/server"
 import { StatusBadge, EmptyState } from "@/components/shared"
@@ -115,7 +115,8 @@ export default async function TurfDetailPage({ params }: PageProps) {
         {photos.length > 0 ? (
           <TurfPhotoStrip name={turf.name} photos={photos} />
         ) : (
-          <div className="flex aspect-video w-full items-center justify-center rounded-xl border border-dashed border-border text-sm text-muted-foreground">
+          <div className="flex w-fit items-center gap-2 rounded-full border border-dashed border-border px-4 py-1.5 text-xs text-muted-foreground">
+            <ImageOffIcon className="size-3.5" aria-hidden />
             {t("turfs.noPhotosYet")}
           </div>
         )}

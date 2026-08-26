@@ -10,7 +10,6 @@ import {
   XIcon,
 } from "lucide-react"
 
-import { Button } from "@/components/ui/button"
 import { Loader } from "@/components/ui/loader"
 import { StatusBadge } from "@/components/shared"
 import { useImageUpload } from "@/hooks/use-image-upload"
@@ -146,7 +145,9 @@ export function TurfPhotoGallery({
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={uploading || full}
-          className="flex size-24 flex-col items-center justify-center gap-1 rounded-md border border-dashed border-border text-xs text-muted-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+          className={`flex flex-col items-center justify-center gap-1 rounded-md border border-dashed border-border text-xs text-muted-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50 ${
+            photos.length === 0 ? "size-16" : "size-24"
+          }`}
         >
           {uploading ? (
             <Loader size={14} className="size-3.5" aria-hidden />
