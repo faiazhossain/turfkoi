@@ -217,6 +217,7 @@ export const en = {
       turfNotFound: "Turf not found.",
       slugTaken: "That slug is already taken.",
       alreadyClaimed: "This turf has already been claimed.",
+      notTakingBookings: "This turf isn't taking bookings right now.",
     },
   },
 
@@ -272,7 +273,7 @@ export const en = {
     backToDashboard: "Back to dashboard",
     publicView: "Public view",
     tabDetails: "Details",
-    tabSlots: "Slots ({count})",
+    tabSlots: "Slots",
     turfDetails: "Turf details",
     detailsDesc: "Changes appear on the public page after saving.",
     photos: "Photos",
@@ -384,6 +385,10 @@ export const en = {
       pricePositive: "Price must be positive",
       priceTooHigh: "Price looks too high",
       endDateAfter: "End date must be on or after the start date",
+      wholeMinutes: "Use whole minutes",
+      slotMinutesMin: "Minimum 30 minutes",
+      slotMinutesMax: "Maximum 180 minutes",
+      slotMinutesStep: "Use a multiple of 5 minutes",
     },
   },
 
@@ -741,6 +746,9 @@ export const en = {
   auth: {
     signInTitle: "Sign in",
     signInDesc: "Use the phone number or email you registered with.",
+    signInDescCode: "For turf owners who received a one-time code from the Turfkoi team.",
+    haveSignInCode: "Have a sign-in code from the Turfkoi team?",
+    usePasswordInstead: "Sign in with password instead",
     identifierLabel: "Phone or email",
     identifierPlaceholder: "01XXXXXXXXX or you@email.com",
     passwordLabel: "Password",
@@ -980,6 +988,9 @@ export const en = {
       },
       owner: "owner {phone}",
       noOwnerYet: "no owner yet",
+      viewPublic: "public",
+      edit: "Edit turf",
+      editAria: "Edit {name}",
     },
 
     seed: {

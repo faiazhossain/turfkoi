@@ -1,8 +1,15 @@
 import type { Metadata } from "next"
 import Link from "next/link"
+import { PencilIcon } from "lucide-react"
 
 import { StatusBadge } from "@/components/shared"
-import { InvitePanel, VerifyTurfButton } from "@/components/admin"
+import { Button } from "@/components/ui/button"
+import {
+  InvitePanel,
+  TurfActiveToggle,
+  UnverifyTurfButton,
+  VerifyTurfButton,
+} from "@/components/admin"
 import { listTurfsAdmin } from "@/features/admin/queries"
 import { turfFormatLabel } from "@/features/turfs/formats"
 import { getT } from "@/i18n/server"
@@ -66,10 +73,16 @@ export default async function AdminTurfsPage({
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
                   <Link
-                    href={`/turfs/${trf.slug}`}
+                    href={`/admin/turfs/${trf.id}`}
                     className="truncate font-heading font-medium hover:underline"
                   >
                     {trf.name}
+                  </Link>
+                  <Link
+                    href={`/turfs/${trf.slug}`}
+                    className="text-xs text-muted-foreground hover:text-foreground hover:underline"
+                  >
+                    {t("admin.turfs.viewPublic")}
                   </Link>
                   {trf.ownerId === null ? (
                     <StatusBadge status="neutral" showIcon={false}>
@@ -100,11 +113,25 @@ export default async function AdminTurfsPage({
                     : t("admin.turfs.noOwnerYet")}
                 </p>
               </div>
-              {trf.ownerId === null ? (
-                <InvitePanel turfId={trf.id} defaultPhone={trf.applicantPhone ?? ""} />
-              ) : !trf.isVerified ? (
-                <VerifyTurfButton turfId={trf.id} />
-              ) : null}
+              <div className="flex flex-wrap items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  aria-label={t("admin.turfs.editAria", { name: trf.name })}
+                  title={t("admin.turfs.edit")}
+                  render={<Link href={`/admin/turfs/${trf.id}`} />}
+                >
+                  <PencilIcon aria-hidden />
+                </Button>
+                {trf.ownerId === null ? (
+                  <InvitePanel turfId={trf.id} defaultPhone={trf.applicantPhone ?? ""} />
+                ) : !trf.isVerified ? (
+                  <VerifyTurfButton turfId={trf.id} />
+                ) : (
+                  <UnverifyTurfButton turfId={trf.id} />
+                )}
+                <TurfActiveToggle turfId={trf.id} isActive={trf.isActive} />
+              </div>
             </li>
           ))}
         </ul>

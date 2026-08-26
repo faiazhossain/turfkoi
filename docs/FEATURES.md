@@ -20,7 +20,7 @@ based discovery. Mobile-first, dark-themed.
 | Data fetching | RSC for SSR reads, TanStack Query for client reads, Server Actions for mutations | `src/features/*/` |
 | Forms | react-hook-form + zod | `src/components/*/` |
 | DB | Neon Postgres + PostGIS, Drizzle ORM | `src/db/`, `drizzle/` |
-| Background jobs | Inngest (`slot-hold-expire`, `settle-at-kickoff`, `account-hard-anonymize`) | `src/lib/inngest.ts` |
+| Background jobs | Inngest (`slot-hold-expire`, `settle-at-kickoff`, `account-hard-anonymize`, `schedule-materialize-nightly`) | `src/lib/inngest.ts` |
 | Realtime | Pusher (provider wired, called from match + team flows) | `src/lib/realtime.ts` |
 | Rate limit / cache | Upstash Redis | `src/lib/ratelimit.ts` |
 | Analytics | PostHog (P1 — provider imported, calls deferred) | — |
@@ -29,7 +29,7 @@ based discovery. Mobile-first, dark-themed.
 | Storage | S3-compatible (R2) presigned PUT uploads + magic-byte verify | `src/features/turfs/storage.ts`, `src/lib/file-validation.ts` |
 | Deploy | Vercel | — |
 
-Schema: **26 tables** across 8 files (`src/db/schema/`) + **19 enums**.
+Schema: **29 tables** across 8 files (`src/db/schema/`) + **21 enums**.
 
 ---
 
@@ -118,8 +118,75 @@ Routes: `/turf-owner`, `/turf-owner/turfs/new`, `/turf-owner/turfs/[id]`.
 - **Turf CRUD** — name, location (PostGIS point), format (5-a-side / 7-a-side),
   facilities, photos (presigned R2 upload + magic-byte verify), per-turf-owner
   cancellation policy.
-- **Slot generation** — owner-configurable slot length (60 / 90 min, Q5);
-  bulk-generate a week+ of slots with peak/holiday pricing.
+- **Slot generation** — legacy bulk generator: pick a date range + weekdays,
+  back-to-back slots of one length at one base price (superseded for new
+  setups by the weekly schedule above; still useful for one-off ranges).
+- **Weekly schedule + section pricing (slot system P1)** — a turf's normal
+  week is a named schedule of **sections** ("Morning 06:00-12:00 at 800",
+  "Evening 17:00-23:00, 90 min + 10-min turnaround gap, 1200"), so
+  peak/off-peak pricing is structural, matching how BD venues actually price
+  (Dugout/AnField-style day vs night tiers). Sections may wrap past midnight
+  for Ramadan hours (22:00-03:00); post-midnight slots belong to the date
+  they start on. Saving an active schedule materializes the next 30 days
+  immediately, and the Inngest `schedule-materialize-nightly` job (00:17
+  Asia/Dhaka) extends the horizon nightly. Materialized `turf_slots` stays
+  the runtime source of truth — bookings, holds, and KPIs keep reading it.
+  Regeneration is diff-based with a hard safety contract: only
+  `source=template AND status=available` rows are ever mutated or deleted;
+  booked/held slots and anything the owner hand-touched (`source=manual`)
+  are untouchable, and unresolvable rows surface as conflicts instead of
+  being forced. Precedence everywhere: **single-slot touch > date exception
+  (P2) > weekly schedule**. Slot lengths widened to 30-180 min in 5-min
+  steps.
+- **Weekly schedule builder (P2)** — day-tabbed section editor with live
+  slot-start preview (computed client-side by the same pure expander the
+  server materializes from), copy-day-to-day, conflict display, and a
+  materialization summary on save. New turfs start from a prefilled typical
+  Dhaka week (Friday opens after jummah, evening peak 90 min + 10-min gap).
+- **Day exceptions + calendar (P2)** — `turf_date_exceptions` closes a date
+  (Eid, rain, maintenance — the reason is shown to players) or sets a
+  holiday price rule (multiplier 0.5-3x, rounded to whole Taka, or a flat
+  day price). The owner Slots tab has a month calendar (markers for closed /
+  special-price / public-holiday days, server-driven via `?month=`/`?date=`)
+  with a per-day panel: slots, closure toggle + reason, holiday pricing, and
+  a remove-exception control. Closures suppress schedule expansion for that
+  date including midnight spillover into it.
+- **BD holiday seed (P2)** — `src/lib/bd-holidays.ts` carries fixed national
+  dates plus moon-dependent estimates (Eid, Durga Puja, Ramadan windows) for
+  2026-2027. It powers calendar markers and prefills closure reasons; it is
+  a suggestion layer, never a mandate — owners decide per date. Lunar dates
+  need a yearly update when the government list lands.
+- **Saved-schedule library + seasonal switch (P3)** — every saved schedule
+  (active or "for later") is listed on the owner Slots tab. Activate swaps
+  the running week: siblings deactivate, the target rematerializes the next
+  30 days immediately, and a one-line summary reports what changed. An
+  optional effective window makes a schedule seasonal — outside its window
+  a schedule produces no slots at all, so "Ramadan hours" runs its course
+  and the owner switches back to "Regular week" after Eid. The seeded
+  Ramadan window is one tap away (a prefill button backed by
+  `nextRamadanWindow`). Switches never touch booked or hand-edited slots
+  (the materializer safety contract); leftovers surface in the conflict
+  center.
+- **Needs-attention conflict center (P3)** — `listSlotConflicts` sweeps the
+  next 30 days for slots the materializer refuses to touch because the
+  active schedule no longer agrees with reality: active bookings outside
+  the plan, booked slots whose length the schedule would change, and kept
+  manual slots. They render in a "Needs attention" card on the owner Slots
+  tab (read-only — the owner resolves them in the day panel).
+- **Database overlap guard (P3)** — `turf_slots.slot_range` is a generated
+  `tsrange` column `[start, start + duration)` backed by the
+  `turf_slots_no_overlap` EXCLUDE gist constraint (btree_gist), making
+  overlapping inventory physically unrepresentable at the DB level on top
+  of the app-level checks. Back-to-back slots stay legal (exclusive upper
+  bound). Drizzle models the column via a `tsrange` customType with
+  `generatedAlwaysAs`, so migration diffs know it exists; the trigger and
+  EXCLUDE constraint live in the hand-written part of migration 0014.
+- **Custom slots** — hand-place a single slot on one date (a late-night
+  Ramadan game, a one-off session) via the "Add a custom slot" card.
+  Overlaps are rejected across a 3-day window (yesterday's 23:30/90 spills
+  into today). Custom slots carry `source=manual` and survive every
+  regeneration; any price/status edit on an existing slot promotes it to
+  manual too.
 - **Owner dashboard** — KPI tiles (today's revenue, upcoming bookings, open
   slots, 7-day occupancy), "my turfs" list, **"Fill This Slot"** surface
   (unsold inventory in the next 7 days, promotable once matchmaking
@@ -190,7 +257,10 @@ locks.
 
 - `/` — landing.
 - `/turfs`, `/turfs/[slug]` — discovery + turf detail (dynamic OG metadata,
-  canonical).
+  canonical). The booking list shows section labels ("Evening",
+  "Ramadan nights") as peak/off-peak markers and renders closed dates
+  explicitly with the owner's reason instead of a silent gap (slot system
+  P2).
 - `/matches`, `/matches/[id]` — public match directory.
 - `/invite/[code]` — referral landing.
 - `/login`, `/register`, `/forgot-password`, `/auth/onboarding` — auth flow.

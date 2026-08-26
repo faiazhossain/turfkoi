@@ -100,7 +100,7 @@ export function NotificationRow({
             {body}
           </span>
         ) : null}
-        <span className="block text-xs text-muted-foreground/70">
+        <span className="block text-xs text-muted-foreground">
           {formatDistanceToNowIn(new Date(item.createdAt), locale, { addSuffix: true })}
         </span>
       </span>

@@ -6,6 +6,7 @@ import { randomUUID } from "node:crypto"
 import type { z } from "zod"
 
 import { db } from "@/db"
+import { isUniqueViolation } from "@/db/errors"
 import {
   bookings,
   slotHolds,
@@ -87,10 +88,16 @@ export async function holdSlotAction(
 
   const { turfId, date, startTime } = parsed.data
 
-  // Lock down the slot: must exist, be available, and belong to a verified turf.
+  // Lock down the slot: must exist, be available, and belong to a turf that
+  // is verified and active — deactivated or unverified turfs take no bookings.
   const slotRows = await db
-    .select()
+    .select({
+      slot: turfSlots,
+      isVerified: turfs.isVerified,
+      isActive: turfs.isActive,
+    })
     .from(turfSlots)
+    .innerJoin(turfs, eq(turfs.id, turfSlots.turfId))
     .where(
       and(
         eq(turfSlots.turfId, turfId),
@@ -99,8 +106,12 @@ export async function holdSlotAction(
       )
     )
     .limit(1)
-  const slot = slotRows[0]
-  if (!slot) return { ok: false, error: "turfs.errors.slotGone" }
+  const row = slotRows[0]
+  if (!row) return { ok: false, error: "turfs.errors.slotGone" }
+  if (!row.isVerified || !row.isActive) {
+    return { ok: false, error: "turfs.errors.notTakingBookings" }
+  }
+  const slot = row.slot
   if (slot.status !== "available") {
     return { ok: false, error: "turfs.errors.slotTaken" }
   }
@@ -154,7 +165,7 @@ export async function holdSlotAction(
           eq(turfSlots.status, "held")
         )
       )
-    if (String(err).includes("unique")) {
+    if (isUniqueViolation(err)) {
       return { ok: false, error: "turfs.errors.slotTaken" }
     }
     throw err

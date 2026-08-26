@@ -48,7 +48,7 @@ premium, energetic, competitive, dark-first").
 |---|---|---|
 | Dark background (`theme-2`) | `bg #080B10`, `card #11161D` | Strong - keep the dark palette |
 | Football green accent on CTAs | `primary #00E676` | Strong - the green "Book" buttons map directly |
-| Purple secondary accents | `secondary #7C5CFC` | Strong |
+| Purple secondary accents | `secondary #7453FA` | Strong |
 | Big stroked headline type ("OWN THE PITCH") | H1 40/48 desktop, 28/36 mobile | Match Section 13 scale |
 | Football imagery + pitch motifs | football/stadium imagery (Section 11) | Strong |
 | Calm, trustworthy booking area | "Payment/booking flows must remain calm" (Section 11) | Strong |

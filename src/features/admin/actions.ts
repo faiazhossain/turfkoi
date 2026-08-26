@@ -5,6 +5,7 @@ import { and, eq, isNotNull, isNull, sql } from "drizzle-orm"
 import type { z } from "zod"
 
 import { db } from "@/db"
+import { isForeignKeyViolation } from "@/db/errors"
 import {
   bookings,
   cancellations,
@@ -22,11 +23,14 @@ import { logger } from "@/lib/logger"
 
 import {
   approveRefundSchema,
+  deleteTurfSchema,
   rejectRefundSchema,
   requestRefundSchema,
   resolveMatchDisputeSchema,
+  setTurfActiveSchema,
   setUserRoleSchema,
   setUserStatusSchema,
+  unverifyTurfSchema,
   updateReportStatusSchema,
   verifyTurfSchema,
 } from "./schemas"
@@ -175,6 +179,130 @@ export async function verifyTurfAction(
   }
   revalidatePath("/admin/turfs")
   revalidatePath("/admin")
+  return { ok: true, id: parsed.data.turfId }
+}
+
+/**
+ * Pull a verified turf back to pending (misleading listing, bad photos).
+ * Conditional on isVerified = true so concurrent toggles stay idempotent.
+ * Unverifying does NOT deactivate — a pending turf stays listed-but-unbookable
+ * only via isActive; this just re-opens the verification gate.
+ */
+export async function unverifyTurfAction(
+  input: z.infer<typeof unverifyTurfSchema>
+): Promise<ActionResult> {
+  const parsed = unverifyTurfSchema.safeParse(input)
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid" }
+  }
+  const actor = await adminActor()
+  if ("error" in actor) return actor
+
+  const updated = await db
+    .update(turfs)
+    .set({ isVerified: false, updatedAt: new Date() })
+    .where(
+      and(eq(turfs.id, parsed.data.turfId), eq(turfs.isVerified, true))
+    )
+    .returning({ id: turfs.id })
+  if (updated.length === 0) {
+    return { ok: false, error: "Turf not found or already pending." }
+  }
+
+  logger.info("admin.turf_unverified", { turfId: parsed.data.turfId })
+  revalidatePath("/admin/turfs")
+  revalidatePath("/turfs")
+  return { ok: true, id: parsed.data.turfId }
+}
+
+/**
+ * Flip a turf's active flag. Deactivating hides the turf from public lists
+ * (queries filter on isActive) and blocks new bookings (holdSlotAction checks
+ * it); existing bookings stand. Reversible by design — this is the soft
+ * delete.
+ */
+export async function setTurfActiveAction(
+  input: z.infer<typeof setTurfActiveSchema>
+): Promise<ActionResult> {
+  const parsed = setTurfActiveSchema.safeParse(input)
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid" }
+  }
+  const actor = await adminActor()
+  if ("error" in actor) return actor
+
+  const updated = await db
+    .update(turfs)
+    .set({ isActive: parsed.data.isActive, updatedAt: new Date() })
+    .where(eq(turfs.id, parsed.data.turfId))
+    .returning({ id: turfs.id })
+  if (updated.length === 0) {
+    return { ok: false, error: "Turf not found." }
+  }
+
+  logger.info(
+    parsed.data.isActive ? "admin.turf_activated" : "admin.turf_deactivated",
+    { turfId: parsed.data.turfId }
+  )
+  revalidatePath("/admin/turfs")
+  revalidatePath("/turfs")
+  return { ok: true, id: parsed.data.turfId }
+}
+
+/**
+ * Hard-delete a turf that has never taken a booking. Bookings (and the
+ * transactions/payouts behind them) reference turfs with onDelete restrict,
+ * so anything with booking history must be deactivated instead — checked
+ * with a count up front, then enforced by the FK if a booking races in
+ * between. Cascades clean up slots, photos, claim invites, and owner
+ * links; turf application rows survive with turfId nulled.
+ */
+export async function deleteTurfAction(
+  input: z.infer<typeof deleteTurfSchema>
+): Promise<ActionResult> {
+  const parsed = deleteTurfSchema.safeParse(input)
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid" }
+  }
+  const actor = await adminActor()
+  if ("error" in actor) return actor
+
+  const [agg] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(bookings)
+    .where(eq(bookings.turfId, parsed.data.turfId))
+  const bookingCount = agg?.count ?? 0
+  if (bookingCount > 0) {
+    return {
+      ok: false,
+      error: `This turf has ${bookingCount} booking${bookingCount === 1 ? "" : "s"} — booking history can't be deleted. Deactivate the turf instead.`,
+    }
+  }
+
+  try {
+    const deleted = await db
+      .delete(turfs)
+      .where(eq(turfs.id, parsed.data.turfId))
+      .returning({ id: turfs.id })
+    if (deleted.length === 0) {
+      return { ok: false, error: "Turf not found." }
+    }
+  } catch (err) {
+    // A booking landed between the count and the delete — the FK restrict
+    // is the real guard; surface it with the same friendly guidance.
+    if (isForeignKeyViolation(err)) {
+      return {
+        ok: false,
+        error:
+          "A booking came in while deleting — this turf now has history. Deactivate it instead.",
+      }
+    }
+    throw err
+  }
+
+  logger.info("admin.turf_deleted", { turfId: parsed.data.turfId })
+  revalidatePath("/admin/turfs")
+  revalidatePath("/turfs")
   return { ok: true, id: parsed.data.turfId }
 }
 

@@ -238,6 +238,34 @@ export async function listTurfsAdmin(
   }))
 }
 
+/**
+ * Full turf row + owner phone + lifetime booking count for the admin cockpit
+ * (/admin/turfs/[id]). The booking count feeds the danger zone (guarded
+ * delete, turfkoi-2fw.3): a turf with bookings can never be deleted.
+ */
+export async function getTurfAdminDetail(id: string) {
+  const rows = await db
+    .select({ turf: turfs, ownerPhone: users.phone })
+    .from(turfs)
+    // Seeded turfs have no owner yet — left join keeps the detail page alive.
+    .leftJoin(users, eq(users.id, turfs.ownerId))
+    .where(eq(turfs.id, id))
+    .limit(1)
+  const row = rows[0]
+  if (!row) return null
+
+  const [agg] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(bookings)
+    .where(eq(bookings.turfId, id))
+
+  return {
+    turf: row.turf,
+    ownerPhone: row.ownerPhone ?? null,
+    bookingCount: agg?.count ?? 0,
+  }
+}
+
 export async function listTeamsAdmin() {
   const rows = await db
     .select({

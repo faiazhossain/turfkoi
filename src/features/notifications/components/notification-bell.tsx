@@ -1,5 +1,6 @@
 "use client"
 
+import { useSyncExternalStore } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { BellIcon } from "lucide-react"
@@ -45,6 +46,16 @@ export function NotificationBell({
   const { t } = useI18n()
   const feed = useNotifications({ realtime: variant === "popover" })
 
+  // Unread count is client-only (no server snapshot), and the feed fetch can
+  // resolve before hydration finishes — gate it so the first client render
+  // matches the server (0) and avoid a hydration mismatch.
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  )
+  const unreadCount = mounted ? feed.unreadCount : 0
+
   const onOpen = (item: NotificationDTO, href?: string) => {
     if (!item.readAt) feed.markRead(item.id)
     if (href) router.push(href)
@@ -53,8 +64,8 @@ export function NotificationBell({
   if (feed.signedOut) return null
 
   const bellAria =
-    feed.unreadCount > 0
-      ? t("notifications.bellAriaUnread", { count: feed.unreadCount })
+    unreadCount > 0
+      ? t("notifications.bellAriaUnread", { count: unreadCount })
       : t("notifications.bellAria")
 
   if (variant === "link") {
@@ -68,7 +79,7 @@ export function NotificationBell({
         )}
       >
         <BellIcon className="size-5" aria-hidden />
-        <UnreadBadge count={feed.unreadCount} />
+        <UnreadBadge count={unreadCount} />
       </Link>
     )
   }
@@ -86,7 +97,7 @@ export function NotificationBell({
         className="relative"
       >
         <BellIcon className="size-4" aria-hidden />
-        <UnreadBadge count={feed.unreadCount} />
+        <UnreadBadge count={unreadCount} />
       </PopoverTrigger>
       <PopoverContent align="end" className="w-80 p-2">
         <div className="flex items-center justify-between px-2 pb-1">

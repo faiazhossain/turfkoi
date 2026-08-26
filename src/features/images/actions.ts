@@ -5,6 +5,7 @@ import { and, asc, desc, eq, sql } from "drizzle-orm"
 import { z } from "zod"
 
 import { db } from "@/db"
+import { isUniqueViolation } from "@/db/errors"
 import { playerProfiles, teams, turfPhotos } from "@/db/schema"
 import { getCurrentUser } from "@/lib/auth"
 
@@ -77,7 +78,7 @@ export async function addTurfPhotoAction(
   } catch (err) {
     // DB failed after a successful upload — don't orphan the asset.
     await destroyAsset(parsed.data)
-    if (String(err).includes("unique")) {
+    if (isUniqueViolation(err)) {
       return { ok: false, error: "images.errors.alreadyAdded" }
     }
     throw err

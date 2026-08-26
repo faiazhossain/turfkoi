@@ -221,6 +221,7 @@ export const bn: Dictionary = {
       turfNotFound: "টার্ফ পাওয়া যায়নি।",
       slugTaken: "এই slug আগেই ব্যবহার হয়েছে।",
       alreadyClaimed: "এই টার্ফ আগেই claim হয়ে গেছে।",
+      notTakingBookings: "এই turf-এ এখন booking নেওয়া যাচ্ছে না।",
     },
   },
 
@@ -276,7 +277,7 @@ export const bn: Dictionary = {
     backToDashboard: "ড্যাশবোর্ডে ফিরে যান",
     publicView: "পাবলিক পেজ",
     tabDetails: "বিবরণ",
-    tabSlots: "স্লট ({count})",
+    tabSlots: "Slots",
     turfDetails: "টার্ফের বিবরণ",
     detailsDesc: "সেভ করার পর পরিবর্তনগুলো পাবলিক পেজে দেখা যাবে।",
     photos: "ছবি",
@@ -388,6 +389,10 @@ export const bn: Dictionary = {
       pricePositive: "দাম ০-এর বেশি হতে হবে",
       priceTooHigh: "দাম বেশি মনে হচ্ছে",
       endDateAfter: "শেষ তারিখ শুরুর তারিখের পরে বা একই দিন হতে হবে",
+      wholeMinutes: "পূর্ণ সংখ্যায় মিনিট লিখুন",
+      slotMinutesMin: "সর্বনিম্ন ৩০ মিনিট",
+      slotMinutesMax: "সর্বোচ্চ ১৮০ মিনিট",
+      slotMinutesStep: "৫ মিনিটের গুণিতক হতে হবে",
     },
   },
 
@@ -740,7 +745,10 @@ export const bn: Dictionary = {
 
   auth: {
     signInTitle: "সাইন ইন",
-    signInDesc: "যে phone number বা email দিয়ে অ্যাকাউন্ট খুলেছিলেন সেটা দিয়ে সাইন ইন করুন।",
+    signInDesc: "যে phone number বা email দিয়ে অ্যাকাউ্ট খুলেছিলেন সেটা দিয়ে সাইন ইন করুন।",
+    signInDescCode: "Turfkoi টিমের কাছ থেকে one-time code পাওয়া turf owner-দের জন্য।",
+    haveSignInCode: "Turfkoi টিমের sign-in code আছে?",
+    usePasswordInstead: "Password দিয়ে সাইন ইন করুন",
     identifierLabel: "Phone বা email",
     identifierPlaceholder: "01XXXXXXXXX বা you@email.com",
     passwordLabel: "পাসওয়ার্ড",
@@ -976,6 +984,9 @@ export const bn: Dictionary = {
       },
       owner: "ওনার {phone}",
       noOwnerYet: "এখনো ওনার নেই",
+      viewPublic: "পাবলিক",
+      edit: "Turf edit করুন",
+      editAria: "{name} edit করুন",
     },
 
     seed: {

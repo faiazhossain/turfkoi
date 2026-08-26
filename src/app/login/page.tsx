@@ -20,6 +20,7 @@ import { StatusBadge } from "@/components/shared"
 import { OwnerHelpButton } from "@/components/auth/owner-help-button"
 import { useI18n } from "@/i18n/client"
 import { reasonMessage } from "@/features/auth/reasons"
+import { OwnerCodeLogin } from "@/components/auth/owner-code-login"
 import { loginAction } from "@/features/auth/actions"
 import { loginFormSchema, type LoginFormValues } from "@/features/auth/schemas"
 
@@ -27,6 +28,7 @@ export default function LoginPage() {
   const router = useRouter()
   const { t } = useI18n()
   const [error, setError] = useState<string | null>(null)
+  const [mode, setMode] = useState<"password" | "code">("password")
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginFormSchema),
     defaultValues: { identifier: "", password: "" },
@@ -47,9 +49,16 @@ export default function LoginPage() {
       <Card>
         <CardHeader>
           <CardTitle className="font-heading text-2xl">{t("auth.signInTitle")}</CardTitle>
-          <CardDescription>{t("auth.signInDesc")}</CardDescription>
+          <CardDescription>
+            {mode === "password"
+              ? t("auth.signInDesc")
+              : t("auth.signInDescCode")}
+          </CardDescription>
         </CardHeader>
         <CardContent>
+          {mode === "code" ? (
+            <OwnerCodeLogin />
+          ) : (
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="identifier">{t("auth.identifierLabel")}</Label>
@@ -97,7 +106,22 @@ export default function LoginPage() {
               {form.formState.isSubmitting ? t("auth.signingIn") : t("auth.signInTitle")}
             </Button>
           </form>
+          )}
         </CardContent>
+        <div className="px-6 pb-6">
+          <button
+            type="button"
+            onClick={() => {
+              setError(null)
+              setMode(mode === "password" ? "code" : "password")
+            }}
+            className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+          >
+            {mode === "password"
+              ? t("auth.haveSignInCode")
+              : t("auth.usePasswordInstead")}
+          </button>
+        </div>
       </Card>
       <p className="text-center text-sm text-muted-foreground">
         {t("auth.newHere")}{" "}

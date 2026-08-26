@@ -7,6 +7,8 @@ import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import {
   verifyTurfAction,
+  unverifyTurfAction,
+  setTurfActiveAction,
   setUserStatusAction,
   setUserRoleAction,
   resolveMatchDisputeAction,
@@ -34,6 +36,55 @@ export function VerifyTurfButton({ turfId }: { turfId: string }) {
   return (
     <Button size="sm" onClick={run} loading={pending}>
       {t("admin.turfs.verify")}
+    </Button>
+  )
+}
+
+/** Pull a verified turf back to pending (misleading listing lever). */
+export function UnverifyTurfButton({ turfId }: { turfId: string }) {
+  const router = useRouter()
+  const [pending, start] = useTransition()
+  function run() {
+    start(async () => {
+      const res = await unverifyTurfAction({ turfId })
+      if (!res.ok) { toast.error(res.error); return }
+      toast.success("Turf moved back to pending.")
+      router.refresh()
+    })
+  }
+  return (
+    <Button size="xs" variant="destructive" onClick={run} loading={pending}>
+      Unverify
+    </Button>
+  )
+}
+
+/** Toggle a turf's active status: deactivate hides it and stops bookings. */
+export function TurfActiveToggle({
+  turfId,
+  isActive,
+}: {
+  turfId: string
+  isActive: boolean
+}) {
+  const router = useRouter()
+  const [pending, start] = useTransition()
+  function run() {
+    start(async () => {
+      const res = await setTurfActiveAction({ turfId, isActive: !isActive })
+      if (!res.ok) { toast.error(res.error); return }
+      toast.success(isActive ? "Turf deactivated." : "Turf activated.")
+      router.refresh()
+    })
+  }
+  return (
+    <Button
+      size="xs"
+      variant={isActive ? "secondary" : "outline"}
+      onClick={run}
+      loading={pending}
+    >
+      {isActive ? "Deactivate" : "Activate"}
     </Button>
   )
 }

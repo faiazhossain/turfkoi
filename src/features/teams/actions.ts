@@ -5,6 +5,7 @@ import { and, eq } from "drizzle-orm"
 import type { z } from "zod"
 
 import { db } from "@/db"
+import { isUniqueViolation } from "@/db/errors"
 import { teams, teamMembers, teamInvitations } from "@/db/schema"
 import { can } from "@/lib/capabilities"
 import { getCurrentUser } from "@/lib/auth"
@@ -62,7 +63,7 @@ export async function createTeamAction(
     revalidatePath("/team")
     return { ok: true, id: created.id, slug: created.slug }
   } catch (err) {
-    if (String(err).includes("unique")) {
+    if (isUniqueViolation(err)) {
       return { ok: false, error: "team.errors.slugTaken" }
     }
     throw err
@@ -93,7 +94,7 @@ export async function updateTeamAction(
     revalidatePath(`/team/${slug}`)
     return { ok: true }
   } catch (err) {
-    if (String(err).includes("unique")) {
+    if (isUniqueViolation(err)) {
       return { ok: false, error: "team.errors.slugTaken" }
     }
     throw err

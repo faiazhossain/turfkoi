@@ -72,3 +72,44 @@ of the foundation: shared status badges (Phase 1+), booking state pills
 - Nothing in `globals.css`. The re-audit is therefore a confirmation pass,
   not a remediation. The new UI added in Phase 8 (referral card, delete-account
   confirmation, admin tables) reuses existing tokens and components.
+
+---
+
+## Remediation audit (2026-08-25)
+
+Trigger: owner-reported readability issues, worst case the danger-zone
+confirm input in the admin turf cockpit — the field was visually
+indistinguishable from the card it sits on, so the typed-confirmation
+step read as "a button that won't enable" rather than "type here".
+
+Full-palette re-measure (same relative-luminance method, alpha tints
+composited the way the browser blends `bg-x/n` over the surface beneath)
+found the earlier audits missed entire categories of pairs. Failures and
+fixes:
+
+| Pair (before) | Ratio | Problem | Fix |
+|---|---|---|---|
+| `--input #161D27` border on card | 1.07:1 | Inputs are `bg-transparent`; the border is the only field boundary. Invisible on cards, worse on tinted cards. **Every input in the app.** | `--input` -> `#5A6C86` (3.2-3.7:1 on card / bg / muted / danger tint) |
+| `text-muted-foreground/70` (notif timestamps, 12px) | 3.57:1 | Opacity-dimmed small text | Drop the `/70`; use full `muted-foreground` |
+| `info` on `bg-info/15` (StatusBadge) | 4.13:1 | Blue too dark for its own tint | `--info` -> `#60A5FA` (5.6:1) |
+| destructive Badge dark tint `bg-destructive/20` | 4.37:1 | 12px `font-medium` is not "large text" | Dark tint -> `/15` (4.7:1); hover matches |
+| `#FFFFFF` on `#7C5CFC` (secondary) | 4.38:1 | The Phase-0 "semibold >= 14px" convention was not held everywhere (Badge secondary is 12px medium) | `--secondary` -> `#7453FA` (4.8:1) — convention no longer load-bearing |
+| `--border #222B38` on card / bg | 1.27:1 / 1.38:1 | Phase-0 note "passes 3:1 as UI boundary" was arithmetic error; sections blurred together | `--border` / `--sidebar-border` -> `#2D3C4F` (~1.6-1.8:1 delineation target) |
+| `--muted-foreground #8B95A5` on card | 6.0:1 | Passed AA, but dim in practice at 12-13px helper sizes | `#98A4B8` (7.2:1) — headroom for small text |
+
+Also strengthened the danger-zone card itself (`bg-destructive/5
+ring-destructive/30` -> `/10` + `/40`) so the section reads as a distinct
+zone, and confirmed the switch's unchecked track (`bg-input`) and select
+triggers inherit the input fix.
+
+Corrected record: the Phase-0 claim that `border #222B38` "passes 3:1"
+was wrong; measured 1.38:1. UI-boundary 3:1 now applies only where the
+border is the sole control boundary (inputs); card outlines are held to a
+documented 1.5:1 delineation floor as a deliberate quiet-divider choice.
+
+Regression guard: `src/app/__tests__/contrast.test.ts` parses
+`globals.css` and enforces these floors (4.5:1 text pairs incl. badge/danger
+tints, 3:1 input/ring boundaries, 1.5:1 delineation). Future token edits
+fail CI instead of silently regressing. SS11 starting-palette hexes for
+`secondary` and `muted` updated in PROJECT_REQUIREMENTS.md accordingly
+("evaluate for contrast before freeze").

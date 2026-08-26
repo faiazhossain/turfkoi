@@ -91,27 +91,33 @@
   --popover-foreground: #FFFFFF;
   --primary: #00E676;          /* pitch green */
   --primary-foreground: #04140B;
-  --secondary: #7C5CFC;        /* purple accent */
+  --secondary: #7453FA;        /* purple accent */
   --secondary-foreground: #FFFFFF;
   --muted: #161D27;
-  --muted-foreground: #8B95A5;
+  --muted-foreground: #98A4B8;
   --accent: #1A2230;
   --accent-foreground: #FFFFFF;
   --destructive: #FF4D4F;
   --destructive-foreground: #2A0606;
   --success: #22C55E;
   --success-foreground: #06281A;
-  --info: #3B82F6;
+  --info: #60A5FA;
   --info-foreground: #061A2E;
   --warning: #FFC53D;
   --warning-foreground: #2A1F00;
-  --border: #222B38;
-  --input: #161D27;
+  /*
+   * Contrast floors (guarded by src/app/__tests__/contrast.test.ts):
+   *   border  >= 1.5:1 vs card/background (soft delineation target)
+   *   input   >= 3:1   vs card/background/muted (WCAG 1.4.11 — the border is
+   *                    the only edge transparent inputs have)
+   */
+  --border: #2D3C4F;
+  --input: #5A6C86;
   --ring: #00E676;
   --chart-1: #00E676;
-  --chart-2: #7C5CFC;
+  --chart-2: #7453FA;
   --chart-3: #FFC53D;
-  --chart-4: #3B82F6;
+  --chart-4: #60A5FA;
   --chart-5: #FF4D4F;
   --radius: 0.75rem;
   --sidebar: #0B1016;
@@ -120,7 +126,7 @@
   --sidebar-primary-foreground: #04140B;
   --sidebar-accent: #1A2230;
   --sidebar-accent-foreground: #FFFFFF;
-  --sidebar-border: #222B38;
+  --sidebar-border: #2D3C4F;
   --sidebar-ring: #00E676;
 }
 

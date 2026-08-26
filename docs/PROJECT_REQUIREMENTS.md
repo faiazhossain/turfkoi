@@ -424,9 +424,9 @@ Mobile:
 | `bg` | `#080B10` |
 | `card` | `#11161D` |
 | `primary` | `#00E676` |
-| `secondary` | `#7C5CFC` |
+| `secondary` | `#7453FA` |
 | `text` | `#FFFFFF` |
-| `muted` | `#8B95A5` |
+| `muted` | `#98A4B8` |
 | `danger` | `#FF4D4F` |
 | `warning` | `#FFC53D` |
 

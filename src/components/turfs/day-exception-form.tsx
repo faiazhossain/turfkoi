@@ -1,0 +1,214 @@
+"use client"
+
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Switch } from "@/components/ui/switch"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { StatusBadge } from "@/components/shared"
+
+import {
+  clearDateExceptionAction,
+  setDateExceptionAction,
+} from "@/features/turfs/actions"
+import {
+  dateExceptionSchema,
+  type DateExceptionValues,
+} from "@/features/turfs/schemas"
+
+export type ExistingException = {
+  isClosed: boolean
+  reason: string | null
+  priceMode: "multiplier" | "absolute" | null
+  priceValue: number | null
+}
+
+/**
+ * Day-exception editor (slot system P2): close a date or set its holiday
+ * price rule. Saving rematerializes immediately — booked slots stay put and
+ * surface as conflicts in the weekly-schedule card if they no longer fit.
+ */
+export function DayExceptionForm({
+  turfId,
+  date,
+  existing,
+  holidayName,
+}: {
+  turfId: string
+  date: string
+  existing: ExistingException | null
+  holidayName: string | null
+}) {
+  const router = useRouter()
+  const [serverError, setServerError] = useState<string | null>(null)
+  const [busy, setBusy] = useState<"save" | "clear" | null>(null)
+
+  const form = useForm<DateExceptionValues>({
+    resolver: zodResolver(dateExceptionSchema),
+    defaultValues: {
+      date,
+      isClosed: existing?.isClosed ?? false,
+      reason: existing?.reason ?? holidayName ?? undefined,
+      priceMode: existing?.priceMode ?? undefined,
+      priceValue: existing?.priceValue ?? undefined,
+    },
+  })
+
+  const isClosed = form.watch("isClosed")
+  const priceMode = form.watch("priceMode")
+
+  async function onSubmit(values: DateExceptionValues) {
+    setServerError(null)
+    setBusy("save")
+    try {
+      const res = await setDateExceptionAction(turfId, values)
+      if (!res.ok) {
+        setServerError(res.error)
+        return
+      }
+      router.refresh()
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  async function onClear() {
+    setServerError(null)
+    setBusy("clear")
+    try {
+      const res = await clearDateExceptionAction(turfId, { date })
+      if (!res.ok) {
+        setServerError(res.error)
+        return
+      }
+      form.reset({ date, isClosed: false, reason: undefined, priceMode: undefined, priceValue: undefined })
+      router.refresh()
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  return (
+    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <div className="flex items-center justify-between gap-3">
+        <Label
+          htmlFor={`closed-${date}`}
+          className="text-sm font-medium text-foreground"
+        >
+          Close this day
+        </Label>
+        <Switch
+          id={`closed-${date}`}
+          checked={isClosed}
+          onCheckedChange={(v) => {
+            form.setValue("isClosed", v, { shouldValidate: true })
+            if (v) {
+              form.setValue("priceMode", undefined)
+              form.setValue("priceValue", undefined)
+            }
+          }}
+          disabled={busy !== null}
+        />
+      </div>
+
+      {isClosed ? (
+        <div className="space-y-1.5">
+          <Label className="text-xs font-medium text-muted-foreground">
+            Reason (shown in your calendar)
+          </Label>
+          <Input
+            placeholder={holidayName ?? "e.g. Maintenance"}
+            {...form.register("reason")}
+          />
+        </div>
+      ) : (
+        <>
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium text-muted-foreground">
+              Special price for this day
+            </Label>
+            <Select
+              value={priceMode ?? "none"}
+              onValueChange={(v) => {
+                if (v === "none" || v === null) {
+                  form.setValue("priceMode", undefined)
+                  form.setValue("priceValue", undefined)
+                } else {
+                  form.setValue("priceMode", v as "multiplier" | "absolute", {
+                    shouldValidate: true,
+                  })
+                }
+              }}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">None - use section prices</SelectItem>
+                <SelectItem value="multiplier">Multiply section prices</SelectItem>
+                <SelectItem value="absolute">One flat price all day</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {priceMode ? (
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-muted-foreground">
+                {priceMode === "multiplier"
+                  ? "Multiplier (0.5 - 3, e.g. 1.25)"
+                  : "Flat price (BDT)"}
+              </Label>
+              <Input
+                type="number"
+                step="any"
+                min={0}
+                {...form.register("priceValue", { valueAsNumber: true })}
+              />
+              {form.formState.errors.priceValue?.message ? (
+                <p className="text-xs text-destructive">
+                  {String(form.formState.errors.priceValue.message)}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+        </>
+      )}
+
+      {form.formState.errors.isClosed?.message ? (
+        <p className="text-xs text-destructive">
+          {String(form.formState.errors.isClosed.message)}
+        </p>
+      ) : null}
+      {serverError ? (
+        <StatusBadge status="danger">{serverError}</StatusBadge>
+      ) : null}
+
+      <div className="flex flex-wrap items-center gap-2">
+        <Button type="submit" loading={busy === "save"} disabled={busy !== null}>
+          {busy === "save" ? "Applying" : "Apply to this day"}
+        </Button>
+        {existing ? (
+          <Button
+            type="button"
+            variant="outline"
+            loading={busy === "clear"}
+            disabled={busy !== null}
+            onClick={onClear}
+          >
+            {busy === "clear" ? "Removing" : "Remove exception"}
+          </Button>
+        ) : null}
+      </div>
+    </form>
+  )
+}
