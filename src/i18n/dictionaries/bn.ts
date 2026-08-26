@@ -393,6 +393,218 @@ export const bn: Dictionary = {
       slotMinutesMin: "সর্বনিম্ন ৩০ মিনিট",
       slotMinutesMax: "সর্বোচ্চ ১৮০ মিনিট",
       slotMinutesStep: "৫ মিনিটের গুণিতক হতে হবে",
+      scheduleNotFound: "Schedule খুঁজে পাওয়া যায়নি।",
+      scheduleRace: "আরেকটি schedule এইমাত্র active হয়েছে — একটু পরে আবার চেষ্টা করুন।",
+      horizonChoice: "৭, ১৪, ৩০, ৬০ বা ৯০ দিন থেকে বাছুন।",
+      futureDate: "আজ বা আজকের পরের কোনো তারিখ দিন।",
+      overlapsSlot: "এই slot-টা এই দিনে বা পাশের দিনের আরেকটি slot-এর সাথে overlap করছে।",
+      slotExists: "ওই সময়ে আগেই একটি slot আছে।",
+      labelShort: "লেবেল ছোট রাখুন",
+      sectionEndDiffer: "শুরু আর শেষের সময় আলাদা হতে হবে (রাতের slot-এর জন্য আগের সময় দিন)",
+      nameSchedule: "Schedule-এর একটি নাম দিন",
+      addSection: "অন্তত একটি section যোগ করুন",
+      tooManySections: "অনেক বেশি section (দিনে সর্বোচ্চ ১০টি)",
+      reasonShort: "কারণটা ছোট রাখুন",
+      closedWithPrice: "বন্ধ দিনে আবার price rule দেওয়া যায় না",
+      closeOrPrice: "দিনটা বন্ধ করুন বা price rule সেট করুন",
+      priceRuleValue: "Price rule-এর মান দিন",
+      multiplierRange: "Multiplier ০.৫ থেকে ৩-এর মধ্যে হতে হবে",
+      priceRange: "দাম ১ থেকে ১০০০০০-এর মধ্যে হতে হবে",
+      sectionOverlap: "একই দিনের দুটি section overlap করছে",
+      sectionWrap: "একটি section মধ্যরাত পেরিয়ে পরের দিনে ঢুকে যাচ্ছে",
+    },
+
+    schedule: {
+      // Slots ড্যাশবোর্ড — weekly hours + calendar
+      weeklyHours: "Weekly hours",
+      activeName: "Active: {name}",
+      weeklyHoursDesc:
+        "একবার সেট করুন — প্রতি সপ্তাহে নিজেই চলতে থাকবে। আপনি না বদলালে কিছুই বদলায় না।",
+      setupTitle: "Weekly hours সেট করুন",
+      setupDesc:
+        "আপনার turf-এ এখনো weekly schedule সেট করা হয়নি, তাই booking-এর জন্য কোনো slot নেই। দাম, খোলার সময় আর বিরতি নিয়ে কয়েকটি সহজ প্রশ্নের উত্তর দিন — আমরা পুরো সপ্তাহটা বানিয়ে দেব।",
+      calendarTitle: "Availability calendar",
+      calendarDesc:
+        "যেকোনো দিনে tap করে সেই দিনের slot দেখুন বা edit করুন। রিং চিহ্নিত দিনগুলো public holiday (BD calendar আমরা seed করি — lunar তারিখ আন্দাজি, Eid-এর আগে আবার check করে নিন)।",
+      bulkTitle: "Bulk generate (পুরনো পদ্ধতি)",
+      bulkDesc:
+        "শুধু weekly hours ছাড়া turf-এর জন্য। Weekly hours-ই ভালো — এটা পরের ৩০ দিন নিজেই ভরে দেয়।",
+      howTitle: "আপনার weekly schedule থেকে booking slot নিজে থেকেই তৈরি হয়।",
+      howDesc:
+        "কোনো দিন বেছে নিয়ে booking বন্ধ করুন বা দাম বদলান। বাড়তি সময় লাগবে? একটি one-time slot যোগ করুন।",
+      emptyDay: "যেকোনো দিন বেছে নিন — সেই দিনের slot দেখুন, booking বন্ধ করুন বা দাম বদলান।",
+      advancedTools: "Advanced tools",
+      dayAdjustmentsTitle: "নির্দিষ্ট কোনো দিন বদলান",
+      dayAdjustmentsDesc:
+        "Booking বন্ধ করতে, দিনের দাম বদলাতে বা বাড়তি slot দিতে এই অংশটি খুলুন।",
+
+      // Booking window
+      bookingWindow: "Booking window",
+      saving: "Saving…",
+      windowSavedWithSlots:
+        "Booking window {days} দিনে সেট হয়েছে — {added}টি slot যোগ, {removed}টি বাদ।",
+      windowSaved: "Booking window {days} দিনে সেট হয়েছে।",
+      windowSaveFailed: "Booking window সেভ করা গেল না। আবার চেষ্টা করুন।",
+      daysAhead: "{count} দিন আগ পর্যন্ত",
+      windowHint:
+        "Player-রা সর্বোচ্চ {count} দিন আগ পর্যন্ত book করতে পারবে — window-টা প্রতিদিন নিজেই এগিয়ে যায়।",
+
+      // Day panel
+      addOneOffSlot: "One-off slot যোগ করুন",
+      addOneOffTitle: "একটি one-off slot যোগ করুন",
+      addOneOffDesc:
+        "{date} তারিখের একটি একক slot — weekly hours বদলালেও এটি জায়গায় থাকবে। Overlap করলে নেওয়া হবে না।",
+      dayClosedReopen: "এই দিনটা বন্ধ আছে। উপরের switch দিয়ে আবার খুলুন।",
+      noSlotsThisDate: "এই তারিখে কোনো slot নেই।",
+      noSlotsThisWeekday:
+        "কোনো slot নেই — এই বারের জন্য weekly hours-এ কিছু নেই। নিচে একটি one-off slot দিন, বা weekly hours বদলান।",
+      holidayEstimate: " (আন্দাজি)",
+      closed: "বন্ধ",
+      closedWithReason: "বন্ধ - {reason}",
+      multiplierRate: "x{value} বিশেষ দাম",
+      flatRate: "Flat {value} BDT",
+      ramadanHint:
+        "রমজান — রাতের খেলা? Weekly hours-এ একটি section মধ্যরাত পেরিয়ে দিন।",
+      slotsThisDay: "এই দিনের slot",
+
+      // Calendar legend
+      legendClosed: "বন্ধ",
+      legendSpecialPrice: "বিশেষ দাম",
+      legendPublicHoliday: "Public holiday",
+
+      // Day exception form
+      closeThisDay: "এই দিনটা বন্ধ করুন",
+      reasonLabel: "কারণ (আপনার calendar-এ দেখাবে)",
+      reasonPlaceholder: "যেমন Maintenance",
+      specialPrice: "এই দিনের বিশেষ দাম",
+      priceModeNone: "কিছু না - section দামই চলবে",
+      priceModeMultiplier: "Section দামের সাথে গুণ",
+      priceModeAbsolute: "পুরো দিনে এক দাম",
+      multiplierLabel: "Multiplier (০.৫ - ৩, যেমন 1.25)",
+      flatPriceLabel: "Flat দাম (BDT)",
+      applying: "Applying…",
+      applyToDay: "এই দিনে apply করুন",
+      removing: "Removing…",
+      removeException: "Exception সরান",
+
+      // Saved schedules
+      savedSchedules: "Saved schedules",
+      savedDesc:
+        "Regular week আর seasonal hours পাশাপাশি রেখে এক tap-এ switch করুন। চাইলে একটি window দিয়ে সীমাবদ্ধ করুন - window-এর বাইরে ওই schedule কোনো slot দেয় না।",
+      savedDescRamadan:
+        "Regular week আর seasonal hours পাশাপাশি রেখে এক tap-এ switch করুন। Seed করা Ramadan তারিখগুলো ({window}) এক tap-এ পাওয়া যায়। Window-এর বাইরে schedule কোনো slot দেয় না, তাই মৌসুম শেষে ফিরে যান।",
+      sectionCount: "{count}টি section",
+      windowLabel: "window {window}",
+      active: "Active",
+      windowEnded:
+        "এই window শেষ — schedule-টি আর কোনো slot দিচ্ছে না। নিচে অন্য schedule activate করুন।",
+      windowStartsLater: "শুরু হবে {date} - তার আগে এই schedule কোনো slot দেবে না।",
+      from: "From",
+      to: "To",
+      ramadanDates: "Ramadan তারিখ",
+      activate: "Activate",
+      activating: "Activating…",
+      activated: "\"{name}\" এখন active।",
+      activatedWithSlots:
+        "\"{name}\" এখন active। পরের ৩০ দিন: {added}টি যোগ, {updated}টি update, {removed}টি বাদ।{conflictsNote}",
+      activatedConflicts: " {count}টি slot-এ খেয়াল রাখতে হবে - উপরে দেখুন।",
+
+      // Schedule builder
+      scheduleName: "Schedule-এর নাম",
+      status: "Status",
+      statusActive: "Active - প্রতি সপ্তাহে চলবে",
+      statusInactive: "পরের জন্য সেভ করা",
+      editingDay: "যে দিন edit করছেন",
+      noSectionsThatDay: "{day}-এ কোনো section নেই - ওই দিন turf বন্ধ থাকবে।",
+      labelPlaceholder: "লেবেল (যেমন Evening)",
+      removeSection: "Section সরান",
+      slotLabel: "Slot",
+      gapLabel: "Gap",
+      addSectionOn: "{day}-এ section যোগ করুন",
+      copyDayTo: "{day} থেকে copy করুন",
+      copy: "Copy",
+      previewCount: "{day} preview - {count}টি slot",
+      conflictOverlap: "{a} আর {b} একই দিনে overlap করছে",
+      conflictWrap: "{a} মধ্যরাত পেরিয়ে {b}-এ ঢুকে যাচ্ছে",
+      leftInPlace: "যেগুলো রেখে দেওয়া হয়েছে - নিচে নিজে মিটিয়ে নিন:",
+      conflictKind: {
+        insert_overlap: "Schedule slot একটি রাখা slot-এর সাথে overlap করত — বাদ দেওয়া হয়েছে",
+        kept_duration: "রাখা slot-এর দৈর্ঘ্য আর মিলছে না — ছুঁয়ে দেওয়া হয়নি",
+        resize_overlap: "নতুন slot একটি রাখা slot-এর সাথে overlap করত — resize করা হয়নি",
+        outside_plan: "নতুন schedule-এর বাইরে পড়ে গেছে — জায়গায় রাখা হয়েছে",
+      },
+      conflictMinutes: "চলে {got} মিনিট কিন্তু schedule এখন চায় {want} মিনিট",
+      saveSchedule: "Schedule সেভ করুন",
+      savedMaterialized:
+        "সেভ হয়েছে। পরের ৩০ দিন: {added}টি যোগ, {updated}টি update, {removed}টি বাদ।",
+      savedInactive: "সেভ হয়েছে (inactive - slot তৈরি করতে activate করুন)।",
+
+      // Custom slot
+      startTime: "শুরুর সময়",
+      addCustomSlot: "Custom slot যোগ করুন",
+      addingSlot: "Adding…",
+      customSlotAdded: "{date} তারিখে {time}-এর জন্য custom slot যোগ হয়েছে।",
+
+      // Needs-attention card
+      needsAttention: "খেয়াল রাখুন ({count})",
+      conflictBadge: {
+        booked_outside_plan: "Schedule-এর বাইরের booking",
+        booked_duration_mismatch: "Booking-এর দৈর্ঘ্য বদলেছে",
+        kept_manual: "Custom slot রাখা হয়েছে",
+      },
+      conflictDetail: {
+        booked_outside_plan: "Active booking নতুন schedule-এর বাইরে পড়েছে",
+        kept_manual: "Custom slot - regeneration কখনো এটি ছোঁয় না",
+      },
+    },
+
+    wizard: {
+      desc: "কয়েকটি সহজ প্রশ্নের উত্তর দিন — আমরা আপনার সপ্তাহ বানিয়ে পরের ৩০ দিনের slot ভরে দেব।",
+      stepPrices: "দাম",
+      stepHours: "সময়",
+      stepBreaks: "বিরতি",
+      stepReview: "রিভিউ",
+      pricingQuestion: "সময়ভেদে আপনার দাম কি বদলায়?",
+      flatTitle: "সারাদিন এক দাম",
+      flatDesc: "প্রতিটি slot-এ একই rate",
+      peakTitle: "Peak ও off-peak",
+      peakDesc: "সন্ধ্যার ভিড়ে দাম বেশি",
+      pricePerGame: "প্রতি খেলার দাম (BDT)",
+      peakStarts: "Peak শুরু",
+      peakEnds: "Peak শেষ",
+      peakPrice: "Peak দাম (BDT)",
+      offPeakPrice: "Off-peak দাম (BDT)",
+      openFrom: "খোলে",
+      openTo: "বন্ধ হয়",
+      gameLength: "খেলার দৈর্ঘ্য",
+      gapBetweenGames: "খেলার ফাঁক",
+      gapNone: "নেই",
+      gapMinutes: "+{count} মিনিট",
+      breakQuestion: "কোনো কোনো দিন কি বিরতিতে বন্ধ থাকে?",
+      noBreaksTitle: "বিরতি নেই",
+      noBreaksDesc: "সারাক্ষণ খোলা",
+      breakTitle: "হ্যাঁ, বিরতি আছে",
+      breakDesc: "লাঞ্চ, নামাজ, maintenance",
+      breakFrom: "বিরতি শুরু",
+      breakTo: "বিরতি শেষ",
+      breakDays: "যেসব দিনে বিরতি",
+      yourWeek: "আপনার সপ্তাহ",
+      closedDay: "বন্ধ",
+      slotsPerDay: "দিনে ≈{count}টি slot · পরের ৩০ দিন ভরে দেয়",
+      back: "পেছনে",
+      next: "পরেরটি",
+      save: "Weekly hours সেভ করুন",
+      saving: "Saving…",
+      saved: "Weekly hours সেভ হয়েছে।",
+      savedWithSlots:
+        "Weekly hours সেভ হয়েছে — পরের ৩০ দিন: {added}টি slot যোগ, {updated}টি update।",
+      errFlatPrice: "প্রতি খেলার দাম দিন।",
+      errPeakPrices: "Peak আর off-peak দুটো দামই দিন।",
+      errPeakTimes: "Peak-এর শুরু আর শেষ আলাদা হতে হবে।",
+      errOpenTimes: "বন্ধের সময়টা খোলার সময় থেকে আলাদা হতে হবে।",
+      errBreakTimes: "বিরতির শুরু আর শেষ আলাদা হতে হবে।",
+      errBreakDays: "বিরতির জন্য অন্তত একটি দিন বাছুন।",
+      errNoSlots: "এই setup-এ কোনো slot তৈরি হচ্ছে না — সময় আর বিরতি check করুন।",
     },
   },
 
@@ -891,6 +1103,28 @@ export const bn: Dictionary = {
     },
   },
 
+  ownerCode: {
+    codeLabel: "Sign-in code",
+    signInButton: "Code দিয়ে sign in করুন",
+    newPassword: "নতুন password",
+    errors: {
+      passwordMismatch: "দুটো password মিলছে না",
+      phoneRequired: "আপনার phone number দিন",
+      codeFormat: "৬ ডিজিটের code দিন",
+      noOwner: "এই turf-এ এখনো owner নেই — claim invite পাঠান।",
+      invalidPhone: "সঠিক Bangladeshi number দিন, যেমন 01XXXXXXXXX",
+      rateLimited: "অনেকবার চেষ্টা হয়েছে। একটু পরে আবার করুন।",
+      noCode: "এই number-এ কোনো active code নেই। Turfkoi team-এর কাছে নতুন একটি চান।",
+      wrongCode: "ভুল code। আবার চেষ্টা করুন।",
+      locked: "অনেকবার ভুল code। ১৫ মিনিট পর আবার চেষ্টা করুন।",
+      consumed: "এই code আগেই ব্যবহার হয়েছে। নতুন একটি চান।",
+      expired: "Code-টির সময় শেষ। Turfkoi team-এর কাছে নতুন একটি চান।",
+      revoked: "এই code-এর জায়গায় নতুন code দেওয়া হয়েছে। সবচেয়ে নতুনটি নিন।",
+      noAccount: "এই number-এ কোনো অ্যাকাউন্ট পাওয়া যায়নি।",
+      signinFailed: "Sign in করা গেল না। আবার চেষ্টা করুন।",
+    },
+  },
+
   admin: {
     title: "Admin",
     subtitle: "পে-আউট, রিফান্ড, ডিসপিউট আর সার্বিক তদারকি।",
@@ -988,6 +1222,46 @@ export const bn: Dictionary = {
       edit: "Turf edit করুন",
       editAria: "{name} edit করুন",
     },
+
+    cockpit: {
+      allTurfs: "সব turf",
+      statusAndOwner: "Status আর owner",
+      statusDesc:
+        "Verify আর visibility পরিবর্তন সাথে সাথেই public page আর booking flow-তে কার্যকর হয়।",
+      ownerLabel: "Owner:",
+      noOwnerInvite: "এখনো owner নেই — নিচে invite পাঠিয়ে হস্তান্তর করুন।",
+      slotsCount: "Slots ({count})",
+      dangerZone: "Danger zone",
+      dangerDesc: "Delete স্থায়ী — booking থাকলে আটকে যায়।",
+      bookingHistoryBlocked:
+        "এই turf-এ booking history আছে — booking history delete করা যায় না। বদলে turf-টি deactivate করুন।",
+      deleted: "Turf delete হয়েছে।",
+      typeToConfirm: "Confirm করতে {name} লিখুন",
+      deleteTurf: "Turf delete করুন",
+      deleteDesc:
+        "Turf, এর slot, ছবি আর claim invite মুছে যাবে। Turf application-এর history থাকবে। এটা আর ফেরানো যাবে না।",
+    },
+
+    ownerCode: {
+      sendCode: "Sign-in code পাঠান",
+      newCode: "নতুন code",
+      lockPassword: "Reset না হওয়া পর্যন্ত password login lock থাকবে",
+      codeAria: "One-time sign-in code",
+      copy: "Copy",
+      copyMessage: "Message copy করুন",
+      copied: "Copy হয়েছে।",
+      copyFailed: "Copy করা গেল না। নিজে হাতে নিয়ে নিন।",
+      whatsappMessage: "WhatsApp message",
+      passwordLocked:
+        "Owner নতুন password না সেট করা পর্যন্ত password login lock থাকবে।",
+      passwordStillWorks: "তাঁর বর্তমান password {phone}-এর জন্য চালুই থাকবে।",
+      hint: "{phone}-এর জন্য one-time code, ১৫ মিনিট সময়। WhatsApp-এ পাঠিয়ে দিন; sign in করার পরই owner নতুন password সেট করবেন।",
+      waLine1: "হ্যালো! \"{name}\" turf-এর জন্য আপনার Turfkoi sign-in code:",
+      waLine2:
+        "আপনার phone ({phone}) আর এই code দিয়ে sign in করুন। {time}-এ ({date}) expire হবে, একবারই কাজ করবে।",
+      waLine3: "সাথে সাথেই নতুন password সেট করবেন। — Turfkoi team",
+    },
+
 
     seed: {
       title: "Turf সীড করুন",
@@ -1164,6 +1438,9 @@ export const bn: Dictionary = {
 
     errors: {
       turfUnclaimed: "এই turf এখনো ওনার ক্লেইম করেননি।",
+      turfNotFoundPending: "Turf পাওয়া যায়নি বা আগেই pending আছে।",
+      turfHasBookings:
+        "এই turf-এ booking history আছে — delete করা যায় না। বদলে turf-টি deactivate করুন।",
       turfNotFoundVerified: "Turf পাওয়া যায়নি বা আগেই ভেরিফাই করা হয়েছে।",
       cantSuspendSelf: "নিজের অ্যাকাউন্ট সাসপেন্ড করা যাবে না।",
       cantRemoveOwnAdmin: "নিজের অ্যাডমিন রোল সরানো যাবে না।",

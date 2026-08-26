@@ -108,7 +108,7 @@ export type GenerateSlotsValues = z.infer<typeof generateSlotsSchema>
 export const scheduleSectionSchema = z
   .object({
     dayOfWeek: z.number().int().min(0).max(6),
-    label: z.string().max(30, "Keep labels short").optional(),
+    label: z.string().max(30, "turfOwner.errors.labelShort").optional(),
     startTime: hhmmSchema,
     endTime: hhmmSchema,
     slotMinutes: slotMinutesSchema,
@@ -117,11 +117,11 @@ export const scheduleSectionSchema = z
     gapMinutes: z.number().int().min(0).max(30),
     price: z
       .number()
-      .positive("Price must be positive")
-      .max(100000, "Price looks too high"),
+      .positive("turfOwner.errors.pricePositive")
+      .max(100000, "turfOwner.errors.priceTooHigh"),
   })
   .refine((v) => v.endTime !== v.startTime, {
-    message: "End time must differ from start time (wrap earlier for night hours)",
+    message: "turfOwner.errors.sectionEndDiffer",
     path: ["endTime"],
   })
 export type ScheduleSectionValues = z.infer<typeof scheduleSectionSchema>
@@ -130,16 +130,23 @@ export const saveScheduleSchema = z
   .object({
     // Present = edit that schedule; absent = create a new one.
     scheduleId: z.string().uuid().optional(),
-    name: z.string().min(1, "Name the schedule").max(60),
+    name: z.string().min(1, "turfOwner.errors.nameSchedule").max(60),
     isActive: z.boolean(),
     sections: z
       .array(scheduleSectionSchema)
-      .min(1, "Add at least one section")
-      .max(70, "Too many sections (max 10 per day)"),
+      .min(1, "turfOwner.errors.addSection")
+      .max(70, "turfOwner.errors.tooManySections"),
   })
   .superRefine((v, ctx) => {
     for (const conflict of findSectionConflicts(v.sections)) {
-      ctx.addIssue({ code: "custom", message: conflict, path: ["sections"] })
+      ctx.addIssue({
+        code: "custom",
+        message:
+          conflict.type === "overlap"
+            ? "turfOwner.errors.sectionOverlap"
+            : "turfOwner.errors.sectionWrap",
+        path: ["sections"],
+      })
     }
   })
 export type SaveScheduleValues = z.infer<typeof saveScheduleSchema>
@@ -154,13 +161,13 @@ export type BookingHorizonDays = z.infer<typeof bookingHorizonSchema>
 
 // Custom single-slot add (Layer 3): one hand-placed slot on one date.
 export const addSlotSchema = z.object({
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD"),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "booking.errors.dateFormat"),
   startTime: hhmmSchema,
   durationMinutes: slotMinutesSchema,
   price: z
     .number()
-    .positive("Price must be positive")
-    .max(100000, "Price looks too high"),
+    .positive("turfOwner.errors.pricePositive")
+    .max(100000, "turfOwner.errors.priceTooHigh"),
 })
 export type AddSlotValues = z.infer<typeof addSlotSchema>
 
@@ -169,9 +176,9 @@ export type AddSlotValues = z.infer<typeof addSlotSchema>
 // exclusive — a closed turf has nothing to price.
 export const dateExceptionSchema = z
   .object({
-    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD"),
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "booking.errors.dateFormat"),
     isClosed: z.boolean(),
-    reason: z.string().max(80, "Keep the reason short").optional(),
+    reason: z.string().max(80, "turfOwner.errors.reasonShort").optional(),
     priceMode: z.enum(["multiplier", "absolute"]).optional(),
     priceValue: z.number().optional(),
   })
@@ -179,7 +186,7 @@ export const dateExceptionSchema = z
     if (v.isClosed && (v.priceMode || v.priceValue !== undefined)) {
       ctx.addIssue({
         code: "custom",
-        message: "A closed day can't also carry a price rule",
+        message: "turfOwner.errors.closedWithPrice",
         path: ["priceMode"],
       })
       return
@@ -188,7 +195,7 @@ export const dateExceptionSchema = z
       if (!v.priceMode && v.priceValue === undefined) {
         ctx.addIssue({
           code: "custom",
-          message: "Either close the day or set a price rule",
+          message: "turfOwner.errors.closeOrPrice",
           path: ["isClosed"],
         })
         return
@@ -196,7 +203,7 @@ export const dateExceptionSchema = z
       if (v.priceMode && v.priceValue === undefined) {
         ctx.addIssue({
           code: "custom",
-          message: "Provide the value for the price rule",
+          message: "turfOwner.errors.priceRuleValue",
           path: ["priceValue"],
         })
         return
@@ -210,7 +217,7 @@ export const dateExceptionSchema = z
         ) {
           ctx.addIssue({
             code: "custom",
-            message: "Multiplier must be between 0.5 and 3",
+            message: "turfOwner.errors.multiplierRange",
             path: ["priceValue"],
           })
         }
@@ -224,7 +231,7 @@ export const dateExceptionSchema = z
         ) {
           ctx.addIssue({
             code: "custom",
-            message: "Price must be between 1 and 100000",
+            message: "turfOwner.errors.priceRange",
             path: ["priceValue"],
           })
         }
@@ -234,7 +241,7 @@ export const dateExceptionSchema = z
 export type DateExceptionValues = z.infer<typeof dateExceptionSchema>
 
 export const clearDateExceptionSchema = z.object({
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD"),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "booking.errors.dateFormat"),
 })
 
 // P3.1: activate a saved schedule, optionally for an effective window.
@@ -245,17 +252,17 @@ export const activateScheduleSchema = z
     scheduleId: z.string().uuid(),
     effectiveFrom: z
       .string()
-      .regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD")
+      .regex(/^\d{4}-\d{2}-\d{2}$/, "booking.errors.dateFormat")
       .nullable()
       .optional(),
     effectiveTo: z
       .string()
-      .regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD")
+      .regex(/^\d{4}-\d{2}-\d{2}$/, "booking.errors.dateFormat")
       .nullable()
       .optional(),
   })
   .refine((v) => !v.effectiveFrom || !v.effectiveTo || v.effectiveTo >= v.effectiveFrom, {
-    message: "End date must be on or after the start date",
+    message: "turfOwner.errors.endDateAfter",
     path: ["effectiveTo"],
   })
 export type ActivateScheduleValues = z.infer<typeof activateScheduleSchema>

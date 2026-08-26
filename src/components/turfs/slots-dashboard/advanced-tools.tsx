@@ -4,6 +4,7 @@ import { useState } from "react"
 import { ChevronDownIcon, WrenchIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { useI18n } from "@/i18n/client"
 import { cn } from "@/lib/utils"
 
 /**
@@ -12,6 +13,7 @@ import { cn } from "@/lib/utils"
  * the calendar; children are passed from the server page.
  */
 export function AdvancedTools({ children }: { children: React.ReactNode }) {
+  const { t } = useI18n()
   const [open, setOpen] = useState(false)
 
   return (
@@ -24,7 +26,7 @@ export function AdvancedTools({ children }: { children: React.ReactNode }) {
         onClick={() => setOpen((v) => !v)}
       >
         <WrenchIcon aria-hidden />
-        Advanced tools
+        {t("turfOwner.schedule.advancedTools")}
         <ChevronDownIcon
           aria-hidden
           className={cn(

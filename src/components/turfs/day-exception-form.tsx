@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { StatusBadge } from "@/components/shared"
+import { useI18n } from "@/i18n/client"
 
 import {
   clearDateExceptionAction,
@@ -51,6 +52,7 @@ export function DayExceptionForm({
   holidayName: string | null
 }) {
   const router = useRouter()
+  const { t } = useI18n()
   const [serverError, setServerError] = useState<string | null>(null)
   const [busy, setBusy] = useState<"save" | "clear" | null>(null)
 
@@ -106,7 +108,7 @@ export function DayExceptionForm({
           htmlFor={`closed-${date}`}
           className="text-sm font-medium text-foreground"
         >
-          Close this day
+          {t("turfOwner.schedule.closeThisDay")}
         </Label>
         <Switch
           id={`closed-${date}`}
@@ -125,10 +127,10 @@ export function DayExceptionForm({
       {isClosed ? (
         <div className="space-y-1.5">
           <Label className="text-xs font-medium text-muted-foreground">
-            Reason (shown in your calendar)
+            {t("turfOwner.schedule.reasonLabel")}
           </Label>
           <Input
-            placeholder={holidayName ?? "e.g. Maintenance"}
+            placeholder={holidayName ?? t("turfOwner.schedule.reasonPlaceholder")}
             {...form.register("reason")}
           />
         </div>
@@ -136,7 +138,7 @@ export function DayExceptionForm({
         <>
           <div className="space-y-1.5">
             <Label className="text-xs font-medium text-muted-foreground">
-              Special price for this day
+              {t("turfOwner.schedule.specialPrice")}
             </Label>
             <Select
               value={priceMode ?? "none"}
@@ -155,9 +157,15 @@ export function DayExceptionForm({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">None - use section prices</SelectItem>
-                <SelectItem value="multiplier">Multiply section prices</SelectItem>
-                <SelectItem value="absolute">One flat price all day</SelectItem>
+                <SelectItem value="none">
+                  {t("turfOwner.schedule.priceModeNone")}
+                </SelectItem>
+                <SelectItem value="multiplier">
+                  {t("turfOwner.schedule.priceModeMultiplier")}
+                </SelectItem>
+                <SelectItem value="absolute">
+                  {t("turfOwner.schedule.priceModeAbsolute")}
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -165,8 +173,8 @@ export function DayExceptionForm({
             <div className="space-y-1.5">
               <Label className="text-xs font-medium text-muted-foreground">
                 {priceMode === "multiplier"
-                  ? "Multiplier (0.5 - 3, e.g. 1.25)"
-                  : "Flat price (BDT)"}
+                  ? t("turfOwner.schedule.multiplierLabel")
+                  : t("turfOwner.schedule.flatPriceLabel")}
               </Label>
               <Input
                 type="number"
@@ -176,7 +184,7 @@ export function DayExceptionForm({
               />
               {form.formState.errors.priceValue?.message ? (
                 <p className="text-xs text-destructive">
-                  {String(form.formState.errors.priceValue.message)}
+                  {t(String(form.formState.errors.priceValue.message))}
                 </p>
               ) : null}
             </div>
@@ -186,16 +194,18 @@ export function DayExceptionForm({
 
       {form.formState.errors.isClosed?.message ? (
         <p className="text-xs text-destructive">
-          {String(form.formState.errors.isClosed.message)}
+          {t(String(form.formState.errors.isClosed.message))}
         </p>
       ) : null}
       {serverError ? (
-        <StatusBadge status="danger">{serverError}</StatusBadge>
+        <StatusBadge status="danger">{t(serverError)}</StatusBadge>
       ) : null}
 
       <div className="flex flex-wrap items-center gap-2">
         <Button type="submit" loading={busy === "save"} disabled={busy !== null}>
-          {busy === "save" ? "Applying" : "Apply to this day"}
+          {busy === "save"
+            ? t("turfOwner.schedule.applying")
+            : t("turfOwner.schedule.applyToDay")}
         </Button>
         {existing ? (
           <Button
@@ -205,7 +215,9 @@ export function DayExceptionForm({
             disabled={busy !== null}
             onClick={onClear}
           >
-            {busy === "clear" ? "Removing" : "Remove exception"}
+            {busy === "clear"
+              ? t("turfOwner.schedule.removing")
+              : t("turfOwner.schedule.removeException")}
           </Button>
         ) : null}
       </div>

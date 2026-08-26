@@ -20,6 +20,7 @@ import {
   spillOverlap,
   todayInDhaka,
 } from "@/lib/slot-expansion"
+import type { PlanConflict } from "@/lib/slot-planning"
 
 import {
   activateScheduleSchema,
@@ -281,7 +282,7 @@ export type ScheduleMaterializeSummary = {
   inserted: number
   updated: number
   deleted: number
-  conflicts: string[]
+  conflicts: PlanConflict[]
 }
 
 export type SaveScheduleResult =
@@ -300,7 +301,7 @@ export async function saveScheduleAction(
 ): Promise<SaveScheduleResult> {
   const parsed = saveScheduleSchema.safeParse(input)
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid" }
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "errors.invalid" }
   }
   const user = await getCurrentUser()
   if (!user) return unauthorized()
@@ -310,7 +311,7 @@ export async function saveScheduleAction(
     .from(turfs)
     .where(eq(turfs.id, turfId))
     .limit(1)
-  if (!existing[0]) return { ok: false, error: "Turf not found." }
+  if (!existing[0]) return { ok: false, error: "turfs.errors.turfNotFound" }
   if (!can(user, "turf.update", { ownerId: existing[0].ownerId })) {
     return forbidden()
   }
@@ -343,7 +344,7 @@ export async function saveScheduleAction(
         )
         .returning({ id: turfSchedules.id })
       if (updated.length === 0) {
-        return { ok: false, error: "Schedule not found." }
+        return { ok: false, error: "turfOwner.errors.scheduleNotFound" }
       }
       // Sections are rewritten wholesale — they are pure schedule state.
       await db
@@ -387,7 +388,7 @@ export async function saveScheduleAction(
     if (pgConstraintName(err) === "turf_schedules_one_active") {
       return {
         ok: false,
-        error: "Another schedule just went active — retry in a moment.",
+        error: "turfOwner.errors.scheduleRace",
       }
     }
     throw err
@@ -405,7 +406,7 @@ export async function updateBookingHorizonAction(
 ): Promise<ActionResult & { materialized?: ScheduleMaterializeSummary }> {
   const parsed = bookingHorizonSchema.safeParse(days)
   if (!parsed.success) {
-    return { ok: false, error: "Choose 7, 14, 30, 60, or 90 days." }
+    return { ok: false, error: "turfOwner.errors.horizonChoice" }
   }
   const user = await getCurrentUser()
   if (!user) return unauthorized()
@@ -415,7 +416,7 @@ export async function updateBookingHorizonAction(
     .from(turfs)
     .where(eq(turfs.id, turfId))
     .limit(1)
-  if (!existing[0]) return { ok: false, error: "Turf not found." }
+  if (!existing[0]) return { ok: false, error: "turfs.errors.turfNotFound" }
   if (!can(user, "turf.update", { ownerId: existing[0].ownerId })) {
     return forbidden()
   }
@@ -450,7 +451,7 @@ export async function addSlotAction(
 ): Promise<ActionResult> {
   const parsed = addSlotSchema.safeParse(input)
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid" }
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "errors.invalid" }
   }
   const user = await getCurrentUser()
   if (!user) return unauthorized()
@@ -460,14 +461,14 @@ export async function addSlotAction(
     .from(turfs)
     .where(eq(turfs.id, turfId))
     .limit(1)
-  if (!existing[0]) return { ok: false, error: "Turf not found." }
+  if (!existing[0]) return { ok: false, error: "turfs.errors.turfNotFound" }
   if (!can(user, "turf.update", { ownerId: existing[0].ownerId })) {
     return forbidden()
   }
 
   const { date, startTime, durationMinutes, price } = parsed.data
   if (date < todayInDhaka()) {
-    return { ok: false, error: "Pick today or a future date." }
+    return { ok: false, error: "turfOwner.errors.futureDate" }
   }
 
   const prevDate = addDays(date, -1)
@@ -502,7 +503,7 @@ export async function addSlotAction(
     if (clashes) {
       return {
         ok: false,
-        error: `Overlaps the ${rowStart} slot on ${row.date}.`,
+        error: "turfOwner.errors.overlapsSlot",
       }
     }
   }
@@ -521,7 +522,7 @@ export async function addSlotAction(
     .onConflictDoNothing()
     .returning({ startTime: turfSlots.startTime })
   if (inserted.length === 0) {
-    return { ok: false, error: `A slot already starts at ${startTime} on that date.` }
+    return { ok: false, error: "turfOwner.errors.slotExists" }
   }
 
   revalidatePath(`/turf-owner/turfs/${turfId}`)
@@ -541,7 +542,7 @@ export async function setDateExceptionAction(
 ): Promise<ActionResult> {
   const parsed = dateExceptionSchema.safeParse(input)
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid" }
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "errors.invalid" }
   }
   const user = await getCurrentUser()
   if (!user) return unauthorized()
@@ -551,14 +552,14 @@ export async function setDateExceptionAction(
     .from(turfs)
     .where(eq(turfs.id, turfId))
     .limit(1)
-  if (!existing[0]) return { ok: false, error: "Turf not found." }
+  if (!existing[0]) return { ok: false, error: "turfs.errors.turfNotFound" }
   if (!can(user, "turf.update", { ownerId: existing[0].ownerId })) {
     return forbidden()
   }
 
   const { date, isClosed, reason, priceMode, priceValue } = parsed.data
   if (date < todayInDhaka()) {
-    return { ok: false, error: "Pick today or a future date." }
+    return { ok: false, error: "turfOwner.errors.futureDate" }
   }
 
   await db
@@ -594,7 +595,7 @@ export async function clearDateExceptionAction(
 ): Promise<ActionResult> {
   const parsed = clearDateExceptionSchema.safeParse(input)
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid" }
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "errors.invalid" }
   }
   const user = await getCurrentUser()
   if (!user) return unauthorized()
@@ -604,7 +605,7 @@ export async function clearDateExceptionAction(
     .from(turfs)
     .where(eq(turfs.id, turfId))
     .limit(1)
-  if (!existing[0]) return { ok: false, error: "Turf not found." }
+  if (!existing[0]) return { ok: false, error: "turfs.errors.turfNotFound" }
   if (!can(user, "turf.update", { ownerId: existing[0].ownerId })) {
     return forbidden()
   }
@@ -637,7 +638,7 @@ export async function activateScheduleAction(
 ): Promise<SaveScheduleResult> {
   const parsed = activateScheduleSchema.safeParse(input)
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid" }
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "errors.invalid" }
   }
   const user = await getCurrentUser()
   if (!user) return unauthorized()
@@ -647,7 +648,7 @@ export async function activateScheduleAction(
     .from(turfs)
     .where(eq(turfs.id, turfId))
     .limit(1)
-  if (!existing[0]) return { ok: false, error: "Turf not found." }
+  if (!existing[0]) return { ok: false, error: "turfs.errors.turfNotFound" }
   if (!can(user, "turf.update", { ownerId: existing[0].ownerId })) {
     return forbidden()
   }
@@ -673,7 +674,7 @@ export async function activateScheduleAction(
       )
       .returning({ id: turfSchedules.id })
     if (updated.length === 0) {
-      return { ok: false, error: "Schedule not found." }
+      return { ok: false, error: "turfOwner.errors.scheduleNotFound" }
     }
 
     const res = await materializeTurfSchedule(turfId)
@@ -692,7 +693,7 @@ export async function activateScheduleAction(
     if (pgConstraintName(err) === "turf_schedules_one_active") {
       return {
         ok: false,
-        error: "Another schedule just went active — retry in a moment.",
+        error: "turfOwner.errors.scheduleRace",
       }
     }
     throw err

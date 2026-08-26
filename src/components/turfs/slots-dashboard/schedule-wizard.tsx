@@ -24,16 +24,23 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { StatusBadge } from "@/components/shared"
+import { useI18n } from "@/i18n/client"
+import { formatBdt } from "@/lib/pricing"
 
 import { saveScheduleAction } from "@/features/turfs/actions"
 
-import { DAY_NAMES, expandSectionsForDay } from "@/lib/slot-expansion"
+import { expandSectionsForDay } from "@/lib/slot-expansion"
 import { buildWizardSections, type WizardValues } from "@/lib/wizard-sections"
 
 const DURATIONS = [30, 45, 60, 75, 90, 120, 180]
 const GAPS = [0, 5, 10, 15, 20, 30]
 const DAY_ABBR = ["S", "M", "T", "W", "T", "F", "S"]
-const STEPS = ["Prices", "Hours", "Breaks", "Review"] as const
+const STEP_KEYS = [
+  "turfOwner.wizard.stepPrices",
+  "turfOwner.wizard.stepHours",
+  "turfOwner.wizard.stepBreaks",
+  "turfOwner.wizard.stepReview",
+] as const
 
 const DEFAULTS: WizardValues = {
   pricing: "flat",
@@ -96,32 +103,32 @@ function Field({
   )
 }
 
-/** Validate one wizard step; returns an error message or null. */
+/** Validate one wizard step; returns a dictionary key or null. */
 function stepError(step: number, v: WizardValues): string | null {
   if (step === 1) {
     if (v.pricing === "flat" && !(v.flatPrice > 0)) {
-      return "Enter a price per game."
+      return "turfOwner.wizard.errFlatPrice"
     }
     if (v.pricing === "peak") {
       if (!(v.peakPrice > 0) || !(v.offPeakPrice > 0)) {
-        return "Enter both peak and off-peak prices."
+        return "turfOwner.wizard.errPeakPrices"
       }
       if (v.peakFrom === v.peakTo) {
-        return "Peak start and end must differ."
+        return "turfOwner.wizard.errPeakTimes"
       }
     }
   }
   if (step === 2) {
     if (v.openFrom === v.openTo) {
-      return "Closing time must differ from opening time."
+      return "turfOwner.wizard.errOpenTimes"
     }
   }
   if (step === 3 && v.breakEnabled) {
     if (v.breakFrom === v.breakTo) {
-      return "Break start and end must differ."
+      return "turfOwner.wizard.errBreakTimes"
     }
     if (v.breakDays.length === 0) {
-      return "Pick at least one day for the break."
+      return "turfOwner.wizard.errBreakDays"
     }
   }
   return null
@@ -136,16 +143,15 @@ function stepError(step: number, v: WizardValues): string | null {
  */
 export function ScheduleWizardDialog({
   turfId,
-  triggerLabel = "Set up weekly hours",
   triggerVariant = "default",
   triggerSize = "default",
 }: {
   turfId: string
-  triggerLabel?: string
   triggerVariant?: "default" | "outline" | "secondary"
   triggerSize?: "default" | "sm" | "lg"
 }) {
   const router = useRouter()
+  const { t } = useI18n()
   const [open, setOpen] = useState(false)
   const [step, setStep] = useState(1)
   const [values, setValues] = useState<WizardValues>(DEFAULTS)
@@ -165,7 +171,7 @@ export function ScheduleWizardDialog({
 
   async function save() {
     const err = stepError(4, values) ?? (sections.length === 0
-      ? "This setup creates no slots — check your hours and breaks."
+      ? "turfOwner.wizard.errNoSlots"
       : null)
     setError(err)
     if (err) return
@@ -184,8 +190,11 @@ export function ScheduleWizardDialog({
       const m = res.materialized
       toast.success(
         m
-          ? `Weekly hours saved — next 30 days: ${m.inserted} slots added, ${m.updated} updated.`
-          : "Weekly hours saved."
+          ? t("turfOwner.wizard.savedWithSlots", {
+              added: m.inserted,
+              updated: m.updated,
+            })
+          : t("turfOwner.wizard.saved")
       )
       router.refresh()
     } finally {
@@ -223,20 +232,19 @@ export function ScheduleWizardDialog({
           <Button variant={triggerVariant} size={triggerSize} />
         }
       >
-        {triggerLabel}
+        {t("turfOwner.schedule.setupTitle")}
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] max-w-md overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Set up weekly hours</DialogTitle>
+          <DialogTitle>{t("turfOwner.schedule.setupTitle")}</DialogTitle>
           <DialogDescription>
-            A few quick questions — we&apos;ll build your week and fill the
-            next 30 days of slots.
+            {t("turfOwner.wizard.desc")}
           </DialogDescription>
         </DialogHeader>
 
         <div className="flex items-center gap-2" aria-hidden>
-          {STEPS.map((label, i) => (
-            <div key={label} className="flex flex-1 flex-col items-center gap-1">
+          {STEP_KEYS.map((key, i) => (
+            <div key={key} className="flex flex-1 flex-col items-center gap-1">
               <span
                 className={
                   "h-1.5 w-full rounded-full " +
@@ -249,7 +257,7 @@ export function ScheduleWizardDialog({
                   (i + 1 === step ? "text-foreground" : "text-muted-foreground")
                 }
               >
-                {label}
+                {t(key)}
               </span>
             </div>
           ))}
@@ -258,24 +266,24 @@ export function ScheduleWizardDialog({
         {step === 1 ? (
           <div className="space-y-4">
             <p className="text-sm font-medium">
-              Do your prices change by time of day?
+              {t("turfOwner.wizard.pricingQuestion")}
             </p>
             <div className="grid gap-2 sm:grid-cols-2">
               <ChoiceCard
                 selected={values.pricing === "flat"}
-                title="Same price all day"
-                description="One rate for every slot"
+                title={t("turfOwner.wizard.flatTitle")}
+                description={t("turfOwner.wizard.flatDesc")}
                 onClick={() => set("pricing", "flat")}
               />
               <ChoiceCard
                 selected={values.pricing === "peak"}
-                title="Peak & off-peak"
-                description="Higher rate in the evening rush"
+                title={t("turfOwner.wizard.peakTitle")}
+                description={t("turfOwner.wizard.peakDesc")}
                 onClick={() => set("pricing", "peak")}
               />
             </div>
             {values.pricing === "flat" ? (
-              <Field label="Price per game (BDT)">
+              <Field label={t("turfOwner.wizard.pricePerGame")}>
                 <Input
                   type="number"
                   min={1}
@@ -287,14 +295,14 @@ export function ScheduleWizardDialog({
             ) : (
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
-                  <Field label="Peak starts">
+                  <Field label={t("turfOwner.wizard.peakStarts")}>
                     <Input
                       type="time"
                       value={values.peakFrom}
                       onChange={(e) => set("peakFrom", e.target.value)}
                     />
                   </Field>
-                  <Field label="Peak ends">
+                  <Field label={t("turfOwner.wizard.peakEnds")}>
                     <Input
                       type="time"
                       value={values.peakTo}
@@ -303,7 +311,7 @@ export function ScheduleWizardDialog({
                   </Field>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <Field label="Peak price (BDT)">
+                  <Field label={t("turfOwner.wizard.peakPrice")}>
                     <Input
                       type="number"
                       min={1}
@@ -312,7 +320,7 @@ export function ScheduleWizardDialog({
                       onChange={(e) => set("peakPrice", Number(e.target.value))}
                     />
                   </Field>
-                  <Field label="Off-peak price (BDT)">
+                  <Field label={t("turfOwner.wizard.offPeakPrice")}>
                     <Input
                       type="number"
                       min={1}
@@ -332,14 +340,14 @@ export function ScheduleWizardDialog({
         {step === 2 ? (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Open from">
+              <Field label={t("turfOwner.wizard.openFrom")}>
                 <Input
                   type="time"
                   value={values.openFrom}
                   onChange={(e) => set("openFrom", e.target.value)}
                 />
               </Field>
-              <Field label="Open to">
+              <Field label={t("turfOwner.wizard.openTo")}>
                 <Input
                   type="time"
                   value={values.openTo}
@@ -348,7 +356,7 @@ export function ScheduleWizardDialog({
               </Field>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Game length">
+              <Field label={t("turfOwner.wizard.gameLength")}>
                 <Select
                   value={String(values.slotMinutes)}
                   onValueChange={(v) => set("slotMinutes", Number(v))}
@@ -359,13 +367,13 @@ export function ScheduleWizardDialog({
                   <SelectContent>
                     {DURATIONS.map((d) => (
                       <SelectItem key={d} value={String(d)}>
-                        {d} min
+                        {t("turfOwner.generate.minutes", { count: d })}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </Field>
-              <Field label="Gap between games">
+              <Field label={t("turfOwner.wizard.gapBetweenGames")}>
                 <Select
                   value={String(values.gapMinutes)}
                   onValueChange={(v) => set("gapMinutes", Number(v))}
@@ -376,7 +384,9 @@ export function ScheduleWizardDialog({
                   <SelectContent>
                     {GAPS.map((g) => (
                       <SelectItem key={g} value={String(g)}>
-                        {g === 0 ? "none" : `+${g} min`}
+                        {g === 0
+                          ? t("turfOwner.wizard.gapNone")
+                          : t("turfOwner.wizard.gapMinutes", { count: g })}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -389,33 +399,33 @@ export function ScheduleWizardDialog({
         {step === 3 ? (
           <div className="space-y-4">
             <p className="text-sm font-medium">
-              Closed for a break on some days?
+              {t("turfOwner.wizard.breakQuestion")}
             </p>
             <div className="grid gap-2 sm:grid-cols-2">
               <ChoiceCard
                 selected={!values.breakEnabled}
-                title="No breaks"
-                description="Open the whole time"
+                title={t("turfOwner.wizard.noBreaksTitle")}
+                description={t("turfOwner.wizard.noBreaksDesc")}
                 onClick={() => set("breakEnabled", false)}
               />
               <ChoiceCard
                 selected={values.breakEnabled}
-                title="Yes, a break"
-                description="Lunch, prayer, maintenance"
+                title={t("turfOwner.wizard.breakTitle")}
+                description={t("turfOwner.wizard.breakDesc")}
                 onClick={() => set("breakEnabled", true)}
               />
             </div>
             {values.breakEnabled ? (
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
-                  <Field label="Break from">
+                  <Field label={t("turfOwner.wizard.breakFrom")}>
                     <Input
                       type="time"
                       value={values.breakFrom}
                       onChange={(e) => set("breakFrom", e.target.value)}
                     />
                   </Field>
-                  <Field label="Break to">
+                  <Field label={t("turfOwner.wizard.breakTo")}>
                     <Input
                       type="time"
                       value={values.breakTo}
@@ -423,7 +433,7 @@ export function ScheduleWizardDialog({
                     />
                   </Field>
                 </div>
-                <Field label="Break days">
+                <Field label={t("turfOwner.wizard.breakDays")}>
                   <div className="flex gap-1.5">
                     {DAY_ABBR.map((abbr, day) => {
                       const on = values.breakDays.includes(day)
@@ -432,7 +442,7 @@ export function ScheduleWizardDialog({
                           key={day}
                           type="button"
                           aria-pressed={on}
-                          aria-label={DAY_NAMES[day]}
+                          aria-label={t(`turfOwner.generate.day${day}`)}
                           onClick={() =>
                             set(
                               "breakDays",
@@ -461,15 +471,17 @@ export function ScheduleWizardDialog({
 
         {step === 4 ? (
           <div className="space-y-3">
-            <p className="text-sm font-medium">Your week</p>
+            <p className="text-sm font-medium">{t("turfOwner.wizard.yourWeek")}</p>
             <div className="max-h-64 space-y-2 overflow-y-auto rounded-lg border border-border p-3">
-              {DAY_NAMES.map((name, day) => {
+              {[0, 1, 2, 3, 4, 5, 6].map((day) => {
                 const daySecs = sections.filter((s) => s.dayOfWeek === day)
                 return (
-                  <div key={name} className="text-xs">
-                    <p className="font-medium">{name}</p>
+                  <div key={day} className="text-xs">
+                    <p className="font-medium">{t(`turfOwner.generate.day${day}`)}</p>
                     {daySecs.length === 0 ? (
-                      <p className="text-muted-foreground">Closed</p>
+                      <p className="text-muted-foreground">
+                        {t("turfOwner.wizard.closedDay")}
+                      </p>
                     ) : (
                       <div className="mt-0.5 space-y-0.5">
                         {daySecs.map((s) => (
@@ -481,7 +493,7 @@ export function ScheduleWizardDialog({
                               {s.startTime}–{s.endTime}
                             </span>
                             <span>
-                              {s.label ? `${s.label} · ` : ""}৳{s.price}
+                              {s.label ? `${s.label} · ` : ""}{formatBdt(s.price)}
                             </span>
                           </p>
                         ))}
@@ -492,12 +504,12 @@ export function ScheduleWizardDialog({
               })}
             </div>
             <StatusBadge status="neutral" showIcon={false}>
-              ≈{slotsPerDay} slots per day · fills the next 30 days
+              {t("turfOwner.wizard.slotsPerDay", { count: slotsPerDay })}
             </StatusBadge>
           </div>
         ) : null}
 
-        {error ? <StatusBadge status="danger">{error}</StatusBadge> : null}
+        {error ? <StatusBadge status="danger">{t(error)}</StatusBadge> : null}
 
         <DialogFooter>
           {step > 1 ? (
@@ -509,14 +521,14 @@ export function ScheduleWizardDialog({
                 setStep((s) => Math.max(1, s - 1))
               }}
             >
-              Back
+              {t("turfOwner.wizard.back")}
             </Button>
           ) : null}
           {step < 4 ? (
-            <Button onClick={next}>Next</Button>
+            <Button onClick={next}>{t("turfOwner.wizard.next")}</Button>
           ) : (
             <Button onClick={() => void save()} loading={busy}>
-              {busy ? "Saving" : "Save weekly hours"}
+              {busy ? t("turfOwner.wizard.saving") : t("turfOwner.wizard.save")}
             </Button>
           )}
         </DialogFooter>

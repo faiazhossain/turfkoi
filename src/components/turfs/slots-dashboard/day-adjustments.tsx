@@ -3,15 +3,17 @@
 import { useState } from "react"
 import { CalendarDaysIcon, ChevronDownIcon } from "lucide-react"
 
+import { useI18n } from "@/i18n/client"
 import { cn } from "@/lib/utils"
 
 /**
  * Collapsible home for day-by-day adjustments (calendar + day panel).
  * Collapsed by default — weekly hours is the primary path; owners open this
  * only when a specific date needs closing, a price override, or a one-off
- * slot. Bilingual copy so Bangla-first owners know what lives here.
+ * slot.
  */
 export function DayAdjustments({ children }: { children: React.ReactNode }) {
+  const { t } = useI18n()
   const [open, setOpen] = useState(false)
 
   return (
@@ -25,14 +27,10 @@ export function DayAdjustments({ children }: { children: React.ReactNode }) {
         <CalendarDaysIcon className="size-5 shrink-0 text-primary" aria-hidden />
         <span className="min-w-0 flex-1">
           <span className="block text-sm font-medium text-foreground">
-            Change a specific day
+            {t("turfOwner.schedule.dayAdjustmentsTitle")}
           </span>
           <span className="block text-xs text-muted-foreground">
-            Close bookings, change a day&apos;s price, or add a one-off slot.
-          </span>
-          <span lang="bn" className="block text-xs text-muted-foreground">
-            নির্দিষ্ট কোনো দিনের বুকিং বন্ধ করতে, দাম বদলাতে বা বাড়তি স্লট
-            দিতে এই অংশটি খুলুন।
+            {t("turfOwner.schedule.dayAdjustmentsDesc")}
           </span>
         </span>
         <ChevronDownIcon

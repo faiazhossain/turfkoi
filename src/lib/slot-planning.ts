@@ -43,6 +43,21 @@ export type SlotMutation = {
   price: number
 }
 
+/** A row the plan engine refused to touch, and why (rendered via i18n). */
+export type PlanConflict = {
+  date: string
+  startTime: string
+  kind:
+    | "insert_overlap"
+    | "kept_duration"
+    | "resize_overlap"
+    | "outside_plan"
+  /** What sits at the key: a booking or the owner's hand-placed slot. */
+  kept: "booking" | "manual"
+  gotMinutes?: number
+  wantMinutes?: number
+}
+
 export type MaterializePlan = {
   /** New rows to insert (source=template). */
   inserts: SlotMutation[]
@@ -50,8 +65,8 @@ export type MaterializePlan = {
   updates: SlotMutation[]
   /** Available template rows the schedule no longer offers. */
   deletes: Array<{ date: string; startTime: string }>
-  /** Human-readable notes the engine refused to resolve destructively. */
-  conflicts: string[]
+  /** Notes the engine refused to resolve destructively. */
+  conflicts: PlanConflict[]
   /** Manual rows present in the window (never touched by this run). */
   keptManual: number
   /** Rows matching the plan exactly (no statement needed). */
@@ -78,10 +93,8 @@ function isKept(row: ExistingSlotRow): boolean {
   return !(row.source === "template" && row.status === "available")
 }
 
-function describeKept(row: ExistingSlotRow): string {
-  if (row.source === "manual") return "custom slot"
-  if (row.status === "booked" || row.status === "held") return "active booking"
-  return row.status
+function keptKind(row: ExistingSlotRow): "booking" | "manual" {
+  return row.source === "manual" ? "manual" : "booking"
 }
 
 export function planMaterialization(
@@ -118,13 +131,19 @@ export function planMaterialization(
     unchanged: 0,
   }
 
-  const overlapsKept = (slot: { date: string; startTime: string; durationMinutes: number }, exceptKey?: string) => {
-    const kept = keptByDate.get(slot.date) ?? []
-    return kept.some(
-      (row) =>
+  const overlappingKept = (
+    slot: { date: string; startTime: string; durationMinutes: number },
+    exceptKey?: string
+  ): ExistingSlotRow | null => {
+    for (const row of keptByDate.get(slot.date) ?? []) {
+      if (
         key(row.date, row.startTime) !== exceptKey &&
         rangesOverlap(slot.startTime, slot.durationMinutes, row.startTime, row.durationMinutes)
-    )
+      ) {
+        return row
+      }
+    }
+    return null
   }
 
   for (const slot of desired) {
@@ -132,10 +151,14 @@ export function planMaterialization(
     const ex = existingByKey.get(slotKey)
 
     if (!ex) {
-      if (overlapsKept(slot)) {
-        plan.conflicts.push(
-          `${slot.date} ${slot.startTime}: schedule slot would overlap a kept slot — skipped`
-        )
+      const clash = overlappingKept(slot)
+      if (clash) {
+        plan.conflicts.push({
+          date: slot.date,
+          startTime: slot.startTime,
+          kind: "insert_overlap",
+          kept: keptKind(clash),
+        })
       } else {
         plan.inserts.push(slot)
       }
@@ -144,9 +167,14 @@ export function planMaterialization(
 
     if (isKept(ex)) {
       if (ex.durationMinutes !== slot.durationMinutes) {
-        plan.conflicts.push(
-          `${slot.date} ${slot.startTime}: ${describeKept(ex)} runs ${ex.durationMinutes} min but the schedule wants ${slot.durationMinutes} min — left untouched`
-        )
+        plan.conflicts.push({
+          date: slot.date,
+          startTime: slot.startTime,
+          kind: "kept_duration",
+          kept: keptKind(ex),
+          gotMinutes: ex.durationMinutes,
+          wantMinutes: slot.durationMinutes,
+        })
       } else {
         // Same time, same length: the kept row already satisfies the plan.
         plan.unchanged++
@@ -159,13 +187,14 @@ export function planMaterialization(
       plan.unchanged++
       continue
     }
-    if (
-      ex.durationMinutes !== slot.durationMinutes &&
-      overlapsKept(slot, slotKey)
-    ) {
-      plan.conflicts.push(
-        `${slot.date} ${slot.startTime}: new ${slot.durationMinutes} min slot would overlap a kept slot — not resized`
-      )
+    if (ex.durationMinutes !== slot.durationMinutes && overlappingKept(slot, slotKey)) {
+      plan.conflicts.push({
+        date: slot.date,
+        startTime: slot.startTime,
+        kind: "resize_overlap",
+        kept: keptKind(ex),
+        wantMinutes: slot.durationMinutes,
+      })
       continue
     }
     plan.updates.push(slot)
@@ -179,9 +208,12 @@ export function planMaterialization(
     }
     if (desiredKeys.has(key(row.date, row.startTime))) continue
     if (row.status === "booked" || row.status === "held") {
-      plan.conflicts.push(
-        `${row.date} ${row.startTime}: ${describeKept(row)} sits outside the new schedule — left in place`
-      )
+      plan.conflicts.push({
+        date: row.date,
+        startTime: row.startTime,
+        kind: "outside_plan",
+        kept: keptKind(row),
+      })
       continue
     }
     if (row.status === "available") {

@@ -13,6 +13,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet"
 import { AddSlotForm } from "@/components/turfs/add-slot-form"
+import { useI18n } from "@/i18n/client"
 
 /**
  * Bottom sheet for adding a one-off slot to a specific calendar date. The
@@ -22,12 +23,11 @@ import { AddSlotForm } from "@/components/turfs/add-slot-form"
 export function AddSlotSheet({
   turfId,
   date,
-  label = "Add one-off slot",
 }: {
   turfId: string
   date: string
-  label?: string
 }) {
+  const { t } = useI18n()
   const [open, setOpen] = useState(false)
 
   return (
@@ -38,14 +38,13 @@ export function AddSlotSheet({
         }
       >
         <PlusIcon aria-hidden />
-        {label}
+        {t("turfOwner.schedule.addOneOffSlot")}
       </SheetTrigger>
       <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto">
         <SheetHeader>
-          <SheetTitle>Add a one-off slot</SheetTitle>
+          <SheetTitle>{t("turfOwner.schedule.addOneOffTitle")}</SheetTitle>
           <SheetDescription>
-            A single slot for {date} that stays put even when weekly hours
-            change. Overlapping slots are rejected.
+            {t("turfOwner.schedule.addOneOffDesc", { date })}
           </SheetDescription>
         </SheetHeader>
         <div className="px-4 pb-6">

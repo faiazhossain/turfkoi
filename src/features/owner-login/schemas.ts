@@ -9,7 +9,7 @@ export const mintOwnerLoginCodeSchema = z.object({
 export type MintOwnerLoginCodeValues = z.infer<typeof mintOwnerLoginCodeSchema>
 
 export const ownerCodeLoginSchema = z.object({
-  phone: z.string().min(5, "Enter your phone number"),
-  code: z.string().regex(/^\d{6}$/, "Enter the 6-digit code"),
+  phone: z.string().min(5, "ownerCode.errors.phoneRequired"),
+  code: z.string().regex(/^\d{6}$/, "ownerCode.errors.codeFormat"),
 })
 export type OwnerCodeLoginValues = z.infer<typeof ownerCodeLoginSchema>

@@ -1,8 +1,10 @@
 "use client"
 
 import { useRouter } from "next/navigation"
+import { bn as bnLocale } from "date-fns/locale"
 
 import { Calendar } from "@/components/ui/calendar"
+import { useI18n } from "@/i18n/client"
 
 export type DayMarker = {
   closed?: boolean
@@ -43,6 +45,7 @@ export function TurfDayCalendar({
   markers: Record<string, DayMarker>
 }) {
   const router = useRouter()
+  const { t, locale } = useI18n()
 
   const datesWhere = (pred: (m: DayMarker) => boolean): Date[] =>
     Object.entries(markers)
@@ -62,6 +65,7 @@ export function TurfDayCalendar({
     <div className="space-y-3">
       <Calendar
         mode="single"
+        locale={locale === "bn" ? bnLocale : undefined}
         month={isoToDate(`${month}-01`)}
         selected={selectedDate ? isoToDate(selectedDate) : undefined}
         onSelect={(date) => {
@@ -87,15 +91,15 @@ export function TurfDayCalendar({
       <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
         <span className="flex items-center gap-1.5">
           <span className="size-2.5 rounded-full bg-destructive/60" aria-hidden />
-          Closed
+          {t("turfOwner.schedule.legendClosed")}
         </span>
         <span className="flex items-center gap-1.5">
           <span className="size-2.5 rounded-full bg-primary/60" aria-hidden />
-          Special price
+          {t("turfOwner.schedule.legendSpecialPrice")}
         </span>
         <span className="flex items-center gap-1.5">
           <span className="size-2.5 rounded-full border border-muted-foreground" aria-hidden />
-          Public holiday
+          {t("turfOwner.schedule.legendPublicHoliday")}
         </span>
       </div>
     </div>

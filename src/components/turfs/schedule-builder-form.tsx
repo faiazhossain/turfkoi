@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { StatusBadge } from "@/components/shared"
+import { useI18n } from "@/i18n/client"
 
 import { saveScheduleAction } from "@/features/turfs/actions"
 import {
@@ -24,14 +25,13 @@ import {
   type SaveScheduleValues,
 } from "@/features/turfs/schemas"
 import {
-  DAY_NAMES,
   expandSectionsForDay,
   findSectionConflicts,
 } from "@/lib/slot-expansion"
+import type { PlanConflict } from "@/lib/slot-planning"
 
 const DURATIONS = [30, 45, 60, 75, 90, 120, 180]
 const GAPS = [0, 5, 10, 15, 20, 30]
-const DAY_ABBR = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 
 /**
  * Weekly schedule builder (slot system P2). Sections are edited per selected
@@ -47,11 +47,12 @@ export function ScheduleBuilderForm({
   defaultValues: SaveScheduleValues
 }) {
   const router = useRouter()
+  const { t } = useI18n()
   const [selectedDay, setSelectedDay] = useState(1)
   const [copyTarget, setCopyTarget] = useState("0")
   const [serverError, setServerError] = useState<string | null>(null)
   const [summary, setSummary] = useState<string | null>(null)
-  const [conflicts, setConflicts] = useState<string[]>([])
+  const [conflicts, setConflicts] = useState<PlanConflict[]>([])
 
   const form = useForm<SaveScheduleValues>({
     resolver: zodResolver(saveScheduleSchema),
@@ -110,11 +111,15 @@ export function ScheduleBuilderForm({
     const m = res.materialized
     if (m) {
       setSummary(
-        `Saved. Materialized next 30 days: ${m.inserted} added, ${m.updated} updated, ${m.deleted} removed.`
+        t("turfOwner.schedule.savedMaterialized", {
+          added: m.inserted,
+          updated: m.updated,
+          removed: m.deleted,
+        })
       )
       setConflicts(m.conflicts)
     } else {
-      setSummary("Saved (inactive - activate to materialize).")
+      setSummary(t("turfOwner.schedule.savedInactive"))
     }
     router.refresh()
   }
@@ -124,13 +129,13 @@ export function ScheduleBuilderForm({
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1.5">
           <Label className="text-xs font-medium text-muted-foreground">
-            Schedule name
+            {t("turfOwner.schedule.scheduleName")}
           </Label>
           <Input {...form.register("name")} />
         </div>
         <div className="space-y-1.5">
           <Label className="text-xs font-medium text-muted-foreground">
-            Status
+            {t("turfOwner.schedule.status")}
           </Label>
           <Select
             value={form.watch("isActive") ? "active" : "inactive"}
@@ -142,8 +147,12 @@ export function ScheduleBuilderForm({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="active">Active - runs every week</SelectItem>
-              <SelectItem value="inactive">Saved for later</SelectItem>
+              <SelectItem value="active">
+                {t("turfOwner.schedule.statusActive")}
+              </SelectItem>
+              <SelectItem value="inactive">
+                {t("turfOwner.schedule.statusInactive")}
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -151,12 +160,12 @@ export function ScheduleBuilderForm({
 
       <div className="space-y-1.5">
         <Label className="text-xs font-medium text-muted-foreground">
-          Editing day
+          {t("turfOwner.schedule.editingDay")}
         </Label>
         <div className="flex flex-wrap gap-2">
-          {DAY_ABBR.map((abbr, day) => (
+          {[0, 1, 2, 3, 4, 5, 6].map((day) => (
             <button
-              key={abbr}
+              key={day}
               type="button"
               onClick={() => setSelectedDay(day)}
               aria-pressed={selectedDay === day}
@@ -167,7 +176,7 @@ export function ScheduleBuilderForm({
                   : "border-border bg-card text-foreground hover:bg-muted")
               }
             >
-              {abbr}
+              {t(`turfOwner.generate.day${day}`)}
               <span className="ml-1 text-xs opacity-70">
                 {dayCounts[day] ?? 0}
               </span>
@@ -179,8 +188,9 @@ export function ScheduleBuilderForm({
       <div className="space-y-3">
         {daySections.length === 0 ? (
           <p className="rounded-lg border border-dashed border-border p-4 text-center text-sm text-muted-foreground">
-            {DAY_NAMES[selectedDay]} has no sections - the turf is closed that
-            day.
+            {t("turfOwner.schedule.noSectionsThatDay", {
+              day: t(`turfOwner.generate.day${selectedDay}`),
+            })}
           </p>
         ) : null}
 
@@ -195,7 +205,7 @@ export function ScheduleBuilderForm({
               >
                 <div className="flex items-center justify-between gap-2">
                   <Input
-                    placeholder="Label (e.g. Evening)"
+                    placeholder={t("turfOwner.schedule.labelPlaceholder")}
                     className="h-8 max-w-48"
                     {...form.register(`sections.${idx}.label` as const)}
                   />
@@ -203,7 +213,7 @@ export function ScheduleBuilderForm({
                     type="button"
                     size="icon-sm"
                     variant="ghost"
-                    aria-label="Remove section"
+                    aria-label={t("turfOwner.schedule.removeSection")}
                     onClick={() => remove(idx)}
                   >
                     <Trash2Icon aria-hidden />
@@ -211,7 +221,9 @@ export function ScheduleBuilderForm({
                 </div>
                 <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-5">
                   <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">From</Label>
+                    <Label className="text-xs text-muted-foreground">
+                      {t("turfOwner.schedule.from")}
+                    </Label>
                     <Input
                       type="time"
                       {...form.register(`sections.${idx}.startTime` as const)}
@@ -219,7 +231,7 @@ export function ScheduleBuilderForm({
                   </div>
                   <div className="space-y-1">
                     <Label className="text-xs text-muted-foreground">
-                      To
+                      {t("turfOwner.schedule.to")}
                     </Label>
                     <Input
                       type="time"
@@ -228,7 +240,7 @@ export function ScheduleBuilderForm({
                   </div>
                   <div className="space-y-1">
                     <Label className="text-xs text-muted-foreground">
-                      Slot
+                      {t("turfOwner.schedule.slotLabel")}
                     </Label>
                     <Select
                       value={String(sections[idx]?.slotMinutes ?? 60)}
@@ -246,14 +258,16 @@ export function ScheduleBuilderForm({
                       <SelectContent>
                         {DURATIONS.map((d) => (
                           <SelectItem key={d} value={String(d)}>
-                            {d} min
+                            {t("turfOwner.generate.minutes", { count: d })}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">Gap</Label>
+                    <Label className="text-xs text-muted-foreground">
+                      {t("turfOwner.schedule.gapLabel")}
+                    </Label>
                     <Select
                       value={String(sections[idx]?.gapMinutes ?? 0)}
                       onValueChange={(v) =>
@@ -270,7 +284,9 @@ export function ScheduleBuilderForm({
                       <SelectContent>
                         {GAPS.map((g) => (
                           <SelectItem key={g} value={String(g)}>
-                            {g === 0 ? "none" : `+${g} min`}
+                            {g === 0
+                              ? t("turfOwner.wizard.gapNone")
+                              : t("turfOwner.wizard.gapMinutes", { count: g })}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -278,7 +294,7 @@ export function ScheduleBuilderForm({
                   </div>
                   <div className="space-y-1">
                     <Label className="text-xs text-muted-foreground">
-                      Price (BDT)
+                      {t("turfOwner.generate.basePrice")}
                     </Label>
                     <Input
                       type="number"
@@ -297,10 +313,14 @@ export function ScheduleBuilderForm({
       <div className="flex flex-wrap items-center gap-2">
         <Button type="button" variant="outline" size="sm" onClick={addSection}>
           <PlusIcon aria-hidden />
-          Add section on {DAY_ABBR[selectedDay]}
+          {t("turfOwner.schedule.addSectionOn", {
+            day: t(`turfOwner.generate.day${selectedDay}`),
+          })}
         </Button>
         <div className="flex items-center gap-1 text-sm text-muted-foreground">
-          Copy {DAY_ABBR[selectedDay]} to
+          {t("turfOwner.schedule.copyDayTo", {
+            day: t(`turfOwner.generate.day${selectedDay}`),
+          })}
           <Select
             value={copyTarget}
             onValueChange={(v) => setCopyTarget(v ?? "0")}
@@ -309,10 +329,10 @@ export function ScheduleBuilderForm({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {DAY_ABBR.map((abbr, day) =>
+              {[0, 1, 2, 3, 4, 5, 6].map((day) =>
                 day === selectedDay ? null : (
-                  <SelectItem key={abbr} value={String(day)}>
-                    {abbr}
+                  <SelectItem key={day} value={String(day)}>
+                    {t(`turfOwner.generate.day${day}`)}
                   </SelectItem>
                 )
               )}
@@ -325,7 +345,7 @@ export function ScheduleBuilderForm({
             onClick={() => copyDayTo(Number(copyTarget))}
             disabled={daySections.length === 0}
           >
-            Copy
+            {t("turfOwner.schedule.copy")}
           </Button>
         </div>
       </div>
@@ -333,7 +353,10 @@ export function ScheduleBuilderForm({
       {preview.length > 0 ? (
         <div className="space-y-1">
           <p className="text-xs font-medium text-muted-foreground">
-            {DAY_NAMES[selectedDay]} preview - {preview.length} slots
+            {t("turfOwner.schedule.previewCount", {
+              day: t(`turfOwner.generate.day${selectedDay}`),
+              count: preview.length,
+            })}
           </p>
           <div className="flex flex-wrap gap-1">
             {preview.map((p, i) => (
@@ -353,9 +376,17 @@ export function ScheduleBuilderForm({
 
       {conflictList.length > 0 ? (
         <div className="space-y-1">
-          {conflictList.map((c) => (
-            <p key={c} className="text-xs text-destructive">
-              {c}
+          {conflictList.map((c, i) => (
+            <p key={i} className="text-xs text-destructive">
+              {t(
+                c.type === "overlap"
+                  ? "turfOwner.schedule.conflictOverlap"
+                  : "turfOwner.schedule.conflictWrap",
+                {
+                  a: `${t(`turfOwner.generate.day${c.a.dayOfWeek}`)} ${c.a.range}`,
+                  b: `${t(`turfOwner.generate.day${c.b.dayOfWeek}`)} ${c.b.range}`,
+                }
+              )}
             </p>
           ))}
         </div>
@@ -363,19 +394,32 @@ export function ScheduleBuilderForm({
 
       {form.formState.errors.sections?.message ? (
         <StatusBadge status="danger">
-          {String(form.formState.errors.sections.message)}
+          {t(String(form.formState.errors.sections.message))}
         </StatusBadge>
       ) : null}
-      {serverError ? <StatusBadge status="danger">{serverError}</StatusBadge> : null}
+      {serverError ? (
+        <StatusBadge status="danger">{t(serverError)}</StatusBadge>
+      ) : null}
       {summary ? <StatusBadge status="success">{summary}</StatusBadge> : null}
       {conflicts.length > 0 ? (
         <div className="rounded-lg border border-warning bg-warning/10 p-3 text-xs text-foreground">
           <p className="mb-1 font-medium">
-            Left in place - resolve manually below:
+            {t("turfOwner.schedule.leftInPlace")}
           </p>
           <ul className="list-inside list-disc space-y-0.5">
-            {conflicts.map((c) => (
-              <li key={c}>{c}</li>
+            {conflicts.map((c, i) => (
+              <li key={i}>
+                <span className="font-mono">
+                  {c.date} · {c.startTime}
+                </span>{" "}
+                {t(`turfOwner.schedule.conflictKind.${c.kind}`)}
+                {c.kind === "kept_duration" && c.gotMinutes != null && c.wantMinutes != null
+                  ? ` — ${t("turfOwner.schedule.conflictMinutes", {
+                      got: c.gotMinutes,
+                      want: c.wantMinutes,
+                    })}`
+                  : ""}
+              </li>
             ))}
           </ul>
         </div>
@@ -387,7 +431,9 @@ export function ScheduleBuilderForm({
         loading={form.formState.isSubmitting}
         disabled={conflictList.length > 0}
       >
-        {form.formState.isSubmitting ? "Saving" : "Save schedule"}
+        {form.formState.isSubmitting
+          ? t("turfOwner.wizard.saving")
+          : t("turfOwner.schedule.saveSchedule")}
       </Button>
     </form>
   )

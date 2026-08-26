@@ -269,7 +269,7 @@ describe("findSectionConflicts", () => {
       section({ startTime: "11:00", endTime: "14:00" }),
     ])
     expect(conflicts).toHaveLength(1)
-    expect(conflicts[0]).toContain("overlaps")
+    expect(conflicts[0]!.type).toBe("overlap")
   })
 
   it("flags a wrapping section reaching into the next weekday's early section", () => {
@@ -278,7 +278,7 @@ describe("findSectionConflicts", () => {
       section({ dayOfWeek: 5, startTime: "01:00", endTime: "03:00" }), // Fri early
     ])
     expect(conflicts).toHaveLength(1)
-    expect(conflicts[0]).toContain("wraps past midnight")
+    expect(conflicts[0]!.type).toBe("wrap")
   })
 
   it("allows a wrapping section when the next weekday opens later", () => {

@@ -19,6 +19,8 @@ import {
 import { StatusBadge } from "@/components/shared"
 import { DayExceptionForm, type ExistingException } from "@/components/turfs/day-exception-form"
 import { SlotGrid } from "@/components/turfs/slot-grid"
+import { useI18n } from "@/i18n/client"
+import { humanDateLocale } from "@/lib/format-date"
 
 import { AddSlotSheet } from "./add-slot-sheet"
 
@@ -28,15 +30,6 @@ type DaySlot = {
   durationMinutes: number
   status: "available" | "held" | "booked" | "maintenance" | "blocked"
   price: string
-}
-
-function fmtDateHeading(iso: string) {
-  return new Date(`${iso}T00:00:00`).toLocaleDateString("en-GB", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  })
 }
 
 /**
@@ -81,6 +74,7 @@ export function DayPanel({
   daySlots: DaySlot[]
 }) {
   const router = useRouter()
+  const { t, locale } = useI18n()
   const isMobile = useIsMobile()
 
   const slotsSection =
@@ -88,16 +82,15 @@ export function DayPanel({
       <SlotGrid turfId={turfId} slots={daySlots} />
     ) : exception?.isClosed ? (
       <p className="rounded-lg border border-dashed border-border p-4 text-center text-sm text-muted-foreground">
-        This day is closed. Reopen it with the switch above.
+        {t("turfOwner.schedule.dayClosedReopen")}
       </p>
     ) : weekdayHasSections ? (
       <p className="rounded-lg border border-dashed border-border p-4 text-center text-sm text-muted-foreground">
-        No slots on this date.
+        {t("turfOwner.schedule.noSlotsThisDate")}
       </p>
     ) : (
       <p className="rounded-lg border border-dashed border-border p-4 text-center text-sm text-muted-foreground">
-        No slots — weekly hours have nothing for this weekday. Add a one-off
-        slot below, or change your weekly hours.
+        {t("turfOwner.schedule.noSlotsThisWeekday")}
       </p>
     )
 
@@ -107,25 +100,26 @@ export function DayPanel({
         {holiday ? (
           <StatusBadge status="warning" showIcon={false}>
             {holiday.name}
-            {holiday.approximate ? " (est.)" : ""}
+            {holiday.approximate ? t("turfOwner.schedule.holidayEstimate") : ""}
           </StatusBadge>
         ) : null}
         {exception?.isClosed ? (
           <StatusBadge status="danger" showIcon={false}>
-            Closed{exception.reason ? ` - ${exception.reason}` : ""}
+            {exception.reason
+              ? t("turfOwner.schedule.closedWithReason", { reason: exception.reason })
+              : t("turfOwner.schedule.closed")}
           </StatusBadge>
         ) : null}
         {exception?.priceMode ? (
           <StatusBadge status="success" showIcon={false}>
             {exception.priceMode === "multiplier"
-              ? `x${exception.priceValue} special rate`
-              : `Flat ${exception.priceValue} BDT`}
+              ? t("turfOwner.schedule.multiplierRate", { value: exception.priceValue ?? 0 })
+              : t("turfOwner.schedule.flatRate", { value: exception.priceValue ?? 0 })}
           </StatusBadge>
         ) : null}
         {isRamadan ? (
           <StatusBadge status="neutral" showIcon={false}>
-            Ramadan — night hours? Wrap a section past midnight in weekly
-            hours.
+            {t("turfOwner.schedule.ramadanHint")}
           </StatusBadge>
         ) : null}
       </CardDescription>
@@ -137,7 +131,9 @@ export function DayPanel({
           holidayName={holiday?.name ?? null}
         />
         <div className="space-y-2">
-          <h4 className="text-sm font-semibold">Slots this day</h4>
+          <h4 className="text-sm font-semibold">
+            {t("turfOwner.schedule.slotsThisDay")}
+          </h4>
           {slotsSection}
         </div>
         <AddSlotSheet turfId={turfId} date={selectedDate} />
@@ -145,7 +141,13 @@ export function DayPanel({
     </>
   )
 
-  const heading = fmtDateHeading(selectedDate)
+  const [y, m, d] = selectedDate.split("-").map(Number)
+  const heading = new Intl.DateTimeFormat(humanDateLocale(locale), {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(new Date(y!, m! - 1, d!))
 
   return (
     <>

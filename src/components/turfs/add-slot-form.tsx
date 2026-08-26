@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { StatusBadge } from "@/components/shared"
+import { useI18n } from "@/i18n/client"
 
 import { addSlotAction } from "@/features/turfs/actions"
 import { addSlotSchema, type AddSlotValues } from "@/features/turfs/schemas"
@@ -37,6 +38,7 @@ export function AddSlotForm({
   onSuccess?: () => void
 }) {
   const router = useRouter()
+  const { t } = useI18n()
   const [serverError, setServerError] = useState<string | null>(null)
   const [info, setInfo] = useState<string | null>(null)
 
@@ -58,7 +60,12 @@ export function AddSlotForm({
       setServerError(res.error)
       return
     }
-    setInfo(`Custom slot added for ${values.date} at ${values.startTime}.`)
+    setInfo(
+      t("turfOwner.schedule.customSlotAdded", {
+        date: values.date,
+        time: values.startTime,
+      })
+    )
     router.refresh()
     onSuccess?.()
   }
@@ -67,7 +74,9 @@ export function AddSlotForm({
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1.5">
-          <Label className="text-xs font-medium text-muted-foreground">Date</Label>
+          <Label className="text-xs font-medium text-muted-foreground">
+            {t("turfOwner.generate.startDate")}
+          </Label>
           {defaultDate ? (
             <p className="rounded-lg border border-border bg-muted px-3 py-2 text-sm">
               {defaultDate}
@@ -78,7 +87,7 @@ export function AddSlotForm({
         </div>
         <div className="space-y-1.5">
           <Label className="text-xs font-medium text-muted-foreground">
-            Start time
+            {t("turfOwner.schedule.startTime")}
           </Label>
           <Input type="time" {...form.register("startTime")} />
         </div>
@@ -87,7 +96,7 @@ export function AddSlotForm({
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1.5">
           <Label className="text-xs font-medium text-muted-foreground">
-            Duration
+            {t("turfOwner.wizard.gameLength")}
           </Label>
           <Select
             value={String(form.watch("durationMinutes"))}
@@ -103,7 +112,7 @@ export function AddSlotForm({
             <SelectContent>
               {DURATIONS.map((d) => (
                 <SelectItem key={d} value={String(d)}>
-                  {d} min
+                  {t("turfOwner.generate.minutes", { count: d })}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -111,7 +120,7 @@ export function AddSlotForm({
         </div>
         <div className="space-y-1.5">
           <Label className="text-xs font-medium text-muted-foreground">
-            Price (BDT)
+            {t("turfOwner.generate.basePrice")}
           </Label>
           <Input
             type="number"
@@ -121,14 +130,14 @@ export function AddSlotForm({
           />
           {form.formState.errors.price?.message ? (
             <p className="text-xs text-destructive">
-              {form.formState.errors.price.message}
+              {t(form.formState.errors.price.message)}
             </p>
           ) : null}
         </div>
       </div>
 
       {serverError ? (
-        <StatusBadge status="danger">{serverError}</StatusBadge>
+        <StatusBadge status="danger">{t(serverError)}</StatusBadge>
       ) : null}
       {info ? <StatusBadge status="success">{info}</StatusBadge> : null}
 
@@ -137,7 +146,9 @@ export function AddSlotForm({
         size="lg"
         loading={form.formState.isSubmitting}
       >
-        {form.formState.isSubmitting ? "Adding" : "Add custom slot"}
+        {form.formState.isSubmitting
+          ? t("turfOwner.schedule.addingSlot")
+          : t("turfOwner.schedule.addCustomSlot")}
       </Button>
     </form>
   )

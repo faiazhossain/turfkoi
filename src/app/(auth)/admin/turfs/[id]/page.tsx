@@ -30,6 +30,7 @@ import { getTurfAdminDetail } from "@/features/admin/queries"
 import { listTurfSlots, listTurfPhotos } from "@/features/turfs/queries"
 import { turfFormatLabel } from "@/features/turfs/formats"
 import type { TurfFormValues } from "@/features/turfs/schemas"
+import { getT } from "@/i18n/server"
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -43,6 +44,7 @@ interface PageProps {
  */
 export default async function AdminTurfCockpitPage({ params }: PageProps) {
   const { id } = await params
+  const t = await getT()
   const detail = await getTurfAdminDetail(id)
   if (!detail) notFound()
   const { turf, ownerPhone, bookingCount } = detail
@@ -80,31 +82,31 @@ export default async function AdminTurfCockpitPage({ params }: PageProps) {
           href="/admin/turfs"
           className="text-muted-foreground hover:text-foreground"
         >
-          ← All turfs
+          ← {t("admin.cockpit.allTurfs")}
         </Link>
         <div className="flex items-center gap-2">
           <Link
             href={`/turfs/${turf.slug}`}
             className="text-primary hover:underline"
           >
-            Public view
+            {t("turfOwner.publicView")}
           </Link>
           {turf.ownerId === null ? (
             <StatusBadge status="neutral" showIcon={false}>
-              awaiting claim
+              {t("admin.turfs.badges.awaitingClaim")}
             </StatusBadge>
           ) : turf.isVerified ? (
             <StatusBadge status="success" showIcon={false}>
-              verified
+              {t("admin.turfs.badges.verified")}
             </StatusBadge>
           ) : (
             <StatusBadge status="warning" showIcon={false}>
-              pending
+              {t("admin.turfs.badges.pending")}
             </StatusBadge>
           )}
           {!turf.isActive ? (
             <StatusBadge status="neutral" showIcon={false}>
-              inactive
+              {t("turfs.inactive")}
             </StatusBadge>
           ) : null}
         </div>
@@ -113,7 +115,8 @@ export default async function AdminTurfCockpitPage({ params }: PageProps) {
       <div>
         <h2 className="font-heading text-2xl font-semibold">{turf.name}</h2>
         <p className="text-sm text-muted-foreground">
-          {[turf.area, turf.city].filter(Boolean).join(", ") || "Location TBD"}
+          {[turf.area, turf.city].filter(Boolean).join(", ") ||
+            t("turfs.locationTbd")}
           {" · "}
           {turfFormatLabel(turf.format)}
         </p>
@@ -122,21 +125,22 @@ export default async function AdminTurfCockpitPage({ params }: PageProps) {
       <Card>
         <CardHeader>
           <CardTitle className="font-heading text-lg">
-            Status and owner
+            {t("admin.cockpit.statusAndOwner")}
           </CardTitle>
           <CardDescription>
-            Verification and visibility apply to the public listing and the
-            booking flow immediately.
+            {t("admin.cockpit.statusDesc")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex flex-wrap items-center gap-2 text-sm">
-            <span className="text-muted-foreground">Owner:</span>
+            <span className="text-muted-foreground">
+              {t("admin.cockpit.ownerLabel")}
+            </span>
             {ownerPhone ? (
               <span className="font-medium">{ownerPhone}</span>
             ) : (
               <span className="text-muted-foreground">
-                No owner yet — invite below to hand it over.
+                {t("admin.cockpit.noOwnerInvite")}
               </span>
             )}
           </div>
@@ -158,18 +162,20 @@ export default async function AdminTurfCockpitPage({ params }: PageProps) {
 
       <Tabs defaultValue="edit">
         <TabsList>
-          <TabsTrigger value="edit">Details</TabsTrigger>
-          <TabsTrigger value="slots">Slots ({slots.length})</TabsTrigger>
+          <TabsTrigger value="edit">{t("turfOwner.tabDetails")}</TabsTrigger>
+          <TabsTrigger value="slots">
+            {t("admin.cockpit.slotsCount", { count: slots.length })}
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="edit" className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle className="font-heading text-lg">
-                Turf details
+                {t("turfOwner.turfDetails")}
               </CardTitle>
               <CardDescription>
-                Changes appear on the public page after saving.
+                {t("turfOwner.detailsDesc")}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -178,9 +184,11 @@ export default async function AdminTurfCockpitPage({ params }: PageProps) {
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle className="font-heading text-lg">Photos</CardTitle>
+              <CardTitle className="font-heading text-lg">
+                {t("turfOwner.photos")}
+              </CardTitle>
               <CardDescription>
-                Added photos appear immediately — no save needed.
+                {t("turfOwner.photosDesc")}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -193,11 +201,10 @@ export default async function AdminTurfCockpitPage({ params }: PageProps) {
           <Card>
             <CardHeader>
               <CardTitle className="font-heading text-lg">
-                Generate availability
+                {t("turfOwner.generateAvailability")}
               </CardTitle>
               <CardDescription>
-                Bulk-create slots across a date range. Individual slots can be
-                overridden below.
+                {t("turfOwner.generateDesc")}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -208,11 +215,10 @@ export default async function AdminTurfCockpitPage({ params }: PageProps) {
           <Card>
             <CardHeader>
               <CardTitle className="font-heading text-lg">
-                Slots · next 14 days
+                {t("turfOwner.slotsNext14")}
               </CardTitle>
               <CardDescription>
-                Edit price or set maintenance / blocked. Booked slots are
-                immutable here — the booking flow owns them.
+                {t("turfOwner.slotsDesc")}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -226,10 +232,10 @@ export default async function AdminTurfCockpitPage({ params }: PageProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 font-heading text-lg text-destructive">
             <AlertTriangleIcon className="size-4" aria-hidden />
-            Danger zone
+            {t("admin.cockpit.dangerZone")}
           </CardTitle>
           <CardDescription>
-            Deletion is permanent and blocked once a turf has bookings.
+            {t("admin.cockpit.dangerDesc")}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -237,9 +243,7 @@ export default async function AdminTurfCockpitPage({ params }: PageProps) {
             <DeleteTurfControl turfId={turf.id} name={turf.name} />
           ) : (
             <p className="text-sm text-muted-foreground">
-              This turf has {bookingCount} booking
-              {bookingCount === 1 ? "" : "s"} — booking history can&apos;t be
-              deleted. Deactivate the turf instead.
+              {t("admin.cockpit.bookingHistoryBlocked")}
             </p>
           )}
         </CardContent>

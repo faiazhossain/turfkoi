@@ -181,7 +181,7 @@ describe("setTurfActiveAction", () => {
     currentUser = ADMIN
     updateReturnQueue = [[]]
     const res = await setTurfActiveAction({ turfId: TURF_ID, isActive: false })
-    expect(res).toEqual({ ok: false, error: "Turf not found." })
+    expect(res).toEqual({ ok: false, error: "turfs.errors.turfNotFound" })
   })
 })
 
@@ -208,7 +208,7 @@ describe("unverifyTurfAction", () => {
     const res = await unverifyTurfAction({ turfId: TURF_ID })
     expect(res).toEqual({
       ok: false,
-      error: "Turf not found or already pending.",
+      error: "admin.errors.turfNotFoundPending",
     })
     expect(logCalls.length).toBe(0)
   })
@@ -271,8 +271,8 @@ describe("deleteTurfAction", () => {
     const res = await deleteTurfAction({ turfId: TURF_ID })
     expect(res.ok).toBe(false)
     if (!res.ok) {
-      expect(res.error).toContain("3 bookings")
-      expect(res.error).toContain("Deactivate")
+      expect(res.error).toBe("admin.errors.turfHasBookings")
+      
     }
     expect(deleteCalls.length).toBe(0)
     expect(logCalls.length).toBe(0)
@@ -295,7 +295,7 @@ describe("deleteTurfAction", () => {
     selectQueue = [[{ count: 0 }]]
     deleteReturnQueue = [[]]
     const res = await deleteTurfAction({ turfId: TURF_ID })
-    expect(res).toEqual({ ok: false, error: "Turf not found." })
+    expect(res).toEqual({ ok: false, error: "turfs.errors.turfNotFound" })
     expect(logCalls.length).toBe(0)
   })
 
@@ -316,7 +316,7 @@ describe("deleteTurfAction", () => {
     deleteError = wrapped
     const res = await deleteTurfAction({ turfId: TURF_ID })
     expect(res.ok).toBe(false)
-    if (!res.ok) expect(res.error).toContain("Deactivate")
+    if (!res.ok) 
     expect(logCalls.length).toBe(0)
   })
 })

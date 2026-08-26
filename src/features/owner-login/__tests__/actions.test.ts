@@ -140,7 +140,7 @@ describe("mintOwnerLoginCodeAction", () => {
   it("rejects callers without the admin role", async () => {
     currentUser = PLAYER
     const res = await mintOwnerLoginCodeAction({ turfId: TURF_ID, lockPassword: false })
-    expect(res).toEqual({ ok: false, error: "Admins only." })
+    expect(res).toEqual({ ok: false, error: "errors.adminOnly" })
     expect(insertValues.length).toBe(0)
   })
 
@@ -151,7 +151,7 @@ describe("mintOwnerLoginCodeAction", () => {
     ]
     const res = await mintOwnerLoginCodeAction({ turfId: TURF_ID, lockPassword: false })
     expect(res.ok).toBe(false)
-    if (!res.ok) expect(res.error).toContain("claim invite")
+    if (!res.ok) expect(res.error).toBe("ownerCode.errors.noOwner")
     expect(insertValues.length).toBe(0)
   })
 
@@ -179,7 +179,7 @@ describe("ownerCodeLoginAction", () => {
   it("rejects a non-Bangladeshi phone before touching the db", async () => {
     const res = await ownerCodeLoginAction({ phone: "12345", code: "123456" })
     expect(res.ok).toBe(false)
-    if (!res.ok) expect(res.error).toContain("valid Bangladeshi number")
+    if (!res.ok) expect(res.error).toBe("ownerCode.errors.invalidPhone")
     expect(selectQueue.length).toBe(0)
   })
 
@@ -200,8 +200,8 @@ describe("ownerCodeLoginAction", () => {
     const res = await ownerCodeLoginAction({ phone: "01712345678", code: "123456" })
     expect(res.ok).toBe(false)
     if (!res.ok) {
-      expect(res.error).toContain("Wrong code")
-      expect(res.error).toContain("3 attempts")
+      expect(res.error).toBe("ownerCode.errors.wrongCode")
+      
     }
     expect(signInCalls.length).toBe(0)
   })
@@ -210,7 +210,7 @@ describe("ownerCodeLoginAction", () => {
     selectQueue = [[codeRowForLogin()]]
     userByPhone = null
     const res = await ownerCodeLoginAction({ phone: "01712345678", code: "123456" })
-    expect(res).toEqual({ ok: false, error: "No account found for this number." })
+    expect(res).toEqual({ ok: false, error: "ownerCode.errors.noAccount" })
     expect(signInCalls.length).toBe(0)
   })
 

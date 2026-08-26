@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { useI18n } from "@/i18n/client"
 
 import { mintOwnerLoginCodeAction } from "@/features/owner-login/actions"
 
@@ -20,12 +21,16 @@ type MintedCode = {
   passwordLocked: boolean
 }
 
-function whatsappMessage(c: MintedCode): string {
+function whatsappMessage(c: MintedCode, t: ReturnType<typeof useI18n>["t"]): string {
   return [
-    `Hi! Your Turfkoi sign-in code for "${c.turfName}":`,
+    t("admin.ownerCode.waLine1", { name: c.turfName }),
     c.code,
-    `Sign in with your phone (${c.phone}) and this code. It expires ${c.expiresAt.toTimeString().slice(0, 5)} (${c.expiresAt.toDateString()}) and works once.`,
-    "You'll set a new password right after. — Turfkoi team",
+    t("admin.ownerCode.waLine2", {
+      phone: c.phone,
+      time: c.expiresAt.toTimeString().slice(0, 5),
+      date: c.expiresAt.toDateString(),
+    }),
+    t("admin.ownerCode.waLine3"),
   ].join("\n")
 }
 
@@ -43,6 +48,7 @@ export function OwnerLoginCodePanel({
   turfId: string
   ownerPhone: string
 }) {
+  const { t } = useI18n()
   const [lockPassword, setLockPassword] = useState(false)
   const [pending, setPending] = useState(false)
   const [minted, setMinted] = useState<MintedCode | null>(null)
@@ -53,7 +59,7 @@ export function OwnerLoginCodePanel({
     try {
       const res = await mintOwnerLoginCodeAction({ turfId, lockPassword })
       if (!res.ok) {
-        toast.error(res.error)
+        toast.error(t(res.error ?? "errors.generic"))
         return
       }
       const next: MintedCode = {
@@ -64,18 +70,18 @@ export function OwnerLoginCodePanel({
         passwordLocked: res.passwordLocked,
       }
       setMinted(next)
-      setMessage(whatsappMessage(next))
+      setMessage(whatsappMessage(next, t))
     } finally {
       setPending(false)
     }
   }
 
-  async function onCopy(value: string, what: string) {
+  async function onCopy(value: string) {
     try {
       await navigator.clipboard.writeText(value)
-      toast.success(`${what} copied.`)
+      toast.success(t("admin.ownerCode.copied"))
     } catch {
-      toast.error(`Couldn't copy the ${what.toLowerCase()}. Copy it manually.`)
+      toast.error(t("admin.ownerCode.copyFailed"))
     }
   }
 
@@ -83,7 +89,9 @@ export function OwnerLoginCodePanel({
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2">
         <Button size="xs" onClick={onMint} loading={pending}>
-          {minted ? "New code" : "Send sign-in code"}
+          {minted
+            ? t("admin.ownerCode.newCode")
+            : t("admin.ownerCode.sendCode")}
         </Button>
         <Label className="flex items-center gap-1.5 text-xs font-normal">
           <Checkbox
@@ -91,7 +99,7 @@ export function OwnerLoginCodePanel({
             onCheckedChange={(v) => setLockPassword(v === true)}
             disabled={pending}
           />
-          Lock password login until reset
+          {t("admin.ownerCode.lockPassword")}
         </Label>
       </div>
 
@@ -102,16 +110,16 @@ export function OwnerLoginCodePanel({
               readOnly
               value={minted.code}
               onFocus={(e) => e.currentTarget.select()}
-              aria-label="One-time sign-in code"
+              aria-label={t("admin.ownerCode.codeAria")}
               className="w-32 text-center font-medium tracking-[0.3em]"
             />
             <Button
               size="sm"
               variant="outline"
-              onClick={() => onCopy(minted.code, "Code")}
+              onClick={() => onCopy(minted.code)}
             >
               <CopyIcon className="size-4" aria-hidden />
-              Copy
+              {t("admin.ownerCode.copy")}
             </Button>
           </div>
           <div className="space-y-1.5">
@@ -120,7 +128,7 @@ export function OwnerLoginCodePanel({
               className="flex items-center gap-1.5"
             >
               <MessageCircleIcon className="size-4" aria-hidden />
-              WhatsApp message
+              {t("admin.ownerCode.whatsappMessage")}
             </Label>
             <Textarea
               id={`owner-code-wa-${turfId}`}
@@ -132,23 +140,21 @@ export function OwnerLoginCodePanel({
             <Button
               size="xs"
               variant="outline"
-              onClick={() => onCopy(message, "Message")}
+              onClick={() => onCopy(message)}
             >
               <CopyIcon className="size-3.5" aria-hidden />
-              Copy message
+              {t("admin.ownerCode.copyMessage")}
             </Button>
           </div>
           <p className="text-xs text-muted-foreground">
-            Shown only once — expires {minted.expiresAt.toTimeString().slice(0, 5)} and works once.{" "}
             {minted.passwordLocked
-              ? "Password login is locked until the owner sets a new password."
-              : `Their current password keeps working for ${minted.phone}.`}
+              ? t("admin.ownerCode.passwordLocked")
+              : t("admin.ownerCode.passwordStillWorks", { phone: minted.phone })}
           </p>
         </div>
       ) : (
         <p className="text-xs text-muted-foreground">
-          One-time code for {ownerPhone}, valid 15 minutes. Relay it over
-          WhatsApp; the owner sets a new password right after signing in.
+          {t("admin.ownerCode.hint", { phone: ownerPhone })}
         </p>
       )}
     </div>

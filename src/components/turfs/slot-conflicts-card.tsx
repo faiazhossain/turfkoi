@@ -1,12 +1,8 @@
 import { AlertTriangleIcon } from "lucide-react"
 
-import type { SlotConflict } from "@/features/turfs/materialize"
+import { getT } from "@/i18n/server"
 
-const KIND_LABEL: Record<SlotConflict["kind"], string> = {
-  booked_outside_plan: "Booking outside the schedule",
-  booked_duration_mismatch: "Booking length changed",
-  kept_manual: "Custom slot kept",
-}
+import type { SlotConflict } from "@/features/turfs/materialize"
 
 /**
  * Needs-attention center (slot system P3.2): slots the materializer refused
@@ -15,7 +11,12 @@ const KIND_LABEL: Record<SlotConflict["kind"], string> = {
  * the day panel (block/reprice/contact bookers). P3.4 conflict resolution is
  * the follow-up.
  */
-export function SlotConflictsCard({ conflicts }: { conflicts: SlotConflict[] }) {
+export async function SlotConflictsCard({
+  conflicts,
+}: {
+  conflicts: SlotConflict[]
+}) {
+  const t = await getT()
   if (conflicts.length === 0) return null
 
   return (
@@ -23,7 +24,7 @@ export function SlotConflictsCard({ conflicts }: { conflicts: SlotConflict[] }) 
       <div className="flex items-center gap-2">
         <AlertTriangleIcon className="size-4 text-warning" aria-hidden />
         <h3 className="font-heading text-sm font-semibold">
-          Needs attention ({conflicts.length})
+          {t("turfOwner.schedule.needsAttention", { count: conflicts.length })}
         </h3>
       </div>
       <ul className="space-y-1.5 text-sm">
@@ -36,9 +37,17 @@ export function SlotConflictsCard({ conflicts }: { conflicts: SlotConflict[] }) 
               {c.date} · {c.startTime}
             </span>
             <span className="rounded border border-border bg-card px-1.5 py-0.5 text-[0.65rem] text-foreground">
-              {KIND_LABEL[c.kind]}
+              {t(`turfOwner.schedule.conflictBadge.${c.kind}`)}
             </span>
-            <span className="text-xs text-muted-foreground">{c.detail}</span>
+            <span className="text-xs text-muted-foreground">
+              {c.kind === "booked_duration_mismatch" &&
+              c.wantedMinutes != null
+                ? t("turfOwner.schedule.conflictMinutes", {
+                    got: c.durationMinutes,
+                    want: c.wantedMinutes,
+                  })
+                : t(`turfOwner.schedule.conflictDetail.${c.kind}`)}
+            </span>
           </li>
         ))}
       </ul>

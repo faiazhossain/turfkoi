@@ -389,6 +389,220 @@ export const en = {
       slotMinutesMin: "Minimum 30 minutes",
       slotMinutesMax: "Maximum 180 minutes",
       slotMinutesStep: "Use a multiple of 5 minutes",
+      scheduleNotFound: "Schedule not found.",
+      scheduleRace: "Another schedule just went active — retry in a moment.",
+      horizonChoice: "Choose 7, 14, 30, 60, or 90 days.",
+      futureDate: "Pick today or a future date.",
+      overlapsSlot: "That slot overlaps another slot on this or an adjacent day.",
+      slotExists: "A slot already starts at that time on that date.",
+      labelShort: "Keep labels short",
+      sectionEndDiffer:
+        "End time must differ from start time (wrap earlier for night hours)",
+      nameSchedule: "Name the schedule",
+      addSection: "Add at least one section",
+      tooManySections: "Too many sections (max 10 per day)",
+      reasonShort: "Keep the reason short",
+      closedWithPrice: "A closed day can't also carry a price rule",
+      closeOrPrice: "Either close the day or set a price rule",
+      priceRuleValue: "Provide the value for the price rule",
+      multiplierRange: "Multiplier must be between 0.5 and 3",
+      priceRange: "Price must be between 1 and 100000",
+      sectionOverlap: "Two sections overlap on the same day",
+      sectionWrap: "A section wraps past midnight into the next day's hours",
+    },
+
+    schedule: {
+      // Slots dashboard — weekly hours + calendar
+      weeklyHours: "Weekly hours",
+      activeName: "Active: {name}",
+      weeklyHoursDesc:
+        "Set once — it repeats every week forever. Nothing expires unless you edit it.",
+      setupTitle: "Set up weekly hours",
+      setupDesc:
+        "Your turf doesn't have a weekly schedule yet, so there are no booking slots available. Answer a few quick questions about your prices, opening hours, and breaks, and we'll set up the whole week for you.",
+      calendarTitle: "Availability calendar",
+      calendarDesc:
+        "Tap a day to see and edit its slots. Ringed days are public holidays (we seed the BD calendar — lunar dates are estimates, always double-check Eid).",
+      bulkTitle: "Bulk generate (legacy)",
+      bulkDesc:
+        "Only for turfs without weekly hours. Prefer weekly hours — it auto-fills the next 30 days.",
+      howTitle: "Booking slots are created automatically from your weekly schedule.",
+      howDesc:
+        "Select a day to close bookings or change the price. Need extra time? Add a one-time slot.",
+      emptyDay: "Select a day to see its slots, close it, or change its price.",
+      advancedTools: "Advanced tools",
+      dayAdjustmentsTitle: "Change a specific day",
+      dayAdjustmentsDesc:
+        "Close bookings, change a day's price, or add a one-off slot.",
+
+      // Booking window
+      bookingWindow: "Booking window",
+      saving: "Saving",
+      windowSavedWithSlots:
+        "Booking window set to {days} days — {added} slots added, {removed} removed.",
+      windowSaved: "Booking window set to {days} days.",
+      windowSaveFailed: "Couldn't save the booking window. Try again.",
+      daysAhead: "{count} days ahead",
+      windowHint:
+        "Players can book up to {count} days ahead; the window moves forward by itself.",
+
+      // Day panel
+      addOneOffSlot: "Add one-off slot",
+      addOneOffTitle: "Add a one-off slot",
+      addOneOffDesc:
+        "A single slot for {date} that stays put even when weekly hours change. Overlapping slots are rejected.",
+      dayClosedReopen: "This day is closed. Reopen it with the switch above.",
+      noSlotsThisDate: "No slots on this date.",
+      noSlotsThisWeekday:
+        "No slots — weekly hours have nothing for this weekday. Add a one-off slot below, or change your weekly hours.",
+      holidayEstimate: " (est.)",
+      closed: "Closed",
+      closedWithReason: "Closed - {reason}",
+      multiplierRate: "x{value} special rate",
+      flatRate: "Flat {value} BDT",
+      ramadanHint:
+        "Ramadan — night hours? Wrap a section past midnight in weekly hours.",
+      slotsThisDay: "Slots this day",
+
+      // Calendar legend
+      legendClosed: "Closed",
+      legendSpecialPrice: "Special price",
+      legendPublicHoliday: "Public holiday",
+
+      // Day exception form
+      closeThisDay: "Close this day",
+      reasonLabel: "Reason (shown in your calendar)",
+      reasonPlaceholder: "e.g. Maintenance",
+      specialPrice: "Special price for this day",
+      priceModeNone: "None - use section prices",
+      priceModeMultiplier: "Multiply section prices",
+      priceModeAbsolute: "One flat price all day",
+      multiplierLabel: "Multiplier (0.5 - 3, e.g. 1.25)",
+      flatPriceLabel: "Flat price (BDT)",
+      applying: "Applying",
+      applyToDay: "Apply to this day",
+      removing: "Removing",
+      removeException: "Remove exception",
+
+      // Saved schedules
+      savedSchedules: "Saved schedules",
+      savedDesc:
+        "Keep a regular week and seasonal hours side by side and switch between them. An optional window limits when a schedule runs - outside it the schedule produces no slots.",
+      savedDescRamadan:
+        "Keep a regular week and seasonal hours side by side and switch between them. The seeded Ramadan dates ({window}) are one tap away. Outside its window a schedule produces no slots, so switch back after the season ends.",
+      sectionCount: "{count} section(s)",
+      windowLabel: "window {window}",
+      active: "Active",
+      windowEnded:
+        "This window has ended - the schedule is producing no slots. Activate another schedule below.",
+      windowStartsLater:
+        "Starts {date} - until then this schedule produces no slots.",
+      from: "From",
+      to: "To",
+      ramadanDates: "Ramadan dates",
+      activate: "Activate",
+      activating: "Activating",
+      activated: "\"{name}\" is now active.",
+      activatedWithSlots:
+        "\"{name}\" is now active. Materialized next 30 days: {added} added, {updated} updated, {removed} removed.{conflictsNote}",
+      activatedConflicts: " {count} slot(s) need attention - see above.",
+
+      // Schedule builder
+      scheduleName: "Schedule name",
+      status: "Status",
+      statusActive: "Active - runs every week",
+      statusInactive: "Saved for later",
+      editingDay: "Editing day",
+      noSectionsThatDay: "{day} has no sections - the turf is closed that day.",
+      labelPlaceholder: "Label (e.g. Evening)",
+      removeSection: "Remove section",
+      slotLabel: "Slot",
+      gapLabel: "Gap",
+      addSectionOn: "Add section on {day}",
+      copyDayTo: "Copy {day} to",
+      copy: "Copy",
+      previewCount: "{day} preview - {count} slots",
+      conflictOverlap: "{a} overlaps {b} on the same day",
+      conflictWrap: "{a} wraps past midnight into {b}",
+      leftInPlace: "Left in place - resolve manually below:",
+      conflictKind: {
+        insert_overlap: "Schedule slot would overlap a kept slot — skipped",
+        kept_duration: "Kept slot duration no longer matches — left untouched",
+        resize_overlap: "New slot would overlap a kept slot — not resized",
+        outside_plan: "Sits outside the new schedule — left in place",
+      },
+      conflictMinutes: "runs {got} min but the schedule wants {want} min",
+      saveSchedule: "Save schedule",
+      savedMaterialized:
+        "Saved. Materialized next 30 days: {added} added, {updated} updated, {removed} removed.",
+      savedInactive: "Saved (inactive - activate to materialize).",
+
+      // Custom slot
+      startTime: "Start time",
+      addCustomSlot: "Add custom slot",
+      addingSlot: "Adding",
+      customSlotAdded: "Custom slot added for {date} at {time}.",
+
+      // Needs-attention card
+      needsAttention: "Needs attention ({count})",
+      conflictBadge: {
+        booked_outside_plan: "Booking outside the schedule",
+        booked_duration_mismatch: "Booking length changed",
+        kept_manual: "Custom slot kept",
+      },
+      conflictDetail: {
+        booked_outside_plan: "Active booking sits outside the new schedule",
+        kept_manual: "Custom slot - regeneration never touches it",
+      },
+    },
+
+    wizard: {
+      desc: "A few quick questions — we'll build your week and fill the next 30 days of slots.",
+      stepPrices: "Prices",
+      stepHours: "Hours",
+      stepBreaks: "Breaks",
+      stepReview: "Review",
+      pricingQuestion: "Do your prices change by time of day?",
+      flatTitle: "Same price all day",
+      flatDesc: "One rate for every slot",
+      peakTitle: "Peak & off-peak",
+      peakDesc: "Higher rate in the evening rush",
+      pricePerGame: "Price per game (BDT)",
+      peakStarts: "Peak starts",
+      peakEnds: "Peak ends",
+      peakPrice: "Peak price (BDT)",
+      offPeakPrice: "Off-peak price (BDT)",
+      openFrom: "Open from",
+      openTo: "Open to",
+      gameLength: "Game length",
+      gapBetweenGames: "Gap between games",
+      gapNone: "none",
+      gapMinutes: "+{count} min",
+      breakQuestion: "Closed for a break on some days?",
+      noBreaksTitle: "No breaks",
+      noBreaksDesc: "Open the whole time",
+      breakTitle: "Yes, a break",
+      breakDesc: "Lunch, prayer, maintenance",
+      breakFrom: "Break from",
+      breakTo: "Break to",
+      breakDays: "Break days",
+      yourWeek: "Your week",
+      closedDay: "Closed",
+      slotsPerDay: "≈{count} slots per day · fills the next 30 days",
+      back: "Back",
+      next: "Next",
+      save: "Save weekly hours",
+      saving: "Saving",
+      saved: "Weekly hours saved.",
+      savedWithSlots:
+        "Weekly hours saved — next 30 days: {added} slots added, {updated} updated.",
+      errFlatPrice: "Enter a price per game.",
+      errPeakPrices: "Enter both peak and off-peak prices.",
+      errPeakTimes: "Peak start and end must differ.",
+      errOpenTimes: "Closing time must differ from opening time.",
+      errBreakTimes: "Break start and end must differ.",
+      errBreakDays: "Pick at least one day for the break.",
+      errNoSlots: "This setup creates no slots — check your hours and breaks.",
     },
   },
 
@@ -895,6 +1109,28 @@ export const en = {
     },
   },
 
+  ownerCode: {
+    codeLabel: "Sign-in code",
+    signInButton: "Sign in with code",
+    newPassword: "New password",
+    errors: {
+      passwordMismatch: "Passwords do not match",
+      phoneRequired: "Enter your phone number",
+      codeFormat: "Enter the 6-digit code",
+      noOwner: "This turf has no owner yet — send a claim invite instead.",
+      invalidPhone: "Enter a valid Bangladeshi number, e.g. 01XXXXXXXXX",
+      rateLimited: "Too many attempts. Try again later.",
+      noCode: "No active code for this number. Ask the Turfkoi team for a new one.",
+      wrongCode: "Wrong code. Try again.",
+      locked: "Too many wrong codes. Try again in 15 minutes.",
+      consumed: "This code was already used. Ask for a new one.",
+      expired: "This code expired. Ask the Turfkoi team for a new one.",
+      revoked: "This code was replaced by a newer one. Ask for the latest.",
+      noAccount: "No account found for this number.",
+      signinFailed: "Couldn't sign you in. Try again.",
+    },
+  },
+
   admin: {
     title: "Admin",
     subtitle: "Payouts, refunds, disputes, and oversight.",
@@ -991,6 +1227,46 @@ export const en = {
       viewPublic: "public",
       edit: "Edit turf",
       editAria: "Edit {name}",
+    },
+
+    cockpit: {
+      allTurfs: "All turfs",
+      statusAndOwner: "Status and owner",
+      statusDesc:
+        "Verification and visibility apply to the public listing and the booking flow immediately.",
+      ownerLabel: "Owner:",
+      noOwnerInvite: "No owner yet — invite below to hand it over.",
+      slotsCount: "Slots ({count})",
+      dangerZone: "Danger zone",
+      dangerDesc: "Deletion is permanent and blocked once a turf has bookings.",
+      bookingHistoryBlocked:
+        "This turf has booking history — booking history can't be deleted. Deactivate the turf instead.",
+      deleted: "Turf deleted.",
+      typeToConfirm: "Type {name} to confirm",
+      deleteTurf: "Delete turf",
+      deleteDesc:
+        "Removes the turf, its slots, photos, and claim invites. Turf applications keep their history. This can't be undone.",
+    },
+
+    ownerCode: {
+      sendCode: "Send sign-in code",
+      newCode: "New code",
+      lockPassword: "Lock password login until reset",
+      codeAria: "One-time sign-in code",
+      copy: "Copy",
+      copyMessage: "Copy message",
+      copied: "Copied.",
+      copyFailed: "Couldn't copy. Copy it manually.",
+      whatsappMessage: "WhatsApp message",
+      passwordLocked:
+        "Password login is locked until the owner sets a new password.",
+      passwordStillWorks:
+        "Their current password keeps working for {phone}.",
+      hint: "One-time code for {phone}, valid 15 minutes. Relay it over WhatsApp; the owner sets a new password right after signing in.",
+      waLine1: "Hi! Your Turfkoi sign-in code for \"{name}\":",
+      waLine2:
+        "Sign in with your phone ({phone}) and this code. It expires {time} ({date}) and works once.",
+      waLine3: "You'll set a new password right after. — Turfkoi team",
     },
 
     seed: {
@@ -1170,6 +1446,9 @@ export const en = {
     errors: {
       turfUnclaimed: "This turf hasn't been claimed by its owner yet.",
       turfNotFoundVerified: "Turf not found or already verified.",
+      turfNotFoundPending: "Turf not found or already pending.",
+      turfHasBookings:
+        "This turf has booking history — it can't be deleted. Deactivate the turf instead.",
       cantSuspendSelf: "You can't suspend your own account.",
       cantRemoveOwnAdmin: "You can't remove your own admin role.",
       notRefundable: "This booking can't be refunded.",

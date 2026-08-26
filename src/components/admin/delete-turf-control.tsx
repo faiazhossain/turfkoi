@@ -7,6 +7,7 @@ import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { useI18n } from "@/i18n/client"
 import { deleteTurfAction } from "@/features/admin/actions"
 
 /**
@@ -23,6 +24,7 @@ export function DeleteTurfControl({
   name: string
 }) {
   const router = useRouter()
+  const { t } = useI18n()
   const [confirmName, setConfirmName] = useState("")
   const [pending, setPending] = useState(false)
   const armed = confirmName.trim() === name
@@ -32,10 +34,10 @@ export function DeleteTurfControl({
     try {
       const res = await deleteTurfAction({ turfId })
       if (!res.ok) {
-        toast.error(res.error)
+        toast.error(t(res.error ?? "errors.generic"))
         return
       }
-      toast.success("Turf deleted.")
+      toast.success(t("admin.cockpit.deleted"))
       router.replace("/admin/turfs")
     } finally {
       setPending(false)
@@ -46,8 +48,7 @@ export function DeleteTurfControl({
     <div className="space-y-3">
       <div className="space-y-1.5">
         <Label htmlFor={`delete-turf-${turfId}`}>
-          Type <span className="font-medium text-foreground">{name}</span> to
-          confirm
+          {t("admin.cockpit.typeToConfirm", { name })}
         </Label>
         <Input
           id={`delete-turf-${turfId}`}
@@ -64,11 +65,10 @@ export function DeleteTurfControl({
         loading={pending}
         disabled={!armed}
       >
-        Delete turf
+        {t("admin.cockpit.deleteTurf")}
       </Button>
       <p className="text-xs text-muted-foreground">
-        Removes the turf, its slots, photos, and claim invites. Turf
-        applications keep their history. This can&apos;t be undone.
+        {t("admin.cockpit.deleteDesc")}
       </p>
     </div>
   )

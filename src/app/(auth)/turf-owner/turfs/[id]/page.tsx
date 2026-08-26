@@ -288,20 +288,13 @@ export default async function EditTurfPage({
             <Card>
               <CardHeader>
                 <CardTitle className="flex flex-wrap items-center gap-2 font-heading text-lg">
-                  Weekly hours
+                  {t("turfOwner.schedule.weeklyHours")}
                   <span className="text-xs font-normal text-muted-foreground">
-                    Active: {activeSchedule.name}
+                    {t("turfOwner.schedule.activeName", { name: activeSchedule.name })}
                   </span>
                 </CardTitle>
                 <CardDescription>
-                  <span className="block">
-                    Set once — it repeats every week forever. Nothing expires
-                    unless you edit it.
-                  </span>
-                  <span lang="bn" className="block">
-                    একবার সেট করুন — এটি সাবার সাপ্তাহ চলতে থাকবে। আপনি না
-                    বদলালে কিছুই পরিবর্তন হয় না।
-                  </span>
+                  {t("turfOwner.schedule.weeklyHoursDesc")}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -319,27 +312,10 @@ export default async function EditTurfPage({
             <Card className="border-primary/40">
               <CardHeader>
                 <CardTitle className="font-heading text-lg">
-                  Set up weekly hours
+                  {t("turfOwner.schedule.setupTitle")}
                 </CardTitle>
                 <CardDescription>
-                  <span className="block">
-                    Your turf doesn&apos;t have a weekly schedule yet, so there
-                    are no booking slots available. Answer a few quick
-                    questions about your prices, opening hours, and breaks, and
-                    we&apos;ll set up the whole week for you.
-                  </span>
-                  <span
-                    lang="bn"
-                    className="block pt-1 font-medium text-foreground"
-                  >
-                    সাপ্তাহিক সময়সূচি সেট করুন
-                  </span>
-                  <span lang="bn" className="block">
-                    আপনার টার্ফের সাপ্তাহিক সময়সূচি এখনো সেট করা হয়নি, তাই
-                    বুকিংয়ের জন্য কোনো স্লট নেই। দাম, খোলার সময় এবং বিরতি
-                    সম্পর্কে কয়েকটি সহজ প্রশ্নের উত্তর দিন—আমরা আপনার জন্য
-                    পুরো সপ্তাহের সময়সূচি তৈরি করে দেব।
-                  </span>
+                  {t("turfOwner.schedule.setupDesc")}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -353,12 +329,10 @@ export default async function EditTurfPage({
               <Card>
                 <CardHeader>
                   <CardTitle className="font-heading text-lg">
-                    Availability calendar
+                    {t("turfOwner.schedule.calendarTitle")}
                   </CardTitle>
                   <CardDescription>
-                    Tap a day to see and edit its slots. Ringed days are public
-                    holidays ({`we seed the BD calendar - lunar dates are
-                    estimates, always double-check Eid`}).
+                    {t("turfOwner.schedule.calendarDesc")}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -413,11 +387,10 @@ export default async function EditTurfPage({
             <Card>
               <CardHeader>
                 <CardTitle className="font-heading text-lg">
-                  Bulk generate (legacy)
+                  {t("turfOwner.schedule.bulkTitle")}
                 </CardTitle>
                 <CardDescription>
-                  Only for turfs without weekly hours. Prefer weekly hours —
-                  it auto-fills the next 30 days.
+                  {t("turfOwner.schedule.bulkDesc")}
                 </CardDescription>
               </CardHeader>
               <CardContent>

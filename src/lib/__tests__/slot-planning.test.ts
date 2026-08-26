@@ -107,8 +107,12 @@ describe("planMaterialization", () => {
       [desired({ durationMinutes: 60 })]
     )
     expect(plan.updates).toEqual([])
-    expect(plan.conflicts[0]).toContain("custom slot")
-    expect(plan.conflicts[0]).toContain("45")
+    expect(plan.conflicts[0]).toMatchObject({
+      kind: "kept_duration",
+      kept: "manual",
+      gotMinutes: 45,
+      wantMinutes: 60,
+    })
   })
 
   it("keeps a booked slot matching the plan without conflict", () => {
@@ -124,8 +128,10 @@ describe("planMaterialization", () => {
   it("reports a booked slot the schedule no longer offers", () => {
     const plan = planMaterialization([existing({ status: "booked" })], [])
     expect(plan.deletes).toEqual([])
-    expect(plan.conflicts[0]).toContain("active booking")
-    expect(plan.conflicts[0]).toContain("outside the new schedule")
+    expect(plan.conflicts[0]).toMatchObject({
+      kind: "outside_plan",
+      kept: "booking",
+    })
   })
 
   it("reports a booked slot whose duration no longer matches", () => {
@@ -133,7 +139,12 @@ describe("planMaterialization", () => {
       [existing({ status: "held", durationMinutes: 90 })],
       [desired({ durationMinutes: 60 })]
     )
-    expect(plan.conflicts[0]).toContain("active booking")
+    expect(plan.conflicts[0]).toMatchObject({
+      kind: "kept_duration",
+      kept: "booking",
+      gotMinutes: 90,
+      wantMinutes: 60,
+    })
     expect(plan.updates).toEqual([])
   })
 
@@ -153,7 +164,9 @@ describe("planMaterialization", () => {
     expect(plan.updates).toEqual([])
     expect(plan.inserts.map((i) => i.startTime)).toEqual(["20:30"])
     expect(
-      plan.conflicts.some((c) => c.includes("18:00") && c.includes("not resized"))
+      plan.conflicts.some(
+        (c) => c.startTime === "18:00" && c.kind === "resize_overlap"
+      )
     ).toBe(true)
   })
 
@@ -164,7 +177,10 @@ describe("planMaterialization", () => {
       [desired({ startTime: "20:30" })]
     )
     expect(plan.inserts).toEqual([])
-    expect(plan.conflicts[0]).toContain("would overlap a kept slot")
+    expect(plan.conflicts[0]).toMatchObject({
+      kind: "insert_overlap",
+      kept: "manual",
+    })
   })
 
   it("keeps maintenance and blocked template rows outside the plan", () => {
@@ -205,8 +221,8 @@ describe("planMaterialization", () => {
       [existing({ status: "booked", startTime: "18:00" })],
       [desired({ startTime: "20:00" })]
     )
-    const conflictCount = plan.conflicts.filter((c) =>
-      c.includes("18:00")
+    const conflictCount = plan.conflicts.filter(
+      (c) => c.startTime === "18:00"
     ).length
     expect(conflictCount).toBe(1)
   })

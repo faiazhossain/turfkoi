@@ -167,7 +167,7 @@ describe("addSlotAction", () => {
       { date: "2099-03-06", startTime: "21:30:00", durationMinutes: 60 },
     ])
     const res = await addSlotAction(TURF_ID, validSlot)
-    expect(failure(res)).toContain("21:30")
+    expect(failure(res)).toBe("turfOwner.errors.overlapsSlot")
     expect(insertCalls).toEqual([])
   })
 
@@ -178,7 +178,7 @@ describe("addSlotAction", () => {
       { date: "2099-03-05", startTime: "23:30:00", durationMinutes: 90 },
     ])
     const res = await addSlotAction(TURF_ID, { ...validSlot, startTime: "00:30" })
-    expect(failure(res)).toContain("23:30")
+    expect(failure(res)).toBe("turfOwner.errors.overlapsSlot")
     expect(insertCalls).toEqual([])
   })
 
@@ -204,7 +204,7 @@ describe("addSlotAction", () => {
     // onConflictDoNothing swallows the PK clash -> empty returning.
     insertReturnQueue.push([])
     const res = await addSlotAction(TURF_ID, validSlot)
-    expect(failure(res)).toContain("already starts")
+    expect(failure(res)).toBe("turfOwner.errors.slotExists")
   })
 })
 
@@ -218,7 +218,7 @@ describe("saveScheduleAction", () => {
         { dayOfWeek: 0, startTime: "22:00", endTime: "23:30", slotMinutes: 60, gapMinutes: 0, price: 1000 },
       ],
     })
-    expect(failure(res)).toContain("overlaps")
+    expect(failure(res)).toBe("turfOwner.errors.sectionOverlap")
     expect(materializeMock).not.toHaveBeenCalled()
   })
 
@@ -275,7 +275,7 @@ describe("setDateExceptionAction", () => {
       priceMode: "multiplier",
       priceValue: 1.25,
     })
-    expect(failure(res)).toContain("can't also carry")
+    expect(failure(res)).toBe("turfOwner.errors.closedWithPrice")
     expect(insertCalls).toEqual([])
   })
 
@@ -286,7 +286,7 @@ describe("setDateExceptionAction", () => {
       isClosed: false,
       priceMode: "multiplier",
     })
-    expect(failure(res)).toContain("Provide the value")
+    expect(failure(res)).toBe("turfOwner.errors.priceRuleValue")
   })
 
   it("rejects an out-of-range multiplier", async () => {
@@ -297,7 +297,7 @@ describe("setDateExceptionAction", () => {
       priceMode: "multiplier",
       priceValue: 5,
     })
-    expect(failure(res)).toContain("between 0.5 and 3")
+    expect(failure(res)).toBe("turfOwner.errors.multiplierRange")
   })
 
   it("rejects a past date", async () => {
@@ -382,7 +382,7 @@ describe("activateScheduleAction", () => {
       effectiveFrom: "2099-03-20",
       effectiveTo: "2099-03-01",
     })
-    expect(failure(res)).toContain("on or after")
+    expect(failure(res)).toBe("turfOwner.errors.endDateAfter")
     expect(materializeMock).not.toHaveBeenCalled()
   })
 
@@ -428,7 +428,7 @@ describe("activateScheduleAction", () => {
     const res = await activateScheduleAction(TURF_ID, {
       scheduleId: SCHED_ID,
     })
-    expect(failure(res)).toContain("not found")
+    expect(failure(res)).toBe("turfOwner.errors.scheduleNotFound")
     expect(materializeMock).not.toHaveBeenCalled()
   })
 })
@@ -437,7 +437,7 @@ describe("updateBookingHorizonAction", () => {
   it("rejects values outside the allowed choices", async () => {
     signInAs(["turf_owner"])
     const res = await updateBookingHorizonAction(TURF_ID, 45)
-    expect(failure(res)).toContain("days")
+    expect(failure(res)).toBe("turfOwner.errors.horizonChoice")
     expect(materializeMock).not.toHaveBeenCalled()
   })
 

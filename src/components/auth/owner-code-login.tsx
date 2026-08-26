@@ -17,6 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { useI18n } from "@/i18n/client"
 
 import { ownerCodeLoginAction } from "@/features/owner-login/actions"
 import {
@@ -32,6 +33,7 @@ import {
  */
 export function OwnerCodeLogin() {
   const router = useRouter()
+  const { t } = useI18n()
   const [phone, setPhone] = useState("")
   const [code, setCode] = useState("")
   const [verifying, setVerifying] = useState(false)
@@ -65,7 +67,7 @@ export function OwnerCodeLogin() {
   async function onSavePassword() {
     setModalError(null)
     if (password !== confirm) {
-      setModalError("Passwords do not match")
+      setModalError("ownerCode.errors.passwordMismatch")
       return
     }
     setSaving(true)
@@ -105,9 +107,9 @@ export function OwnerCodeLogin() {
     if (!generated) return
     try {
       await navigator.clipboard.writeText(generated)
-      toast.success("Password copied — keep it somewhere safe.")
+      toast.success(t("claim.copiedToast"))
     } catch {
-      toast.error("Couldn't copy. Write it down manually.")
+      toast.error(t("claim.copyFailToast"))
     }
   }
 
@@ -121,7 +123,7 @@ export function OwnerCodeLogin() {
         className="space-y-3"
       >
         <div className="space-y-2">
-          <Label htmlFor="owner-code-phone">Phone number</Label>
+          <Label htmlFor="owner-code-phone">{t("auth.phoneLabel")}</Label>
           <Input
             id="owner-code-phone"
             inputMode="tel"
@@ -132,7 +134,7 @@ export function OwnerCodeLogin() {
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="owner-code">Sign-in code</Label>
+          <Label htmlFor="owner-code">{t("ownerCode.codeLabel")}</Label>
           <Input
             id="owner-code"
             inputMode="numeric"
@@ -144,9 +146,11 @@ export function OwnerCodeLogin() {
             className="text-center text-lg tracking-[0.5em]"
           />
         </div>
-        {error ? <StatusBadge status="danger">{error}</StatusBadge> : null}
+        {error ? (
+          <StatusBadge status="danger">{t(error)}</StatusBadge>
+        ) : null}
         <Button type="submit" size="lg" className="w-full" loading={verifying}>
-          {verifying ? "Verifying" : "Sign in with code"}
+          {verifying ? t("claim.verifying") : t("ownerCode.signInButton")}
         </Button>
       </form>
 
@@ -154,12 +158,14 @@ export function OwnerCodeLogin() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {generated ? "Your password" : "Set a password"}
+              {generated
+                ? t("claim.yourPasswordTitle")
+                : t("claim.setPasswordTitle")}
             </DialogTitle>
             <DialogDescription>
               {generated
-                ? "Use this to sign in with your phone number. You can change it later in settings."
-                : "You're signed in. Choose a password for next time — or skip and we'll generate one for you."}
+                ? t("claim.passwordGeneratedDesc")
+                : t("claim.passwordChooseDesc")}
             </DialogDescription>
           </DialogHeader>
 
@@ -170,51 +176,54 @@ export function OwnerCodeLogin() {
                   readOnly
                   value={generated}
                   onFocus={(e) => e.currentTarget.select()}
-                  aria-label="Generated password"
+                  aria-label={t("claim.generatedAria")}
                 />
                 <Button
                   variant="outline"
                   onClick={onCopyGenerated}
-                  aria-label="Copy password"
+                  aria-label={t("claim.copyAria")}
                 >
                   <CopyIcon className="size-4" aria-hidden />
-                  Copy
+                  {t("admin.ownerCode.copy")}
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">
-                Shown only once — save it now. Signing in uses your phone
-                number and this password.
+                {t("claim.shownOnce", { phone })}
               </p>
               {modalError ? (
-                <StatusBadge status="danger">{modalError}</StatusBadge>
+                <StatusBadge status="danger">{t(modalError)}</StatusBadge>
               ) : null}
             </div>
           ) : (
             <div className="space-y-3">
               <div className="space-y-2">
-                <Label htmlFor="owner-new-password">New password</Label>
+                <Label htmlFor="owner-new-password">
+                  {t("ownerCode.newPassword")}
+                </Label>
                 <Input
                   id="owner-new-password"
                   type="password"
                   autoComplete="new-password"
-                  placeholder="At least 8 characters"
+                  placeholder={t("auth.passwordPlaceholder")}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="owner-new-confirm">Confirm password</Label>
+                <Label htmlFor="owner-new-confirm">
+                  {t("auth.confirmPassword")}
+                </Label>
                 <Input
                   id="owner-new-confirm"
                   type="password"
                   autoComplete="new-password"
-                  placeholder="Same password again"
+                  placeholder={t("claim.confirmPlaceholder")}
                   value={confirm}
                   onChange={(e) => setConfirm(e.target.value)}
                 />
               </div>
               {modalError ? (
-                <StatusBadge status="danger">{modalError}</StatusBadge>
+                <StatusBadge status="danger">{t(modalError)}</StatusBadge>
               ) : null}
             </div>
           )}
@@ -222,7 +231,7 @@ export function OwnerCodeLogin() {
           <DialogFooter>
             {generated ? (
               <Button loading={redirecting} onClick={goHome}>
-                Continue
+                {t("common.continue")}
               </Button>
             ) : (
               <>
@@ -232,10 +241,10 @@ export function OwnerCodeLogin() {
                   loading={skipping}
                   disabled={saving}
                 >
-                  Skip — generate one for me
+                  {t("claim.skipGenerate")}
                 </Button>
                 <Button onClick={onSavePassword} loading={saving} disabled={skipping}>
-                  Save password
+                  {t("claim.savePassword")}
                 </Button>
               </>
             )}

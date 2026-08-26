@@ -32,9 +32,9 @@ async function adminActor(): Promise<
   { ok: true; id: string } | { ok: false; error: string }
 > {
   const user = await getCurrentUser()
-  if (!user) return { ok: false, error: "You are not signed in." }
+  if (!user) return { ok: false, error: "errors.notSignedIn" }
   if (!user.roles.includes("admin")) {
-    return { ok: false, error: "Admins only." }
+    return { ok: false, error: "errors.adminOnly" }
   }
   return { ok: true, id: user.id }
 }
@@ -61,7 +61,7 @@ export async function mintOwnerLoginCodeAction(
 > {
   const parsed = mintOwnerLoginCodeSchema.safeParse(input)
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid" }
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "errors.invalid" }
   }
   const actor = await adminActor()
   if (!actor.ok) return actor
@@ -79,11 +79,11 @@ export async function mintOwnerLoginCodeAction(
     .where(eq(turfs.id, parsed.data.turfId))
     .limit(1)
   const turf = rows[0]
-  if (!turf) return { ok: false, error: "Turf not found." }
+  if (!turf) return { ok: false, error: "turfs.errors.turfNotFound" }
   if (!turf.ownerId || !turf.ownerPhone) {
     return {
       ok: false,
-      error: "This turf has no owner yet — send a claim invite instead.",
+      error: "ownerCode.errors.noOwner",
     }
   }
 
@@ -127,12 +127,12 @@ export async function ownerCodeLoginAction(
 ): Promise<ActionResult> {
   const parsed = ownerCodeLoginSchema.safeParse(input)
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid" }
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "errors.invalid" }
   }
   if (!isValidPhone(parsed.data.phone)) {
     return {
       ok: false,
-      error: "Enter a valid Bangladeshi number, e.g. 01XXXXXXXXX",
+      error: "ownerCode.errors.invalidPhone",
     }
   }
 
@@ -140,7 +140,7 @@ export async function ownerCodeLoginAction(
   const ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown"
   const allowIp = await rateLimit(`owner-code:ip:${ip}`, 10, 300)
   if (!allowIp) {
-    return { ok: false, error: "Too many attempts. Try again later." }
+    return { ok: false, error: "ownerCode.errors.rateLimited" }
   }
 
   const verified = await verifyOwnerLoginCode(
@@ -149,16 +149,12 @@ export async function ownerCodeLoginAction(
   )
   if (!verified.ok) {
     const messages: Record<typeof verified.reason, string> = {
-      no_code:
-        "No active code for this number. Ask the Turfkoi team for a new one.",
-      invalid:
-        verified.attemptsLeft !== undefined
-          ? `Wrong code. ${verified.attemptsLeft} attempt${verified.attemptsLeft === 1 ? "" : "s"} left.`
-          : "Wrong code. Try again.",
-      locked: "Too many wrong codes. Try again in 15 minutes.",
-      consumed: "This code was already used. Ask for a new one.",
-      expired: "This code expired. Ask the Turfkoi team for a new one.",
-      revoked: "This code was replaced by a newer one. Ask for the latest.",
+      no_code: "ownerCode.errors.noCode",
+      invalid: "ownerCode.errors.wrongCode",
+      locked: "ownerCode.errors.locked",
+      consumed: "ownerCode.errors.consumed",
+      expired: "ownerCode.errors.expired",
+      revoked: "ownerCode.errors.revoked",
     }
     return { ok: false, error: messages[verified.reason] }
   }
@@ -169,12 +165,12 @@ export async function ownerCodeLoginAction(
     300
   )
   if (!allowPhone) {
-    return { ok: false, error: "Too many attempts. Try again later." }
+    return { ok: false, error: "ownerCode.errors.rateLimited" }
   }
 
   const existing = await getUserByPhone(verified.phone)
   if (!existing || existing.status === "deleted") {
-    return { ok: false, error: "No account found for this number." }
+    return { ok: false, error: "ownerCode.errors.noAccount" }
   }
 
   // Rotate to a one-time password and sign in with it in the same request;
@@ -190,7 +186,7 @@ export async function ownerCodeLoginAction(
   } catch (err) {
     if (err instanceof AuthError) {
       console.error("[owner-login] code sign-in failed:", err)
-      return { ok: false, error: "Couldn't sign you in. Try again." }
+      return { ok: false, error: "ownerCode.errors.signinFailed" }
     }
     throw err
   }

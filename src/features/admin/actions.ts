@@ -206,7 +206,7 @@ export async function unverifyTurfAction(
     )
     .returning({ id: turfs.id })
   if (updated.length === 0) {
-    return { ok: false, error: "Turf not found or already pending." }
+    return { ok: false, error: "admin.errors.turfNotFoundPending" }
   }
 
   logger.info("admin.turf_unverified", { turfId: parsed.data.turfId })
@@ -237,7 +237,7 @@ export async function setTurfActiveAction(
     .where(eq(turfs.id, parsed.data.turfId))
     .returning({ id: turfs.id })
   if (updated.length === 0) {
-    return { ok: false, error: "Turf not found." }
+    return { ok: false, error: "turfs.errors.turfNotFound" }
   }
 
   logger.info(
@@ -275,7 +275,7 @@ export async function deleteTurfAction(
   if (bookingCount > 0) {
     return {
       ok: false,
-      error: `This turf has ${bookingCount} booking${bookingCount === 1 ? "" : "s"} — booking history can't be deleted. Deactivate the turf instead.`,
+      error: "admin.errors.turfHasBookings",
     }
   }
 
@@ -285,7 +285,7 @@ export async function deleteTurfAction(
       .where(eq(turfs.id, parsed.data.turfId))
       .returning({ id: turfs.id })
     if (deleted.length === 0) {
-      return { ok: false, error: "Turf not found." }
+      return { ok: false, error: "turfs.errors.turfNotFound" }
     }
   } catch (err) {
     // A booking landed between the count and the delete — the FK restrict

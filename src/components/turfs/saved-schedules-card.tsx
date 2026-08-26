@@ -14,6 +14,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { StatusBadge } from "@/components/shared"
+import { useI18n } from "@/i18n/client"
 
 import { activateScheduleAction } from "@/features/turfs/actions"
 import type { SavedSchedule } from "@/features/turfs/materialize"
@@ -49,6 +50,7 @@ export function SavedSchedulesCard({
   today: string
 }) {
   const router = useRouter()
+  const { t } = useI18n()
   const [pendingId, setPendingId] = useState<string | null>(null)
   const [serverError, setServerError] = useState<string | null>(null)
   const [summary, setSummary] = useState<string | null>(null)
@@ -83,12 +85,19 @@ export function SavedSchedulesCard({
       const m = res.materialized
       setSummary(
         m
-          ? `"${schedule.name}" is now active. Materialized next 30 days: ` +
-              `${m.inserted} added, ${m.updated} updated, ${m.deleted} removed.` +
-              (m.conflicts.length > 0
-                ? ` ${m.conflicts.length} slot(s) need attention - see above.`
-                : "")
-          : `"${schedule.name}" is now active.`
+          ? t("turfOwner.schedule.activatedWithSlots", {
+              name: schedule.name,
+              added: m.inserted,
+              updated: m.updated,
+              removed: m.deleted,
+              conflictsNote:
+                m.conflicts.length > 0
+                  ? t("turfOwner.schedule.activatedConflicts", {
+                      count: m.conflicts.length,
+                    })
+                  : "",
+            })
+          : t("turfOwner.schedule.activated", { name: schedule.name })
       )
       router.refresh()
     } finally {
@@ -100,14 +109,14 @@ export function SavedSchedulesCard({
     <Card>
       <CardHeader>
         <CardTitle className="font-heading text-lg">
-          Saved schedules
+          {t("turfOwner.schedule.savedSchedules")}
         </CardTitle>
         <CardDescription>
-          Keep a regular week and seasonal hours side by side and switch
-          between them. An optional window limits when a schedule runs
           {ramadan
-            ? ` - the seeded Ramadan dates (${formatWindow(ramadan.from, ramadan.to)}) are one tap away. Outside its window a schedule produces no slots, so switch back after the season ends.`
-            : " - outside it the schedule produces no slots."}
+            ? t("turfOwner.schedule.savedDescRamadan", {
+                window: formatWindow(ramadan.from, ramadan.to),
+              })
+            : t("turfOwner.schedule.savedDesc")}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -124,30 +133,33 @@ export function SavedSchedulesCard({
                   <div>
                     <p className="text-sm font-medium">{s.name}</p>
                     <p className="text-xs text-muted-foreground">
-                      {s.sectionCount}{" "}
-                      {s.sectionCount === 1 ? "section" : "sections"}
+                      {t("turfOwner.schedule.sectionCount", {
+                        count: s.sectionCount,
+                      })}
                       {s.effectiveFrom || s.effectiveTo
-                        ? ` - window ${formatWindow(s.effectiveFrom, s.effectiveTo)}`
+                        ? ` — ${t("turfOwner.schedule.windowLabel", {
+                            window: formatWindow(s.effectiveFrom, s.effectiveTo),
+                          })}`
                         : ""}
                     </p>
                   </div>
                   {s.isActive ? (
                     <StatusBadge status="success" showIcon={false}>
-                      Active
+                      {t("turfOwner.schedule.active")}
                     </StatusBadge>
                   ) : null}
                 </div>
 
                 {s.isActive && s.effectiveTo && s.effectiveTo < today ? (
                   <p className="text-xs text-warning">
-                    This window has ended - the schedule is producing no
-                    slots. Activate another schedule below.
+                    {t("turfOwner.schedule.windowEnded")}
                   </p>
                 ) : null}
                 {s.isActive && s.effectiveFrom && s.effectiveFrom > today ? (
                   <p className="text-xs text-warning">
-                    Starts {s.effectiveFrom} - until then this schedule
-                    produces no slots.
+                    {t("turfOwner.schedule.windowStartsLater", {
+                      date: s.effectiveFrom,
+                    })}
                   </p>
                 ) : null}
 
@@ -158,7 +170,7 @@ export function SavedSchedulesCard({
                         htmlFor={`from-${s.id}`}
                         className="text-xs text-muted-foreground"
                       >
-                        From
+                        {t("turfOwner.schedule.from")}
                       </Label>
                       <Input
                         id={`from-${s.id}`}
@@ -176,7 +188,7 @@ export function SavedSchedulesCard({
                         htmlFor={`to-${s.id}`}
                         className="text-xs text-muted-foreground"
                       >
-                        To
+                        {t("turfOwner.schedule.to")}
                       </Label>
                       <Input
                         id={`to-${s.id}`}
@@ -200,7 +212,7 @@ export function SavedSchedulesCard({
                           })
                         }
                       >
-                        Ramadan dates
+                        {t("turfOwner.schedule.ramadanDates")}
                       </Button>
                     ) : null}
                     <Button
@@ -210,7 +222,9 @@ export function SavedSchedulesCard({
                       disabled={busyElsewhere}
                       onClick={() => onActivate(s)}
                     >
-                      {pendingId === s.id ? "Activating" : "Activate"}
+                      {pendingId === s.id
+                        ? t("turfOwner.schedule.activating")
+                        : t("turfOwner.schedule.activate")}
                     </Button>
                   </div>
                 ) : null}
@@ -220,7 +234,7 @@ export function SavedSchedulesCard({
         </ul>
 
         {serverError ? (
-          <StatusBadge status="danger">{serverError}</StatusBadge>
+          <StatusBadge status="danger">{t(serverError)}</StatusBadge>
         ) : null}
         {summary ? <StatusBadge status="success">{summary}</StatusBadge> : null}
       </CardContent>

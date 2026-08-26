@@ -265,6 +265,19 @@ export function expandScheduleRange(
   return out
 }
 
+/** Reference to one side of a section conflict, for i18n-side rendering. */
+export type SectionConflictSide = {
+  dayOfWeek: number
+  range: string
+}
+
+export type SectionConflict = {
+  /** Same-weekday overlap, or a wrap spilling into the next weekday. */
+  type: "overlap" | "wrap"
+  a: SectionConflictSide
+  b: SectionConflictSide
+}
+
 /**
  * Pairwise section conflicts: two sections on the same weekday overlapping,
  * or a wrapping section spilling into the next weekday's early sections.
@@ -272,10 +285,12 @@ export function expandScheduleRange(
  */
 export function findSectionConflicts(
   sections: ScheduleSection[]
-): string[] {
-  const conflicts: string[] = []
-  const name = (s: ScheduleSection) =>
-    `${DAY_NAMES[s.dayOfWeek] ?? "day"} ${s.startTime}-${s.endTime}`
+): SectionConflict[] {
+  const conflicts: SectionConflict[] = []
+  const ref = (s: ScheduleSection): SectionConflictSide => ({
+    dayOfWeek: s.dayOfWeek,
+    range: `${s.startTime}-${s.endTime}`,
+  })
 
   for (let i = 0; i < sections.length; i++) {
     for (let j = i + 1; j < sections.length; j++) {
@@ -285,7 +300,7 @@ export function findSectionConflicts(
         const sa = sectionSpan(a)
         const sb = sectionSpan(b)
         if (sa.start < sb.end && sb.start < sa.end) {
-          conflicts.push(`${name(a)} overlaps ${name(b)} on the same day`)
+          conflicts.push({ type: "overlap", a: ref(a), b: ref(b) })
         }
         continue
       }
@@ -301,9 +316,7 @@ export function findSectionConflicts(
         const spillEnd = sf.end - MINUTES_PER_DAY
         const nextStart = toMinutes(next.startTime)
         if (nextStart < spillEnd) {
-          conflicts.push(
-            `${name(first)} wraps past midnight into ${name(next)}`
-          )
+          conflicts.push({ type: "wrap", a: ref(first), b: ref(next) })
         }
       }
     }

@@ -20,6 +20,7 @@ import {
 import {
   planMaterialization,
   type ExistingSlotRow,
+  type PlanConflict,
 } from "@/lib/slot-planning"
 
 /**
@@ -171,7 +172,7 @@ export type MaterializeResult = {
   inserted: number
   updated: number
   deleted: number
-  conflicts: string[]
+  conflicts: PlanConflict[]
   keptManual: number
 }
 
@@ -319,7 +320,8 @@ export type SlotConflict = {
   startTime: string
   durationMinutes: number
   kind: "booked_outside_plan" | "booked_duration_mismatch" | "kept_manual"
-  detail: string
+  /** For duration mismatches: what the schedule now wants at this key. */
+  wantedMinutes?: number
 }
 
 /**
@@ -361,7 +363,6 @@ export async function listSlotConflicts(turfId: string): Promise<SlotConflict[]>
           startTime: row.startTime.slice(0, 5),
           durationMinutes: row.durationMinutes,
           kind: "kept_manual",
-          detail: "Custom slot - regeneration never touches it",
         })
       }
       continue
@@ -373,7 +374,6 @@ export async function listSlotConflicts(turfId: string): Promise<SlotConflict[]>
           startTime: row.startTime.slice(0, 5),
           durationMinutes: row.durationMinutes,
           kind: "booked_outside_plan",
-          detail: "Active booking sits outside the new schedule",
         })
       } else {
         const want = desired.find((d) => `${d.date}|${d.startTime}` === key)
@@ -383,7 +383,7 @@ export async function listSlotConflicts(turfId: string): Promise<SlotConflict[]>
             startTime: row.startTime.slice(0, 5),
             durationMinutes: row.durationMinutes,
             kind: "booked_duration_mismatch",
-            detail: `Booked ${row.durationMinutes} min but the schedule now wants ${want.durationMinutes} min`,
+            wantedMinutes: want.durationMinutes,
           })
         }
       }
