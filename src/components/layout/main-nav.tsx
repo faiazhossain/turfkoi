@@ -35,7 +35,7 @@ export function MainNav({ variant }: { variant: "desktop" | "mobile" }) {
             >
               <Icon className="size-5" aria-hidden />
               {t(item.labelKey)}
-              <LinkPendingIndicator className="absolute top-0.5 right-1/4" />
+              <LinkPendingIndicator className="absolute top-0.5 right-1/4 ml-0 w-3.5" />
             </Link>
           )
         })}

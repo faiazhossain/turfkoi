@@ -1,4 +1,5 @@
 import { Suspense } from "react"
+import Image from "next/image"
 import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
@@ -47,10 +48,13 @@ async function SessionActions() {
     )
   }
 
+  // Turf owners land on their owner dashboard, not the player dashboard.
+  const ownerHref = user?.roles.includes("turf_owner") ? "/turf-owner" : "/app"
+
   return (
     <>
       <NotificationBell />
-      <Button variant="ghost" size="sm" render={<Link href="/app" />}>
+      <Button variant="ghost" size="sm" render={<Link href={ownerHref} />}>
         {t("nav.dashboard")}
       </Button>
       <SignOutButton />
@@ -69,12 +73,16 @@ export async function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur supports-backdrop-filter:bg-background/60">
       <div className="mx-auto flex h-14 max-w-6xl items-center gap-2 px-4">
-        <Link
-          href="/"
-          className="flex items-center gap-2 font-heading text-lg font-semibold tracking-tight"
-        >
-          <span className="inline-block size-2.5 rounded-full bg-primary" aria-hidden />
-          DeshiTurf
+        <Link href="/" aria-label="DeshiTurf" className="flex items-center">
+          <Image
+            src="/brand-logo-white.png"
+            alt="DeshiTurf — Book • Play • Connect"
+            width={2172}
+            height={724}
+            quality={85}
+            priority
+            className="h-9 w-auto object-contain"
+          />
         </Link>
         <MainNav variant="desktop" />
         <div className="ml-auto flex items-center gap-2">

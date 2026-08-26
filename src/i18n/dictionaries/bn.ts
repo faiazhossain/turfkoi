@@ -73,6 +73,32 @@ export const bn: Dictionary = {
     featureRosterTitle: "Team পূর্ণ করুন",
     featureRosterDesc:
       "Team-এ Player কম? কাছের Solo Player-রা আপনার Match-এ Guest হিসেবে Join করার জন্য Request পাঠাতে পারবে।",
+    statTurfsValue: "৫০+",
+    statTurfs: "তালিকাভুক্ত টার্ফ",
+    statCitiesValue: "৫",
+    statCities: "শহর",
+    statSlotsValue: "১,০০০+",
+    statSlots: "বুক হওয়া slot",
+    featuresTitle: "আপনার খেলার সবকিছু",
+    featuresSubtitle:
+      "বুকিং থেকে খেলা শুরু — Player, team আর turf owner, সবার জন্যই তৈরি।",
+    audienceTitle: "DeshiTurf কাদের জন্য?",
+    audiencePlayersTitle: "Solo Player",
+    audiencePlayersDesc: "কাছের Match খুঁজে নিন আর Guest Player হিসেবে Join করুন।",
+    audiencePlayersCta: "Player হিসেবে যোগ দিন",
+    audienceTeamsTitle: "Team",
+    audienceTeamsDesc: "Turf বুক করুন, Opponent খুঁজুন আর Team-এর খালি Slot Fill করুন।",
+    audienceTeamsCta: "Team রেজিস্টার করুন",
+    audienceOwnersTitle: "Turf Owner",
+    audienceOwnersDesc: "ফ্রিতে আপনার Turf List করুন আর Empty Slot Fill করুন।",
+    audienceOwnersCta: "আপনার টার্ফ লিস্ট করুন",
+    trustPayments: "bKash-এ নিরাপদ পেমেন্ট",
+    trustFee:
+      "মাত্র ৫% সার্ভিস ফি, সর্বোচ্চ ৳১০০ — checkout-এই locked, পরে কোনো অতিরিক্ত চার্জ নেই।",
+    ctaBannerTitle: "খেলতে প্রস্তুত?",
+    ctaBannerBody: "আজই DeshiTurf-এ যোগ দিন — book, play, connect।",
+    ctaBannerPrimary: "ফ্রি অ্যাকাউন্ট খুলুন",
+    ctaBannerSecondary: "টার্ফ দেখুন",
   },
 
   metadata: {
@@ -109,6 +135,8 @@ export const bn: Dictionary = {
     adminReportsTitle: "অ্যাডমিন · রিপোর্ট",
     adminSeedTurfTitle: "অ্যাডমিন · Turf সীড",
     notFoundTitle: "পেজটি খুঁজে পাওয়া যায়নি",
+    homeDescription:
+      "বাংলাদেশে টার্ফ খুঁজে বুক করুন, match পোস্ট করুন, roster পূরণ করুন।",
   },
 
   notFound: {
@@ -276,8 +304,8 @@ export const bn: Dictionary = {
 
     backToDashboard: "ড্যাশবোর্ডে ফিরে যান",
     publicView: "পাবলিক পেজ",
-    tabDetails: "বিবরণ",
-    tabSlots: "Slots",
+    tabDetails: "Turf-এর বিবরণ",
+    tabSlots: "Slot ও Booking",
     turfDetails: "টার্ফের বিবরণ",
     detailsDesc: "সেভ করার পর পরিবর্তনগুলো পাবলিক পেজে দেখা যাবে।",
     photos: "ছবি",
@@ -426,17 +454,13 @@ export const bn: Dictionary = {
       calendarTitle: "Availability calendar",
       calendarDesc:
         "যেকোনো দিনে tap করে সেই দিনের slot দেখুন বা edit করুন। রিং চিহ্নিত দিনগুলো public holiday (BD calendar আমরা seed করি — lunar তারিখ আন্দাজি, Eid-এর আগে আবার check করে নিন)।",
-      bulkTitle: "Bulk generate (পুরনো পদ্ধতি)",
-      bulkDesc:
-        "শুধু weekly hours ছাড়া turf-এর জন্য। Weekly hours-ই ভালো — এটা পরের ৩০ দিন নিজেই ভরে দেয়।",
-      howTitle: "আপনার weekly schedule থেকে booking slot নিজে থেকেই তৈরি হয়।",
+      howTitle: "আপনার Weekly Schedule থেকেই Booking Slot তৈরি হবে।",
       howDesc:
-        "কোনো দিন বেছে নিয়ে booking বন্ধ করুন বা দাম বদলান। বাড়তি সময় লাগবে? একটি one-time slot যোগ করুন।",
+        "একবার সেট করে দিলেই প্রতি সপ্তাহে Slot নিজে থেকেই তৈরি হতে থাকবে—বারবার সেট করার দরকার নেই। কোনো দিন চাইলে Booking বন্ধ করতে পারবেন বা সেই দিনের Price বদলাতে পারবেন। বাড়তি সময় দিতে চান? একটি One-time Slot Add করুন।",
       emptyDay: "যেকোনো দিন বেছে নিন — সেই দিনের slot দেখুন, booking বন্ধ করুন বা দাম বদলান।",
-      advancedTools: "Advanced tools",
-      dayAdjustmentsTitle: "নির্দিষ্ট কোনো দিন বদলান",
+      dayAdjustmentsTitle: "নির্দিষ্ট দিনের Settings বদলান",
       dayAdjustmentsDesc:
-        "Booking বন্ধ করতে, দিনের দাম বদলাতে বা বাড়তি slot দিতে এই অংশটি খুলুন।",
+        "Booking বন্ধ করতে, দিনের Price বদলাতে বা Extra Slot দিতে এই অংশটি খুলুন।",
 
       // Booking window
       bookingWindow: "Booking window",

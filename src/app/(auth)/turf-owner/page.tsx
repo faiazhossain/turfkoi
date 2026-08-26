@@ -4,15 +4,14 @@ import type { Metadata } from "next"
 import { CalendarClockIcon, PlusIcon, MegaphoneIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { StatusBadge, EmptyState } from "@/components/shared"
-import { KpiTile, PromoteSlotButton } from "@/components/turfs"
+import { EmptyState } from "@/components/shared"
+import { KpiTile, PromoteSlotButton, MyTurfCard } from "@/components/turfs"
 import { getCurrentUser } from "@/lib/auth"
 import {
   getOwnerKPIs,
   listMyTurfs,
   listOwnerFillableSlots,
 } from "@/features/turfs/queries"
-import { turfFormatLabel } from "@/features/turfs/formats"
 import { getT } from "@/i18n/server"
 import { buildMetadata } from "@/i18n/metadata"
 
@@ -111,44 +110,18 @@ export default async function TurfOwnerDashboardPage() {
             }
           />
         ) : (
-          <ul className="grid gap-3 sm:grid-cols-2">
+          <ul className="grid gap-4 sm:grid-cols-2">
             {myTurfs.map((turf) => (
-              <li
-                key={turf.id}
-                className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card p-4"
-              >
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <Link
-                      href={`/turf-owner/turfs/${turf.id}`}
-                      className="truncate font-heading text-sm font-semibold hover:underline"
-                    >
-                      {turf.name}
-                    </Link>
-                    {turf.isVerified ? (
-                      <StatusBadge status="success" showIcon={false}>
-                        {t("turfOwner.verified")}
-                      </StatusBadge>
-                    ) : (
-                      <StatusBadge status="warning" showIcon={false}>
-                        {t("turfOwner.pendingVerification")}
-                      </StatusBadge>
-                    )}
-                  </div>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {[turf.area, turf.city].filter(Boolean).join(", ") ||
-                      t("turfs.locationTbd")}
-                    {" · "}
-                    {turfFormatLabel(turf.format)}
-                  </p>
-                </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  render={<Link href={`/turf-owner/turfs/${turf.id}`} />}
-                >
-                  {t("turfOwner.manage")}
-                </Button>
+              <li key={turf.id}>
+                <MyTurfCard
+                  id={turf.id}
+                  name={turf.name}
+                  area={turf.area}
+                  city={turf.city}
+                  format={turf.format}
+                  isVerified={turf.isVerified}
+                  photo={turf.photo}
+                />
               </li>
             ))}
           </ul>

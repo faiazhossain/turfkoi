@@ -182,7 +182,23 @@ export async function getTurfLatLng(id: string) {
 
 export async function listMyTurfs(ownerId: string) {
   return db
-    .select()
+    .select({
+      id: turfs.id,
+      slug: turfs.slug,
+      name: turfs.name,
+      area: turfs.area,
+      city: turfs.city,
+      format: turfs.format,
+      isActive: turfs.isActive,
+      isVerified: turfs.isVerified,
+      // Cover photo first, else earliest by sort order (Cloudinary public id).
+      photo: sql<string | null>`(
+        SELECT public_id FROM turf_photos tp
+        WHERE tp.turf_id = ${turfs.id}
+        ORDER BY is_cover DESC, sort_order ASC
+        LIMIT 1
+      )`.as("photo"),
+    })
     .from(turfs)
     .where(eq(turfs.ownerId, ownerId))
     .orderBy(asc(turfs.name))

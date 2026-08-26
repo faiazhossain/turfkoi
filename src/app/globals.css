@@ -89,7 +89,7 @@
   --card-foreground: #FFFFFF;
   --popover: #11161D;
   --popover-foreground: #FFFFFF;
-  --primary: #00E676;          /* pitch green */
+  --primary: #8CE000;          /* deshi green — bright end of the brand-logo gradient */
   --primary-foreground: #04140B;
   --secondary: #7453FA;        /* purple accent */
   --secondary-foreground: #FFFFFF;
@@ -113,8 +113,8 @@
    */
   --border: #2D3C4F;
   --input: #5A6C86;
-  --ring: #00E676;
-  --chart-1: #00E676;
+  --ring: #8CE000;
+  --chart-1: #8CE000;
   --chart-2: #7453FA;
   --chart-3: #FFC53D;
   --chart-4: #60A5FA;
@@ -122,12 +122,12 @@
   --radius: 0.75rem;
   --sidebar: #0B1016;
   --sidebar-foreground: #FFFFFF;
-  --sidebar-primary: #00E676;
+  --sidebar-primary: #8CE000;
   --sidebar-primary-foreground: #04140B;
   --sidebar-accent: #1A2230;
   --sidebar-accent-foreground: #FFFFFF;
   --sidebar-border: #2D3C4F;
-  --sidebar-ring: #00E676;
+  --sidebar-ring: #8CE000;
 }
 
 @layer base {
@@ -250,18 +250,20 @@ html[lang="bn"] body {
 }
 
 /*
- * Link navigation pending hint (useLinkStatus). Fixed size, hidden by
- * default; fades in only when a navigation is actually in flight, so
- * prefetched/instant transitions show no flash.
+ * Link navigation pending hint (useLinkStatus). Zero width while idle
+ * (no reserved space); the `w-3.5` utility + fade-in apply only when a
+ * navigation is actually in flight, so prefetched/instant transitions
+ * show no flash. Width is set via Tailwind so callers can override it
+ * (e.g. absolutely positioned hints keep a fixed width).
  */
 .link-hint {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 0.875rem;
-  height: 0.875rem;
+  overflow: hidden;
   opacity: 0;
   visibility: hidden;
+  transition: width 200ms ease;
 }
 .link-hint.is-pending {
   visibility: visible;

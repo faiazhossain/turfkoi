@@ -71,6 +71,31 @@ export const en = {
     featureRosterTitle: "Fill your roster",
     featureRosterDesc:
       "Short on players? Solo players nearby can request to join your match as guests for the game.",
+    statTurfsValue: "50+",
+    statTurfs: "Turfs listed",
+    statCitiesValue: "5",
+    statCities: "Cities",
+    statSlotsValue: "1,000+",
+    statSlots: "Slots booked",
+    featuresTitle: "Everything your game needs",
+    featuresSubtitle: "From booking to kickoff - built for players, teams, and turf owners alike.",
+    audienceTitle: "Who is DeshiTurf for?",
+    audiencePlayersTitle: "Solo players",
+    audiencePlayersDesc: "Find matches nearby and join as a guest player.",
+    audiencePlayersCta: "Join as a player",
+    audienceTeamsTitle: "Teams",
+    audienceTeamsDesc: "Book turfs, find opponents, and fill your roster.",
+    audienceTeamsCta: "Register your team",
+    audienceOwnersTitle: "Turf owners",
+    audienceOwnersDesc: "List your turf for free and fill empty slots.",
+    audienceOwnersCta: "List your turf",
+    trustPayments: "Secure payments via bKash",
+    trustFee:
+      "Just 5% service fee, capped at ৳100 — locked at checkout, no surprises.",
+    ctaBannerTitle: "Ready to play?",
+    ctaBannerBody: "Join DeshiTurf today — book, play, connect.",
+    ctaBannerPrimary: "Create free account",
+    ctaBannerSecondary: "Browse turfs",
   },
 
   metadata: {
@@ -106,6 +131,8 @@ export const en = {
     adminReportsTitle: "Admin · Reports",
     adminSeedTurfTitle: "Admin · Seed a turf",
     notFoundTitle: "Page not found",
+    homeDescription:
+      "Find and book turfs in Bangladesh, post matches, and fill your roster.",
   },
 
   notFound: {
@@ -272,8 +299,8 @@ export const en = {
 
     backToDashboard: "Back to dashboard",
     publicView: "Public view",
-    tabDetails: "Details",
-    tabSlots: "Slots",
+    tabDetails: "Turf details",
+    tabSlots: "Slots & booking",
     turfDetails: "Turf details",
     detailsDesc: "Changes appear on the public page after saving.",
     photos: "Photos",
@@ -423,14 +450,10 @@ export const en = {
       calendarTitle: "Availability calendar",
       calendarDesc:
         "Tap a day to see and edit its slots. Ringed days are public holidays (we seed the BD calendar — lunar dates are estimates, always double-check Eid).",
-      bulkTitle: "Bulk generate (legacy)",
-      bulkDesc:
-        "Only for turfs without weekly hours. Prefer weekly hours — it auto-fills the next 30 days.",
       howTitle: "Booking slots are created automatically from your weekly schedule.",
       howDesc:
-        "Select a day to close bookings or change the price. Need extra time? Add a one-time slot.",
+        "Set it once — it repeats every week on its own, so you never need to renew it. Select a day to close bookings or change the price. Need extra time? Add a one-time slot.",
       emptyDay: "Select a day to see its slots, close it, or change its price.",
-      advancedTools: "Advanced tools",
       dayAdjustmentsTitle: "Change a specific day",
       dayAdjustmentsDesc:
         "Close bookings, change a day's price, or add a one-off slot.",
