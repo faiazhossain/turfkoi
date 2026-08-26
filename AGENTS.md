@@ -26,5 +26,5 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 1. Write the Bangla version first, English second — both land in the dictionaries in the same change. Never ship a user-facing English-only string.
 2. Write **natural Bangladeshi product Bangla**, never literal/textbook translation (টার্ফ বুক করুন — not ক্রীড়াঙ্গন সংরক্ষণ করুন).
-3. Keep these in English inside Bangla copy where natural: Turfkoi, bKash, turf, slot, booking, team, player, match (ম্যাচ is also fine), OTP, email, link. Turf formats ("5-a-side", "7v7") stay English in both locales.
+3. Keep these in English inside Bangla copy where natural: DeshiTurf, bKash, turf, slot, booking, team, player, match (ম্যাচ is also fine), OTP, email, link. Turf formats ("5-a-side", "7v7") stay English in both locales.
 4. Currency: `৳` via `formatBdt`; Bangla numerals where natural (৭ দিন), Western digits for amounts/codes/phone numbers.

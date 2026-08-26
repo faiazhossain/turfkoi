@@ -44,15 +44,15 @@ export const mockEmailProvider: EmailProvider = {
  */
 function resendEmailProvider(): EmailProvider {
   const client = new Resend(process.env.RESEND_API_KEY as string)
-  const from = process.env.OTP_EMAIL_FROM ?? "Turfkoi <onboarding@resend.dev>"
+  const from = process.env.OTP_EMAIL_FROM ?? "DeshiTurf <onboarding@resend.dev>"
   return {
     async sendOtp(email, code) {
       const { error } = await client.emails.send({
         from,
         to: [email],
-        subject: "Your Turfkoi verification code",
+        subject: "Your DeshiTurf verification code",
         text: [
-          `Your Turfkoi code is ${code}.`,
+          `Your DeshiTurf code is ${code}.`,
           "It expires in 5 minutes.",
           "If you did not request it, you can ignore this email.",
         ].join(" "),
@@ -65,9 +65,9 @@ function resendEmailProvider(): EmailProvider {
       const { error } = await client.emails.send({
         from,
         to: [email],
-        subject: `Claim your turf "${turfName}" on Turfkoi`,
+        subject: `Claim your turf "${turfName}" on DeshiTurf`,
         text: [
-          `You've been invited to manage "${turfName}" on Turfkoi.`,
+          `You've been invited to manage "${turfName}" on DeshiTurf.`,
           `Open this link to claim it: ${claimUrl}`,
           ...(otp
             ? [`Your verification code is ${otp}.`]

@@ -1,4 +1,4 @@
-# Turfkoi — Project Requirements & Architecture Document
+# DeshiTurf — Project Requirements & Architecture Document
 
 > **Single source of truth** for product, UX, frontend, backend, database, security, testing, and deployment decisions.
 >
@@ -105,7 +105,7 @@ Conventions used throughout:
 
 ## 1. Product Vision
 
-Turfkoi is **not** a turf booking website. It is a platform that connects four primary roles around the game of football:
+DeshiTurf is **not** a turf booking website. It is a platform that connects four primary roles around the game of football:
 
 1. **Turf Owners** — list turfs, manage slots, fill empty capacity.
 2. **Teams / Team Owners** — book turfs, find opponents, fill rosters.
@@ -274,7 +274,7 @@ can(user, 'booking.cancel', bookingId) // owns booking, or owns turf, or admin
 
 ```mermaid
 graph TD
-    Root[Turfkoi]
+    Root[DeshiTurf]
     Root --> Public[Public]
     Root --> Private[Private]
     Public --> Home[/]

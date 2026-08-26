@@ -19,7 +19,7 @@ import { materializeTurfSchedule } from "@/features/turfs/materialize"
  * Both jobs are idempotent — re-runs are safe because transitions are
  * conditional UPDATEs (only one wins).
  */
-export const inngest = new Inngest({ id: "turfkoi" })
+export const inngest = new Inngest({ id: "deshiturf" })
 
 export const SLOT_HOLD_TTL_MS = 10 * 60 * 1000 // §27: 10-minute hold
 

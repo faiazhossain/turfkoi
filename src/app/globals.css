@@ -5,7 +5,7 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Turfkoi design tokens.
+ * DeshiTurf design tokens.
  * Palette source: PROJECT_REQUIREMENTS.md SS11 + DESIGN_REFERENCE.md.
  * Dark-first (audit I2: light theme deferred to P1).
  */
@@ -145,7 +145,7 @@
 
 /*
  * Bangla-first typography: when the document locale is bn, Bengali script
- * leads the stack (Latin runs like "bKash"/"Turfkoi" fall back to Geist).
+ * leads the stack (Latin runs like "bKash"/"DeshiTurf" fall back to Geist).
  * Bangla conjuncts and matras need extra leading, so body copy gets a
  * taller line-height.
  */

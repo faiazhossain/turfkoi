@@ -33,7 +33,7 @@ export async function rateLimit(
     rl = new Ratelimit({
       redis: r,
       limiter: Ratelimit.fixedWindow(limit, `${windowSeconds}s`),
-      prefix: "turfkoi",
+      prefix: "deshiturf",
       analytics: true,
     })
     _limiters.set(cacheKey, rl)
@@ -52,7 +52,7 @@ export function getRatelimit(): Ratelimit | null {
     _generic = new Ratelimit({
       redis: r,
       limiter: Ratelimit.slidingWindow(60, "1 m"),
-      prefix: "turfkoi:gen",
+      prefix: "deshiturf:gen",
       analytics: true,
     })
   }

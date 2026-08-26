@@ -1,4 +1,4 @@
-# Turfkoi Contrast Audit (audit I1)
+# DeshiTurf Contrast Audit (audit I1)
 
 Target: **WCAG 2.1 AA** - >= 4.5:1 for normal text, >= 3:1 for large text (>= 18px, or >= 14px bold) and UI components.
 Method: relative luminance ratio (foreground / background). MVP is dark-only, so all pairs are against the dark palette.

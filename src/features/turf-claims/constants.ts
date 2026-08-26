@@ -7,4 +7,4 @@
 export const CLAIM_INVITE_TTL_DAYS = 14
 
 /** Cookie that carries a pending claim token across login/register. */
-export const CLAIM_COOKIE = "turfkoi_claim"
+export const CLAIM_COOKIE = "deshiturf_claim"

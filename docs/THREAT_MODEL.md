@@ -1,4 +1,4 @@
-# Turfkoi — Threat Model (H1)
+# DeshiTurf — Threat Model (H1)
 
 A STRIDE-style one-pager, surface by surface. Audit H1 calls for an
 operationalized threat model; this is it. Pair with `AUDIT_DECISIONS.md` §H for

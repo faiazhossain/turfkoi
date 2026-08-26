@@ -122,7 +122,7 @@ export async function verifyRegistrationAction(
 
   const passwordHash = await bcrypt.hash(password, BCRYPT_COST)
   // A3: pull the referral code from the cookie (set by /invite/[code]).
-  const refCode = (await cookies()).get("turfkoi_ref")?.value || undefined
+  const refCode = (await cookies()).get("deshiturf_ref")?.value || undefined
   const created = await createRegisteredUser(
     { name, phone: normalizedPhone, email, passwordHash },
     refCode

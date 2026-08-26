@@ -59,7 +59,7 @@ export const en = {
     heroFindOpponent: "Find an opponent.",
     heroFillAndPlay: "Fill the gap. Play.",
     heroBody:
-      "Turfkoi brings turf booking, team matchmaking, and filling missing roster spots into one place. Prices in Taka, payments via bKash.",
+      "DeshiTurf brings turf booking, team matchmaking, and filling missing roster spots into one place. Prices in Taka, payments via bKash.",
     ctaBook: "Book a turf",
     ctaFindMatch: "Find a match",
     featureBookTitle: "Book a turf",
@@ -74,7 +74,7 @@ export const en = {
   },
 
   metadata: {
-    rootTitle: "Turfkoi - Book a turf. Find an opponent. Play.",
+    rootTitle: "DeshiTurf - Book a turf. Find an opponent. Play.",
     rootDescription:
       "Book turfs in Bangladesh, find an opposing team, fill missing roster spots, and play. Prices in Taka, payments via bKash.",
     turfsTitle: "Find a turf",
@@ -84,7 +84,7 @@ export const en = {
     matchesDescription: "Open matches looking for an opposing team.",
     ownATurfTitle: "List your turf",
     ownATurfDescription:
-      "Apply to list your turf on Turfkoi. We review every listing and send you a claim link to manage slots, pricing, and bookings.",
+      "Apply to list your turf on DeshiTurf. We review every listing and send you a claim link to manage slots, pricing, and bookings.",
     turfOwnerDashboardTitle: "Turf owner dashboard",
     turfOwnerNewTitle: "List a new turf",
     turfOwnerEditTitle: "Manage turf",
@@ -291,7 +291,7 @@ export const en = {
 
     form: {
       basics: "Basics",
-      autoLink: "Your Turfkoi link (automatic)",
+      autoLink: "Your DeshiTurf link (automatic)",
       description: "Description",
       descriptionPlaceholder:
         "e.g. We have two courts, book both for a big group.\nA referee can be arranged for 500 taka per match.",
@@ -772,16 +772,16 @@ export const en = {
   claim: {
     invalidTitle: "This claim link isn't valid",
     invalidBody:
-      "Check that you opened the full link, or ask the Turfkoi team for a new one.",
+      "Check that you opened the full link, or ask the DeshiTurf team for a new one.",
     expiredTitle: "This claim link has expired",
     expiredBody:
-      "Claim links stay valid for {days} days. Ask the Turfkoi team to send a fresh one.",
+      "Claim links stay valid for {days} days. Ask the DeshiTurf team to send a fresh one.",
     claimedTitle: "This turf has already been claimed",
-    claimedBody: "If that wasn't you, contact the Turfkoi team.",
+    claimedBody: "If that wasn't you, contact the DeshiTurf team.",
     revokedTitle: "This claim link was replaced",
     revokedBody: "A newer invite was sent for this turf — use the most recent link.",
     claimTitle: "Claim “{name}”",
-    claimDesc: "You've been invited to manage this turf on Turfkoi.",
+    claimDesc: "You've been invited to manage this turf on DeshiTurf.",
     format: "Format",
     location: "Location",
     address: "Address",
@@ -790,7 +790,7 @@ export const en = {
     claimButton: "Claim this turf",
     claiming: "Claiming",
     claimNote:
-      "Claiming makes you this turf's owner on Turfkoi — you'll set up slots, pricing, and photos next.",
+      "Claiming makes you this turf's owner on DeshiTurf — you'll set up slots, pricing, and photos next.",
     otpSentTo:
       "We sent a 6-digit code to your WhatsApp ({phone}). Enter it to sign in and claim this turf.",
     codeLabel: "WhatsApp code",
@@ -819,7 +819,7 @@ export const en = {
       wrongCode: "Wrong code. Try again.",
       locked: "Too many wrong codes. Try again in 15 minutes.",
       consumed: "This code was already used. Ask for a new link.",
-      linkExpired: "This link has expired. Ask the Turfkoi team for a new one.",
+      linkExpired: "This link has expired. Ask the DeshiTurf team for a new one.",
       linkReplaced: "This link was replaced by a newer one.",
       noOtp: "This link doesn't have a code. Ask for a new one.",
       passwordMin: "Password must be at least 8 characters",
@@ -836,7 +836,7 @@ export const en = {
     inviteTitle: "Invite friends",
     inviteDesc:
       "Share your link. When a friend signs up, they're attributed to you (rewards arrive with the P1 referral program).",
-    inviteShareText: "Join me on Turfkoi — book a turf, find a game: {url}",
+    inviteShareText: "Join me on DeshiTurf — book a turf, find a game: {url}",
     shareOnWhatsApp: "Share on WhatsApp",
     accountSettings: "Account settings →",
     bookingsTitle: "Your bookings",
@@ -912,7 +912,7 @@ export const en = {
     turfApplicationSubmittedBody: "Submitted by {contact}",
     turfApplicationApprovedTitle: "{turf} is approved",
     turfApplicationApprovedBody:
-      "Your turf is live on Turfkoi — claim it to manage bookings.",
+      "Your turf is live on DeshiTurf — claim it to manage bookings.",
     turfApplicationRejectedTitle: "Application update: {turf}",
     turfApplicationRejectedBody:
       "Unfortunately we couldn't approve this application right now.",
@@ -948,7 +948,7 @@ export const en = {
     sending: "Sending…",
     successBadge: "Application received — we'll review it shortly.",
     successBody:
-      "The Turfkoi team checks every listing by hand. We'll reach out on WhatsApp ({phone}) with a claim link to set up your turf.",
+      "The DeshiTurf team checks every listing by hand. We'll reach out on WhatsApp ({phone}) with a claim link to set up your turf.",
     errors: {
       turfNameShort: "Turf name is too short",
       contactShort: "Your name is too short",
@@ -960,8 +960,8 @@ export const en = {
   auth: {
     signInTitle: "Sign in",
     signInDesc: "Use the phone number or email you registered with.",
-    signInDescCode: "For turf owners who received a one-time code from the Turfkoi team.",
-    haveSignInCode: "Have a sign-in code from the Turfkoi team?",
+    signInDescCode: "For turf owners who received a one-time code from the DeshiTurf team.",
+    haveSignInCode: "Have a sign-in code from the DeshiTurf team?",
     usePasswordInstead: "Sign in with password instead",
     identifierLabel: "Phone or email",
     identifierPlaceholder: "01XXXXXXXXX or you@email.com",
@@ -1016,20 +1016,20 @@ export const en = {
       "Set your location so nearby matches can find you. We only store an approximate spot (within ~100m), never your exact address.",
 
     ownATurfTitle: "Own a turf?",
-    ownATurfDesc: "How turf owners get their account on Turfkoi.",
+    ownATurfDesc: "How turf owners get their account on DeshiTurf.",
     ownerStep1Title: "We list your turf",
     ownerStep1Body:
-      "Turf accounts are set up by invitation. The Turfkoi team adds your turf to the platform first.",
+      "Turf accounts are set up by invitation. The DeshiTurf team adds your turf to the platform first.",
     ownerStep2Title: "You receive a claim link",
     ownerStep2Body:
-      "The Turfkoi team sends you a personal link by WhatsApp or email. It stays valid for 14 days.",
+      "The DeshiTurf team sends you a personal link by WhatsApp or email. It stays valid for 14 days.",
     ownerStep3Title: "Open the link, then register or sign in",
     ownerStep3Body:
       "Create your account on this page, or sign in if you already have one. You will be taken straight back to your turf.",
     ownerStep4Title: "Press Claim turf",
     ownerStep4Body: "That makes you the owner. You will set up slots, pricing, and photos next.",
     ownerHelpNote:
-      "No link yet? Apply to list your turf — the Turfkoi team reviews every application and reaches out with next steps.",
+      "No link yet? Apply to list your turf — the DeshiTurf team reviews every application and reaches out with next steps.",
     listYourTurf: "List your turf",
     passwordsNoMatch: "Passwords do not match",
 
@@ -1120,11 +1120,11 @@ export const en = {
       noOwner: "This turf has no owner yet — send a claim invite instead.",
       invalidPhone: "Enter a valid Bangladeshi number, e.g. 01XXXXXXXXX",
       rateLimited: "Too many attempts. Try again later.",
-      noCode: "No active code for this number. Ask the Turfkoi team for a new one.",
+      noCode: "No active code for this number. Ask the DeshiTurf team for a new one.",
       wrongCode: "Wrong code. Try again.",
       locked: "Too many wrong codes. Try again in 15 minutes.",
       consumed: "This code was already used. Ask for a new one.",
-      expired: "This code expired. Ask the Turfkoi team for a new one.",
+      expired: "This code expired. Ask the DeshiTurf team for a new one.",
       revoked: "This code was replaced by a newer one. Ask for the latest.",
       noAccount: "No account found for this number.",
       signinFailed: "Couldn't sign you in. Try again.",
@@ -1263,10 +1263,10 @@ export const en = {
       passwordStillWorks:
         "Their current password keeps working for {phone}.",
       hint: "One-time code for {phone}, valid 15 minutes. Relay it over WhatsApp; the owner sets a new password right after signing in.",
-      waLine1: "Hi! Your Turfkoi sign-in code for \"{name}\":",
+      waLine1: "Hi! Your DeshiTurf sign-in code for \"{name}\":",
       waLine2:
         "Sign in with your phone ({phone}) and this code. It expires {time} ({date}) and works once.",
-      waLine3: "You'll set a new password right after. — Turfkoi team",
+      waLine3: "You'll set a new password right after. — DeshiTurf team",
     },
 
     seed: {
@@ -1411,10 +1411,10 @@ export const en = {
 
     invite: {
       owner: "Invite owner",
-      whatsappHi: 'Hi! Claim your turf "{name}" on Turfkoi:',
+      whatsappHi: 'Hi! Claim your turf "{name}" on DeshiTurf:',
       whatsappCode: "Your verification code: {code}",
       whatsappExpires: "The link expires {date}.",
-      whatsappSignoff: "See you on the pitch! — Turfkoi team",
+      whatsappSignoff: "See you on the pitch! — DeshiTurf team",
       phoneRequired: "Enter the owner's WhatsApp phone — it enables OTP sign-in.",
       inviteEmailedToast: "Invite emailed.",
       inviteCreatedToast: "Invite link created.",

@@ -26,7 +26,7 @@ import {
 } from "@/features/turf-claims/actions"
 
 /**
- * Sign-in with a one-time code the Turfkoi team relayed over WhatsApp
+ * Sign-in with a one-time code the DeshiTurf team relayed over WhatsApp
  * (owner lockout support flow). Verifying the code signs the owner in with
  * a rotated one-time password, then this forces the set-password step —
  * same shape as the claim OTP flow, minus the claim.

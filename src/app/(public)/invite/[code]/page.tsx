@@ -4,7 +4,7 @@ import { notFound } from "next/navigation"
 
 import { isValidReferralCode } from "@/features/auth/referrals"
 
-const REF_COOKIE = "turfkoi_ref"
+const REF_COOKIE = "deshiturf_ref"
 const REF_TTL_SECONDS = 60 * 60 * 24 * 30 // 30 days
 
 /**

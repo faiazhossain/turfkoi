@@ -1,4 +1,4 @@
-# Turfkoi — Testing (J5)
+# DeshiTurf — Testing (J5)
 
 > J5: "Negative E2E tests. Abandon payment, cancel, dispute — not just the
 > happy path."
@@ -33,8 +33,8 @@ magic-byte spoof detection.
 
 ## When a DB test harness lands (post-MVP)
 
-- Spin up a dedicated `turfkoi_test` Neon branch.
-- Set `DATABASE_URL=postgres://…@host/turfkoi_test` before `npm test`.
+- Spin up a dedicated `deshiturf_test` Neon branch.
+- Set `DATABASE_URL=postgres://…@host/deshiturf_test` before `npm test`.
 - Add integration tests under `src/features/__tests__/` that exercise the
   real server actions (`cancelBookingAction`, `requestRefundAction`,
   `approveRefundAction`, `resolveMatchDisputeAction`) against seeded fixtures.

@@ -50,7 +50,7 @@ export const playerProfiles = pgTable("player_profiles", {
   position: text("position"),
   skill: text("skill"),
   area: text("area"),
-  // Cloudinary public id of the avatar (asset in turfkoi/players/{userId}).
+  // Cloudinary public id of the avatar (asset in deshiturf/players/{userId}).
   avatarPublicId: text("avatar_public_id"),
   coords: geographyPoint("coords"),
   // Phase 6: "Available tonight" toggle (SS18). When true + availableAt is

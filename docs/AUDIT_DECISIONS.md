@@ -1,4 +1,4 @@
-# Turfkoi — Audit Decisions Sheet
+# DeshiTurf — Audit Decisions Sheet
 
 > **Purpose:** One decision per row. Approve / Reject / Defer each. This file does **not** replace `PROJECT_REQUIREMENTS.md` — it lists *what to change* and *what it changes*, so you can decide before I revise the spec.
 >

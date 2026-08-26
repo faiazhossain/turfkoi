@@ -9,7 +9,7 @@ import { resolve } from "node:path"
  * Tests SKIP themselves if `DATABASE_URL` is unset, so CI build checks that
  * don't provision a DB still pass. Run them locally with:
  *
- *   DATABASE_URL=postgres://…@host/turfkoi_test npm test
+ *   DATABASE_URL=postgres://…@host/deshiturf_test npm test
  */
 export default defineConfig({
   test: {

@@ -1,13 +1,13 @@
-# Turfkoi — Features
+# DeshiTurf — Features
 
-What Turfkoi actually does, organized by who's using it. Written from the
+What DeshiTurf actually does, organized by who's using it. Written from the
 built code (`src/app/`, `src/db/schema/`, `src/features/`), not from the
 original spec — divergences from `PROJECT_REQUIREMENTS.md` are noted where
 they happened.
 
 ## TL;DR
 
-Turfkoi is a football-turf booking + matchmaking platform built for
+DeshiTurf is a football-turf booking + matchmaking platform built for
 Bangladesh. Phone + OTP sign-in. Book a turf, find an opposing team, fill
 missing roster spots, play. Prices in Taka (BDT). Payments via bKash. Map-
 based discovery. Mobile-first, dark-themed.

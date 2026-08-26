@@ -5,7 +5,7 @@ import type { Dictionary } from "./en"
  *
  * Style: natural Bangladeshi product Bangla, never literal translation.
  * Familiar English terms (turf, slot, team, player, booking, OTP, bKash,
- * Turfkoi…) stay in English inside Bangla sentences where that reads
+ * DeshiTurf…) stay in English inside Bangla sentences where that reads
  * more naturally.
  */
 export const bn: Dictionary = {
@@ -61,7 +61,7 @@ export const bn: Dictionary = {
     heroFindOpponent: "Opponent খুঁজুন।",
     heroFillAndPlay: "Team Create করুন। খেলুন।",
     heroBody:
-      "Turfkoi-তে Turf Booking করুন, Opponent Team খুঁজুন এবং Team-এর জন্য Extra Player এড করুন—খেলার জন্য যা কিছু দরকার, সব এক জায়গায়। টার্ফ ফি bKash-এ Pay করুন।",
+      "DeshiTurf-এ Turf Booking করুন, Opponent Team খুঁজুন এবং Team-এর জন্য Extra Player এড করুন—খেলার জন্য যা কিছু দরকার, সব এক জায়গায়। টার্ফ ফি bKash-এ Pay করুন।",
     ctaBook: "টার্ফ বুক করুন",
     ctaFindMatch: "ম্যাচ খুঁজুন",
     featureBookTitle: "টার্ফ বুক করুন",
@@ -76,7 +76,7 @@ export const bn: Dictionary = {
   },
 
   metadata: {
-    rootTitle: "Turfkoi — টার্ফ বুক করুন। প্রতিপক্ষ খুঁজুন। খেলুন।",
+    rootTitle: "DeshiTurf — টার্ফ বুক করুন। প্রতিপক্ষ খুঁজুন। খেলুন।",
     rootDescription:
       "বাংলাদেশে টার্ফ বুক করুন, প্রতিপক্ষ টিম খুঁজুন, টিমের খালি জায়গা পূরণ করে খেলুন। দাম টাকায়, পেমেন্ট bKash-এ।",
     turfsTitle: "Turf খুঁজুন",
@@ -87,7 +87,7 @@ export const bn: Dictionary = {
       "যেসব Open Match-এ এখনো Opponent Team দরকার, সেগুলো এখানে খুঁজে নিন।",
     ownATurfTitle: "আপনার টার্ফ লিস্ট করুন",
     ownATurfDescription:
-      "Turfkoi-তে আপনার টার্ফ লিস্ট করার আবেদন করুন। প্রতিটি আবেদন আমরা নিজে দেখে claim link পাঠাই — slot, দাম আর booking ম্যানেজ করার জন্য।",
+      "DeshiTurf-এ আপনার টার্ফ লিস্ট করার আবেদন করুন। প্রতিটি আবেদন আমরা নিজে দেখে claim link পাঠাই — slot, দাম আর booking ম্যানেজ করার জন্য।",
     turfOwnerDashboardTitle: "টার্ফ ওনার ড্যাশবোর্ড",
     turfOwnerNewTitle: "নতুন টার্ফ যোগ করুন",
     turfOwnerEditTitle: "টার্ফ ম্যানেজ করুন",
@@ -295,7 +295,7 @@ export const bn: Dictionary = {
 
     form: {
       basics: "প্রাথমিক তথ্য",
-      autoLink: "আপনার Turfkoi লিংক (অটোমেটিক)",
+      autoLink: "আপনার DeshiTurf লিংক (অটোমেটিক)",
       description: "বিবরণ",
       descriptionPlaceholder:
         "যেমন: আমাদের দুটি কোর্ট আছে, বড় দলের জন্য দুটোই বুক করুন।\nম্যাচ প্রতি ৫০০ টাকায় রেফারি নেওয়া যাবে।",
@@ -420,7 +420,7 @@ export const bn: Dictionary = {
       activeName: "Active: {name}",
       weeklyHoursDesc:
         "একবার সেট করুন — প্রতি সপ্তাহে নিজেই চলতে থাকবে। আপনি না বদলালে কিছুই বদলায় না।",
-      setupTitle: "Weekly hours সেট করুন",
+      setupTitle: "Weekly Hours সেট করুন",
       setupDesc:
         "আপনার turf-এ এখনো weekly schedule সেট করা হয়নি, তাই booking-এর জন্য কোনো slot নেই। দাম, খোলার সময় আর বিরতি নিয়ে কয়েকটি সহজ প্রশ্নের উত্তর দিন — আমরা পুরো সপ্তাহটা বানিয়ে দেব।",
       calendarTitle: "Availability calendar",
@@ -559,16 +559,16 @@ export const bn: Dictionary = {
     },
 
     wizard: {
-      desc: "কয়েকটি সহজ প্রশ্নের উত্তর দিন — আমরা আপনার সপ্তাহ বানিয়ে পরের ৩০ দিনের slot ভরে দেব।",
+      desc: "কয়েকটি সহজ প্রশ্নের উত্তর দিন—আমরা আপনার Weekly Schedule তৈরি করে পরের ৩০ দিনের Slot তৈরি করে দেব।",
       stepPrices: "দাম",
       stepHours: "সময়",
       stepBreaks: "বিরতি",
       stepReview: "রিভিউ",
-      pricingQuestion: "সময়ভেদে আপনার দাম কি বদলায়?",
-      flatTitle: "সারাদিন এক দাম",
-      flatDesc: "প্রতিটি slot-এ একই rate",
-      peakTitle: "Peak ও off-peak",
-      peakDesc: "সন্ধ্যার ভিড়ে দাম বেশি",
+      pricingQuestion: "সময় অনুযায়ী Price বদলাবে?",
+      flatTitle: "সারাদিন একই Price",
+      flatDesc: "সব Slot-এর জন্য একই Rate",
+      peakTitle: "Peak ও Off-Peak",
+      peakDesc: "ব্যস্ত সময়ে Price বেশি, অন্য সময়ে কম",
       pricePerGame: "প্রতি খেলার দাম (BDT)",
       peakStarts: "Peak শুরু",
       peakEnds: "Peak শেষ",
@@ -772,15 +772,15 @@ export const bn: Dictionary = {
 
   claim: {
     invalidTitle: "এই claim link সঠিক নয়",
-    invalidBody: "পুরো linkটি খুলেছেন কিনা দেখুন, বা Turfkoi team-কে নতুন একটি চান।",
+    invalidBody: "পুরো linkটি খুলেছেন কিনা দেখুন, বা DeshiTurf team-কে নতুন একটি চান।",
     expiredTitle: "এই claim link-এর সময় শেষ",
-    expiredBody: "Claim link {days} দিন ব্যবহারযোগ্য থাকে। Turfkoi team-কে নতুন একটি পাঠাতে বলুন।",
+    expiredBody: "Claim link {days} দিন ব্যবহারযোগ্য থাকে। DeshiTurf team-কে নতুন একটি পাঠাতে বলুন।",
     claimedTitle: "এই টার্ফ আগেই claim হয়ে গেছে",
-    claimedBody: "এটা যদি আপনি না হন, Turfkoi team-এর সাথে যোগাযোগ করুন।",
+    claimedBody: "এটা যদি আপনি না হন, DeshiTurf team-এর সাথে যোগাযোগ করুন।",
     revokedTitle: "এই claim link বদলে গেছে",
     revokedBody: "এই টার্ফের জন্য নতুন invite পাঠানো হয়েছে — সবচেয়ে সাম্প্রতিক linkটি ব্যবহার করুন।",
     claimTitle: "“{name}” claim করুন",
-    claimDesc: "Turfkoi-তে এই টার্ফটি ম্যানেজ করার জন্য আপনাকে আমন্ত্রণ জানানো হয়েছে।",
+    claimDesc: "DeshiTurf-এ এই টার্ফটি ম্যানেজ করার জন্য আপনাকে আমন্ত্রণ জানানো হয়েছে।",
     format: "ফরম্যাট",
     location: "অবস্থান",
     address: "ঠিকানা",
@@ -789,7 +789,7 @@ export const bn: Dictionary = {
     claimButton: "এই টার্ফ claim করুন",
     claiming: "Claim হচ্ছে",
     claimNote:
-      "Claim করলে Turfkoi-তে আপনি এই টার্ফের owner হয়ে যাবেন — এরপর slot, দাম আর ছবি সেট করবেন।",
+      "Claim করলে DeshiTurf-এ আপনি এই টার্ফের owner হয়ে যাবেন — এরপর slot, দাম আর ছবি সেট করবেন।",
     otpSentTo:
       "আপনার WhatsApp-এ ({phone}) একটি ৬-ডিজিটের কোড পাঠানো হয়েছে। সেটি লিখে সাইন ইন করুন ও এই টার্ফ claim করুন।",
     codeLabel: "WhatsApp কোড",
@@ -818,7 +818,7 @@ export const bn: Dictionary = {
       wrongCode: "কোড ভুল। আবার চেষ্টা করুন।",
       locked: "অনেকবার ভুল কোড। ১৫ মিনিট পর চেষ্টা করুন।",
       consumed: "কোডটি আগেই ব্যবহার হয়েছে। নতুন link নিন।",
-      linkExpired: "link-এর সময় শেষ। Turfkoi team-কে নতুন একটি চান।",
+      linkExpired: "link-এর সময় শেষ। DeshiTurf team-কে নতুন একটি চান।",
       linkReplaced: "নতুন একটি link পাঠানো হয়েছে, এটি আর চলবে না।",
       noOtp: "এই link-এ কোড নেই। নতুন একটি চান।",
       passwordMin: "পাসওয়ার্ড কমপক্ষে ৮ অক্ষরের হতে হবে",
@@ -835,7 +835,7 @@ export const bn: Dictionary = {
     inviteTitle: "বন্ধুদের Invite করুন",
     inviteDesc:
       "আপনার Referral Link শেয়ার করুন। বন্ধু Sign Up করলে Referral Program-এর মাধ্যমে আপনি Reward পাবেন।",
-    inviteShareText: "Turfkoi-তে আসুন — turf বুক করুন, ম্যাচ খুঁজুন: {url}",
+    inviteShareText: "DeshiTurf-এ আসুন — turf বুক করুন, ম্যাচ খুঁজুন: {url}",
     shareOnWhatsApp: "WhatsApp-এ শেয়ার করুন",
     accountSettings: "অ্যাকাউন্ট settings →",
     bookingsTitle: "আপনার booking",
@@ -911,7 +911,7 @@ export const bn: Dictionary = {
     turfApplicationSubmittedBody: "{contact} পাঠিয়েছেন",
     turfApplicationApprovedTitle: "{turf} অনুমোদিত হয়েছে",
     turfApplicationApprovedBody:
-      "আপনার turf এখন Turfkoi-তে লাইভ — booking ম্যানেজ করতে claim করুন।",
+      "আপনার turf এখন DeshiTurf-এ লাইভ — booking ম্যানেজ করতে claim করুন।",
     turfApplicationRejectedTitle: "আবেদনের আপডেট: {turf}",
     turfApplicationRejectedBody: "দুঃখিত, এই আবেদনটি এখন আমরা অনুমোদন করতে পারিনি।",
     bookingConfirmedTitle: "{turf}-এ booking কনফার্ম হয়েছে",
@@ -946,7 +946,7 @@ export const bn: Dictionary = {
     sending: "পাঠানো হচ্ছে…",
     successBadge: "আবেদন পেয়েছি — শিগগিরই দেখে জানাব।",
     successBody:
-      "Turfkoi team প্রতিটি আবেদন নিজে দেখে যাচাই করে। আপনার টার্ফ সেট আপ করার claim link নিয়ে WhatsApp-এ ({phone}) যোগাযোগ করব।",
+      "DeshiTurf team প্রতিটি আবেদন নিজে দেখে যাচাই করে। আপনার টার্ফ সেট আপ করার claim link নিয়ে WhatsApp-এ ({phone}) যোগাযোগ করব।",
     errors: {
       turfNameShort: "টার্ফের নাম খুব ছোট",
       contactShort: "নাম খুব ছোট",
@@ -958,8 +958,8 @@ export const bn: Dictionary = {
   auth: {
     signInTitle: "সাইন ইন",
     signInDesc: "যে phone number বা email দিয়ে অ্যাকাউ্ট খুলেছিলেন সেটা দিয়ে সাইন ইন করুন।",
-    signInDescCode: "Turfkoi টিমের কাছ থেকে one-time code পাওয়া turf owner-দের জন্য।",
-    haveSignInCode: "Turfkoi টিমের sign-in code আছে?",
+    signInDescCode: "DeshiTurf টিমের কাছ থেকে one-time code পাওয়া turf owner-দের জন্য।",
+    haveSignInCode: "DeshiTurf টিমের sign-in code আছে?",
     usePasswordInstead: "Password দিয়ে সাইন ইন করুন",
     identifierLabel: "Phone বা email",
     identifierPlaceholder: "01XXXXXXXXX বা you@email.com",
@@ -1014,16 +1014,16 @@ export const bn: Dictionary = {
       "কাছের ম্যাচ যেন আপনাকে খুঁজে পায় সেজন্য location দিন। আমরা প্রায় ১০০ মিটারের মধ্যে একটি আনুমানিক জায়গা সেভ করি—আসল ঠিকানা কখনোই না।",
 
     ownATurfTitle: "টার্ফের মালিক?",
-    ownATurfDesc: "Turfkoi-তে turf owner-রা কীভাবে অ্যাকাউন্ট পান।",
+    ownATurfDesc: "DeshiTurf-এ turf owner-রা কীভাবে অ্যাকাউন্ট পান।",
     ownerStep1Title: "আমরা আপনার টার্ফ লিস্ট করি",
-    ownerStep1Body: "Turf অ্যাকাউন্ট ইনভাইটেশনের মাধ্যমে তৈরি হয়। Turfkoi team আগে আপনার টার্ফ প্ল্যাটফর্মে যোগ করে।",
+    ownerStep1Body: "Turf অ্যাকাউন্ট ইনভাইটেশনের মাধ্যমে তৈরি হয়। DeshiTurf team আগে আপনার টার্ফ প্ল্যাটফর্মে যোগ করে।",
     ownerStep2Title: "আপনি claim link পান",
-    ownerStep2Body: "Turfkoi team আপনাকে WhatsApp বা email-এ একটি ব্যক্তিগত link পাঠায়। linkটি ১৪ দিন ব্যবহারযোগ্য থাকে।",
+    ownerStep2Body: "DeshiTurf team আপনাকে WhatsApp বা email-এ একটি ব্যক্তিগত link পাঠায়। linkটি ১৪ দিন ব্যবহারযোগ্য থাকে।",
     ownerStep3Title: "link খুলে রেজিস্টার বা সাইন ইন করুন",
     ownerStep3Body: "এই পেজে অ্যাকাউন্ট খুলুন, অথবা আগে থেকেই অ্যাকাউন্ট থাকলে সাইন ইন করুন। এরপর সোজা আপনার টার্ফে চলে যাবেন।",
     ownerStep4Title: "“Claim turf” চাপুন",
     ownerStep4Body: "এতে আপনি owner হয়ে যাবেন। এরপর slot, দাম আর ছবি সেট করবেন।",
-    ownerHelpNote: "এখনো link পাননি? টার্ফ লিস্ট করার আবেদন করুন—Turfkoi team প্রতিটি আবেদন দেখে পরের ধাপ জানায়।",
+    ownerHelpNote: "এখনো link পাননি? টার্ফ লিস্ট করার আবেদন করুন—DeshiTurf team প্রতিটি আবেদন দেখে পরের ধাপ জানায়।",
     listYourTurf: "আপনার টার্ফ লিস্ট করুন",
     passwordsNoMatch: "পাসওয়ার্ড দুটো মিলছে না",
 
@@ -1114,11 +1114,11 @@ export const bn: Dictionary = {
       noOwner: "এই turf-এ এখনো owner নেই — claim invite পাঠান।",
       invalidPhone: "সঠিক Bangladeshi number দিন, যেমন 01XXXXXXXXX",
       rateLimited: "অনেকবার চেষ্টা হয়েছে। একটু পরে আবার করুন।",
-      noCode: "এই number-এ কোনো active code নেই। Turfkoi team-এর কাছে নতুন একটি চান।",
+      noCode: "এই number-এ কোনো active code নেই। DeshiTurf team-এর কাছে নতুন একটি চান।",
       wrongCode: "ভুল code। আবার চেষ্টা করুন।",
       locked: "অনেকবার ভুল code। ১৫ মিনিট পর আবার চেষ্টা করুন।",
       consumed: "এই code আগেই ব্যবহার হয়েছে। নতুন একটি চান।",
-      expired: "Code-টির সময় শেষ। Turfkoi team-এর কাছে নতুন একটি চান।",
+      expired: "Code-টির সময় শেষ। DeshiTurf team-এর কাছে নতুন একটি চান।",
       revoked: "এই code-এর জায়গায় নতুন code দেওয়া হয়েছে। সবচেয়ে নতুনটি নিন।",
       noAccount: "এই number-এ কোনো অ্যাকাউন্ট পাওয়া যায়নি।",
       signinFailed: "Sign in করা গেল না। আবার চেষ্টা করুন।",
@@ -1256,10 +1256,10 @@ export const bn: Dictionary = {
         "Owner নতুন password না সেট করা পর্যন্ত password login lock থাকবে।",
       passwordStillWorks: "তাঁর বর্তমান password {phone}-এর জন্য চালুই থাকবে।",
       hint: "{phone}-এর জন্য one-time code, ১৫ মিনিট সময়। WhatsApp-এ পাঠিয়ে দিন; sign in করার পরই owner নতুন password সেট করবেন।",
-      waLine1: "হ্যালো! \"{name}\" turf-এর জন্য আপনার Turfkoi sign-in code:",
+      waLine1: "হ্যালো! \"{name}\" turf-এর জন্য আপনার DeshiTurf sign-in code:",
       waLine2:
         "আপনার phone ({phone}) আর এই code দিয়ে sign in করুন। {time}-এ ({date}) expire হবে, একবারই কাজ করবে।",
-      waLine3: "সাথে সাথেই নতুন password সেট করবেন। — Turfkoi team",
+      waLine3: "সাথে সাথেই নতুন password সেট করবেন। — DeshiTurf team",
     },
 
 
@@ -1405,10 +1405,10 @@ export const bn: Dictionary = {
 
     invite: {
       owner: "ওনারকে ইনভাইট করুন",
-      whatsappHi: 'হাই! Turfkoi-তে আপনার turf "{name}" ক্লেইম করুন:',
+      whatsappHi: 'হাই! DeshiTurf-এ আপনার turf "{name}" ক্লেইম করুন:',
       whatsappCode: "আপনার ভেরিফিকেশন কোড: {code}",
       whatsappExpires: "লিংকটি {date} পর্যন্ত বৈধ।",
-      whatsappSignoff: "মাঠে দেখা হবে! — Turfkoi টিম",
+      whatsappSignoff: "মাঠে দেখা হবে! — DeshiTurf টিম",
       phoneRequired: "ওনারের WhatsApp নম্বর দিন — এতে OTP দিয়ে লগইন চালু হবে।",
       inviteEmailedToast: "ইনভাইট ইমেইল হয়েছে।",
       inviteCreatedToast: "ইনভাইট লিংক তৈরি হয়েছে।",

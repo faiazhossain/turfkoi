@@ -4,7 +4,7 @@ import { db } from "@/db"
 import { turfs } from "@/db/schema"
 import { eq } from "drizzle-orm"
 
-const BASE = process.env.NEXT_PUBLIC_APP_URL ?? "https://turfkoi.bd"
+const BASE = process.env.NEXT_PUBLIC_APP_URL ?? "https://deshiturf.bd"
 
 // Computed at request time (the turf list is live data; we don't want it
 // baked into the build output, and `db` is unavailable at build time anyway).

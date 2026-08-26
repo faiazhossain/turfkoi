@@ -34,21 +34,21 @@ export interface ImageContextConfig {
 
 export const IMAGE_CONTEXTS: Record<ImageContextKind, ImageContextConfig> = {
   turf: {
-    folder: (id) => `turfkoi/turfs/${id}`,
+    folder: (id) => `deshiturf/turfs/${id}`,
     uploadTransform: "c_limit,w_1600,q_auto",
     maxStoredBytes: 8 * 1024 * 1024,
     maxDim: 1600,
     allowedFormats: ["jpeg", "png", "webp", "avif"],
   },
   team: {
-    folder: (id) => `turfkoi/teams/${id}`,
+    folder: (id) => `deshiturf/teams/${id}`,
     uploadTransform: "c_limit,w_800,q_auto",
     maxStoredBytes: 4 * 1024 * 1024,
     maxDim: 800,
     allowedFormats: ["jpeg", "png", "webp", "avif"],
   },
   player: {
-    folder: (id) => `turfkoi/players/${id}`,
+    folder: (id) => `deshiturf/players/${id}`,
     uploadTransform: "c_limit,w_800,q_auto",
     maxStoredBytes: 4 * 1024 * 1024,
     maxDim: 800,

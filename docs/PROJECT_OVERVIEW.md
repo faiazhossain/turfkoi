@@ -1,12 +1,12 @@
-# Turfkoi - The Whole Thing Explained Simply
+# DeshiTurf - The Whole Thing Explained Simply
 
 > This is a plain-language summary for anyone. No tech background needed.
 
 ---
 
-## What Is Turfkoi?
+## What Is DeshiTurf?
 
-Turfkoi is an app/website for **booking turfs (fields) in Bangladesh** and for **finding people to play with**.
+DeshiTurf is an app/website for **booking turfs (fields) in Bangladesh** and for **finding people to play with**.
 
 It is built for the local market: prices in Taka (BDT), payments through bKash/Nagad, and showed in maps.
 
@@ -14,7 +14,7 @@ The tagline says it all:
 
 > _Book a turf. Find an opponent. Find missing players. Play._
 
-The big idea that makes Turfkoi different from other turf-booking sites is **matchmaking**. Most sites stop at "here is a field, book it." Turfkoi goes further: it helps you find an opposing team, fill empty roster spots with solo players, confirm the match, and record the result. It closes the loop from _"I want to play tonight"_ to _"match confirmed."_
+The big idea that makes DeshiTurf different from other turf-booking sites is **matchmaking**. Most sites stop at "here is a field, book it." DeshiTurf goes further: it helps you find an opposing team, fill empty roster spots with solo players, confirm the match, and record the result. It closes the loop from _"I want to play tonight"_ to _"match confirmed."_
 
 ---
 
@@ -30,7 +30,7 @@ Three groups of people each have a headache today:
 
 Right now this all happens over phone calls and WhatsApp groups, which is messy, slow, and unreliable.
 
-**Turfkoi brings all of it into one place.**
+**DeshiTurf brings all of it into one place.**
 
 ---
 
@@ -60,7 +60,7 @@ Example:
 | Platform fee (about 5%) | 50        |
 | **Booker pays total**   | **1,050** |
 | Turf owner receives     | 1,000     |
-| Turfkoi receives        | 50        |
+| DeshiTurf receives        | 50        |
 
 The fee is always shown **before** payment and is **locked** the moment payment starts - it can never be secretly changed afterward. This builds trust.
 

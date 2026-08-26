@@ -13,10 +13,10 @@ import {
 
 describe("buildImageUrl", () => {
   it("builds secure delivery URLs with the variant transformation", () => {
-    expect(buildImageUrl("demo", "turfkoi/turfs/x/abc", "card")).toBe(
-      "https://res.cloudinary.com/demo/image/upload/c_limit,w_800,q_auto,f_auto/turfkoi/turfs/x/abc"
+    expect(buildImageUrl("demo", "deshiturf/turfs/x/abc", "card")).toBe(
+      "https://res.cloudinary.com/demo/image/upload/c_limit,w_800,q_auto,f_auto/deshiturf/turfs/x/abc"
     )
-    expect(buildImageUrl("demo", "turfkoi/players/u/abc", "avatar")).toContain(
+    expect(buildImageUrl("demo", "deshiturf/players/u/abc", "avatar")).toContain(
       "c_fill,g_face,w_200,h_200,q_auto,f_auto"
     )
   })

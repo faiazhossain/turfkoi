@@ -7,7 +7,7 @@ export const teams = pgTable("teams", {
   id: uuid("id").defaultRandom().primaryKey(),
   slug: text("slug").notNull().unique(),
   name: text("name").notNull(),
-  // Cloudinary public id of the team logo (asset in turfkoi/teams/{id}).
+  // Cloudinary public id of the team logo (asset in deshiturf/teams/{id}).
   logoPublicId: text("logo_public_id"),
   // Ownership lives in team_members(role=owner) ONLY (audit F6) - no
   // denormalized owner_id, which would be a second source of truth.

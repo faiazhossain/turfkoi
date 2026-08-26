@@ -1,4 +1,4 @@
-# Turfkoi — Alerting Thresholds (K2)
+# DeshiTurf — Alerting Thresholds (K2)
 
 > K2: "Alerting thresholds. 5xx rate, p95 latency, payment-webhook failure
 > rate, slot-expiry lag."
@@ -44,7 +44,7 @@ telemetry that pays for itself.
 
 - **Page** — on-call rotation (PagerDuty / Opsgenie). Off-hours muted for
   `Warn` severity.
-- **Warn** — `#turfkoi-alerts` Slack channel.
+- **Warn** — `#deshiturf-alerts` Slack channel.
 
 ## How to add a new alert
 

@@ -74,7 +74,7 @@ export async function SiteHeader() {
           className="flex items-center gap-2 font-heading text-lg font-semibold tracking-tight"
         >
           <span className="inline-block size-2.5 rounded-full bg-primary" aria-hidden />
-          Turfkoi
+          DeshiTurf
         </Link>
         <MainNav variant="desktop" />
         <div className="ml-auto flex items-center gap-2">

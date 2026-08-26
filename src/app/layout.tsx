@@ -34,10 +34,10 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: {
       default: t("metadata.rootTitle"),
-      template: "%s | Turfkoi",
+      template: "%s | DeshiTurf",
     },
     description: t("metadata.rootDescription"),
-    applicationName: "Turfkoi",
+    applicationName: "DeshiTurf",
   }
 }
 

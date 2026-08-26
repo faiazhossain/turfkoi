@@ -1,4 +1,4 @@
-# Turfkoi
+# DeshiTurf
 
 > Book a turf. Find an opponent. Fill missing players. Play.
 >

@@ -42,7 +42,7 @@ export type PhotonFeature = {
   }
 }
 
-/** Flatten a Photon feature into Turfkoi's display + storage shapes. */
+/** Flatten a Photon feature into DeshiTurf's display + storage shapes. */
 export function photonToPlace(feature: PhotonFeature) {
   const [lng, lat] = feature.geometry.coordinates
   const p = feature.properties
