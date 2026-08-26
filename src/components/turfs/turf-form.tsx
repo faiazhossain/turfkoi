@@ -21,6 +21,7 @@ import {
 import { StatusBadge } from "@/components/shared";
 import { LocationPicker } from "@/components/map";
 import { useI18n, fieldError } from "@/i18n/client";
+import { cn } from "@/lib/utils";
 
 import { createTurfAction, updateTurfAction } from "@/features/turfs/actions";
 import { turfFormSchema, type TurfFormValues } from "@/features/turfs/schemas";
@@ -298,22 +299,39 @@ export function TurfForm({ mode, turfId, defaultValues }: TurfFormProps) {
 
       <section className="space-y-3">
         <h3 className="font-heading text-sm font-semibold">{t("turfs.facilities")}</h3>
-        <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3">
-          {FACILITY_TOGGLE_KEYS.map((key) => (
-            <label key={key} className="flex items-center gap-2 text-sm">
-              <Checkbox
-                checked={!!form.watch(`facilities.${key}`)}
-                onCheckedChange={(v) =>
-                  form.setValue(
-                    `facilities.${key}`,
-                    v === true ? true : undefined,
-                    { shouldDirty: true },
-                  )
-                }
-              />
-              <span>{t(`turfs.facility.${key}`)}</span>
-            </label>
-          ))}
+        <p className="text-xs text-muted-foreground">
+          {t("turfOwner.form.facilitiesHint")}
+        </p>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+          {FACILITY_TOGGLE_KEYS.map((key) => {
+            const checked = !!form.watch(`facilities.${key}`);
+            return (
+              <label
+                key={key}
+                className={cn(
+                  "flex cursor-pointer items-center gap-3 rounded-lg border px-3 py-3 text-sm font-medium transition-colors",
+                  checked
+                    ? "border-primary bg-primary/5 text-foreground"
+                    : "border-border bg-card text-muted-foreground hover:border-input hover:bg-muted/50 hover:text-foreground",
+                )}
+              >
+                <Checkbox
+                  className="size-5"
+                  checked={checked}
+                  onCheckedChange={(v) =>
+                    form.setValue(
+                      `facilities.${key}`,
+                      v === true ? true : undefined,
+                      { shouldDirty: true },
+                    )
+                  }
+                />
+                <span className="min-w-0 leading-snug">
+                  {t(`turfs.facility.${key}`)}
+                </span>
+              </label>
+            );
+          })}
         </div>
         <div className="space-y-2">
           <Label className="text-xs font-medium text-muted-foreground">
