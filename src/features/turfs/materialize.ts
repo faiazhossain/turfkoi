@@ -18,6 +18,7 @@ import {
   type ScheduleSection,
 } from "@/lib/slot-expansion"
 import {
+  normalizeHHMM,
   planMaterialization,
   type ExistingSlotRow,
   type PlanConflict,
@@ -158,8 +159,10 @@ export async function getActiveSchedule(
   const sections: ScheduleSection[] = rows.map((r) => ({
     dayOfWeek: r.dayOfWeek,
     label: r.label,
-    startTime: r.startTime,
-    endTime: r.endTime,
+    // Postgres `time` columns round-trip as "HH:mm:ss" — trim to the
+    // "HH:mm" contract the slot-expansion math and form schemas expect.
+    startTime: normalizeHHMM(r.startTime),
+    endTime: normalizeHHMM(r.endTime),
     slotMinutes: r.slotMinutes,
     gapMinutes: r.gapMinutes,
     price: Number(r.price),

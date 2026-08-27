@@ -1,4 +1,4 @@
-import type { Dictionary } from "./en"
+import type { Dictionary } from "./en";
 
 /**
  * Bangla dictionary — the primary product language.
@@ -84,10 +84,12 @@ export const bn: Dictionary = {
       "বুকিং থেকে খেলা শুরু — Player, team আর turf owner, সবার জন্যই তৈরি।",
     audienceTitle: "DeshiTurf কাদের জন্য?",
     audiencePlayersTitle: "Solo Player",
-    audiencePlayersDesc: "কাছের Match খুঁজে নিন আর Guest Player হিসেবে Join করুন।",
+    audiencePlayersDesc:
+      "কাছের Match খুঁজে নিন আর Guest Player হিসেবে Join করুন।",
     audiencePlayersCta: "Player হিসেবে যোগ দিন",
     audienceTeamsTitle: "Team",
-    audienceTeamsDesc: "Turf বুক করুন, Opponent খুঁজুন আর Team-এর খালি Slot Fill করুন।",
+    audienceTeamsDesc:
+      "Turf বুক করুন, Opponent খুঁজুন আর Team-এর খালি Slot Fill করুন।",
     audienceTeamsCta: "Team রেজিস্টার করুন",
     audienceOwnersTitle: "Turf Owner",
     audienceOwnersDesc: "ফ্রিতে আপনার Turf List করুন আর Empty Slot Fill করুন।",
@@ -175,7 +177,8 @@ export const bn: Dictionary = {
       confirmFailed: "আপলোড যাচাই করা গেল না।",
       uploadNotFound: "আপলোড পাওয়া যায় নি। আবার চেষ্টা করুন।",
       badFormat: "এই ধরনের ফাইল সমর্থিত নয়।",
-      tooLarge: "ছবিটি কম্প্রেস করার পরেও অনেক বড়। ছোট একটি ছবি দিয়ে চেষ্টা করুন।",
+      tooLarge:
+        "ছবিটি কম্প্রেস করার পরেও অনেক বড়। ছোট একটি ছবি দিয়ে চেষ্টা করুন।",
       badFolder: "এই আপলোড এই resource-এর নয়।",
       invalidType: "শুধু JPEG, PNG, WebP এবং AVIF ছবি গ্রহণ করা হয়।",
       tooBig: "ছবিটি অনেক বড় (সর্বোচ্চ ১০ MB)।",
@@ -214,7 +217,21 @@ export const bn: Dictionary = {
       "শুরুর ২৪ ঘণ্টা আগে পর্যন্ত পুরো ফেরত, এর মধ্যে ৫০%, শেষ মুহূর্তে কিছু না।",
     cancellationRebook: "অন্য কোনো player সেই slotটি বুক করলেই ফেরত পাবেন।",
     cancellationStrict: "বুক করার পর ফেরতযোগ্য নয়।",
-    next7Days: "পরের ৭ দিন",
+    bookingCalendar: "Slot বুক করুন",
+    timeFilterLabel: "আপনি যে সময়ে খেলতে চান, সেই Slot Available আছে কি না Check করুন।",
+    timeFilterAll: "সব সময়",
+    legendAvailable: "খালি আছে",
+    legendFull: "সম্পূর্ণ বুকড",
+    legendClosed: "বন্ধ",
+    slotsOn: "{date}-এর slot",
+    slotAvailableCount: "{count}টি খালি",
+    dayClosed: "এই দিনে turfটি বন্ধ থাকবে।",
+    dayPast: "এই দিনটি পার হয়ে গেছে।",
+    dayNoSlots: "এই দিনের কোনো slot পাবলিশ করা হয়নি।",
+    monthUnavailable: "এই মাসে বুক করার মতো কোনো তারিখ নেই।",
+    slotBooked: "বুকড",
+    slotHeld: "হোল্ড করা",
+    slotBlocked: "পাওয়া যাচ্ছে না",
     slotCountOne: "১টি slot",
     slotCountMany: "{count}টি slot",
     noSlotsTitle: "এখনো কোনো slot পাবলিশ করা হয়নি",
@@ -262,7 +279,8 @@ export const bn: Dictionary = {
     hint: "ম্যাপে ট্যাপ করে বা সার্চ করে লোকেশন সেট করুন।",
     useMyLocation: "আমার লোকেশন ব্যবহার করুন",
     loading: "ম্যাপ লোড হচ্ছে…",
-    loadFailed: "ম্যাপ লোড করা যায়নি। ইন্টারনেট কানেকশন দেখে আবার রিফ্রেশ করুন।",
+    loadFailed:
+      "ম্যাপ লোড করা যায়নি। ইন্টারনেট কানেকশন দেখে আবার রিফ্রেশ করুন।",
   },
 
   turfOwner: {
@@ -295,8 +313,7 @@ export const bn: Dictionary = {
     fillDesc:
       "আগামী ৭ দিনের যেসব Slot এখনো Book হয়নি, সেগুলো এখানে দেখুন। Matchmaking চালু হলে কাছের Team-গুলোর কাছে এগুলো Promote করতে পারবেন।",
     noFillableTitle: "বুক করার মতো কোনো Slot নেই",
-    noFillableDesc:
-      "আপনার কোনো Turf-এ Slot তৈরি হলে, সেগুলো এখানে দেখা যাবে।",
+    noFillableDesc: "আপনার কোনো Turf-এ Slot তৈরি হলে, সেগুলো এখানে দেখা যাবে।",
     potentialRevenue: "সম্ভাব্য আয়:",
     promoteSlot: "স্লট প্রমোট করুন",
     promoteToastTitle: "টিম ম্যাচমেকিং শিগগিরই আসছে",
@@ -309,7 +326,8 @@ export const bn: Dictionary = {
     turfDetails: "টার্ফের বিবরণ",
     detailsDesc: "সেভ করার পর পরিবর্তনগুলো পাবলিক পেজে দেখা যাবে।",
     photos: "ছবি",
-    photosDesc: "ছবি যোগ করলেই সাথে সাথে দেখা যাবে — আলাদা করে সেভ করতে হবে না।",
+    photosDesc:
+      "ছবি যোগ করলেই সাথে সাথে দেখা যাবে — আলাদা করে সেভ করতে হবে না।",
     generateAvailability: "Slot Create করুন",
     generateDesc:
       "একসাথে একটি Date Range-এর জন্য অনেকগুলো Slot Create করুন। এরপর চাইলে প্রতিটি Slot আলাদাভাবে Edit করতে পারবেন।",
@@ -405,14 +423,14 @@ export const bn: Dictionary = {
       deletePhoto: "ছবি ডিলিট করুন",
       uploading: "আপলোড হচ্ছে",
       maxPhotos: "সর্বোচ্চ ১২",
-      help:
-        "ছবি অটোমেটিক রিসাইজ ও কমপ্রেস হয় — সাধারণ ফোনের ছবিই চলবে। কভার ছবিটি আপনার টার্ফের পাবলিক পেজে দেখানো হয়।",
+      help: "ছবি অটোমেটিক রিসাইজ ও কমপ্রেস হয় — সাধারণ ফোনের ছবিই চলবে। কভার ছবিটি আপনার টার্ফের পাবলিক পেজে দেখানো হয়।",
     },
 
     errors: {
       nameShort: "নাম খুব ছোট",
       noSlotsInRange: "এই রেঞ্জে কোনো স্লট পড়ে না।",
-      manualStatus: "এই স্ট্যাটাস ম্যানুয়ালি সেট করা যায় না — এটা বুকিং-ই নিয়ন্ত্রণ করে।",
+      manualStatus:
+        "এই স্ট্যাটাস ম্যানুয়ালি সেট করা যায় না — এটা বুকিং-ই নিয়ন্ত্রণ করে।",
       pickAtLeastOneDay: "অন্তত একটি দিন বেছে নিন",
       pricePositive: "দাম ০-এর বেশি হতে হবে",
       priceTooHigh: "দাম বেশি মনে হচ্ছে",
@@ -422,19 +440,22 @@ export const bn: Dictionary = {
       slotMinutesMax: "সর্বোচ্চ ১৮০ মিনিট",
       slotMinutesStep: "৫ মিনিটের গুণিতক হতে হবে",
       scheduleNotFound: "Schedule খুঁজে পাওয়া যায়নি।",
-      scheduleRace: "আরেকটি schedule এইমাত্র active হয়েছে — একটু পরে আবার চেষ্টা করুন।",
+      scheduleRace:
+        "আরেকটি schedule এইমাত্র active হয়েছে — একটু পরে আবার চেষ্টা করুন।",
       horizonChoice: "৭, ১৪, ৩০, ৬০ বা ৯০ দিন থেকে বাছুন।",
       futureDate: "আজ বা আজকের পরের কোনো তারিখ দিন।",
-      overlapsSlot: "এই slot-টা এই দিনে বা পাশের দিনের আরেকটি slot-এর সাথে overlap করছে।",
+      overlapsSlot:
+        "এই slot-টা এই দিনে বা পাশের দিনের আরেকটি slot-এর সাথে overlap করছে।",
       slotExists: "ওই সময়ে আগেই একটি slot আছে।",
       labelShort: "লেবেল ছোট রাখুন",
-      sectionEndDiffer: "শুরু আর শেষের সময় আলাদা হতে হবে (রাতের slot-এর জন্য আগের সময় দিন)",
+      sectionEndDiffer:
+        "শুরু আর শেষের সময় আলাদা হতে হবে (রাতের slot-এর জন্য আগের সময় দিন)",
       nameSchedule: "Schedule-এর একটি নাম দিন",
       addSection: "অন্তত একটি section যোগ করুন",
       tooManySections: "অনেক বেশি section (দিনে সর্বোচ্চ ১০টি)",
       reasonShort: "কারণটা ছোট রাখুন",
       closedWithPrice: "বন্ধ দিনে আবার price rule দেওয়া যায় না",
-      closeOrPrice: "দিনটা বন্ধ করুন বা price rule সেট করুন",
+      closeOrPrice: "দিনটা বন্ধ করুন বা এই দিনের জন্য Price সেট করুন।",
       priceRuleValue: "Price rule-এর মান দিন",
       multiplierRange: "Multiplier ০.৫ থেকে ৩-এর মধ্যে হতে হবে",
       priceRange: "দাম ১ থেকে ১০০০০০-এর মধ্যে হতে হবে",
@@ -453,11 +474,12 @@ export const bn: Dictionary = {
         "আপনার turf-এ এখনো weekly schedule সেট করা হয়নি, তাই booking-এর জন্য কোনো slot নেই। দাম, খোলার সময় আর বিরতি নিয়ে কয়েকটি সহজ প্রশ্নের উত্তর দিন — আমরা পুরো সপ্তাহটা বানিয়ে দেব।",
       calendarTitle: "Availability calendar",
       calendarDesc:
-        "যেকোনো দিনে tap করে সেই দিনের slot দেখুন বা edit করুন। রিং চিহ্নিত দিনগুলো public holiday (BD calendar আমরা seed করি — lunar তারিখ আন্দাজি, Eid-এর আগে আবার check করে নিন)।",
+        "যেকোনো দিনে Tap করে সেই দিনের Slot দেখুন বা Edit করুন। Highlight করা দিনগুলো Public Holiday। BD Calendar অনুযায়ী ছুটির দিনগুলো আমরা আগে থেকেই Add করে রাখি—Lunar Date আনুমানিক হতে পারে, তাই Eid-এর আগে একবার Check করে নিন।",
       howTitle: "আপনার Weekly Schedule থেকেই Booking Slot তৈরি হবে।",
       howDesc:
         "একবার সেট করে দিলেই প্রতি সপ্তাহে Slot নিজে থেকেই তৈরি হতে থাকবে—বারবার সেট করার দরকার নেই। কোনো দিন চাইলে Booking বন্ধ করতে পারবেন বা সেই দিনের Price বদলাতে পারবেন। বাড়তি সময় দিতে চান? একটি One-time Slot Add করুন।",
-      emptyDay: "যেকোনো দিন বেছে নিন — সেই দিনের slot দেখুন, booking বন্ধ করুন বা দাম বদলান।",
+      emptyDay:
+        "যেকোনো দিন Select করুন—সেই দিনের Slot দেখুন, Booking বন্ধ করুন বা Price বদলান।",
       dayAdjustmentsTitle: "নির্দিষ্ট দিনের Settings বদলান",
       dayAdjustmentsDesc:
         "Booking বন্ধ করতে, দিনের Price বদলাতে বা Extra Slot দিতে এই অংশটি খুলুন।",
@@ -481,7 +503,7 @@ export const bn: Dictionary = {
       dayClosedReopen: "এই দিনটা বন্ধ আছে। উপরের switch দিয়ে আবার খুলুন।",
       noSlotsThisDate: "এই তারিখে কোনো slot নেই।",
       noSlotsThisWeekday:
-        "কোনো slot নেই — এই বারের জন্য weekly hours-এ কিছু নেই। নিচে একটি one-off slot দিন, বা weekly hours বদলান।",
+        "কোনো Slot নেই—এই দিনের জন্য Weekly Hours-এ কোনো Slot সেট করা নেই। চাইলে নিচে একটি One-time Slot Add করুন, অথবা Weekly Hours পরিবর্তন করুন।",
       holidayEstimate: " (আন্দাজি)",
       closed: "বন্ধ",
       closedWithReason: "বন্ধ - {reason}",
@@ -489,7 +511,7 @@ export const bn: Dictionary = {
       flatRate: "Flat {value} BDT",
       ramadanHint:
         "রমজান — রাতের খেলা? Weekly hours-এ একটি section মধ্যরাত পেরিয়ে দিন।",
-      slotsThisDay: "এই দিনের slot",
+      slotsThisDay: "এই দিনের Slot",
 
       // Calendar legend
       legendClosed: "বন্ধ",
@@ -497,14 +519,18 @@ export const bn: Dictionary = {
       legendPublicHoliday: "Public holiday",
 
       // Day exception form
-      closeThisDay: "এই দিনটা বন্ধ করুন",
+      bookingStatusLabel: "এই দিনের Booking Status",
+      statusOpen: "Booking চালু করুন",
+      statusClosed: "Booking বন্ধ করুন",
+      statusClosedHint: "এই দিনে কেউ আপনার Turf বুক করতে পারবে না।",
       reasonLabel: "কারণ (আপনার calendar-এ দেখাবে)",
       reasonPlaceholder: "যেমন Maintenance",
-      specialPrice: "এই দিনের বিশেষ দাম",
-      priceModeNone: "কিছু না - section দামই চলবে",
-      priceModeMultiplier: "Section দামের সাথে গুণ",
-      priceModeAbsolute: "পুরো দিনে এক দাম",
-      multiplierLabel: "Multiplier (০.৫ - ৩, যেমন 1.25)",
+      specialPrice: "এই দিনের Special Price",
+      priceModeNone: "কোনো পরিবর্তন নেই — Section-এর Price-ই থাকবে",
+      priceModeMultiplier: "Section-এর Price দিয়ে গুণ হবে — যেমন: ৳1,200 × 2",
+      priceModeAbsolute: "সারাদিন একই Price — সব Slot-এ একই Price থাকবে",
+      multiplierLabel:
+        "Price Multiplier (০.৫–৩) — যেমন 1.25× দিলে Price ২৫% বেশি হবে",
       flatPriceLabel: "Flat দাম (BDT)",
       applying: "Applying…",
       applyToDay: "এই দিনে apply করুন",
@@ -522,15 +548,16 @@ export const bn: Dictionary = {
       active: "Active",
       windowEnded:
         "এই window শেষ — schedule-টি আর কোনো slot দিচ্ছে না। নিচে অন্য schedule activate করুন।",
-      windowStartsLater: "শুরু হবে {date} - তার আগে এই schedule কোনো slot দেবে না।",
+      windowStartsLater:
+        "শুরু হবে {date} - তার আগে এই schedule কোনো slot দেবে না।",
       from: "From",
       to: "To",
       ramadanDates: "Ramadan তারিখ",
       activate: "Activate",
       activating: "Activating…",
-      activated: "\"{name}\" এখন active।",
+      activated: '"{name}" এখন active।',
       activatedWithSlots:
-        "\"{name}\" এখন active। পরের ৩০ দিন: {added}টি যোগ, {updated}টি update, {removed}টি বাদ।{conflictsNote}",
+        '"{name}" এখন active। পরের ৩০ দিন: {added}টি যোগ, {updated}টি update, {removed}টি বাদ।{conflictsNote}',
       activatedConflicts: " {count}টি slot-এ খেয়াল রাখতে হবে - উপরে দেখুন।",
 
       // Schedule builder
@@ -552,9 +579,11 @@ export const bn: Dictionary = {
       conflictWrap: "{a} মধ্যরাত পেরিয়ে {b}-এ ঢুকে যাচ্ছে",
       leftInPlace: "যেগুলো রেখে দেওয়া হয়েছে - নিচে নিজে মিটিয়ে নিন:",
       conflictKind: {
-        insert_overlap: "Schedule slot একটি রাখা slot-এর সাথে overlap করত — বাদ দেওয়া হয়েছে",
+        insert_overlap:
+          "Schedule slot একটি রাখা slot-এর সাথে overlap করত — বাদ দেওয়া হয়েছে",
         kept_duration: "রাখা slot-এর দৈর্ঘ্য আর মিলছে না — ছুঁয়ে দেওয়া হয়নি",
-        resize_overlap: "নতুন slot একটি রাখা slot-এর সাথে overlap করত — resize করা হয়নি",
+        resize_overlap:
+          "নতুন slot একটি রাখা slot-এর সাথে overlap করত — resize করা হয়নি",
         outside_plan: "নতুন schedule-এর বাইরে পড়ে গেছে — জায়গায় রাখা হয়েছে",
       },
       conflictMinutes: "চলে {got} মিনিট কিন্তু schedule এখন চায় {want} মিনিট",
@@ -598,23 +627,23 @@ export const bn: Dictionary = {
       peakEnds: "Peak শেষ",
       peakPrice: "Peak দাম (BDT)",
       offPeakPrice: "Off-peak দাম (BDT)",
-      openFrom: "খোলে",
-      openTo: "বন্ধ হয়",
-      gameLength: "খেলার দৈর্ঘ্য",
-      gapBetweenGames: "খেলার ফাঁক",
+      openFrom: "খেলার সময় শুরু",
+      openTo: "খেলার সময় শেষ",
+      gameLength: "প্রতি Slot-এর সময়",
+      gapBetweenGames: "দুই Slot-এর মাঝে বিরতি",
       gapNone: "নেই",
       gapMinutes: "+{count} মিনিট",
-      breakQuestion: "কোনো কোনো দিন কি বিরতিতে বন্ধ থাকে?",
+      breakQuestion: "কোনো দিন কি Slot-এর মাঝে বিরতি থাকে?",
       noBreaksTitle: "বিরতি নেই",
-      noBreaksDesc: "সারাক্ষণ খোলা",
+      noBreaksDesc: "সারাদিন Booking চালু থাকবে",
       breakTitle: "হ্যাঁ, বিরতি আছে",
-      breakDesc: "লাঞ্চ, নামাজ, maintenance",
+      breakDesc: "যেমন: Lunch, নামাজ বা Maintenance-এর সময় Booking বন্ধ থাকবে",
       breakFrom: "বিরতি শুরু",
       breakTo: "বিরতি শেষ",
       breakDays: "যেসব দিনে বিরতি",
       yourWeek: "আপনার সপ্তাহ",
       closedDay: "বন্ধ",
-      slotsPerDay: "দিনে ≈{count}টি slot · পরের ৩০ দিন ভরে দেয়",
+      slotsPerDay: "প্রতিদিন প্রায় {count}টি Slot",
       back: "পেছনে",
       next: "পরেরটি",
       save: "Weekly hours সেভ করুন",
@@ -628,13 +657,15 @@ export const bn: Dictionary = {
       errOpenTimes: "বন্ধের সময়টা খোলার সময় থেকে আলাদা হতে হবে।",
       errBreakTimes: "বিরতির শুরু আর শেষ আলাদা হতে হবে।",
       errBreakDays: "বিরতির জন্য অন্তত একটি দিন বাছুন।",
-      errNoSlots: "এই setup-এ কোনো slot তৈরি হচ্ছে না — সময় আর বিরতি check করুন।",
+      errNoSlots:
+        "এই setup-এ কোনো slot তৈরি হচ্ছে না — সময় আর বিরতি check করুন।",
     },
   },
 
   matches: {
     title: "Match খুঁজুন",
-    subtitle: "যেসব Open Match-এ এখনো Opponent Team দরকার, সেগুলো এখানে খুঁজে নিন।",
+    subtitle:
+      "যেসব Open Match-এ এখনো Opponent Team দরকার, সেগুলো এখানে খুঁজে নিন।",
     emptyTitle: "এই মুহূর্তে কোনো ওপেন ম্যাচ নেই",
     emptyDesc: "কনফার্মড booking-এর টিমরা প্রতিপক্ষ খুঁজলে এখানে দেখা যাবে।",
     teamTbd: "টিম এখনো নির্ধারিত হয়নি",
@@ -789,22 +820,27 @@ export const bn: Dictionary = {
       useTransfer: "Team-এর owner বদলাতে ownership transfer ব্যবহার করুন।",
       onlyOwnerCaptains: "শুধু owner-ই captain বানাতে পারেন।",
       transferFirstRole: "আগে ownership transfer করুন, তারপর নিজের role বদলান।",
-      cantRemoveOwner: "Owner-কে বাদ দেওয়া যায় না — আগে ownership transfer করুন।",
+      cantRemoveOwner:
+        "Owner-কে বাদ দেওয়া যায় না — আগে ownership transfer করুন।",
       onlyOwnerRemoveCaptains: "শুধু owner-ই captain-দের বাদ দিতে পারেন।",
     },
   },
 
   claim: {
     invalidTitle: "এই claim link সঠিক নয়",
-    invalidBody: "পুরো linkটি খুলেছেন কিনা দেখুন, বা DeshiTurf team-কে নতুন একটি চান।",
+    invalidBody:
+      "পুরো linkটি খুলেছেন কিনা দেখুন, বা DeshiTurf team-কে নতুন একটি চান।",
     expiredTitle: "এই claim link-এর সময় শেষ",
-    expiredBody: "Claim link {days} দিন ব্যবহারযোগ্য থাকে। DeshiTurf team-কে নতুন একটি পাঠাতে বলুন।",
+    expiredBody:
+      "Claim link {days} দিন ব্যবহারযোগ্য থাকে। DeshiTurf team-কে নতুন একটি পাঠাতে বলুন।",
     claimedTitle: "এই টার্ফ আগেই claim হয়ে গেছে",
     claimedBody: "এটা যদি আপনি না হন, DeshiTurf team-এর সাথে যোগাযোগ করুন।",
     revokedTitle: "এই claim link বদলে গেছে",
-    revokedBody: "এই টার্ফের জন্য নতুন invite পাঠানো হয়েছে — সবচেয়ে সাম্প্রতিক linkটি ব্যবহার করুন।",
+    revokedBody:
+      "এই টার্ফের জন্য নতুন invite পাঠানো হয়েছে — সবচেয়ে সাম্প্রতিক linkটি ব্যবহার করুন।",
     claimTitle: "“{name}” claim করুন",
-    claimDesc: "DeshiTurf-এ এই টার্ফটি ম্যানেজ করার জন্য আপনাকে আমন্ত্রণ জানানো হয়েছে।",
+    claimDesc:
+      "DeshiTurf-এ এই টার্ফটি ম্যানেজ করার জন্য আপনাকে আমন্ত্রণ জানানো হয়েছে।",
     format: "ফরম্যাট",
     location: "অবস্থান",
     address: "ঠিকানা",
@@ -867,7 +903,8 @@ export const bn: Dictionary = {
     noBookingsDesc: "টার্ফ দেখে একটা slot বুক করে শুরু করুন।",
     findTurf: "টার্ফ খুঁজুন →",
     playTonightTitle: "আজ রাতে খেলুন",
-    playTonightDesc: "কাছাকাছি যেসব Match-এ এখনো Player দরকার, সেগুলো এখানে দেখুন।",
+    playTonightDesc:
+      "কাছাকাছি যেসব Match-এ এখনো Player দরকার, সেগুলো এখানে দেখুন।",
     noNearbyMatches:
       "এই মুহূর্তে কোনো Match-এ Player দরকার নেই। একটু পরে আবার দেখুন, অথবা নিজেকে Available করে রাখুন।",
     historyTitle: "ম্যাচের ইতিহাস",
@@ -911,7 +948,8 @@ export const bn: Dictionary = {
       "সাথে সাথে সাইন আউট হয়ে যাবেন এবং অ্যাকাউন্ট ১৪ দিনের grace period-এ যাবে। এরপর আপনার নাম, phone, email ও player প্রোফাইল স্থায়ীভাবে মুছে যাবে। Audit ইতিহাস (শুধু hashed id সহ) থেকে যাবে।",
     deleteConfirmButton: "হ্যাঁ, অ্যাকাউন্ট ডিলিট করুন",
     deleteScheduledToast: "অ্যাকাউন্ট ডিলিটের জন্য নির্ধারিত হয়েছে।",
-    deleteFailedToast: "অ্যাকাউন্ট ডিলিট করা গেল না। আবার চেষ্টা করুন বা support-এ জানান।",
+    deleteFailedToast:
+      "অ্যাকাউন্ট ডিলিট করা গেল না। আবার চেষ্টা করুন বা support-এ জানান।",
   },
 
   notifications: {
@@ -937,7 +975,8 @@ export const bn: Dictionary = {
     turfApplicationApprovedBody:
       "আপনার turf এখন DeshiTurf-এ লাইভ — booking ম্যানেজ করতে claim করুন।",
     turfApplicationRejectedTitle: "আবেদনের আপডেট: {turf}",
-    turfApplicationRejectedBody: "দুঃখিত, এই আবেদনটি এখন আমরা অনুমোদন করতে পারিনি।",
+    turfApplicationRejectedBody:
+      "দুঃখিত, এই আবেদনটি এখন আমরা অনুমোদন করতে পারিনি।",
     bookingConfirmedTitle: "{turf}-এ booking কনফার্ম হয়েছে",
     bookingReceivedTitle: "{turf}-এ নতুন booking",
     bookingCancelledTitle: "{turf}-এ booking বাতিল হয়েছে",
@@ -981,8 +1020,10 @@ export const bn: Dictionary = {
 
   auth: {
     signInTitle: "সাইন ইন",
-    signInDesc: "যে phone number বা email দিয়ে অ্যাকাউ্ট খুলেছিলেন সেটা দিয়ে সাইন ইন করুন।",
-    signInDescCode: "DeshiTurf টিমের কাছ থেকে one-time code পাওয়া turf owner-দের জন্য।",
+    signInDesc:
+      "যে phone number বা email দিয়ে অ্যাকাউ্ট খুলেছিলেন সেটা দিয়ে সাইন ইন করুন।",
+    signInDescCode:
+      "DeshiTurf টিমের কাছ থেকে one-time code পাওয়া turf owner-দের জন্য।",
     haveSignInCode: "DeshiTurf টিমের sign-in code আছে?",
     usePasswordInstead: "Password দিয়ে সাইন ইন করুন",
     identifierLabel: "Phone বা email",
@@ -994,7 +1035,8 @@ export const bn: Dictionary = {
     createAccount: "অ্যাকাউন্ট খুলুন",
 
     registerTitle: "অ্যাকাউন্ট খুলুন",
-    registerDesc: "Phone number ও email দিয়ে রেজিস্টার করুন। verification code আপনার email-এ পাঠানো হবে।",
+    registerDesc:
+      "Phone number ও email দিয়ে রেজিস্টার করুন। verification code আপনার email-এ পাঠানো হবে।",
     nameLabel: "নাম",
     namePlaceholder: "আপনার নাম",
     phoneLabel: "Phone number",
@@ -1013,8 +1055,10 @@ export const bn: Dictionary = {
     alreadyHaveAccount: "আগেই অ্যাকাউন্ট আছে?",
 
     resetTitle: "পাসওয়ার্ড রিসেট করুন",
-    resetDesc: "যে email দিয়ে রেজিস্টার করেছিলেন সেটা লিখুন। অ্যাকাউন্ট থাকলে verification code পাঠানো হবে।",
-    sentCodeResetTo: "{email} ঠিকানায় একটি ৬-ডিজিটের কোড পাঠানো হয়েছে। কোডটি লিখে নতুন পাসওয়ার্ড দিন।",
+    resetDesc:
+      "যে email দিয়ে রেজিস্টার করেছিলেন সেটা লিখুন। অ্যাকাউন্ট থাকলে verification code পাঠানো হবে।",
+    sentCodeResetTo:
+      "{email} ঠিকানায় একটি ৬-ডিজিটের কোড পাঠানো হয়েছে। কোডটি লিখে নতুন পাসওয়ার্ড দিন।",
     sendCode: "কোড পাঠান",
     newPassword: "নতুন পাসওয়ার্ড",
     confirmNewPassword: "নতুন পাসওয়ার্ড আবার লিখুন",
@@ -1040,14 +1084,19 @@ export const bn: Dictionary = {
     ownATurfTitle: "টার্ফের মালিক?",
     ownATurfDesc: "DeshiTurf-এ turf owner-রা কীভাবে অ্যাকাউন্ট পান।",
     ownerStep1Title: "আমরা আপনার টার্ফ লিস্ট করি",
-    ownerStep1Body: "Turf অ্যাকাউন্ট ইনভাইটেশনের মাধ্যমে তৈরি হয়। DeshiTurf team আগে আপনার টার্ফ প্ল্যাটফর্মে যোগ করে।",
+    ownerStep1Body:
+      "Turf অ্যাকাউন্ট ইনভাইটেশনের মাধ্যমে তৈরি হয়। DeshiTurf team আগে আপনার টার্ফ প্ল্যাটফর্মে যোগ করে।",
     ownerStep2Title: "আপনি claim link পান",
-    ownerStep2Body: "DeshiTurf team আপনাকে WhatsApp বা email-এ একটি ব্যক্তিগত link পাঠায়। linkটি ১৪ দিন ব্যবহারযোগ্য থাকে।",
+    ownerStep2Body:
+      "DeshiTurf team আপনাকে WhatsApp বা email-এ একটি ব্যক্তিগত link পাঠায়। linkটি ১৪ দিন ব্যবহারযোগ্য থাকে।",
     ownerStep3Title: "link খুলে রেজিস্টার বা সাইন ইন করুন",
-    ownerStep3Body: "এই পেজে অ্যাকাউন্ট খুলুন, অথবা আগে থেকেই অ্যাকাউন্ট থাকলে সাইন ইন করুন। এরপর সোজা আপনার টার্ফে চলে যাবেন।",
+    ownerStep3Body:
+      "এই পেজে অ্যাকাউন্ট খুলুন, অথবা আগে থেকেই অ্যাকাউন্ট থাকলে সাইন ইন করুন। এরপর সোজা আপনার টার্ফে চলে যাবেন।",
     ownerStep4Title: "“Claim turf” চাপুন",
-    ownerStep4Body: "এতে আপনি owner হয়ে যাবেন। এরপর slot, দাম আর ছবি সেট করবেন।",
-    ownerHelpNote: "এখনো link পাননি? টার্ফ লিস্ট করার আবেদন করুন—DeshiTurf team প্রতিটি আবেদন দেখে পরের ধাপ জানায়।",
+    ownerStep4Body:
+      "এতে আপনি owner হয়ে যাবেন। এরপর slot, দাম আর ছবি সেট করবেন।",
+    ownerHelpNote:
+      "এখনো link পাননি? টার্ফ লিস্ট করার আবেদন করুন—DeshiTurf team প্রতিটি আবেদন দেখে পরের ধাপ জানায়।",
     listYourTurf: "আপনার টার্ফ লিস্ট করুন",
     passwordsNoMatch: "পাসওয়ার্ড দুটো মিলছে না",
 
@@ -1057,9 +1106,11 @@ export const bn: Dictionary = {
       signin_failed: "সাইন ইন করা গেল না। একটু পরে আবার চেষ্টা করুন।",
       phone_taken: "এই phone number দিয়ে আগেই একটি অ্যাকাউন্ট আছে।",
       email_taken: "এই email দিয়ে আগেই একটি অ্যাকাউন্ট আছে।",
-      phone_taken_just: "এই phone number এইমাত্র রেজিস্টার হয়ে গেছে। সাইন ইন করুন।",
+      phone_taken_just:
+        "এই phone number এইমাত্র রেজিস্টার হয়ে গেছে। সাইন ইন করুন।",
       email_taken_just: "এই email এইমাত্র রেজিস্টার হয়ে গেছে। সাইন ইন করুন।",
-      signin_failed_created: "অ্যাকাউন্ট তৈরি হয়েছে, কিন্তু সাইন ইন হয়নি। সাইন ইন করার চেষ্টা করুন।",
+      signin_failed_created:
+        "অ্যাকাউন্ট তৈরি হয়েছে, কিন্তু সাইন ইন হয়নি। সাইন ইন করার চেষ্টা করুন।",
       send_failed: "এই মুহূর্তে email পাঠানো গেল না। আবার চেষ্টা করুন।",
       invalid: "কোড ভুল। আবার চেষ্টা করুন।",
       consumed: "কোডটি আগেই ব্যবহার হয়েছে। নতুন কোড নিন।",
@@ -1138,12 +1189,14 @@ export const bn: Dictionary = {
       noOwner: "এই turf-এ এখনো owner নেই — claim invite পাঠান।",
       invalidPhone: "সঠিক Bangladeshi number দিন, যেমন 01XXXXXXXXX",
       rateLimited: "অনেকবার চেষ্টা হয়েছে। একটু পরে আবার করুন।",
-      noCode: "এই number-এ কোনো active code নেই। DeshiTurf team-এর কাছে নতুন একটি চান।",
+      noCode:
+        "এই number-এ কোনো active code নেই। DeshiTurf team-এর কাছে নতুন একটি চান।",
       wrongCode: "ভুল code। আবার চেষ্টা করুন।",
       locked: "অনেকবার ভুল code। ১৫ মিনিট পর আবার চেষ্টা করুন।",
       consumed: "এই code আগেই ব্যবহার হয়েছে। নতুন একটি চান।",
       expired: "Code-টির সময় শেষ। DeshiTurf team-এর কাছে নতুন একটি চান।",
-      revoked: "এই code-এর জায়গায় নতুন code দেওয়া হয়েছে। সবচেয়ে নতুনটি নিন।",
+      revoked:
+        "এই code-এর জায়গায় নতুন code দেওয়া হয়েছে। সবচেয়ে নতুনটি নিন।",
       noAccount: "এই number-এ কোনো অ্যাকাউন্ট পাওয়া যায়নি।",
       signinFailed: "Sign in করা গেল না। আবার চেষ্টা করুন।",
     },
@@ -1212,7 +1265,8 @@ export const bn: Dictionary = {
       needsAttention: "নজর দরকার",
       pendingRefundsOne: "১ টি রিফান্ড রিকোয়েস্ট অপেক্ষমাণ",
       pendingRefundsMany: "{count} টি রিফান্ড রিকোয়েস্ট অপেক্ষমাণ",
-      refundsSecondAdminHint: "৳৫,০০০-এর বেশি রিফান্ডে আরেকজন অ্যাডমিনের অনুমোদন লাগবে।",
+      refundsSecondAdminHint:
+        "৳৫,০০০-এর বেশি রিফান্ডে আরেকজন অ্যাডমিনের অনুমোদন লাগবে।",
       disputedOne: "১ টি ডিসপিউটেড ম্যাচ",
       disputedMany: "{count} টি ডিসপিউটেড ম্যাচ",
       disputedHint: "প্রতিটি ফল কনফার্ম করুন বা স্ক্র্যাচ করুন।",
@@ -1280,12 +1334,11 @@ export const bn: Dictionary = {
         "Owner নতুন password না সেট করা পর্যন্ত password login lock থাকবে।",
       passwordStillWorks: "তাঁর বর্তমান password {phone}-এর জন্য চালুই থাকবে।",
       hint: "{phone}-এর জন্য one-time code, ১৫ মিনিট সময়। WhatsApp-এ পাঠিয়ে দিন; sign in করার পরই owner নতুন password সেট করবেন।",
-      waLine1: "হ্যালো! \"{name}\" turf-এর জন্য আপনার DeshiTurf sign-in code:",
+      waLine1: 'হ্যালো! "{name}" turf-এর জন্য আপনার DeshiTurf sign-in code:',
       waLine2:
         "আপনার phone ({phone}) আর এই code দিয়ে sign in করুন। {time}-এ ({date}) expire হবে, একবারই কাজ করবে।",
       waLine3: "সাথে সাথেই নতুন password সেট করবেন। — DeshiTurf team",
     },
-
 
     seed: {
       title: "Turf সীড করুন",
@@ -1347,7 +1400,8 @@ export const bn: Dictionary = {
       overThreshold: "৳৫,০০০-এর বেশি — আরেকজন অ্যাডমিনের অনুমোদন লাগবে।",
       stage: "রিফান্ড স্টেজ করুন",
       execute: "রিফান্ড এক্সিকিউট করুন",
-      stagedToast: "রিফান্ড স্টেজ হয়েছে — আরেকজন অ্যাডমিনের অনুমোদন লাগবে (৳৫,০০০-এর বেশি)।",
+      stagedToast:
+        "রিফান্ড স্টেজ হয়েছে — আরেকজন অ্যাডমিনের অনুমোদন লাগবে (৳৫,০০০-এর বেশি)।",
       executedToast: "রিফান্ড এক্সিকিউট হয়েছে।",
       approveTitle: "অনুমোদন করে এক্সিকিউট করুন",
       selfApproveTitle:
@@ -1451,7 +1505,8 @@ export const bn: Dictionary = {
       copyMessage: "মেসেজ কপি করুন",
       messageCopiedToast: "মেসেজ কপি হয়েছে — WhatsApp-এ পেস্ট করুন।",
       whatsappMessageAria: "WhatsApp মেসেজ",
-      shownOnce: "লিংক আর কোড একবারই দেখানো হয়। নতুন ইনভাইট করলে আগেরটি বাতিল হয়ে যাবে।",
+      shownOnce:
+        "লিংক আর কোড একবারই দেখানো হয়। নতুন ইনভাইট করলে আগেরটি বাতিল হয়ে যাবে।",
       singleUse:
         "লিংকটি একবার ব্যবহারযোগ্য এবং একবারই দেখানো হয়। নতুন ইনভাইট করলে আগের যেকোনো লিংক বাতিল হয়ে যাবে।",
       ownerEmail: "ওনারের ইমেইল (ঐচ্ছিক)",
@@ -1473,7 +1528,8 @@ export const bn: Dictionary = {
       refundNotPending: "রিফান্ড রিকোয়েস্টটি আর পেন্ডিং নেই।",
       refundSelfApprove:
         "ডুয়াল-কন্ট্রোল: যে অ্যাডমিন রিকোয়েস্ট করেছেন তিনি নিজের রিফান্ড অনুমোদন করতে পারবেন না।",
-      refundNotFoundOrPending: "রিফান্ড রিকোয়েস্ট পাওয়া যায়নি বা আর পেন্ডিং নেই।",
+      refundNotFoundOrPending:
+        "রিফান্ড রিকোয়েস্ট পাওয়া যায়নি বা আর পেন্ডিং নেই।",
       notDisputed: "ম্যাচটি ডিসপিউটেড অবস্থায় নেই।",
       refundAmountPositive: "রিফান্ডের পরিমাণ ধনাত্মক হতে হবে",
       refundAmountTooHigh: "রিফান্ডের পরিমাণ অস্বাভাবিক বড়",
@@ -1481,4 +1537,4 @@ export const bn: Dictionary = {
       applicationHandled: "এই আবেদনটি আগেই নিষ্পত্তি হয়ে গেছে।",
     },
   },
-}
+};

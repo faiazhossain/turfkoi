@@ -26,6 +26,7 @@ import {
 import { StatusBadge } from "@/components/shared"
 import { useI18n } from "@/i18n/client"
 import { formatBdt } from "@/lib/pricing"
+import { formatSlotTimeRange, toBnDigits } from "@/lib/format-time"
 
 import { saveScheduleAction } from "@/features/turfs/actions"
 
@@ -52,7 +53,7 @@ const DEFAULTS: WizardValues = {
   openFrom: "07:00",
   openTo: "23:00",
   slotMinutes: 90,
-  gapMinutes: 10,
+  gapMinutes: 0,
   breakEnabled: false,
   breakFrom: "12:00",
   breakTo: "14:30",
@@ -100,6 +101,34 @@ function Field({
       <Label className="text-xs font-medium text-muted-foreground">{label}</Label>
       {children}
     </div>
+  )
+}
+
+/**
+ * Price input that stays editable: keeps a string draft so the field can be
+ * cleared or retyped (no stuck leading "0" from Number coercion) and uses a
+ * text input so mouse-wheel scrolling over it never changes the value.
+ */
+function PriceInput({
+  value,
+  onChange,
+}: {
+  value: number
+  onChange: (n: number) => void
+}) {
+  const [draft, setDraft] = useState(String(value))
+  const shown = Number(draft) === value ? draft : String(value)
+  return (
+    <Input
+      type="text"
+      inputMode="numeric"
+      value={shown}
+      onChange={(e) => {
+        const next = e.target.value.replace(/\D/g, "").replace(/^0+(?=\d)/, "")
+        setDraft(next)
+        onChange(next === "" ? 0 : Number(next))
+      }}
+    />
   )
 }
 
@@ -151,7 +180,7 @@ export function ScheduleWizardDialog({
   triggerSize?: "default" | "sm" | "lg"
 }) {
   const router = useRouter()
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
   const [open, setOpen] = useState(false)
   const [step, setStep] = useState(1)
   const [values, setValues] = useState<WizardValues>(DEFAULTS)
@@ -209,11 +238,12 @@ export function ScheduleWizardDialog({
       expandSectionsForDay(sections, d).length
     )
     const open = counts.filter((c) => c > 0)
-    if (open.length === 0) return "0"
+    if (open.length === 0) return locale === "bn" ? "০" : "0"
     const min = Math.min(...open)
     const max = Math.max(...open)
-    return min === max ? String(min) : `${min}–${max}`
-  }, [sections])
+    const range = min === max ? String(min) : `${min}–${max}`
+    return locale === "bn" ? toBnDigits(range) : range
+  }, [sections, locale])
 
   return (
     <Dialog
@@ -284,12 +314,9 @@ export function ScheduleWizardDialog({
             </div>
             {values.pricing === "flat" ? (
               <Field label={t("turfOwner.wizard.pricePerGame")}>
-                <Input
-                  type="number"
-                  min={1}
-                  step="any"
+                <PriceInput
                   value={values.flatPrice}
-                  onChange={(e) => set("flatPrice", Number(e.target.value))}
+                  onChange={(n) => set("flatPrice", n)}
                 />
               </Field>
             ) : (
@@ -312,23 +339,15 @@ export function ScheduleWizardDialog({
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <Field label={t("turfOwner.wizard.peakPrice")}>
-                    <Input
-                      type="number"
-                      min={1}
-                      step="any"
+                    <PriceInput
                       value={values.peakPrice}
-                      onChange={(e) => set("peakPrice", Number(e.target.value))}
+                      onChange={(n) => set("peakPrice", n)}
                     />
                   </Field>
                   <Field label={t("turfOwner.wizard.offPeakPrice")}>
-                    <Input
-                      type="number"
-                      min={1}
-                      step="any"
+                    <PriceInput
                       value={values.offPeakPrice}
-                      onChange={(e) =>
-                        set("offPeakPrice", Number(e.target.value))
-                      }
+                      onChange={(n) => set("offPeakPrice", n)}
                     />
                   </Field>
                 </div>
@@ -490,7 +509,7 @@ export function ScheduleWizardDialog({
                             className="flex items-center justify-between text-muted-foreground"
                           >
                             <span className="font-mono">
-                              {s.startTime}–{s.endTime}
+                              {formatSlotTimeRange(s.startTime, s.endTime, locale)}
                             </span>
                             <span>
                               {s.label ? `${s.label} · ` : ""}{formatBdt(s.price)}

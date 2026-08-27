@@ -5,16 +5,34 @@ import { MapPinIcon, CalendarCheckIcon, ImageOffIcon } from "lucide-react"
 
 import { getT } from "@/i18n/server"
 import { StatusBadge, EmptyState } from "@/components/shared"
-import { BookSlotButton, type ClosedDay } from "@/components/bookings/book-slot-button"
+import { TurfBookingCalendar } from "@/components/turfs/turf-booking-calendar"
 import { getTurfBySlug, listTurfSlots, listTurfPhotos } from "@/features/turfs/queries"
 import { TurfPhotoStrip } from "@/components/turfs/turf-photo-strip"
 import { turfFormatLabel } from "@/features/turfs/formats"
-import { getActiveSchedule, listDateExceptions } from "@/features/turfs/materialize"
-import { sectionLabelForSlot } from "@/lib/slot-expansion"
+import {
+  getActiveSchedule,
+  getBookingHorizon,
+  listDateExceptions,
+} from "@/features/turfs/materialize"
+import {
+  classifyBookingDays,
+  slotEndTime,
+  type PublicSlot,
+} from "@/features/turfs/booking-calendar"
+import { addDays, sectionLabelForSlot, todayInDhaka } from "@/lib/slot-expansion"
 import { getCurrentUser } from "@/lib/auth"
 
 interface PageProps {
   params: Promise<{ slug: string }>
+  searchParams: Promise<{ month?: string }>
+}
+
+const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/
+
+function monthStartEnd(month: string): { start: string; end: string } {
+  const [y, m] = month.split("-").map(Number)
+  const lastDay = new Date(y!, m!, 0).getDate()
+  return { start: `${month}-01`, end: `${month}-${String(lastDay).padStart(2, "0")}` }
 }
 
 export async function generateMetadata({
@@ -56,8 +74,9 @@ const CANCELLATION_KEYS: Record<string, string> = {
   strict: "turfs.cancellationStrict",
 }
 
-export default async function TurfDetailPage({ params }: PageProps) {
+export default async function TurfDetailPage({ params, searchParams }: PageProps) {
   const { slug } = await params
+  const { month: monthParam } = await searchParams
   const [turf, t] = await Promise.all([getTurfBySlug(slug), getT()])
   if (!turf) notFound()
 
@@ -68,11 +87,22 @@ export default async function TurfDetailPage({ params }: PageProps) {
     if (!viewer?.roles.includes("admin")) notFound()
   }
 
-  const today = new Date()
-  const fromDate = today.toISOString().slice(0, 10)
-  const toDate = new Date(today.getTime() + 7 * 86400000)
-    .toISOString()
-    .slice(0, 10)
+  // Displayed month: ?month=YYYY-MM clamped to [current month, horizon end].
+  // Invalid or out-of-range values silently fall back to the current month
+  // (single render pass, no redirect round-trip).
+  const today = todayInDhaka()
+  const currentMonth = today.slice(0, 7)
+  const horizonEnd = addDays(today, await getBookingHorizon(turf.id))
+  const horizonMonth = horizonEnd.slice(0, 7)
+  const month =
+    monthParam && MONTH_RE.test(monthParam) &&
+    monthParam >= currentMonth && monthParam <= horizonMonth
+      ? monthParam
+      : currentMonth
+  const { start: monthStart, end: monthEnd } = monthStartEnd(month)
+  const fromDate = monthStart > today ? monthStart : today
+  const toDate = monthEnd < horizonEnd ? monthEnd : horizonEnd
+
   const slots = await listTurfSlots(turf.id, { from: fromDate, to: toDate })
 
   // Slot system P2: surface section labels (peak/off-peak) and closed dates
@@ -81,19 +111,30 @@ export default async function TurfDetailPage({ params }: PageProps) {
     getActiveSchedule(turf.id),
     listDateExceptions(turf.id, { from: fromDate, to: toDate }),
   ])
-  const labeledSlots = schedule
-    ? slots.map((s) => ({
-        ...s,
-        label: sectionLabelForSlot(
-          schedule.sections,
-          s.date,
-          s.startTime.slice(0, 5)
-        ),
-      }))
-    : slots
-  const closedDays: ClosedDay[] = windowExceptions
+  const publicSlots: PublicSlot[] = slots.map((s) => {
+    const startTime = s.startTime.slice(0, 5)
+    return {
+      date: s.date,
+      startTime,
+      endTime: slotEndTime(startTime, s.durationMinutes),
+      durationMinutes: s.durationMinutes,
+      price: Number(s.price),
+      status: s.status,
+      label: schedule
+        ? sectionLabelForSlot(schedule.sections, s.date, startTime)
+        : null,
+    }
+  })
+  const closedDays = windowExceptions
     .filter((e) => e.isClosed)
     .map((e) => ({ date: e.date, reason: e.reason }))
+  const days = classifyBookingDays(publicSlots, closedDays, {
+    monthStart,
+    monthEnd,
+    today,
+    horizonEnd,
+  })
+  const availableInMonth = publicSlots.filter((s) => s.status === "available").length
 
   const facilities = turf.facilities ?? {}
   const photos = await listTurfPhotos(turf.id)
@@ -176,25 +217,28 @@ export default async function TurfDetailPage({ params }: PageProps) {
       <section className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="font-heading text-sm font-semibold">
-            {t("turfs.next7Days")}
+            {t("turfs.bookingCalendar")}
           </h2>
           <StatusBadge status="neutral" showIcon={false}>
-            {t(slots.length === 1 ? "turfs.slotCountOne" : "turfs.slotCountMany", {
-              count: slots.length,
+            {t(availableInMonth === 1 ? "turfs.slotCountOne" : "turfs.slotCountMany", {
+              count: availableInMonth,
             })}
           </StatusBadge>
         </div>
-        {slots.length === 0 && closedDays.length === 0 ? (
+        {publicSlots.length === 0 && closedDays.length === 0 ? (
           <EmptyState
             icon={CalendarCheckIcon}
             title={t("turfs.noSlotsTitle")}
             description={t("turfs.noSlotsDesc")}
           />
         ) : (
-          <BookSlotButton
+          <TurfBookingCalendar
             turfId={turf.id}
-            slots={labeledSlots}
-            closedDays={closedDays}
+            slug={turf.slug}
+            month={month}
+            today={today}
+            horizonEnd={horizonEnd}
+            days={days}
           />
         )}
       </section>

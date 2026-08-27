@@ -8,7 +8,6 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
 import {
   Select,
   SelectContent,
@@ -103,25 +102,39 @@ export function DayExceptionForm({
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
-        <Label
-          htmlFor={`closed-${date}`}
-          className="text-sm font-medium text-foreground"
-        >
-          {t("turfOwner.schedule.closeThisDay")}
+      <div className="space-y-1.5">
+        <Label className="text-xs font-medium text-muted-foreground">
+          {t("turfOwner.schedule.bookingStatusLabel")}
         </Label>
-        <Switch
-          id={`closed-${date}`}
-          checked={isClosed}
-          onCheckedChange={(v) => {
-            form.setValue("isClosed", v, { shouldValidate: true })
-            if (v) {
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <Button
+            type="button"
+            variant={isClosed ? "outline" : "default"}
+            disabled={busy !== null || !isClosed}
+            onClick={() => {
+              form.setValue("isClosed", false, { shouldValidate: true })
+            }}
+          >
+            {t("turfOwner.schedule.statusOpen")}
+          </Button>
+          <Button
+            type="button"
+            variant={isClosed ? "destructive" : "outline"}
+            disabled={busy !== null || isClosed}
+            onClick={() => {
+              form.setValue("isClosed", true, { shouldValidate: true })
               form.setValue("priceMode", undefined)
               form.setValue("priceValue", undefined)
-            }
-          }}
-          disabled={busy !== null}
-        />
+            }}
+          >
+            {t("turfOwner.schedule.statusClosed")}
+          </Button>
+        </div>
+        {isClosed ? (
+          <p className="text-xs text-muted-foreground">
+            {t("turfOwner.schedule.statusClosedHint")}
+          </p>
+        ) : null}
       </div>
 
       {isClosed ? (
