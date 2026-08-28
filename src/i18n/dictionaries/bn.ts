@@ -1666,18 +1666,18 @@ export const bn: Dictionary = {
     },
     expenses: {
       title: "খরচ",
-      addExpense: "খরচ যোগ করুন",
+      addExpense: "Expense Add করুন",
       monthTotal: "এই মাসে: ৳{amount}",
       form: {
-        amount: "পরিমাণ (৳)",
-        category: "খাত",
-        date: "তারিখ",
-        vendor: "কাকে দেওয়া হলো (ঐচ্ছিক)",
+        amount: "Amount (৳)",
+        category: "Expense Type",
+        date: "Date",
+        vendor: "কাকে দিয়েছেন (Optional)",
         vendorPh: "যেমন DESCO, বাদল সাহেব",
-        note: "নোট (ঐচ্ছিক)",
+        note: "Note (Optional)",
         repeatMonthly: "প্রতি মাসে হয়",
         repeatMonthlyHint:
-          "প্রতি মাসে এখানে মনে করিয়ে দেব — এক ট্যাপে paid করা যাবে।",
+          "প্রতি মাসে এখানে Reminder পাবেন—এক Tap-এ Paid করে দিতে পারবেন।",
       },
       empty: "এখনো কোনো খরচ যোগ করা হয়নি",
       emptyBody:
