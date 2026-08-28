@@ -19,9 +19,9 @@ export const ERP_PREMIUM_PLANS: ErpPremiumPlan[] = [
 ]
 
 export const ERP_MFS_ACCOUNTS: Record<"bkash" | "nagad" | "rocket", string> = {
-  bkash: "01XXXXXXXXX",
-  nagad: "01XXXXXXXXX",
-  rocket: "0XXXXXXXXXX",
+  bkash: "01521425927",
+  nagad: "01521425927",
+  rocket: "01521425927",
 }
 
 export const ERP_MFS_ACCOUNT_TYPES: Record<"bkash" | "nagad" | "rocket", string> = {
