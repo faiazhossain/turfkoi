@@ -9,6 +9,7 @@ import {
   numeric,
   boolean,
   jsonb,
+  smallint,
   index,
   uniqueIndex,
   check,
@@ -117,6 +118,53 @@ export const erpBudgets = pgTable(
       .notNull(),
   },
   (t) => [uniqueIndex("erp_budgets_owner_month_uniq").on(t.ownerId, t.month)]
+)
+
+// ---------------------------------------------------------------------------
+// Premium monetization: manual MFS payment requests. Owners send money via
+// bKash/Nagad/Rocket to the DeshiTurf number, then submit txn id + optional
+// receipt image (Cloudinary public id). Admin verifies → premium granted.
+// ---------------------------------------------------------------------------
+
+export const erpPremiumRequestStatus = pgEnum("erp_premium_request_status", [
+  "pending",
+  "approved",
+  "rejected",
+])
+export const erpPremiumMethod = pgEnum("erp_premium_method", [
+  "bkash",
+  "nagad",
+  "rocket",
+])
+
+export const erpPremiumRequests = pgTable(
+  "erp_premium_requests",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    ownerId: uuid("owner_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    months: smallint("months").notNull(),
+    amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
+    method: erpPremiumMethod("method").notNull(),
+    senderNumber: text("sender_number").notNull(),
+    transactionId: text("transaction_id").notNull(),
+    receiptPublicId: text("receipt_public_id"),
+    status: erpPremiumRequestStatus("status").notNull().default("pending"),
+    ownerNote: text("owner_note"),
+    rejectReason: text("reject_reason"),
+    reviewedBy: uuid("reviewed_by").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [
+    index("erp_premium_requests_owner_idx").on(t.ownerId, t.createdAt),
+    index("erp_premium_requests_status_idx").on(t.status, t.createdAt),
+  ]
 )
 
 // ---------------------------------------------------------------------------

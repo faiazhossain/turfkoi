@@ -270,6 +270,121 @@ export const erpAutoPostBills = inngest.createFunction(
   }
 )
 
+/**
+ * ERP daily reminder fan-out (04:07 Asia/Dhaka = 22:07 UTC; BD fixed UTC+6):
+ * bills due within 3 days and pending salaries → owner bell notifications.
+ * Deduped per day via erp_profiles.settings (lastBillAlertOn/lastSalaryAlertOn)
+ * so re-runs and retries never spam the owner.
+ */
+export const erpNotificationsDaily = inngest.createFunction(
+  {
+    id: "erp-notifications-daily",
+    name: "Send daily ERP bill/salary reminders",
+    triggers: [{ cron: "7 22 * * *" }],
+  },
+  async ({ step }) => {
+    const { erpProfiles, erpRecurringRules } = await import("@/db/schema")
+    const { createNotifications } = await import("@/features/notifications/create")
+    const { todayInDhaka } = await import("@/lib/slot-expansion")
+
+    const today = await step.run("compute-day", async () => todayInDhaka())
+    const in3 = await step.run("compute-window", async () => {
+      const d = new Date(`${today}T00:00:00Z`)
+      d.setUTCDate(d.getUTCDate() + 3)
+      return d.toISOString().slice(0, 10)
+    })
+
+    const rules = await step.run("collect-due-bills", async () => {
+      const { and, eq, lte: le } = await import("drizzle-orm")
+      return db
+        .select()
+        .from(erpRecurringRules)
+        .where(
+          and(
+            eq(erpRecurringRules.isActive, true),
+            le(erpRecurringRules.nextDueDate, in3)
+          )
+        )
+    })
+
+    const ownersWithBills = [
+      ...new Set(rules.map((r) => r.ownerId)),
+    ]
+
+    await step.run("send-bill-reminders", async () => {
+      const { and, eq, lte: le } = await import("drizzle-orm")
+      for (const ownerId of ownersWithBills) {
+        const [profile] = await db
+          .select()
+          .from(erpProfiles)
+          .where(eq(erpProfiles.ownerId, ownerId))
+          .limit(1)
+        const settings = (profile?.settings ?? {}) as Record<string, unknown>
+        if (settings.lastBillAlertOn === today) continue
+
+        const [nextRule] = await db
+          .select({ name: erpRecurringRules.name, nextDueDate: erpRecurringRules.nextDueDate })
+          .from(erpRecurringRules)
+          .where(
+            and(
+              eq(erpRecurringRules.ownerId, ownerId),
+              eq(erpRecurringRules.isActive, true),
+              le(erpRecurringRules.nextDueDate, in3)
+            )
+          )
+          .orderBy(erpRecurringRules.nextDueDate)
+          .limit(1)
+        if (!nextRule) continue
+
+        await createNotifications(
+          {
+            type: "erp.bill_due",
+            payload: { name: nextRule.name, dueDate: nextRule.nextDueDate },
+          },
+          [ownerId]
+        )
+        settings.lastBillAlertOn = today
+        await db
+          .update(erpProfiles)
+          .set({ settings, updatedAt: new Date() })
+          .where(eq(erpProfiles.ownerId, ownerId))
+      }
+    })
+
+    await step.run("send-salary-reminders", async () => {
+      const { getSalaryMonth } = await import("@/features/erp/queries")
+      const { monthOfDate } = await import("@/features/erp/finance")
+      const month = monthOfDate(today)
+      const ownerIds = await db
+        .selectDistinct({ ownerId: erpProfiles.ownerId })
+        .from(erpProfiles)
+      for (const { ownerId } of ownerIds) {
+        const [profile] = await db
+          .select()
+          .from(erpProfiles)
+          .where(eq(erpProfiles.ownerId, ownerId))
+          .limit(1)
+        const settings = (profile?.settings ?? {}) as Record<string, unknown>
+        if (settings.lastSalaryAlertOn === today) continue
+        const rows = await getSalaryMonth(ownerId, month)
+        const pending = rows.filter((r) => r.status !== "paid")
+        if (pending.length === 0) continue
+        await createNotifications(
+          { type: "erp.salary_pending", payload: { count: pending.length } },
+          [ownerId]
+        )
+        settings.lastSalaryAlertOn = today
+        await db
+          .update(erpProfiles)
+          .set({ settings, updatedAt: new Date() })
+          .where(eq(erpProfiles.ownerId, ownerId))
+      }
+    })
+
+    return { bills: ownersWithBills.length }
+  }
+)
+
 // All durable jobs, declared after every function above.
 export const inngestFunctionsAll = [
   expireSlotHold,
@@ -277,4 +392,5 @@ export const inngestFunctionsAll = [
   hardAnonymizeAccount,
   materializeSchedulesNightly,
   erpAutoPostBills,
+  erpNotificationsDaily,
 ]

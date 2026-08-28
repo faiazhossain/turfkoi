@@ -15,7 +15,7 @@ type SignedUploadResponse = {
   maxDim: number
 }
 
-export type ImageUploadContext = "turf" | "team" | "player"
+export type ImageUploadContext = "turf" | "team" | "player" | "receipt"
 
 /**
  * Generic signed direct-to-Cloudinary upload: compress client-side →

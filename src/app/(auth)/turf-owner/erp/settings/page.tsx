@@ -41,6 +41,14 @@ export default async function ErpSettingsPage() {
           <span className="font-medium">{planLabel}</span>
         </p>
         <p className="mt-1 text-xs text-muted-foreground">{t("erp.plan.seeWhatStaysFree")}</p>
+        {plan.tier !== "premium" ? (
+          <a
+            href="/turf-owner/erp/premium"
+            className="mt-3 inline-flex h-9 items-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground"
+          >
+            {t("erp.premium.upgradeCta")}
+          </a>
+        ) : null}
       </section>
 
       <section className="rounded-xl border border-border bg-card p-5">

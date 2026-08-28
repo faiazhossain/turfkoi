@@ -43,6 +43,10 @@ const SAMPLE_PAYLOADS: {
     startTime: "20:00",
     refundAmount: 250,
   },
+  "erp.bill_due": { name: "Electricity bill", dueDate: "2026-08-30" },
+  "erp.salary_pending": { count: 2 },
+  "erp.premium_approved": { months: 3 },
+  "erp.premium_rejected": { reason: "Transaction ID not found" },
 }
 
 describe("notification registry", () => {

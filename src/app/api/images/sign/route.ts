@@ -11,7 +11,7 @@ import { MAX_TURF_PHOTOS } from "@/features/images/constants"
 import type { ImageContextKind } from "@/features/images/service"
 
 const bodySchema = z.object({
-  context: z.enum(["turf", "team", "player"]),
+  context: z.enum(["turf", "team", "player", "receipt"]),
   resourceId: z.string().uuid(),
 })
 

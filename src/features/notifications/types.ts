@@ -6,6 +6,9 @@ import {
   CalendarCheckIcon,
   CalendarPlusIcon,
   CalendarXIcon,
+  ReceiptTextIcon,
+  BanknoteIcon,
+  BadgeCheckIcon,
 } from "lucide-react"
 
 /**
@@ -66,6 +69,23 @@ export interface NotificationPayloads {
     date: string
     startTime: string
     refundAmount?: number
+  }
+  /** Turf owner: an ERP bill is due within 3 days. */
+  "erp.bill_due": {
+    name: string
+    dueDate: string
+  }
+  /** Turf owner: staff salaries are pending this month. */
+  "erp.salary_pending": {
+    count: number
+  }
+  /** Turf owner: their premium payment was verified and granted. */
+  "erp.premium_approved": {
+    months: number
+  }
+  /** Turf owner: their premium payment claim was rejected. */
+  "erp.premium_rejected": {
+    reason: string
   }
 }
 
@@ -173,6 +193,53 @@ export const NOTIFICATION_TYPES: Registry = {
             params: { date: p.date, start: p.startTime },
           },
     href: (p) => `/bookings/${p.bookingId}`,
+  },
+  "erp.bill_due": {
+    priority: "info",
+    audience: "turf_owner",
+    icon: ReceiptTextIcon,
+    title: (p) => ({
+      key: "notifications.erpBillDueTitle",
+      params: { name: p.name },
+    }),
+    body: () => ({ key: "notifications.erpBillDueBody" }),
+    href: () => "/turf-owner/erp/bills",
+  },
+  "erp.salary_pending": {
+    priority: "info",
+    audience: "turf_owner",
+    icon: BanknoteIcon,
+    title: (p) => ({
+      key: "notifications.erpSalaryPendingTitle",
+      params: { count: p.count },
+    }),
+    body: () => ({ key: "notifications.erpSalaryPendingBody" }),
+    href: () => "/turf-owner/erp/staff/salaries",
+  },
+  "erp.premium_approved": {
+    priority: "transactional",
+    audience: "turf_owner",
+    icon: BadgeCheckIcon,
+    title: (p) => ({
+      key: "notifications.erpPremiumApprovedTitle",
+      params: { months: p.months },
+    }),
+    body: (p) => ({
+      key: "notifications.erpPremiumApprovedBody",
+      params: { months: p.months },
+    }),
+    href: () => "/turf-owner/erp/premium",
+  },
+  "erp.premium_rejected": {
+    priority: "transactional",
+    audience: "turf_owner",
+    icon: CircleXIcon,
+    title: () => ({ key: "notifications.erpPremiumRejectedTitle" }),
+    body: (p): LocalizedText | null =>
+      p.reason
+        ? { key: "notifications.erpPremiumRejectedBody", params: { reason: p.reason } }
+        : null,
+    href: () => "/turf-owner/erp/premium",
   },
 }
 

@@ -26,6 +26,17 @@ export async function assertImageRights(
 ): Promise<RightsResult> {
   if (!user) return { ok: false, error: "errors.notSignedIn" }
 
+  // Premium payment receipts: owners upload their own receipt, keyed by userId.
+  if (context === "receipt") {
+    if (!user.roles.includes("turf_owner") && !user.roles.includes("admin")) {
+      return { ok: false, error: "images.errors.turfOwnersOnly" }
+    }
+    if (resourceId !== user.id) {
+      return { ok: false, error: "images.errors.ownAvatarOnly" }
+    }
+    return { ok: true, userId: user.id }
+  }
+
   if (context === "player") {
     if (resourceId !== user.id) {
       return { ok: false, error: "images.errors.ownAvatarOnly" }

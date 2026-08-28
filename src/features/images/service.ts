@@ -18,7 +18,7 @@ import { buildImageUrl, type ImageVariant } from "./urls"
  * delivery-time concept (see ./urls).
  */
 
-export type ImageContextKind = "turf" | "team" | "player"
+export type ImageContextKind = "turf" | "team" | "player" | "receipt"
 
 export interface ImageContextConfig {
   /** Cloudinary folder for the resource. */
@@ -53,6 +53,14 @@ export const IMAGE_CONTEXTS: Record<ImageContextKind, ImageContextConfig> = {
     maxStoredBytes: 4 * 1024 * 1024,
     maxDim: 800,
     allowedFormats: ["jpeg", "png", "webp", "avif"],
+  },
+  // Premium payment receipts: uploaded by the owner, resourceId = owner userId.
+  receipt: {
+    folder: (id) => `deshiturf/receipts/${id}`,
+    uploadTransform: "c_limit,w_1200,q_auto",
+    maxStoredBytes: 4 * 1024 * 1024,
+    maxDim: 1200,
+    allowedFormats: ["jpeg", "png", "webp"],
   },
 }
 

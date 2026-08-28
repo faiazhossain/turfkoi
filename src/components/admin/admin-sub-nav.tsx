@@ -12,6 +12,7 @@ import {
   SwordsIcon,
   CreditCardIcon,
   FlagIcon,
+  BadgeCheckIcon,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useI18n } from "@/i18n/client"
@@ -26,12 +27,15 @@ const NAV = [
   { href: "/admin/matches", labelKey: "admin.sections.matches", icon: SwordsIcon },
   { href: "/admin/transactions", labelKey: "admin.sections.transactions", icon: CreditCardIcon },
   { href: "/admin/reports", labelKey: "admin.sections.reports", icon: FlagIcon },
+  { href: "/admin/erp-premium", labelKey: "admin.sections.erpPremium", icon: BadgeCheckIcon },
 ]
 
 export function AdminSubNav({
   pendingApplications = 0,
+  pendingPremiumRequests = 0,
 }: {
   pendingApplications?: number
+  pendingPremiumRequests?: number
 }) {
   const pathname = usePathname()
   const { t } = useI18n()
@@ -52,7 +56,11 @@ export function AdminSubNav({
               ? pendingApplications > 9
                 ? "9+"
                 : String(pendingApplications)
-              : null
+              : item.href === "/admin/erp-premium" && pendingPremiumRequests > 0
+                ? pendingPremiumRequests > 9
+                  ? "9+"
+                  : String(pendingPremiumRequests)
+                : null
           return (
             <li key={item.href}>
               <Link

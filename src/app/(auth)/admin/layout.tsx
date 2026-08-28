@@ -5,6 +5,7 @@ import { EmptyState } from "@/components/shared"
 import { AdminSubNav } from "@/components/admin"
 import { getCurrentUser } from "@/lib/auth"
 import { countPendingApplications } from "@/features/turf-applications/queries"
+import { countPendingPremiumRequests } from "@/features/erp/premium"
 import { getT } from "@/i18n/server"
 import { buildMetadata } from "@/i18n/metadata"
 
@@ -31,9 +32,12 @@ export default async function AdminLayout({
     )
   }
 
-  // Badge on the Applications sub-nav item (kept fresh by the revalidatePath
-  // calls in the application actions).
-  const pendingApplications = await countPendingApplications()
+  // Badges on the Applications / ERP Premium sub-nav items (kept fresh by the
+  // revalidatePath calls in the corresponding actions).
+  const [pendingApplications, pendingPremiumRequests] = await Promise.all([
+    countPendingApplications(),
+    countPendingPremiumRequests(),
+  ])
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-12">
@@ -41,7 +45,10 @@ export default async function AdminLayout({
         <h1 className="font-heading text-2xl font-semibold">{t("admin.title")}</h1>
         <p className="text-sm text-muted-foreground">{t("admin.subtitle")}</p>
       </header>
-      <AdminSubNav pendingApplications={pendingApplications} />
+      <AdminSubNav
+        pendingApplications={pendingApplications}
+        pendingPremiumRequests={pendingPremiumRequests}
+      />
       {children}
     </div>
   )

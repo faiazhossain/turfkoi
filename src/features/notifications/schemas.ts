@@ -40,6 +40,19 @@ export const notificationPayloadSchemas = {
     startTime: z.string(),
     refundAmount: z.number().optional(),
   }),
+  "erp.bill_due": z.object({
+    name: z.string(),
+    dueDate: z.string(),
+  }),
+  "erp.salary_pending": z.object({
+    count: z.number(),
+  }),
+  "erp.premium_approved": z.object({
+    months: z.number(),
+  }),
+  "erp.premium_rejected": z.object({
+    reason: z.string(),
+  }),
 } satisfies Record<NotificationType, z.ZodType>
 
 export type NotificationPayloadInput = {
