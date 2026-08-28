@@ -39,7 +39,7 @@ export function ErpSheet({
           </Button>
         }
       />
-      <DialogContent className="max-h-[90dvh] gap-4 overflow-y-auto rounded-t-2xl rounded-b-none px-5 pb-8 pt-4 max-sm:inset-x-0 max-sm:top-auto max-sm:translate-x-0 max-sm:translate-y-0 sm:inset-x-auto sm:max-w-lg sm:rounded-2xl sm:px-6">
+      <DialogContent className="max-h-[90dvh] gap-4 overflow-y-auto rounded-t-2xl rounded-b-none px-5 pb-8 pt-4 max-sm:inset-x-0 max-sm:top-auto max-sm:bottom-0 max-sm:translate-x-0 max-sm:translate-y-0 sm:max-w-lg sm:rounded-2xl sm:px-6">
         <DialogHeader className="p-0">
           <DialogTitle className="font-heading text-base font-semibold">
             {title}
