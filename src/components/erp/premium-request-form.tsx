@@ -92,7 +92,17 @@ export function PremiumRequestForm({
           </Label>
           <Select value={months} onValueChange={(v) => setMonths(v ?? String(plans[0]?.months))}>
             <SelectTrigger className="w-full">
-              <SelectValue />
+              <SelectValue>
+                {(() => {
+                  const plan = plans.find((p) => String(p.months) === months)
+                  return plan
+                    ? t("erp.premium.planOption", {
+                        months: plan.months,
+                        amount: plan.amountBdt.toLocaleString(),
+                      })
+                    : t("erp.premium.plan")
+                })()}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {plans.map((p) => (
@@ -112,7 +122,7 @@ export function PremiumRequestForm({
           </Label>
           <Select value={method} onValueChange={(v) => setMethod((v ?? "bkash") as (typeof METHODS)[number])}>
             <SelectTrigger className="w-full">
-              <SelectValue />
+              <SelectValue>{t(`erp.premium.methods.${method}`)}</SelectValue>
             </SelectTrigger>
             <SelectContent>
               {METHODS.map((m) => (

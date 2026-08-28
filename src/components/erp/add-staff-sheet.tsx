@@ -97,7 +97,9 @@ export function AddStaffSheet() {
               }
             >
               <SelectTrigger className="w-full">
-                <SelectValue />
+                <SelectValue>
+                  {position ? t(`erp.staff.positions.${position}`) : t("erp.staff.form.position")}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {POSITIONS.map((p) => (
