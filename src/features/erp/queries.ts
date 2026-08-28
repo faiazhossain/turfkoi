@@ -21,6 +21,7 @@ import { getOwnerKPIs } from "@/features/turfs/queries"
 
 import {
   SYSTEM_CATEGORY_KIND,
+  SYSTEM_CATEGORY_LABEL_EN,
   SYSTEM_CATEGORY_SLUGS,
   daysUntil,
   monthRange,
@@ -43,7 +44,7 @@ export async function listCategories(ownerId: string): Promise<ErpCategory[]> {
       SYSTEM_CATEGORY_SLUGS.map((slug) => ({
         ownerId,
         slug,
-        name: slug,
+        name: SYSTEM_CATEGORY_LABEL_EN[slug],
         kind: SYSTEM_CATEGORY_KIND[slug],
         isSystem: true,
       }))

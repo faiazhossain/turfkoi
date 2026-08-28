@@ -36,6 +36,21 @@ export const SYSTEM_CATEGORY_KIND: Record<SystemCategorySlug, "fixed" | "variabl
   other: "variable",
 }
 
+/** Human-readable stored names (custom categories use the owner's text). */
+export const SYSTEM_CATEGORY_LABEL_EN: Record<SystemCategorySlug, string> = {
+  rent: "Rent",
+  electricity: "Electricity",
+  water: "Water",
+  internet: "Internet",
+  staff_salary: "Staff salary",
+  cleaning: "Cleaning",
+  maintenance: "Maintenance",
+  equipment: "Equipment",
+  marketing: "Marketing",
+  security: "Security",
+  other: "Other",
+}
+
 const MONTH_RE = /^\d{4}-\d{2}$/
 
 /** Round to 2 decimal places without float drift (paisa math). */
