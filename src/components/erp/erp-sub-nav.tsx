@@ -1,6 +1,5 @@
 "use client"
 
-import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
@@ -17,12 +16,9 @@ import {
   SparklesIcon,
   FileTextIcon,
   SettingsIcon,
-  ChevronDownIcon,
-  CheckIcon,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useI18n } from "@/i18n/client"
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 
 /**
  * ERP navigation, designed the way premium SaaS products do it (Stripe /
@@ -146,91 +142,61 @@ export function ErpSidebarNav() {
   )
 }
 
-/** Mobile: current-page selector that opens the grouped menu in a sheet. */
+/**
+ * Mobile: every section visible at once as icon tiles — the bKash-app home
+ * pattern that Bangladeshi users already know. Nothing hidden behind a
+ * dropdown; the active tile is highlighted.
+ */
 export function ErpMobileNav() {
   const { t } = useI18n()
   const activeHref = useActiveHref()
-  const [open, setOpen] = useState(false)
-  const current = ALL_ITEMS.find((i) => i.href === activeHref) ?? ALL_ITEMS[0]
-  const CurrentIcon = current.icon
 
   return (
-    <div className="lg:hidden">
-      <Sheet open={open} onOpenChange={setOpen}>
-        <SheetTrigger
-          render={
-            <button
-              type="button"
-              aria-label={t("erp.navAria")}
-              className="flex h-11 w-full items-center justify-between rounded-xl border border-border bg-card px-4 text-sm font-medium transition-colors hover:bg-muted/50"
-            >
-              <span className="flex items-center gap-2.5">
-                <CurrentIcon className="size-4 text-primary" aria-hidden />
-                {t(current.labelKey)}
-              </span>
-              <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                {t("erp.nav.menu")}
-                <ChevronDownIcon className="size-4" aria-hidden />
-              </span>
-            </button>
-          }
-        />
-        <SheetContent
-          side="bottom"
-          className="mx-auto max-h-[85dvh] max-w-lg overflow-y-auto rounded-t-2xl px-5 pb-8 pt-4"
-        >
-          <SheetHeader className="p-0 pb-2">
-            <SheetTitle className="font-heading text-base font-semibold">
-              {t("erp.title")}
-            </SheetTitle>
-          </SheetHeader>
-          <nav aria-label={t("erp.navAria")}>
-            {GROUPS.map((group, gi) => (
-              <div key={group.labelKey ?? `g${gi}`}>
-                {group.labelKey ? (
-                  <p className="pb-1 pt-4 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/60">
-                    {t(group.labelKey)}
-                  </p>
-                ) : (
-                  gi > 0 && <div className="mt-4 border-t border-border/60" />
-                )}
-                <ul className="space-y-0.5">
-                  {group.items.map((item) => {
-                    const active = item.href === activeHref
-                    const Icon = item.icon
-                    return (
-                      <li key={item.href}>
-                        <Link
-                          href={item.href}
-                          onClick={() => setOpen(false)}
-                          aria-current={active ? "page" : undefined}
-                          className={cn(
-                            "flex h-11 items-center justify-between rounded-lg px-3 text-sm transition-colors",
-                            active
-                              ? "bg-primary/10 font-medium text-primary"
-                              : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
-                          )}
-                        >
-                          <span className="flex items-center gap-2.5">
-                            <Icon className="size-4 shrink-0" aria-hidden />
-                            {t(item.labelKey)}
-                          </span>
-                          {active ? <CheckIcon className="size-4" aria-hidden /> : null}
-                        </Link>
-                      </li>
-                    )
-                  })}
-                </ul>
-              </div>
-            ))}
-          </nav>
-        </SheetContent>
-      </Sheet>
-    </div>
+    <nav aria-label={t("erp.navAria")} className="lg:hidden">
+      {GROUPS.map((group, gi) => (
+        <div key={group.labelKey ?? `g${gi}`}>
+          {group.labelKey ? (
+            <p className="pb-1.5 pt-4 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/60">
+              {t(group.labelKey)}
+            </p>
+          ) : null}
+          <ul
+            className={cn(
+              "grid gap-2",
+              group.items.length <= 2 ? "grid-cols-2" : "grid-cols-3"
+            )}
+          >
+            {group.items.map((item) => {
+              const active = item.href === activeHref
+              const Icon = item.icon
+              return (
+                <li key={item.href}>
+                  <Link
+                    href={item.href}
+                    aria-current={active ? "page" : undefined}
+                    className={cn(
+                      "flex h-full flex-col items-center justify-center gap-2 rounded-xl border px-2 py-4 text-center transition-colors",
+                      active
+                        ? "border-primary/60 bg-primary/10 text-primary"
+                        : "border-border bg-card text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                    )}
+                  >
+                    <Icon className="size-5 shrink-0" aria-hidden />
+                    <span className="text-xs font-medium leading-tight">
+                      {t(item.labelKey)}
+                    </span>
+                  </Link>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+      ))}
+    </nav>
   )
 }
 
-/** Kept for compatibility — renders the mobile selector (no scroll strip). */
+/** Kept for compatibility — renders the mobile tile grid (no scroll strip). */
 export function ErpSubNav() {
   return <ErpMobileNav />
 }

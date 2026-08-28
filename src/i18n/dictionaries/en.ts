@@ -1192,14 +1192,6 @@ export const en = {
     subtitle: "Payouts, refunds, disputes, and oversight.",
     notAdminTitle: "Not an admin",
     notAdminDesc: "You need the admin role to view this page.",
-        navGroups: {
-      money: "Money",
-      people: "People",
-      operations: "Operations",
-      insight: "Insight",
-      more: "More",
-    },
-    backToDashboard: "Back to dashboard",
     navAria: "Admin sections",
     backToOverview: "← Back to overview",
     filter: "Filter",
@@ -1533,6 +1525,14 @@ export const en = {
   erp: {
     title: "Business",
     subtitle: "Your turf business — income, expenses, staff, and profit in one place.",
+    backToDashboard: "Back to dashboard",
+    navGroups: {
+      money: "Money",
+      people: "People",
+      operations: "Operations",
+      insight: "Insight",
+      more: "More",
+    },
     navAria: "Business sections",
     nav: {
       overview: "Overview",
@@ -1548,7 +1548,6 @@ export const en = {
       assistant: "Assistant",
       reports: "Reports",
       settings: "Settings",
-      menu: "Menu",
     },
     plan: {
       trial: "Your ERP trial is running — {days} days left.",

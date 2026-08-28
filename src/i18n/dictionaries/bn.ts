@@ -1225,14 +1225,6 @@ export const bn: Dictionary = {
     subtitle: "পে-আউট, রিফান্ড, ডিসপিউট আর সার্বিক তদারকি।",
     notAdminTitle: "আপনি অ্যাডমিন নন",
     notAdminDesc: "এই পেজ দেখতে অ্যাডমিন রোল লাগবে।",
-        navGroups: {
-      money: "টাকার হিসাব",
-      people: "মানুষ",
-      operations: "পরিচালনা",
-      insight: "ইনসাইট",
-      more: "আরও",
-    },
-    backToDashboard: "ড্যাশবোর্ডে ফিরে যান",
     navAria: "অ্যাডমিন সেকশন",
     backToOverview: "← ওভারভিউতে ফিরুন",
     filter: "ফিল্টার",
@@ -1568,6 +1560,14 @@ export const bn: Dictionary = {
   erp: {
     title: "ব্যবসা",
     subtitle: "আপনার turf business — আয়, খরচ, staff আর লাভ এক জায়গায়।",
+    backToDashboard: "ড্যাশবোর্ডে ফিরে যান",
+    navGroups: {
+      money: "টাকার হিসাব",
+      people: "মানুষ",
+      operations: "পরিচালনা",
+      insight: "ইনসাইট",
+      more: "আরও",
+    },
     navAria: "ব্যবসা সেকশন",
     nav: {
       overview: "ওভারভিউ",
@@ -1583,7 +1583,6 @@ export const bn: Dictionary = {
       assistant: "অ্যাসিস্ট্যান্ট",
       reports: "রিপোর্ট",
       settings: "সেটিংস",
-      menu: "মেনু",
     },
     plan: {
       trial: "আপনার ERP trial চলছে — আরও {days} দিন।",
