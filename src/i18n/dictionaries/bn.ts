@@ -1583,6 +1583,7 @@ export const bn: Dictionary = {
       assistant: "অ্যাসিস্ট্যান্ট",
       reports: "রিপোর্ট",
       settings: "সেটিংস",
+      sectionPicker: "ব্যবসার সেকশন",
     },
     plan: {
       trial: "আপনার ERP trial চলছে — আরও {days} দিন।",

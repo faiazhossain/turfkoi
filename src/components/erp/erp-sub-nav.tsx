@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import {
   LayoutDashboardIcon,
   TrendingUpIcon,
@@ -19,6 +19,14 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useI18n } from "@/i18n/client"
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+} from "@/components/ui/select"
 
 /**
  * ERP navigation, designed the way premium SaaS products do it (Stripe /
@@ -143,60 +151,67 @@ export function ErpSidebarNav() {
 }
 
 /**
- * Mobile: every section visible at once as icon tiles — the bKash-app home
- * pattern that Bangladeshi users already know. Nothing hidden behind a
- * dropdown; the active tile is highlighted.
+ * Mobile: a dropdown that looks and behaves exactly like the selects in the
+ * ERP forms (same component, same affordance), so it reads as "pick a
+ * section" — with a visible label and grouped options. Navigation happens
+ * on selection.
  */
 export function ErpMobileNav() {
   const { t } = useI18n()
+  const router = useRouter()
   const activeHref = useActiveHref()
+  const current = ALL_ITEMS.find((i) => i.href === activeHref) ?? ALL_ITEMS[0]
+  const CurrentIcon = current.icon
 
   return (
     <nav aria-label={t("erp.navAria")} className="lg:hidden">
-      {GROUPS.map((group, gi) => (
-        <div key={group.labelKey ?? `g${gi}`}>
-          {group.labelKey ? (
-            <p className="pb-1.5 pt-4 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/60">
-              {t(group.labelKey)}
-            </p>
-          ) : null}
-          <ul
-            className={cn(
-              "grid gap-2",
-              group.items.length <= 2 ? "grid-cols-2" : "grid-cols-3"
-            )}
-          >
-            {group.items.map((item) => {
-              const active = item.href === activeHref
-              const Icon = item.icon
-              return (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    aria-current={active ? "page" : undefined}
-                    className={cn(
-                      "flex h-full flex-col items-center justify-center gap-2 rounded-xl border px-2 py-4 text-center transition-colors",
-                      active
-                        ? "border-primary/60 bg-primary/10 text-primary"
-                        : "border-border bg-card text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-                    )}
-                  >
-                    <Icon className="size-5 shrink-0" aria-hidden />
-                    <span className="text-xs font-medium leading-tight">
-                      {t(item.labelKey)}
+      <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
+        {t("erp.nav.sectionPicker")}
+      </label>
+      <Select
+        value={current.href}
+        onValueChange={(href) => {
+          if (href && href !== current.href) router.push(href)
+        }}
+      >
+        <SelectTrigger className="h-11 w-full">
+          <span className="flex items-center gap-2.5 text-sm font-medium">
+            <CurrentIcon className="size-4 text-primary" aria-hidden />
+            {t(current.labelKey)}
+          </span>
+        </SelectTrigger>
+        <SelectContent className="max-h-[70dvh]">
+          {GROUPS.map((group, gi) => (
+            <SelectGroup key={group.labelKey ?? `g${gi}`}>
+              {group.labelKey ? (
+                <SelectLabel>{t(group.labelKey)}</SelectLabel>
+              ) : null}
+              {group.items.map((item) => {
+                const Icon = item.icon
+                return (
+                  <SelectItem key={item.href} value={item.href}>
+                    <span className="flex items-center gap-2.5">
+                      <Icon
+                        className={cn(
+                          "size-4",
+                          item.href === activeHref ? "text-primary" : "text-muted-foreground"
+                        )}
+                        aria-hidden
+                      />
+                      <span>{t(item.labelKey)}</span>
                     </span>
-                  </Link>
-                </li>
-              )
-            })}
-          </ul>
-        </div>
-      ))}
+                  </SelectItem>
+                )
+              })}
+            </SelectGroup>
+          ))}
+        </SelectContent>
+      </Select>
     </nav>
   )
 }
 
-/** Kept for compatibility — renders the mobile tile grid (no scroll strip). */
+/** Kept for compatibility — renders the mobile dropdown (no scroll strip). */
 export function ErpSubNav() {
   return <ErpMobileNav />
 }

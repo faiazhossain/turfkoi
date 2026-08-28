@@ -1548,6 +1548,7 @@ export const en = {
       assistant: "Assistant",
       reports: "Reports",
       settings: "Settings",
+      sectionPicker: "Business section",
     },
     plan: {
       trial: "Your ERP trial is running — {days} days left.",
