@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import { redirect } from "next/navigation"
 
 import { EmptyState } from "@/components/shared"
-import { ErpSubNav } from "@/components/erp"
+import { ErpSidebarNav, ErpMobileNav } from "@/components/erp"
 import { getCurrentUser } from "@/lib/auth"
 import { getT } from "@/i18n/server"
 import { buildMetadata } from "@/i18n/metadata"
@@ -61,8 +61,20 @@ export default async function ErpLayout({
           {t("erp.plan.trialEnding", { days: plan.trialDaysLeft })}
         </div>
       ) : null}
-      <ErpSubNav />
-      {children}
+
+      <div className="lg:grid lg:grid-cols-[230px_minmax(0,1fr)] lg:gap-10">
+        <aside className="hidden lg:block">
+          <div className="sticky top-24">
+            <ErpSidebarNav />
+          </div>
+        </aside>
+        <div className="min-w-0">
+          <div className="mb-6 lg:hidden">
+            <ErpMobileNav />
+          </div>
+          {children}
+        </div>
+      </div>
     </div>
   )
 }

@@ -1,4 +1,4 @@
-export { ErpSubNav } from "./erp-sub-nav"
+export { ErpSubNav, ErpSidebarNav, ErpMobileNav } from "./erp-sub-nav"
 export { ErpSheet } from "./erp-sheet"
 export { AddExpenseSheet } from "./add-expense-sheet"
 export { AddIncomeSheet } from "./add-income-sheet"
