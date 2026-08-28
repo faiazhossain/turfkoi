@@ -1199,6 +1199,7 @@ export const en = {
       insight: "Insight",
       more: "More",
     },
+    backToDashboard: "Back to dashboard",
     navAria: "Admin sections",
     backToOverview: "← Back to overview",
     filter: "Filter",

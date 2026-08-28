@@ -1232,6 +1232,7 @@ export const bn: Dictionary = {
       insight: "ইনসাইট",
       more: "আরও",
     },
+    backToDashboard: "ড্যাশবোর্ডে ফিরে যান",
     navAria: "অ্যাডমিন সেকশন",
     backToOverview: "← ওভারভিউতে ফিরুন",
     filter: "ফিল্টার",

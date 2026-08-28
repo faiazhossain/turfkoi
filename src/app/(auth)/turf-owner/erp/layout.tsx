@@ -1,5 +1,7 @@
 import type { Metadata } from "next"
+import Link from "next/link"
 import { redirect } from "next/navigation"
+import { ArrowLeftIcon } from "lucide-react"
 
 import { EmptyState } from "@/components/shared"
 import { ErpSidebarNav, ErpMobileNav } from "@/components/erp"
@@ -38,6 +40,13 @@ export default async function ErpLayout({
     <div className="mx-auto max-w-6xl px-4 py-12">
       <header className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
+          <Link
+            href="/turf-owner"
+            className="mb-2 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <ArrowLeftIcon className="size-4" aria-hidden />
+            {t("erp.backToDashboard")}
+          </Link>
           <h1 className="font-heading text-2xl font-semibold">{t("erp.title")}</h1>
           <p className="text-sm text-muted-foreground">{t("erp.subtitle")}</p>
         </div>
