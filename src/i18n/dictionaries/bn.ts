@@ -218,7 +218,8 @@ export const bn: Dictionary = {
     cancellationRebook: "অন্য কোনো player সেই slotটি বুক করলেই ফেরত পাবেন।",
     cancellationStrict: "বুক করার পর ফেরতযোগ্য নয়।",
     bookingCalendar: "Slot বুক করুন",
-    timeFilterLabel: "আপনি যে সময়ে খেলতে চান, সেই Slot Available আছে কি না Check করুন।",
+    timeFilterLabel:
+      "আপনি যে সময়ে খেলতে চান, সেই Slot Available আছে কি না Check করুন।",
     timeFilterAll: "সব সময়",
     legendAvailable: "খালি আছে",
     legendFull: "সম্পূর্ণ বুকড",
@@ -230,8 +231,12 @@ export const bn: Dictionary = {
     dayNoSlots: "এই দিনের কোনো slot পাবলিশ করা হয়নি।",
     monthUnavailable: "এই মাসে বুক করার মতো কোনো তারিখ নেই।",
     slotBooked: "বুকড",
+    ownerNotice:
+      "এটা আপনার নিজের Turf—তাই এখান থেকে Booking করা যাবে না। Slot Booking চালু বা বন্ধ করার Option নিচে দেওয়া আছে।",
+    slotBlock: "Booking বন্ধ করুন",
+    slotUnblock: "Booking চালু করুন",
     slotHeld: "হোল্ড করা",
-    slotBlocked: "পাওয়া যাচ্ছে না",
+    slotBlocked: "এখন Available নেই",
     slotCountOne: "১টি slot",
     slotCountMany: "{count}টি slot",
     noSlotsTitle: "এখনো কোনো slot পাবলিশ করা হয়নি",
@@ -267,6 +272,7 @@ export const bn: Dictionary = {
       slugTaken: "এই slug আগেই ব্যবহার হয়েছে।",
       alreadyClaimed: "এই টার্ফ আগেই claim হয়ে গেছে।",
       notTakingBookings: "এই turf-এ এখন booking নেওয়া যাচ্ছে না।",
+      ownerCannotBook: "নিজের turf-এর slot নিজে বুক করা যাবে না।",
     },
   },
 
@@ -468,7 +474,7 @@ export const bn: Dictionary = {
       weeklyHours: "Weekly hours",
       activeName: "Active: {name}",
       weeklyHoursDesc:
-        "একবার সেট করুন — প্রতি সপ্তাহে নিজেই চলতে থাকবে। আপনি না বদলালে কিছুই বদলায় না।",
+        "একবার সেট করে দিন—প্রতি সপ্তাহে নিজে থেকেই চলতে থাকবে। আপনি পরিবর্তন না করা পর্যন্ত সবকিছু একই থাকবে।",
       setupTitle: "Weekly Hours সেট করুন",
       setupDesc:
         "আপনার turf-এ এখনো weekly schedule সেট করা হয়নি, তাই booking-এর জন্য কোনো slot নেই। দাম, খোলার সময় আর বিরতি নিয়ে কয়েকটি সহজ প্রশ্নের উত্তর দিন — আমরা পুরো সপ্তাহটা বানিয়ে দেব।",
@@ -493,7 +499,7 @@ export const bn: Dictionary = {
       windowSaveFailed: "Booking window সেভ করা গেল না। আবার চেষ্টা করুন।",
       daysAhead: "{count} দিন আগ পর্যন্ত",
       windowHint:
-        "Player-রা সর্বোচ্চ {count} দিন আগ পর্যন্ত book করতে পারবে — window-টা প্রতিদিন নিজেই এগিয়ে যায়।",
+        "Player-রা সর্বোচ্চ {count} দিনের আগের Slot Book করতে পারবে। আপনার Turf-এর সুবিধামতো চাইলে এই Booking Window কমিয়ে বা বাড়িয়ে দিতে পারবেন।",
 
       // Day panel
       addOneOffSlot: "One-off slot যোগ করুন",
@@ -538,11 +544,13 @@ export const bn: Dictionary = {
       removeException: "Exception সরান",
 
       // Saved schedules
-      savedSchedules: "Saved schedules",
+      savedSchedules: "Saved Schedules",
       savedDesc:
         "Regular week আর seasonal hours পাশাপাশি রেখে এক tap-এ switch করুন। চাইলে একটি window দিয়ে সীমাবদ্ধ করুন - window-এর বাইরে ওই schedule কোনো slot দেয় না।",
       savedDescRamadan:
-        "Regular week আর seasonal hours পাশাপাশি রেখে এক tap-এ switch করুন। Seed করা Ramadan তারিখগুলো ({window}) এক tap-এ পাওয়া যায়। Window-এর বাইরে schedule কোনো slot দেয় না, তাই মৌসুম শেষে ফিরে যান।",
+        "আপনার Regular Week আর Seasonal Hours Save করে রাখুন। দরকার হলে এক Tap-এ যেকোনো Schedule চালু করতে পারবেন। Ramadan-এর Schedule-ও আগে থেকেই দেওয়া আছে ({window})। Schedule-এর সময়ের বাইরে কোনো Slot তৈরি হবে না, তাই Ramadan শেষ হলে আবার Regular Schedule চালু করুন।",
+      windowFrom: "{date} থেকে",
+      windowUntil: "{date} পর্যন্ত",
       sectionCount: "{count}টি section",
       windowLabel: "window {window}",
       active: "Active",
@@ -563,8 +571,8 @@ export const bn: Dictionary = {
       // Schedule builder
       scheduleName: "Schedule-এর নাম",
       status: "Status",
-      statusActive: "Active - প্রতি সপ্তাহে চলবে",
-      statusInactive: "পরের জন্য সেভ করা",
+      statusActive: "Active - প্রতি সপ্তাহে নিজে থেকেই চলবে",
+      statusInactive: "Inactive - পরে চালু করতে পারবেন",
       editingDay: "যে দিন edit করছেন",
       noSectionsThatDay: "{day}-এ কোনো section নেই - ওই দিন turf বন্ধ থাকবে।",
       labelPlaceholder: "লেবেল (যেমন Evening)",

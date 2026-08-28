@@ -222,6 +222,9 @@ export const en = {
     dayNoSlots: "No slots published for this day.",
     monthUnavailable: "No bookable dates in this month.",
     slotBooked: "Booked",
+    ownerNotice: "This is your own turf — booking from here is disabled. Use the controls below to block or open slots.",
+    slotBlock: "Block",
+    slotUnblock: "Unblock",
     slotHeld: "On hold",
     slotBlocked: "Unavailable",
     slotCountOne: "1 slot",
@@ -259,6 +262,7 @@ export const en = {
       slugTaken: "That slug is already taken.",
       alreadyClaimed: "This turf has already been claimed.",
       notTakingBookings: "This turf isn't taking bookings right now.",
+      ownerCannotBook: "You can't book a slot on your own turf.",
     },
   },
 
@@ -481,7 +485,7 @@ export const en = {
       windowSaveFailed: "Couldn't save the booking window. Try again.",
       daysAhead: "{count} days ahead",
       windowHint:
-        "Players can book up to {count} days ahead; the window moves forward by itself.",
+        "Players can book slots up to {count} days ahead. Shrink or extend this booking window to suit your turf.",
 
       // Day panel
       addOneOffSlot: "Add one-off slot",
@@ -525,11 +529,13 @@ export const en = {
       removeException: "Remove exception",
 
       // Saved schedules
-      savedSchedules: "Saved schedules",
+      savedSchedules: "Saved Schedules",
       savedDesc:
         "Keep a regular week and seasonal hours side by side and switch between them. An optional window limits when a schedule runs - outside it the schedule produces no slots.",
       savedDescRamadan:
-        "Keep a regular week and seasonal hours side by side and switch between them. The seeded Ramadan dates ({window}) are one tap away. Outside its window a schedule produces no slots, so switch back after the season ends.",
+        "Save your regular week and seasonal hours, then switch to any schedule with one tap. A Ramadan schedule comes pre-seeded ({window}). Outside a schedule's window no slots are created, so switch back to your regular schedule once Ramadan ends.",
+      windowFrom: "from {date}",
+      windowUntil: "until {date}",
       sectionCount: "{count} section(s)",
       windowLabel: "window {window}",
       active: "Active",

@@ -33,15 +33,59 @@ export function humanDateLocale(locale: Locale): string {
 }
 
 /**
- * Short human date from a YYYY-MM-DD slot date: "Mon, Jan 5" /
- * "সোম, জানু ৫". Parses the ISO parts directly to avoid UTC shift.
+ * Short human date from a YYYY-MM-DD slot date: "Mon, January 5" /
+ * "সোম, জানুয়ারি ৫". Full month name — BN abbreviations like "সেপ" read
+ * as confusing. Parses the ISO parts directly to avoid UTC shift.
  */
 export function formatSlotDate(iso: string, locale: Locale): string {
   const [y, m, d] = iso.split("-").map(Number)
   if (!y || !m || !d) return iso
   return new Intl.DateTimeFormat(humanDateLocale(locale), {
     weekday: "short",
-    month: "short",
+    month: "long",
     day: "numeric",
   }).format(new Date(y, m - 1, d))
+}
+
+function formatIso(
+  iso: string,
+  locale: Locale,
+  opts: Intl.DateTimeFormatOptions
+): string {
+  const [y, m, d] = iso.split("-").map(Number)
+  if (!y || !m || !d) return iso
+  return new Intl.DateTimeFormat(humanDateLocale(locale), opts).format(
+    new Date(y, m - 1, d)
+  )
+}
+
+/**
+ * Human date range from two YYYY-MM-DD strings: "January 30 – February 28,
+ * 2027" / "৩০ জানুয়ারি–২৮ ফেব্রুয়ারি ২০২৭". When both ends share a year it
+ * is shown once, at the end.
+ */
+export function formatDateRange(
+  from: string,
+  to: string,
+  locale: Locale
+): string {
+  const sameYear = from.slice(0, 4) === to.slice(0, 4)
+  const dayMonth = { day: "numeric", month: "long" } as const
+  if (sameYear) {
+    return `${formatIso(from, locale, dayMonth)}–${formatIso(to, locale, {
+      ...dayMonth,
+      year: "numeric",
+    })}`
+  }
+  const full = { day: "numeric", month: "long", year: "numeric" } as const
+  return `${formatIso(from, locale, full)}–${formatIso(to, locale, full)}`
+}
+
+/** Single human date: "January 30, 2027" / "৩০ জানুয়ারি ২০২৭". */
+export function formatDayMonthYear(iso: string, locale: Locale): string {
+  return formatIso(iso, locale, {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  })
 }

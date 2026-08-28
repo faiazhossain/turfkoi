@@ -30,7 +30,7 @@ describe("format-date", () => {
     const bn = formatSlotDate("2026-01-05", "bn")
     const en = formatSlotDate("2026-01-05", "en")
     expect(bn).toMatch(/[০-৯]/)
-    expect(en).toBe("Mon, Jan 5")
+    expect(en).toBe("Mon, January 5")
     // Invalid ISO falls through untouched.
     expect(formatSlotDate("not-a-date", "en")).toBe("not-a-date")
   })

@@ -11,8 +11,9 @@
 --     date) with a gist column (tsrange).
 --   * The range is [start, start + duration) with `time`-based bounds. The
 --     tsrange column is a generated STORED column so it can never drift from
---     start_time/duration_minutes; a BEFORE trigger keeps the base columns
---     in sync when the range is written.
+--     start_time/duration_minutes. No trigger: a BEFORE trigger cannot see
+--     the generated value (NEW.slot_range is NULL there), so any sync logic
+--     would null out start_time and break every plain UPDATE.
 --   * A slot ending exactly when another starts is NOT an overlap (upper
 --     bound is exclusive) — back-to-back slots stay legal.
 --   * Midnight wrap: a 23:30/90 slot's range ends at 01:00 of the NEXT
@@ -22,30 +23,13 @@
 --     tradeoff, not a silent hole.
 --   * Drizzle models slot_range in src/db/schema/turfs.ts (tsrange
 --     customType + generatedAlwaysAs) so future migration diffs never try
---     to drop it. The function/trigger/EXCLUDE constraint below are
---     hand-written: drizzle-kit cannot express them, and generate would
---     otherwise not include them on a fresh database.
+--     to drop it. The EXCLUDE constraint below is hand-written:
+--     drizzle-kit cannot express it, and generate would otherwise not
+--     include it on a fresh database.
 
 CREATE EXTENSION IF NOT EXISTS btree_gist;
 --> statement-breakpoint
 ALTER TABLE "turf_slots" ADD COLUMN "slot_range" "tsrange" GENERATED ALWAYS AS (tsrange(date + start_time, date + start_time + (duration_minutes || ' minutes')::interval, '[)')) STORED;
---> statement-breakpoint
-CREATE OR REPLACE FUNCTION turf_slots_sync_range()
-RETURNS trigger
-LANGUAGE plpgsql
-AS $$
-BEGIN
-  IF TG_OP = 'UPDATE' AND NEW.slot_range IS DISTINCT FROM OLD.slot_range THEN
-    NEW.start_time := (lower(NEW.slot_range))::time;
-    NEW.duration_minutes := EXTRACT(EPOCH FROM upper(NEW.slot_range) - lower(NEW.slot_range)) / 60;
-  END IF;
-  RETURN NEW;
-END;
-$$;
---> statement-breakpoint
-CREATE TRIGGER turf_slots_sync_range
-BEFORE INSERT OR UPDATE OF slot_range ON turf_slots
-FOR EACH ROW EXECUTE FUNCTION turf_slots_sync_range();
 --> statement-breakpoint
 ALTER TABLE "turf_slots" ADD CONSTRAINT "turf_slots_no_overlap"
 EXCLUDE USING gist (

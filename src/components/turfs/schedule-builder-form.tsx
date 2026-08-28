@@ -67,12 +67,6 @@ export function ScheduleBuilderForm({
   const sections = form.watch("sections")
   const daySections = sections.filter((s) => s.dayOfWeek === selectedDay)
 
-  const dayCounts = useMemo(() => {
-    const counts = new Array(7).fill(0) as number[]
-    for (const s of sections) counts[s.dayOfWeek] = (counts[s.dayOfWeek] ?? 0) + 1
-    return counts
-  }, [sections])
-
   // Preview + conflict signal recompute as the owner types.
   const preview = useMemo(
     () => expandSectionsForDay(sections, selectedDay),
@@ -177,9 +171,6 @@ export function ScheduleBuilderForm({
               }
             >
               {t(`turfOwner.generate.day${day}`)}
-              <span className="ml-1 text-xs opacity-70">
-                {dayCounts[day] ?? 0}
-              </span>
             </button>
           ))}
         </div>

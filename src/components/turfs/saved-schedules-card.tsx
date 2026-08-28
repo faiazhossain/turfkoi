@@ -15,17 +15,33 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { StatusBadge } from "@/components/shared"
 import { useI18n } from "@/i18n/client"
+import type { Locale } from "@/i18n/config"
+import type { Translator } from "@/i18n/translate"
 
 import { activateScheduleAction } from "@/features/turfs/actions"
 import type { SavedSchedule } from "@/features/turfs/materialize"
 import { nextRamadanWindow } from "@/lib/bd-holidays"
+import { formatDateRange, formatDayMonthYear } from "@/lib/format-date"
 
 type WindowDraft = { from: string; to: string }
 
-function formatWindow(from: string | null, to: string | null): string {
-  if (from && to) return `${from} to ${to}`
-  if (from) return `from ${from}`
-  if (to) return `until ${to}`
+function formatWindow(
+  from: string | null,
+  to: string | null,
+  locale: Locale,
+  t: Translator
+): string {
+  if (from && to) return formatDateRange(from, to, locale)
+  if (from) {
+    return t("turfOwner.schedule.windowFrom", {
+      date: formatDayMonthYear(from, locale),
+    })
+  }
+  if (to) {
+    return t("turfOwner.schedule.windowUntil", {
+      date: formatDayMonthYear(to, locale),
+    })
+  }
   return ""
 }
 
@@ -50,7 +66,7 @@ export function SavedSchedulesCard({
   today: string
 }) {
   const router = useRouter()
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
   const [pendingId, setPendingId] = useState<string | null>(null)
   const [serverError, setServerError] = useState<string | null>(null)
   const [summary, setSummary] = useState<string | null>(null)
@@ -114,7 +130,7 @@ export function SavedSchedulesCard({
         <CardDescription>
           {ramadan
             ? t("turfOwner.schedule.savedDescRamadan", {
-                window: formatWindow(ramadan.from, ramadan.to),
+                window: formatWindow(ramadan.from, ramadan.to, locale, t),
               })
             : t("turfOwner.schedule.savedDesc")}
         </CardDescription>
@@ -138,7 +154,12 @@ export function SavedSchedulesCard({
                       })}
                       {s.effectiveFrom || s.effectiveTo
                         ? ` — ${t("turfOwner.schedule.windowLabel", {
-                            window: formatWindow(s.effectiveFrom, s.effectiveTo),
+                            window: formatWindow(
+                              s.effectiveFrom,
+                              s.effectiveTo,
+                              locale,
+                              t
+                            ),
                           })}`
                         : ""}
                     </p>

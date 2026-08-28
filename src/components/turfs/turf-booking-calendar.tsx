@@ -1,7 +1,8 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 import { bn as bnLocale } from "date-fns/locale"
 import { CalendarCheckIcon } from "lucide-react"
 
@@ -22,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useHoldSlot } from "@/components/bookings/use-hold-slot"
+import { updateSlotAction } from "@/features/turfs/actions"
 import { useI18n } from "@/i18n/client"
 import { formatSlotDate } from "@/lib/format-date"
 import { formatSlotTime, formatSlotTimeRange } from "@/lib/format-time"
@@ -63,6 +65,7 @@ export function TurfBookingCalendar({
   today,
   horizonEnd,
   days,
+  isOwner = false,
 }: {
   turfId: string
   slug: string
@@ -73,12 +76,35 @@ export function TurfBookingCalendar({
   /** Last bookable date (YYYY-MM-DD) from the turf's booking horizon. */
   horizonEnd: string
   days: Record<string, BookingDay>
+  /** Viewer owns this turf: booking is replaced by block/unblock controls. */
+  isOwner?: boolean
 }) {
   const router = useRouter()
   const { t, locale } = useI18n()
   const [openDate, setOpenDate] = useState<string | null>(null)
   const [timeFilter, setTimeFilter] = useState("")
   const { hold, pending, isBusy } = useHoldSlot(turfId)
+
+  // Owner mode: block a slot (mark it unavailable) or open it back up.
+  // Treated as a manual touch server-side, so regeneration never overwrites.
+  const [savingKey, setSavingKey] = useState<string | null>(null)
+  const [saving, startSaving] = useTransition()
+  function setSlotStatus(slot: PublicSlot, status: "available" | "blocked") {
+    const key = `${slot.date}|${slot.startTime}`
+    setSavingKey(key)
+    startSaving(async () => {
+      const res = await updateSlotAction(turfId, slot.date, slot.startTime, {
+        status,
+      })
+      if (!res.ok) {
+        toast.error(t(res.error ?? "errors.generic"))
+        setSavingKey(null)
+        return
+      }
+      router.refresh()
+      setSavingKey(null)
+    })
+  }
 
   const filterMinutes = timeFilter ? toMinutes(timeFilter) : null
 
@@ -237,9 +263,11 @@ export function TurfBookingCalendar({
                     t("turfs.dayClosed"),
                     day.closedReason ? `— ${day.closedReason}` : "",
                   ].join(" ")
-                : openSlots.length > 0
-                  ? t("turfs.slotAvailableCount", { count: availableCount })
-                  : ""}
+                : isOwner
+                  ? t("turfs.ownerNotice")
+                  : openSlots.length > 0
+                    ? t("turfs.slotAvailableCount", { count: availableCount })
+                    : ""}
             </DialogDescription>
           </DialogHeader>
 
@@ -260,6 +288,19 @@ export function TurfBookingCalendar({
                       filterMinutes !== null && slotCovers(slot, filterMinutes)
                     }
                     onBook={() => hold(slot)}
+                    ownerControls={
+                      isOwner
+                        ? {
+                            saving:
+                              saving && savingKey === `${slot.date}|${slot.startTime}`,
+                            onToggle: () =>
+                              setSlotStatus(
+                                slot,
+                                slot.status === "available" ? "blocked" : "available"
+                              ),
+                          }
+                        : undefined
+                    }
                   />
                 ))}
               </ul>
@@ -277,15 +318,19 @@ function SlotRow({
   busy,
   matchesFilter,
   onBook,
+  ownerControls,
 }: {
   slot: PublicSlot
   pending: boolean
   busy: boolean
   matchesFilter: boolean
   onBook: () => void
+  /** Present when the viewer owns the turf — replaces the Book button. */
+  ownerControls?: { saving: boolean; onToggle: () => void }
 }) {
   const { t, locale } = useI18n()
   const bookable = slot.status === "available"
+  const unblockable = slot.status === "blocked" || slot.status === "maintenance"
 
   return (
     <li
@@ -329,7 +374,28 @@ function SlotRow({
         <span className="text-sm tabular-nums text-foreground">
           {formatBdt(slot.price)}
         </span>
-        {bookable ? (
+        {ownerControls ? (
+          bookable ? (
+            <Button
+              size="sm"
+              variant="outline"
+              loading={ownerControls.saving}
+              onClick={ownerControls.onToggle}
+            >
+              {t("turfs.slotBlock")}
+            </Button>
+          ) : unblockable ? (
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-success bg-success/10 text-success hover:bg-success/20 hover:text-success"
+              loading={ownerControls.saving}
+              onClick={ownerControls.onToggle}
+            >
+              {t("turfs.slotUnblock")}
+            </Button>
+          ) : null
+        ) : bookable ? (
           <Button size="sm" onClick={onBook} loading={pending}>
             {busy ? t("turfs.holding") : t("turfs.book")}
           </Button>

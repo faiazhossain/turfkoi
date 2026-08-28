@@ -95,6 +95,7 @@ export async function holdSlotAction(
       slot: turfSlots,
       isVerified: turfs.isVerified,
       isActive: turfs.isActive,
+      ownerId: turfs.ownerId,
     })
     .from(turfSlots)
     .innerJoin(turfs, eq(turfs.id, turfSlots.turfId))
@@ -108,6 +109,11 @@ export async function holdSlotAction(
     .limit(1)
   const row = slotRows[0]
   if (!row) return { ok: false, error: "turfs.errors.slotGone" }
+  // An owner manages availability from the owner console (block/unblock) —
+  // he never books his own turf, so self-holds are rejected outright.
+  if (row.ownerId === user.id) {
+    return { ok: false, error: "turfs.errors.ownerCannotBook" }
+  }
   if (!row.isVerified || !row.isActive) {
     return { ok: false, error: "turfs.errors.notTakingBookings" }
   }

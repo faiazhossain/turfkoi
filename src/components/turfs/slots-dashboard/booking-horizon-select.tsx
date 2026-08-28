@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useI18n } from "@/i18n/client"
+import { toBnDigits } from "@/lib/format-time"
 
 import { updateBookingHorizonAction } from "@/features/turfs/actions"
 import { BOOKING_HORIZON_CHOICES } from "@/features/turfs/schemas"
@@ -31,7 +32,7 @@ export function BookingHorizonSelect({
   defaultDays: number
 }) {
   const router = useRouter()
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
   const [days, setDays] = useState(defaultDays)
   const [pending, setPending] = useState(false)
 
@@ -98,7 +99,9 @@ export function BookingHorizonSelect({
         </SelectContent>
       </Select>
       <p className="w-full text-xs text-muted-foreground sm:w-auto sm:flex-1">
-        {t("turfOwner.schedule.windowHint", { count: days })}
+        {t("turfOwner.schedule.windowHint", {
+          count: locale === "bn" ? toBnDigits(String(days)) : days,
+        })}
       </p>
     </div>
   )

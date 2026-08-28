@@ -77,15 +77,20 @@ const CANCELLATION_KEYS: Record<string, string> = {
 export default async function TurfDetailPage({ params, searchParams }: PageProps) {
   const { slug } = await params
   const { month: monthParam } = await searchParams
-  const [turf, t] = await Promise.all([getTurfBySlug(slug), getT()])
+  const [turf, t, viewer] = await Promise.all([
+    getTurfBySlug(slug),
+    getT(),
+    getCurrentUser(),
+  ])
   if (!turf) notFound()
 
   // Seeded-but-unclaimed turfs stay hidden; admins can still preview them
   // from the admin console.
-  if (turf.ownerId === null) {
-    const viewer = await getCurrentUser()
-    if (!viewer?.roles.includes("admin")) notFound()
-  }
+  if (turf.ownerId === null && !viewer?.roles.includes("admin")) notFound()
+
+  // Owners never book their own turf — the calendar swaps Book buttons for
+  // block/unblock controls (server also rejects self-holds).
+  const viewerIsOwner = !!viewer && viewer.id === turf.ownerId
 
   // Displayed month: ?month=YYYY-MM clamped to [current month, horizon end].
   // Invalid or out-of-range values silently fall back to the current month
@@ -239,6 +244,7 @@ export default async function TurfDetailPage({ params, searchParams }: PageProps
             today={today}
             horizonEnd={horizonEnd}
             days={days}
+            isOwner={viewerIsOwner}
           />
         )}
       </section>
