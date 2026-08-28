@@ -1,5 +1,5 @@
 import "server-only"
-import { eq, and } from "drizzle-orm"
+import { and, eq, lte } from "drizzle-orm"
 import { Inngest } from "inngest"
 
 import { db } from "@/db"
@@ -193,9 +193,88 @@ export const materializeSchedulesNightly = inngest.createFunction(
   }
 )
 
-export const inngestFunctions = [
+/**
+ * ERP (ব্যবসা) Phase 2: auto-post recurring bills whose due date has arrived.
+ * Nightly at 03:17 Asia/Dhaka (21:17 UTC — BD is fixed UTC+6, no DST). Each
+ * missed occurrence posts one expense (source='bill') and the rule advances;
+ * catch-up is bounded so a corrupt date can't loop forever. Re-runs are safe:
+ * the due date only advances after the expense insert succeeds.
+ */
+export const erpAutoPostBills = inngest.createFunction(
+  {
+    id: "erp-autopost-bills",
+    name: "Auto-post due ERP bills",
+    triggers: [{ cron: "17 21 * * *" }],
+  },
+  async ({ step }) => {
+    const { erpAuditLogs, erpExpenses, erpRecurringRules } = await import(
+      "@/db/schema"
+    )
+    const { todayInDhaka } = await import("@/lib/slot-expansion")
+    const { catchUpRule } = await import("@/features/erp/finance")
+
+    const rules = await step.run("collect-due-rules", async () => {
+      const today = todayInDhaka()
+      return db
+        .select()
+        .from(erpRecurringRules)
+        .where(
+          and(
+            eq(erpRecurringRules.autoPost, true),
+            eq(erpRecurringRules.isActive, true),
+            lte(erpRecurringRules.nextDueDate, today)
+          )
+        )
+    })
+    if (!rules || rules.length === 0) return { posted: 0 }
+
+    let posted = 0
+    for (const rule of rules) {
+      await step.run(`post-${rule.id}`, async () => {
+        const today = todayInDhaka()
+        const { occurrences, nextDueDate } = catchUpRule(
+          { nextDueDate: rule.nextDueDate, frequency: rule.frequency },
+          today
+        )
+        for (const date of occurrences) {
+          await db.insert(erpExpenses).values({
+            ownerId: rule.ownerId,
+            turfId: rule.turfId,
+            categoryId: rule.categoryId,
+            source: "bill",
+            sourceRefId: rule.id,
+            amount: rule.amount,
+            date,
+            note: rule.name,
+            createdBy: rule.ownerId, // system job — audit attributes to the owner
+          })
+          await db.insert(erpAuditLogs).values({
+            ownerId: rule.ownerId,
+            actorId: rule.ownerId,
+            entity: "expense",
+            entityId: rule.id,
+            action: "create",
+            amount: rule.amount,
+            diff: { automated: true, occurrence: date },
+          })
+        }
+        await db
+          .update(erpRecurringRules)
+          .set({ nextDueDate, updatedAt: new Date() })
+          .where(eq(erpRecurringRules.id, rule.id))
+        posted += occurrences.length
+        return { ruleId: rule.id, occurrences: occurrences.length }
+      })
+    }
+    return { posted }
+  }
+)
+
+// All durable jobs, declared after every function above.
+export const inngestFunctionsAll = [
   expireSlotHold,
   settleAtKickoff,
   hardAnonymizeAccount,
   materializeSchedulesNightly,
+  erpAutoPostBills,
 ]

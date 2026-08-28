@@ -13,6 +13,15 @@ export type Capability =
   | "turf.update"
   | "booking.cancel"
   | "match.result.submit"
+  // ERP (ব্যবসা): owner-scoped business management. ctx.ownerId === user.id
+  // for turf owners; admins pass everything.
+  | "erp.read"
+  | "erp.update"
+  | "erp.finance.read"
+  | "erp.finance.update"
+  | "erp.staff.read"
+  | "erp.staff.update"
+  | "erp.reports.read"
 
 export interface CapabilityContext {
   teamId?: string
@@ -51,6 +60,16 @@ export function can(
       return ctx.bookerId === user.id || ctx.ownerId === user.id
     case "match.result.submit":
       return ctx.submitterId === user.id
+    case "erp.read":
+    case "erp.finance.read":
+    case "erp.staff.read":
+    case "erp.reports.read":
+    case "erp.update":
+    case "erp.finance.update":
+    case "erp.staff.update":
+      // Single-owner MVP: the owner's own data only. ctx.ownerId is always
+      // the requesting user here — the ERP has no delegated access yet.
+      return user.roles.includes("turf_owner") && ctx.ownerId === user.id
     default:
       return false
   }

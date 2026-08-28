@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
 import type { Metadata } from "next"
-import { CalendarClockIcon, PlusIcon, MegaphoneIcon } from "lucide-react"
+import { CalendarClockIcon, PlusIcon, MegaphoneIcon, ChartNoAxesColumnIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { EmptyState } from "@/components/shared"
@@ -57,10 +57,16 @@ export default async function TurfOwnerDashboardPage() {
               : t("turfOwner.turfCountMany", { count: myTurfs.length })}
           </p>
         </div>
-        <Button render={<Link href="/turf-owner/turfs/new" />}>
-          <PlusIcon aria-hidden />
-          {t("turfOwner.addTurf")}
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" render={<Link href="/turf-owner/erp" />}>
+            <ChartNoAxesColumnIcon aria-hidden />
+            {t("erp.title")}
+          </Button>
+          <Button render={<Link href="/turf-owner/turfs/new" />}>
+            <PlusIcon aria-hidden />
+            {t("turfOwner.addTurf")}
+          </Button>
+        </div>
       </header>
 
       <section className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
