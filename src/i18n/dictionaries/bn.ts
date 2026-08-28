@@ -1559,7 +1559,8 @@ export const bn: Dictionary = {
 
   erp: {
     title: "ব্যবসা",
-    subtitle: "আপনার turf business — আয়, খরচ, staff আর লাভ এক জায়গায়।",
+    subtitle:
+      "আপনার Turf Business-এর আয়, খরচ, Staff আর লাভ—সব এক জায়গায় Manage করুন।",
     backToDashboard: "ড্যাশবোর্ডে ফিরে যান",
     navGroups: {
       money: "টাকার হিসাব",
@@ -1631,13 +1632,13 @@ export const bn: Dictionary = {
       qaStaff: "Staff যোগ করুন",
       qaSalary: "Salary দিন",
       qaBill: "Bill যোগ করুন",
-      onboardingTitle: "২ মিনিটে আপনার ব্যবসা সেটআপ করুন",
-      onboardingExpenses: "নিয়মিত খরচগুলো যোগ করুন",
+      onboardingTitle: "২ মিনিটে আপনার Business Setup করুন",
+      onboardingExpenses: "নিয়মিত খরচগুলো Add করুন",
       onboardingExpensesDesc:
-        "ভাড়া, বিদ্যুৎ, ইন্টারনেট — একবার যোগ করলেই আমরা আপনার আসল লাভ দেখাব।",
-      onboardingStaff: "আপনার staff যোগ করুন",
+        "Rent, Electricity, Internet—একবার Add করে দিন, আমরা আপনার আসল Profit হিসাব করে দেখাব।",
+      onboardingStaff: "আপনার Staff Add করুন",
       onboardingStaffDesc:
-        "Salary হিসাবে রাখলে মাসের আসল লাভ সঠিক থাকবে।",
+        "Staff-এর Salary Add করে রাখলে মাসের আসল Profit সঠিকভাবে হিসাব হবে।",
       onboardingDone: "আপনার ERP প্রস্তুত। খরচগুলো হালনাগাদ রাখুন।",
     },
     income: {
