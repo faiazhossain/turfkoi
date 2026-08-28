@@ -82,7 +82,10 @@ export function AddMaintenanceSheet({
                 onValueChange={(v) => form.setValue("turfId", v ?? "", { shouldValidate: true })}
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue />
+                  <SelectValue>
+                    {turfs.find((tf) => tf.id === form.watch("turfId"))?.name ??
+                      t("erp.maintenance.form.turf")}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {turfs.map((turf) => (
@@ -114,7 +117,11 @@ export function AddMaintenanceSheet({
               }
             >
               <SelectTrigger className="w-full">
-                <SelectValue />
+                <SelectValue>
+                  {form.watch("category")
+                    ? t(`erp.maintenance.categories.${form.watch("category")}`)
+                    : t("erp.maintenance.form.category")}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {MAINTENANCE_CATEGORIES.map((c) => (
@@ -162,7 +169,11 @@ export function AddMaintenanceSheet({
                 }
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue />
+                  <SelectValue>
+                    {form.watch("status")
+                      ? t(`erp.maintenance.statuses.${form.watch("status")}`)
+                      : t("erp.maintenance.form.status")}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {(["planned", "in_progress", "done"] as const).map((s) => (

@@ -46,6 +46,8 @@ export function AddBillSheet({
       nextDueDate: today,
     },
   })
+  const selectedCategory = categories.find((c) => c.id === form.watch("categoryId"))
+  const frequency = form.watch("frequency")
 
   return (
     <ErpSheet triggerLabel={t("erp.bills.addBill")} title={t("erp.bills.addBill")}>
@@ -101,7 +103,9 @@ export function AddBillSheet({
                 }
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue />
+                  <SelectValue>
+                    {frequency ? t(`erp.bills.frequencies.${frequency}`) : ""}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {FREQUENCIES.map((f) => (
@@ -124,7 +128,9 @@ export function AddBillSheet({
                 onValueChange={(v) => form.setValue("categoryId", v ?? "", { shouldValidate: true })}
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue />
+                  <SelectValue>
+                    {selectedCategory?.label ?? t("erp.bills.form.category")}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {categories.map((c) => (

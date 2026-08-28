@@ -96,7 +96,10 @@ export function GrantPremiumControl({
     <div className="flex flex-wrap items-center gap-2">
       <Select value={ownerId} onValueChange={(v) => setOwnerId(v ?? "")}>
         <SelectTrigger className="h-9 w-56">
-          <SelectValue />
+          <SelectValue>
+            {owners.find((o) => o.ownerId === ownerId)?.label ??
+              t("erp.premiumAdmin.grantTitle")}
+          </SelectValue>
         </SelectTrigger>
         <SelectContent>
           {owners.map((o) => (
@@ -108,7 +111,9 @@ export function GrantPremiumControl({
       </Select>
       <Select value={months} onValueChange={(v) => setMonths(v ?? "1")}>
         <SelectTrigger className="h-9 w-28">
-          <SelectValue />
+          <SelectValue>
+            {t("erp.premiumAdmin.months", { months })}
+          </SelectValue>
         </SelectTrigger>
         <SelectContent>
           {["1", "3", "6", "12"].map((m) => (

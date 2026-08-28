@@ -124,7 +124,11 @@ export function AddStaffSheet() {
                 }
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue />
+                  <SelectValue>
+                    {form.watch("salaryType")
+                      ? t(`erp.staff.salaryTypes.${form.watch("salaryType")}`)
+                      : t("erp.staff.form.salaryType")}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {SALARY_TYPES.map((s) => (

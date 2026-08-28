@@ -59,6 +59,9 @@ export function AddExpenseSheet({
     return true
   }
 
+  const categoryId = form.watch("categoryId")
+  const selectedCategory = categories.find((c) => c.id === categoryId)
+
   const err = form.formState.errors
 
   return (
@@ -105,7 +108,9 @@ export function AddExpenseSheet({
               onValueChange={(v) => form.setValue("categoryId", v ?? "", { shouldValidate: true })}
             >
               <SelectTrigger className="w-full">
-                <SelectValue />
+                <SelectValue>
+                  {selectedCategory?.label ?? t("erp.expenses.form.category")}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {categories.map((c) => (
