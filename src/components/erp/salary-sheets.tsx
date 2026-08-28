@@ -217,7 +217,11 @@ export function SalaryPaySheet({
                 }
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue />
+                  <SelectValue>
+                    {form.watch("method")
+                      ? t(`erp.salaries.methods.${form.watch("method")}`)
+                      : t("erp.salaries.payForm.method")}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {METHODS.map((m) => (

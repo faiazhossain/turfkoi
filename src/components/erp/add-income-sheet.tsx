@@ -97,7 +97,11 @@ export function AddIncomeSheet({ today }: { today: string }) {
               }
             >
               <SelectTrigger className="w-full">
-                <SelectValue />
+                <SelectValue>
+                  {form.watch("source")
+                    ? t(`erp.income.sources.${form.watch("source")}`)
+                    : t("erp.income.form.source")}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {SOURCES.map((s) => (
