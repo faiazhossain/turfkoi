@@ -26,7 +26,7 @@ import {
   type AddOtherIncomeValues,
 } from "@/features/erp/schemas"
 
-const SOURCES = ["gate", "tournament", "other"] as const
+const SOURCES = ["matchFee", "tournament", "other"] as const
 
 export function AddIncomeSheet({ today }: { today: string }) {
   const router = useRouter()
@@ -38,7 +38,7 @@ export function AddIncomeSheet({ today }: { today: string }) {
     defaultValues: {
       amount: undefined as unknown as number,
       date: today,
-      source: "gate",
+      source: "matchFee",
     },
   })
 

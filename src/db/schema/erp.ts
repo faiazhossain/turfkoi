@@ -330,8 +330,8 @@ export const erpRecurringRules = pgTable(
   ]
 )
 
-/** Off-platform money only (gate money, tournament fees, cash collected
- * outside DeshiTurf). Booking revenue is NEVER entered here — it is derived
+/** Off-platform money only (match/booking fees collected directly, tournament
+ * fees, etc.). Booking revenue is NEVER entered here — it is derived
  * from bookings/transactions at query time (single source of truth). */
 export const erpOtherIncome = pgTable(
   "erp_other_income",
@@ -345,7 +345,7 @@ export const erpOtherIncome = pgTable(
     }),
     amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
     date: date("date").notNull(),
-    source: text("source").notNull().default("other"), // 'gate' | 'tournament' | 'other'
+    source: text("source").notNull().default("other"), // 'matchFee' | 'tournament' | 'other'
     note: text("note"),
     status: erpRecordStatus("status").notNull().default("active"),
     createdAt: timestamp("created_at", { withTimezone: true })

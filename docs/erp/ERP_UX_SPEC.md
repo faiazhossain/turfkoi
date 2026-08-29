@@ -47,7 +47,7 @@ via `?turf=` param, options from `listMyTurfs`. Persisted per-owner preference l
 ## 3. Page specs (essentials)
 
 ### Income
-Split sections: **Booking আয়** (auto table/cards: date, turf, bookings count, gross, platform fee, net; explanation line "DeshiTurf fee বাদে আপনার আয়") and **অন্য আয়** (manual: gate/cash entry, tournament fees, etc. — form states "এই টাকা DeshiTurf booking ছাড়া আয়, যেমন gate money"). Month picker at top. Empty states teach.
+Split sections: **Booking আয়** (auto table/cards: date, turf, bookings count, gross, platform fee, net; explanation line "DeshiTurf fee বাদে আপনার আয়") and **অন্য আয়** (manual: direct match/booking fee, tournament fees, etc. — form states "এই টাকা DeshiTurf booking ছাড়া আয়, যেমন match fee"). Month picker at top. Empty states teach.
 
 ### Expenses
 Filter chips: month + category. Card list (mobile) / table (desktop): date, category badge, note/vendor, amount, void action (archive/void, not delete). **খরচ যোগ করুন** → Sheet form: amount (৳, numeric keypad), category (preset chips: ভাড়া, বিদ্যুৎ, পানি, ইন্টারনেট, staff salary, cleaning, maintenance, equipment, marketing, security, অন্যান্য), date (today default), turf (scope default), note optional, "প্রতি মাসে" repeat toggle → creates recurring rule (free: ≤3 active). Submit = server action, button `loading`, error via `t(res.error)`.

@@ -15,10 +15,12 @@ export function SignOutButton() {
       variant="outline"
       size="sm"
       loading={pending}
+      aria-label={t("nav.signOut")}
+      className="px-2 sm:px-2.5"
       onClick={() => startTransition(async () => await signOutAction())}
     >
       <LogOutIcon />
-      {t("nav.signOut")}
+      <span className="hidden sm:inline">{t("nav.signOut")}</span>
     </Button>
   )
 }

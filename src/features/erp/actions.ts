@@ -593,8 +593,30 @@ export async function recordSalaryPaymentAction(
   const staff = await getStaffById(auth.ownerId, parsed.data.staffId)
   if (!staff) return { ok: false, error: "erp.errors.notFound" }
 
-  const record = await getSalaryRecord(auth.ownerId, parsed.data.staffId, parsed.data.periodMonth)
-  if (!record) return { ok: false, error: "erp.errors.salaryNoRecord" }
+  let record = await getSalaryRecord(auth.ownerId, parsed.data.staffId, parsed.data.periodMonth)
+  if (!record) {
+    // No record saved for this month yet — auto-create one from the staff's
+    // base salary so the owner can pay directly (the salaries page projects
+    // payable from baseSalary when no record exists).
+    const base = Number(staff.baseSalary ?? 0)
+    const [created] = await db
+      .insert(erpSalaryRecords)
+      .values({
+        ownerId: auth.ownerId,
+        staffId: parsed.data.staffId,
+        periodMonth: `${parsed.data.periodMonth}-01`,
+        baseAmount: toNumericString(base),
+        allowance: toNumericString(0),
+        overtime: toNumericString(0),
+        bonus: toNumericString(0),
+        deduction: toNumericString(0),
+        advance: toNumericString(0),
+        paidAmount: toNumericString(0),
+        status: salaryStatus(base, 0),
+      })
+      .returning()
+    record = created
+  }
 
   const payable = Number(record.payable)
   const alreadyPaid = Number(record.paidAmount)
@@ -853,10 +875,6 @@ export async function upsertBudgetAction(
 // ---------------------------------------------------------------------------
 // Phase 4: Business Assistant (data-grounded, no LLM)
 // ---------------------------------------------------------------------------
-
-export const askAssistantSchema = z.object({
-  question: z.string().min(2).max(300),
-})
 
 /**
  * Answers a fixed set of business questions from REAL ERP/booking data.

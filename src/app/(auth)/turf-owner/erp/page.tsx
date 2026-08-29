@@ -39,6 +39,11 @@ export default async function ErpOverviewPage() {
     id: c.id,
     label: c.isSystem ? t(`erp.categories.${c.slug}`) : c.name,
   }))
+  // Salary is managed by the Salaries module (auto-posts its own expense);
+  // offering it as a bill category would double-count staff costs.
+  const billCategoryOptions = categoryOptions.filter(
+    (c) => !categories.find((raw) => raw.id === c.id && raw.isSystem && raw.slug === "staff_salary")
+  )
 
   const fmt = (n: number) => formatBdt(Math.round(n))
 
@@ -197,7 +202,7 @@ export default async function ErpOverviewPage() {
             <BanknoteIcon className="size-4" aria-hidden />
             {t("erp.overview.qaSalary")}
           </Link>
-          <AddBillSheet categories={categoryOptions} today={today} />
+          <AddBillSheet categories={billCategoryOptions} today={today} />
           <Link
             href="/turf-owner/erp/profit"
             className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"

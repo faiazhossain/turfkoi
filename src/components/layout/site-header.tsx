@@ -1,6 +1,7 @@
 import { Suspense } from "react"
 import Image from "next/image"
 import Link from "next/link"
+import { LayoutDashboardIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -23,12 +24,7 @@ async function SessionActions() {
 
   if (!session?.user) {
     return (
-      <Button
-        variant="ghost"
-        size="sm"
-        className="hidden sm:inline-flex"
-        render={<Link href="/login" />}
-      >
+      <Button variant="ghost" size="sm" render={<Link href="/login" />}>
         {t("nav.signIn")}
       </Button>
     )
@@ -40,8 +36,16 @@ async function SessionActions() {
     return (
       <>
         <NotificationBell />
-        <Button variant="ghost" size="sm" render={<Link href="/admin" />}>
-          {t("nav.adminConsole")}
+        {/* Icon-only below sm so the header fits narrow viewports. */}
+        <Button
+          variant="ghost"
+          size="sm"
+          aria-label={t("nav.adminConsole")}
+          className="px-2 sm:px-2.5"
+          render={<Link href="/admin" />}
+        >
+          <LayoutDashboardIcon />
+          <span className="hidden sm:inline">{t("nav.adminConsole")}</span>
         </Button>
         <SignOutButton />
       </>
@@ -54,8 +58,15 @@ async function SessionActions() {
   return (
     <>
       <NotificationBell />
-      <Button variant="ghost" size="sm" render={<Link href={ownerHref} />}>
-        {t("nav.dashboard")}
+      <Button
+        variant="ghost"
+        size="sm"
+        aria-label={t("nav.dashboard")}
+        className="px-2 sm:px-2.5"
+        render={<Link href={ownerHref} />}
+      >
+        <LayoutDashboardIcon />
+        <span className="hidden sm:inline">{t("nav.dashboard")}</span>
       </Button>
       <SignOutButton />
     </>
@@ -72,8 +83,8 @@ export async function SiteHeader() {
   const t = await getT()
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur supports-backdrop-filter:bg-background/60">
-      <div className="mx-auto flex h-14 max-w-6xl items-center gap-2 px-4">
-        <Link href="/" aria-label="DeshiTurf" className="flex items-center">
+      <div className="mx-auto flex h-14 max-w-6xl items-center gap-1.5 px-3 sm:gap-2 sm:px-4">
+        <Link href="/" aria-label="DeshiTurf" className="flex shrink-0 items-center">
           <Image
             src="/brand-logo-white.png"
             alt="DeshiTurf — Book • Play • Connect"
@@ -81,7 +92,7 @@ export async function SiteHeader() {
             height={724}
             quality={85}
             priority
-            className="h-9 w-auto object-contain"
+            className="h-7 w-auto object-contain sm:h-9"
           />
         </Link>
         <MainNav variant="desktop" />
@@ -90,7 +101,8 @@ export async function SiteHeader() {
           <Suspense fallback={<Skeleton className="h-7 w-24 rounded-md" aria-hidden />}>
             <SessionActions />
           </Suspense>
-          <Button size="sm" render={<Link href="/turfs" />}>
+          {/* Redundant on mobile — the bottom nav's Turfs item covers /turfs. */}
+          <Button size="sm" className="hidden sm:inline-flex" render={<Link href="/turfs" />}>
             {t("nav.bookTurf")}
             <LinkPendingIndicator />
           </Button>

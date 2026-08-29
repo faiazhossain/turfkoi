@@ -30,10 +30,14 @@ export default async function ErpBillsPage() {
     countActiveRules(user.id),
     getRentContract(user.id),
   ])
-  const categoryOptions = categories.map((c) => ({
-    id: c.id,
-    label: c.isSystem ? t(`erp.categories.${c.slug}`) : c.name,
-  }))
+  // Salary is managed by the Salaries module (auto-posts its own expense);
+  // offering it here would double-count staff costs.
+  const categoryOptions = categories
+    .filter((c) => !(c.isSystem && c.slug === "staff_salary"))
+    .map((c) => ({
+      id: c.id,
+      label: c.isSystem ? t(`erp.categories.${c.slug}`) : c.name,
+    }))
 
   const active = rules.filter((r) => r.isActive)
   const inactive = rules.filter((r) => !r.isActive)

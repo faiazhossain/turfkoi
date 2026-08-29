@@ -1613,19 +1613,19 @@ export const en = {
       daily: "Booking income by day",
       otherIncome: "Other income",
       otherIncomeHint:
-        "Money you receive outside DeshiTurf bookings — gate money, tournament fees, etc.",
+        "Money you receive outside DeshiTurf bookings — match/booking fees, tournament fees, etc.",
       addIncome: "Add income",
       form: {
         amount: "Amount (৳)",
         date: "Date",
         source: "Source",
         note: "Note (optional)",
-        notePh: "e.g. Friday gate money",
+        notePh: "e.g. Friday match fee",
       },
-      sources: { gate: "Gate money", tournament: "Tournament fee", other: "Other" },
+      sources: { matchFee: "Match/Booking fee", tournament: "Tournament fee", other: "Other" },
       empty: "No other income recorded yet",
       emptyBody:
-        "If you collect gate money or tournament fees outside DeshiTurf, add them here so your profit stays accurate.",
+        "If you collect match or tournament fees outside DeshiTurf, add them here so your profit stays accurate.",
       refundsLine: "Refunds",
     },
     expenses: {
@@ -1882,7 +1882,6 @@ export const en = {
       staffLimit: "Free plan allows up to 5 active staff. Premium removes the limit.",
       ruleLimit: "Free plan allows up to 3 active bills. Premium removes the limit.",
       salaryOverPay: "Payment exceeds the payable amount. Mark it as an advance to continue.",
-      salaryNoRecord: "Set the salary amount for this month first.",
       notFound: "Record not found.",
       premiumRequired: "This is a Premium feature.",
     },

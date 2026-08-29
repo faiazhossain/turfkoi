@@ -37,7 +37,7 @@ export const addOtherIncomeSchema = z.object({
   amount: money,
   date: isoDate,
   turfId: optionalTurfId,
-  source: z.enum(["gate", "tournament", "other"]),
+  source: z.enum(["matchFee", "tournament", "other"]),
   note: z.string().max(500).optional(),
 })
 export type AddOtherIncomeValues = z.infer<typeof addOtherIncomeSchema>
