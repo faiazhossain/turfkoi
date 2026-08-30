@@ -54,7 +54,7 @@ export default async function ErpLayout({
           <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
             {plan.tier === "premium"
               ? t("erp.plan.premium")
-              : t("erp.plan.trial", { days: plan.trialDaysLeft })}
+              : t("erp.plan.premiumTrial", { days: plan.trialDaysLeft })}
           </span>
         ) : (
           <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">

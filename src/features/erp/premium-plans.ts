@@ -37,14 +37,19 @@ export function planForMonths(months: number): ErpPremiumPlan | null {
 /**
  * Pure premium-extension math: extending an active subscription adds months
  * on top of the existing expiry; an expired/new subscription starts now.
+ * `notBefore` (e.g. an ongoing trial's end) pushes the start later so paid
+ * months never run concurrently with free access.
  * Used by admin grant and payment approval — both must agree.
  */
 export function nextPremiumUntil(
   currentUntil: Date | null,
   months: number,
-  now: Date
+  now: Date,
+  notBefore?: Date | null
 ): Date {
-  const base =
-    currentUntil && currentUntil > now ? currentUntil : now
+  let base = now
+  for (const candidate of [currentUntil, notBefore]) {
+    if (candidate && candidate > base) base = candidate
+  }
   return new Date(base.getTime() + months * 30 * 86_400_000)
 }

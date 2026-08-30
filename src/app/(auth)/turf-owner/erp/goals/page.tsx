@@ -4,7 +4,7 @@ import { TargetIcon } from "lucide-react"
 import { EmptyState } from "@/components/shared"
 import { BudgetSheet } from "@/components/erp/budget-sheet"
 import { MonthNav } from "@/components/erp"
-import { PremiumLockCard } from "@/components/erp/premium-lock-card"
+import { PremiumBadge, PremiumLockCard } from "@/components/erp/premium-lock-card"
 import { getCurrentUser } from "@/lib/auth"
 import { todayInDhaka } from "@/lib/slot-expansion"
 import { formatBdt } from "@/lib/pricing"
@@ -79,7 +79,10 @@ export default async function ErpGoalsPage({
   return (
     <div className="mt-4 space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <MonthNav month={month} basePath="/turf-owner/erp/goals" />
+        <div className="flex flex-wrap items-center gap-2">
+          <PremiumBadge />
+          <MonthNav month={month} basePath="/turf-owner/erp/goals" />
+        </div>
         <BudgetSheet
           month={month}
           existing={

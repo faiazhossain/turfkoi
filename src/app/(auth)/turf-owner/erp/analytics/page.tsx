@@ -4,7 +4,7 @@ import { ChartColumnBigIcon } from "lucide-react"
 
 import { EmptyState } from "@/components/shared"
 import { MonthNav } from "@/components/erp"
-import { PremiumLockCard } from "@/components/erp/premium-lock-card"
+import { PremiumBadge, PremiumLockCard } from "@/components/erp/premium-lock-card"
 import { getCurrentUser } from "@/lib/auth"
 import { todayInDhaka } from "@/lib/slot-expansion"
 import { formatBdt } from "@/lib/pricing"
@@ -90,7 +90,10 @@ export default async function ErpAnalyticsPage({
 
   return (
     <div className="mt-4 space-y-8">
-      <MonthNav month={month} basePath="/turf-owner/erp/analytics" />
+      <div className="flex flex-wrap items-center gap-2">
+        <PremiumBadge />
+        <MonthNav month={month} basePath="/turf-owner/erp/analytics" />
+      </div>
 
       <section>
         <h2 className="mb-2 font-heading text-base font-semibold">

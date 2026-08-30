@@ -50,6 +50,15 @@ export default async function ErpPremiumPage() {
         </p>
       </section>
 
+      {plan.tier === "trial" ? (
+        <section
+          role="note"
+          className="rounded-xl border border-primary/30 bg-primary/5 p-5 text-sm"
+        >
+          {t("erp.premium.trialPurchaseNote")}
+        </section>
+      ) : null}
+
       {pending ? (
         <section className="rounded-xl border border-warning/40 bg-warning/10 p-5">
           <StatusBadge status="warning">{t("erp.premium.pendingBadge")}</StatusBadge>

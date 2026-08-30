@@ -30,4 +30,16 @@ describe("nextPremiumUntil (grant/extension math)", () => {
     const until = nextPremiumUntil(active, 1, now)
     expect(until.getTime()).toBe(active.getTime() + 30 * 86_400_000)
   })
+
+  it("stacks months after an ongoing trial when notBefore is given", () => {
+    const trialEnds = new Date("2026-10-15T00:00:00Z")
+    const until = nextPremiumUntil(null, 1, now, trialEnds)
+    expect(until.getTime()).toBe(trialEnds.getTime() + 30 * 86_400_000)
+  })
+
+  it("ignores notBefore when it is already in the past", () => {
+    const past = new Date("2026-08-01T00:00:00Z")
+    const until = nextPremiumUntil(null, 1, now, past)
+    expect(until.getTime()).toBe(now.getTime() + 30 * 86_400_000)
+  })
 })

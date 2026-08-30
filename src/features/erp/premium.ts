@@ -103,14 +103,26 @@ export async function listErpProfileAdminRows(): Promise<ErpProfileAdminRow[]> {
 // Shared grant logic (never exported to clients — actions call this)
 // ---------------------------------------------------------------------------
 
-/** Set plan=premium and extend premiumUntil; writes an audit row. */
+/** Set plan=premium and extend premiumUntil; writes an audit row. When the
+ * owner is still inside the free trial, purchased months stack after the
+ * trial ends instead of burning alongside it. */
 export async function grantPremium(
   ownerId: string,
   months: number,
   actorId: string
 ): Promise<Date> {
   const profile = await ensureErpProfile(ownerId)
-  const until = nextPremiumUntil(profile.premiumUntil, months, new Date())
+  const now = new Date()
+  const alreadyPremium =
+    profile.plan === "premium" &&
+    profile.premiumUntil !== null &&
+    profile.premiumUntil > now
+  const until = nextPremiumUntil(
+    profile.premiumUntil,
+    months,
+    now,
+    alreadyPremium ? null : profile.trialEndsAt
+  )
   await db
     .update(erpProfiles)
     .set({ plan: "premium", premiumUntil: until, updatedAt: new Date() })

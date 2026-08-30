@@ -1551,7 +1551,7 @@ export const en = {
       sectionPicker: "Business section",
     },
     plan: {
-      trial: "Your ERP trial is running — {days} days left.",
+      premiumTrial: "Premium — free trial running ({days} days left)",
       trialEnding: "Your ERP trial ends in {days} days.",
       premium: "Premium plan active",
       free: "Free plan",
@@ -1989,6 +1989,8 @@ export const en = {
       statusFree: "You're on the free plan.",
       valueLine:
         "Premium unlocks advanced analytics, full payroll, unlimited staff and bills, cash-flow reports, forecasting, and the Business Assistant.",
+      trialPurchaseNote:
+        "You're on the free 2-month Premium trial. You can still buy Premium now — your purchased months start after the trial ends, so no paid day goes to waste.",
       howTo: "How to upgrade",
       step1: "Send the plan amount from bKash / Nagad / Rocket to the number below.",
       step2: "Copy the transaction ID (and take a screenshot of the receipt).",

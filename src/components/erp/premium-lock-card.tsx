@@ -1,6 +1,17 @@
-import { LockIcon } from "lucide-react"
+import { LockIcon, SparklesIcon } from "lucide-react"
 
 import { getT } from "@/i18n/server"
+
+/** Small "Premium" chip shown on unlocked premium-gated sections. */
+export async function PremiumBadge() {
+  const t = await getT()
+  return (
+    <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+      <SparklesIcon className="size-3" aria-hidden />
+      {t("erp.premium.badge")}
+    </span>
+  )
+}
 
 /**
  * Premium feature preview (UX spec §5): what it does, why it matters, and a

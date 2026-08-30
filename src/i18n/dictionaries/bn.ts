@@ -1587,7 +1587,7 @@ export const bn: Dictionary = {
       sectionPicker: "ব্যবসার সেকশন",
     },
     plan: {
-      trial: "আপনার ERP trial চলছে — আরও {days} দিন।",
+      premiumTrial: "Premium — ফ্রি ট্রায়াল চলছে ({days} দিন বাকি)",
       trialEnding: "আর {days} দিন পর আপনার ERP trial শেষ হবে।",
       premium: "Premium প্ল্যান চালু আছে",
       free: "Free প্ল্যান",
@@ -2025,6 +2025,8 @@ export const bn: Dictionary = {
       statusFree: "আপনি এখন free প্ল্যানে আছেন।",
       valueLine:
         "Premium-এ আনলক হয়: অ্যাডভান্সড বিশ্লেষণ, ফুল payroll, unlimited staff ও bills, ক্যাশ ফ্লো রিপোর্ট, পূর্বাভাস আর Business Assistant।",
+      trialPurchaseNote:
+        "আপনি এখন ফ্রি ২ মাসের Premium ট্রায়ালে আছেন। এই সময়েও চাইলে Premium কিনতে পারেন — কেনা মাসগুলো ট্রায়াল শেষ হওয়ার পর থেকে যোগ হবে, একটা দিনও নষ্ট হবে না।",
       howTo: "Premium নেওয়ার নিয়ম",
       step1: "নিচের নম্বরে bKash / Nagad / Rocket থেকে প্ল্যানের টাকা পাঠান।",
       step2: "Transaction ID কপি করুন (receipt-এর স্ক্রিনশট নিন)।",

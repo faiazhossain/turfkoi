@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation"
 
-import { PremiumLockCard } from "@/components/erp/premium-lock-card"
+import { PremiumBadge, PremiumLockCard } from "@/components/erp/premium-lock-card"
 import { AssistantBox } from "@/components/erp/assistant-box"
 import { getCurrentUser } from "@/lib/auth"
 import { getT } from "@/i18n/server"
@@ -25,6 +25,9 @@ export default async function ErpAssistantPage() {
 
   return (
     <div className="mt-4 max-w-2xl space-y-4">
+      <div className="flex items-center gap-2">
+        <PremiumBadge />
+      </div>
       <p className="text-sm text-muted-foreground">{t("erp.assistant.subtitle")}</p>
       <AssistantBox />
     </div>
