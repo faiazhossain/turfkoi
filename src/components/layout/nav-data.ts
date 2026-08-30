@@ -16,5 +16,5 @@ export const primaryNav: NavItem[] = [
   { labelKey: "nav.home", href: "/", icon: HomeIcon },
   { labelKey: "nav.turfs", href: "/turfs", icon: CompassIcon },
   { labelKey: "nav.matches", href: "/matches", icon: SwordsIcon },
-  { labelKey: "nav.profile", href: "/app", icon: UserIcon },
+  { labelKey: "nav.profile", href: "/app/profile", icon: UserIcon },
 ]

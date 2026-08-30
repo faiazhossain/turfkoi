@@ -26,6 +26,20 @@ export async function getPlayerProfile(userId: string) {
 }
 
 /**
+ * SS18 freshness: "available" only counts within 24h of the last toggle —
+ * the same window listAvailablePlayersNearTurf applies query-side.
+ */
+export function isAvailabilityFresh(profile: {
+  available?: boolean | null
+  availableAt?: Date | null
+}): boolean {
+  if (!profile.available || !profile.availableAt) return false
+  return (
+    Date.now() - profile.availableAt.getTime() < 24 * 60 * 60 * 1000
+  )
+}
+
+/**
  * SS20 / SS32: matches that need players. A match is "needs players" when:
  *   - state is roster_building or confirmed (roster is open)
  *   - at least one team has fewer than the format's max roster
@@ -145,7 +159,12 @@ export async function listAvailablePlayersNearTurf(
       userId: playerProfiles.userId,
       name: users.name,
       position: playerProfiles.position,
+      secondaryPosition: playerProfiles.secondaryPosition,
       skill: playerProfiles.skill,
+      bio: playerProfiles.bio,
+      avatarType: playerProfiles.avatarType,
+      avatarPublicId: playerProfiles.avatarPublicId,
+      avatarPresetId: playerProfiles.avatarPresetId,
       area: playerProfiles.area,
       distanceKm: distanceExpr,
       lat: sql<number>`ST_Y(${playerProfiles.coords}::geometry)`,

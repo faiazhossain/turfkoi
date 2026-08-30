@@ -50,6 +50,14 @@ export const playerProfiles = pgTable("player_profiles", {
   position: text("position"),
   skill: text("skill"),
   area: text("area"),
+  // Identity fields (0019). bio/secondaryPosition stay plain text so legacy
+  // free-text rows keep rendering; writes are constrained by Zod.
+  bio: text("bio"),
+  secondaryPosition: text("secondary_position"),
+  // Avatar mode: "photo" (Cloudinary) | "preset" (catalog id below) | NULL
+  // (legacy — photo when avatarPublicId is set, else the initials fallback).
+  avatarType: text("avatar_type"),
+  avatarPresetId: text("avatar_preset_id"),
   // Cloudinary public id of the avatar (asset in deshiturf/players/{userId}).
   avatarPublicId: text("avatar_public_id"),
   coords: geographyPoint("coords"),

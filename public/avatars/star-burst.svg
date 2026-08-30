@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img">
+  <title>Star burst badge</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1B2431"/>
+      <stop offset="1" stop-color="#10151C"/>
+    </linearGradient>
+    <linearGradient id="stG" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#F4F7FB"/>
+      <stop offset="1" stop-color="#B9C7DB"/>
+    </linearGradient>
+  </defs>
+  <rect width="96" height="96" fill="#11161D"/>
+  <rect width="96" height="96" fill="url(#bg)"/>
+  <circle cx="48" cy="44" r="22" fill="none" stroke="#FFFFFF" stroke-width="1.5" opacity="0.06"/>
+  <path d="M48 24 C50 40 52 42 68 44 C52 46 50 48 48 64 C46 48 44 46 28 44 C44 42 46 40 48 24 Z" fill="url(#stG)"/>
+  <path d="M66 24.6 C66.7 29.3 67.3 29.9 72 30.6 C67.3 31.3 66.7 31.9 66 36.6 C65.3 31.9 64.7 31.3 60 30.6 C64.7 29.9 65.3 29.3 66 24.6 Z" fill="#7453FA" opacity="0.9"/>
+  <circle cx="32" cy="60" r="2" fill="#8CE000" opacity="0.8"/>
+</svg>

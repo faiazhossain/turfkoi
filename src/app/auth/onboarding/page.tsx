@@ -15,12 +15,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { PositionPicker, SkillPicker } from "@/components/player/choice-picker"
 import { StatusBadge } from "@/components/shared"
 import { LocationPicker } from "@/components/map"
 import { useI18n } from "@/i18n/client"
 import { completeOnboardingAction } from "@/features/auth/actions"
 import {
   onboardingFormSchema,
+  type OnboardingFormInput,
   type OnboardingFormValues,
 } from "@/features/auth/schemas"
 
@@ -28,7 +30,7 @@ export default function OnboardingPage() {
   const router = useRouter()
   const { t } = useI18n()
   const [error, setError] = useState<string | null>(null)
-  const form = useForm<OnboardingFormValues>({
+  const form = useForm<OnboardingFormInput, unknown, OnboardingFormValues>({
     resolver: zodResolver(onboardingFormSchema),
     defaultValues: { name: "", position: "", skill: "", area: "" },
   })
@@ -64,15 +66,25 @@ export default function OnboardingPage() {
                 </p>
               )}
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label htmlFor="position">{t("auth.positionLabel")}</Label>
-                <Input id="position" placeholder={t("auth.positionPlaceholder")} {...form.register("position")} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="skill">{t("auth.skillLabel")}</Label>
-                <Input id="skill" placeholder={t("auth.skillPlaceholder")} {...form.register("skill")} />
-              </div>
+            <div className="space-y-2">
+              <Label>{t("auth.positionLabel")}</Label>
+              <PositionPicker
+                name="position"
+                value={(form.watch("position") as string | undefined) ?? ""}
+                onChange={(v) =>
+                  form.setValue("position", v, { shouldDirty: true })
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>{t("auth.skillLabel")}</Label>
+              <SkillPicker
+                name="skill"
+                value={(form.watch("skill") as string | undefined) ?? ""}
+                onChange={(v) =>
+                  form.setValue("skill", v, { shouldDirty: true })
+                }
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="area">{t("auth.areaLabel")}</Label>

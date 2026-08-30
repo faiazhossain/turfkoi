@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img">
+  <title>Trophy cup badge</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1B2431"/>
+      <stop offset="1" stop-color="#10151C"/>
+    </linearGradient>
+    <linearGradient id="auG" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#F2D27C"/>
+      <stop offset="1" stop-color="#A97E22"/>
+    </linearGradient>
+    <linearGradient id="au2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#D9B356"/>
+      <stop offset="1" stop-color="#8F6A1F"/>
+    </linearGradient>
+  </defs>
+  <rect width="96" height="96" fill="#11161D"/>
+  <rect width="96" height="96" fill="url(#bg)"/>
+  <ellipse cx="48" cy="72" rx="17" ry="2.5" fill="#000000" opacity="0.32"/>
+  <path d="M33 33 C24 33 24 45 34 47" fill="none" stroke="#C89A38" stroke-width="3" stroke-linecap="round"/>
+  <path d="M63 33 C72 33 72 45 62 47" fill="none" stroke="#C89A38" stroke-width="3" stroke-linecap="round"/>
+  <path d="M33 30 H63 C63 45 57 52 48 52 C39 52 33 45 33 30 Z" fill="url(#auG)" stroke="#7C5C1B" stroke-width="1"/>
+  <path d="M39 33 C39 40 41 45 44 47" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity="0.35"/>
+  <path d="M48 34.5 L49 37 L51.5 38 L49 39 L48 41.5 L47 39 L44.5 38 L47 37 Z" fill="#7C5C1B" opacity="0.8"/>
+  <path d="M45.5 52 L43.5 60 H52.5 L50.5 52 Z" fill="#C89A38"/>
+  <rect x="38" y="60" width="20" height="5" rx="1.5" fill="url(#au2)"/>
+  <rect x="34" y="65" width="28" height="5" rx="1.5" fill="#1A2230" stroke="#2D3C4F" stroke-width="1"/>
+</svg>

@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img">
+  <title>Referee whistle badge</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1B2431"/>
+      <stop offset="1" stop-color="#10151C"/>
+    </linearGradient>
+    <linearGradient id="whG" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#9B85FF"/>
+      <stop offset="1" stop-color="#5A3BE0"/>
+    </linearGradient>
+  </defs>
+  <rect width="96" height="96" fill="#11161D"/>
+  <rect width="96" height="96" fill="url(#bg)"/>
+  <ellipse cx="48" cy="64" rx="18" ry="3" fill="#000000" opacity="0.3"/>
+  <path d="M18 44 A8 8 0 0 0 18 52" fill="none" stroke="#8CE000" stroke-width="2" stroke-linecap="round" opacity="0.8"/>
+  <path d="M14 41 A13 13 0 0 0 14 55" fill="none" stroke="#8CE000" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+  <circle cx="64" cy="36" r="5" fill="none" stroke="#C9D2DF" stroke-width="2.5"/>
+  <rect x="61.5" y="39" width="5" height="4" rx="1" fill="#C9D2DF"/>
+  <rect x="22" y="40" width="12" height="10" rx="3" fill="#5A3BE0" stroke="#2D3C4F" stroke-width="1.2"/>
+  <path d="M22 46 H34" stroke="#2D3C4F" stroke-width="1"/>
+  <rect x="30" y="40" width="36" height="18" rx="9" fill="url(#whG)" stroke="#2D3C4F" stroke-width="1.5"/>
+  <circle cx="62" cy="49" r="2.2" fill="#10151C"/>
+  <rect x="36" y="43" width="22" height="3" rx="1.5" fill="#FFFFFF" opacity="0.18"/>
+</svg>

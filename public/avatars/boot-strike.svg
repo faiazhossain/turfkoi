@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img">
+  <title>Football boot badge</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1B2431"/>
+      <stop offset="1" stop-color="#10151C"/>
+    </linearGradient>
+    <linearGradient id="bootB" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2A3442"/>
+      <stop offset="1" stop-color="#181F2A"/>
+    </linearGradient>
+    <linearGradient id="soleG" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#A4F04A"/>
+      <stop offset="1" stop-color="#71BE00"/>
+    </linearGradient>
+  </defs>
+  <rect width="96" height="96" fill="#11161D"/>
+  <rect width="96" height="96" fill="url(#bg)"/>
+  <ellipse cx="49" cy="69" rx="21" ry="3" fill="#000000" opacity="0.35"/>
+  <path d="M34 28 C30 30 27 40 27 50 C27 54 29 56 33 56 L70 56 C74 56 75 53 73 50 L67 44 C61 38 54 36 46 36 Z" fill="url(#bootB)" stroke="#2D3C4F" stroke-width="1.5" stroke-linejoin="round"/>
+  <path d="M40 31 L47 35.5 L43 38.5 C41 36.5 40 33.5 40 31 Z" fill="#232C3A" stroke="#2D3C4F" stroke-width="1" stroke-linejoin="round"/>
+  <path d="M34 28 L46 36" stroke="#FFFFFF" stroke-width="1.5" opacity="0.15"/>
+  <path d="M50 33.5 L53.5 41 M56.5 36 L59.5 43 M62.5 39 L65 45.5" stroke="#E8ECF2" stroke-width="2" stroke-linecap="round" opacity="0.85"/>
+  <path d="M62 56 C64 51 64 47.5 62 44.5" fill="none" stroke="#2D3C4F" stroke-width="1.2"/>
+  <path d="M27 46 C27 50 28 54 30 56 L36 56 C34 52 33 48 33.5 44 Z" fill="#7453FA" opacity="0.45"/>
+  <rect x="25" y="56" width="50" height="6" rx="3" fill="url(#soleG)"/>
+  <circle cx="33" cy="64" r="2" fill="#3D4C61"/>
+  <circle cx="44" cy="64" r="2" fill="#3D4C61"/>
+  <circle cx="55" cy="64" r="2" fill="#3D4C61"/>
+  <circle cx="66" cy="64" r="2" fill="#3D4C61"/>
+</svg>

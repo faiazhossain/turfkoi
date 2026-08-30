@@ -8,6 +8,7 @@ import { MapView } from "@/components/map"
 import { MatchActions } from "@/components/matches/match-actions"
 import { JoinRequestButton } from "@/components/player/join-request-button"
 import { RequestManager } from "@/components/player/request-manager"
+import { PlayerAvatar } from "@/components/player/player-avatar"
 import { getMatch } from "@/features/matches/queries"
 import { ROSTER_LIMITS } from "@/features/matches/schemas"
 import { listTeamMembers, getTeamRole } from "@/features/teams/queries"
@@ -15,9 +16,24 @@ import {
   listPendingPlayerRequests,
   listAvailablePlayersNearTurf,
 } from "@/features/player/queries"
+import { resolveAvatarDisplay } from "@/features/player/avatar"
 import { getTurfLatLng } from "@/features/turfs/queries"
 import { getCurrentUser } from "@/lib/auth"
-import { matchStateLabel } from "@/i18n/labels"
+import {
+  matchStateLabel,
+  positionLabelKey,
+  skillLabelKey,
+} from "@/i18n/labels"
+
+/** Localizes canonical identity ids; legacy free text renders as-is. */
+function localizedIdentity(
+  tr: (key: string) => string,
+  raw: string | null
+): string | null {
+  if (!raw) return null
+  const key = positionLabelKey(raw) ?? skillLabelKey(raw)
+  return key ? tr(key) : raw
+}
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -209,39 +225,64 @@ export default async function MatchDetailPage({ params }: PageProps) {
                         },
                       ]
                     : []),
-                  ...nearbyPlayers.map((p) => ({
-                    id: p.userId,
-                    lat: p.lat,
-                    lng: p.lng,
-                    label: `${p.name ?? tr("matches.player")}${p.position ? ` · ${p.position}` : ""}`,
-                    kind: "player" as const,
-                  })),
+                  ...nearbyPlayers.map((p) => {
+                    const pos = localizedIdentity(tr, p.position)
+                    return {
+                      id: p.userId,
+                      lat: p.lat,
+                      lng: p.lng,
+                      label: `${p.name ?? tr("matches.player")}${pos ? ` · ${pos}` : ""}`,
+                      kind: "player" as const,
+                    }
+                  }),
                 ]}
               />
               <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border">
-                {nearbyPlayers.map((p) => (
-                  <li
-                    key={p.userId}
-                    className="flex items-center justify-between gap-2 bg-card p-3 text-sm"
-                  >
-                    <div className="min-w-0">
-                      <p className="truncate font-heading font-medium">
-                        {p.name ?? tr("matches.player")}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {[p.position, p.skill].filter(Boolean).join(" · ") ||
-                          tr("matches.positionNotSet")}
-                      </p>
-                    </div>
-                    <div className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
-                      <MapPinIcon className="size-3" aria-hidden />
-                      {p.area || tr("matches.nearby")}
-                      <span className="tabular-nums">
-                        {p.distanceKm.toFixed(1)} km
-                      </span>
-                    </div>
-                  </li>
-                ))}
+                {nearbyPlayers.map((p) => {
+                  const identity = [
+                    localizedIdentity(tr, p.position),
+                    localizedIdentity(tr, p.secondaryPosition),
+                    localizedIdentity(tr, p.skill),
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")
+                  const display = resolveAvatarDisplay({
+                    avatarType: p.avatarType,
+                    avatarPublicId: p.avatarPublicId,
+                    avatarPresetId: p.avatarPresetId,
+                    name: p.name,
+                  })
+                  return (
+                    <li
+                      key={p.userId}
+                      className="flex items-start gap-3 bg-card p-3 text-sm"
+                    >
+                      <PlayerAvatar display={display} size="md" />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-heading font-medium">
+                          {p.name ?? tr("matches.player")}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {identity || tr("matches.positionNotSet")}
+                        </p>
+                        {p.bio ? (
+                          <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
+                            &ldquo;{p.bio}&rdquo;
+                          </p>
+                        ) : null}
+                      </div>
+                      <div className="flex shrink-0 flex-col items-end gap-0.5 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <MapPinIcon className="size-3" aria-hidden />
+                          {p.area || tr("matches.nearby")}
+                        </span>
+                        <span className="tabular-nums">
+                          {p.distanceKm.toFixed(1)} km
+                        </span>
+                      </div>
+                    </li>
+                  )
+                })}
               </ul>
             </>
           )}

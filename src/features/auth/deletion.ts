@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm"
 
 import { db } from "@/db"
 import { users, playerProfiles, userRoles } from "@/db/schema"
+import { destroyAsset } from "@/features/images/service"
 import { logger } from "@/lib/logger"
 
 /**
@@ -29,6 +30,21 @@ export async function anonymizeUser(userId: string): Promise<void> {
     .slice(0, 16)
   const placeholderPhone = `deleted:${hash}@local`
 
+  // Best-effort removal of the avatar asset — the hard-anonymize job must
+  // not fail on a CDN error.
+  const [profile] = await db
+    .select({ avatarPublicId: playerProfiles.avatarPublicId })
+    .from(playerProfiles)
+    .where(eq(playerProfiles.userId, userId))
+    .limit(1)
+  if (profile?.avatarPublicId) {
+    try {
+      await destroyAsset(profile.avatarPublicId)
+    } catch (err) {
+      logger.warn("account.anonymize.avatarDestroyFailed", { userId, err })
+    }
+  }
+
   await db
     .update(users)
     .set({
@@ -47,6 +63,11 @@ export async function anonymizeUser(userId: string): Promise<void> {
       position: null,
       skill: null,
       area: null,
+      bio: null,
+      secondaryPosition: null,
+      avatarType: null,
+      avatarPresetId: null,
+      avatarPublicId: null,
       coords: null,
       available: false,
       availableAt: null,

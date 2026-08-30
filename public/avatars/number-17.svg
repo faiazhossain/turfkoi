@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img">
+  <title>Number 17 badge</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1B2431"/>
+      <stop offset="1" stop-color="#10151C"/>
+    </linearGradient>
+    <linearGradient id="numG" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#F4F7FB"/>
+      <stop offset="1" stop-color="#A9B7CB"/>
+    </linearGradient>
+  </defs>
+  <rect width="96" height="96" fill="#11161D"/>
+  <rect width="96" height="96" fill="url(#bg)"/>
+  <rect x="20" width="16" height="96" fill="#FFFFFF" opacity="0.025"/>
+  <rect x="60" width="16" height="96" fill="#FFFFFF" opacity="0.025"/>
+  <circle cx="48" cy="48" r="28" fill="none" stroke="#FFFFFF" opacity="0.05" stroke-width="2"/>
+  <g fill="none" stroke="url(#numG)" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" transform="translate(21.55 27.8) scale(1.15)">
+    <path d="M4 8 L10 3 L10 27"/>
+  </g>
+  <g fill="none" stroke="url(#numG)" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" transform="translate(51.45 27.8) scale(1.15)">
+    <path d="M2 3 H18 L7 27"/>
+  </g>
+  <path d="M35 70 Q48 74 61 70" fill="none" stroke="#8CE000" stroke-width="3" stroke-linecap="round"/>
+</svg>

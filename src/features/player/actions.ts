@@ -5,6 +5,7 @@ import { and, eq } from "drizzle-orm"
 
 import { db } from "@/db"
 import {
+  users,
   playerProfiles,
   playerRequests,
   matchPlayers,
@@ -67,25 +68,42 @@ export async function updateProfileAction(
   const user = await getCurrentUser()
   if (!user) return unauthorized()
 
-  const { coords, ...rest } = parsed.data
+  const { name, coords, avatarType, avatarPresetId, ...rest } = parsed.data
+
+  if (name !== undefined) {
+    await db
+      .update(users)
+      .set({ name, updatedAt: new Date() })
+      .where(eq(users.id, user.id))
+  }
+
+  // Omitted keys leave stored values untouched (Drizzle's set() skips
+  // undefined); explicit nulls clear. Coordinates are only written when the
+  // caller actually sent them — an absent key must not wipe the pin.
+  const set: Partial<typeof playerProfiles.$inferInsert> = {
+    ...rest,
+    updatedAt: new Date(),
+  }
+  if (coords !== undefined) {
+    // F7 privacy: round player coords to 3 decimals (~110m) at write time.
+    set.coords = coords ? roundCoords(coords) : null
+  }
+  if (avatarType === "preset" && avatarPresetId) {
+    // Non-destructive: avatarPublicId is kept, so the photo comes back when
+    // the player switches to photo mode.
+    set.avatarType = "preset"
+    set.avatarPresetId = avatarPresetId
+  } else if (avatarType === "photo") {
+    set.avatarType = "photo"
+  }
+
   await db
     .insert(playerProfiles)
-    .values({
-      userId: user.id,
-      ...rest,
-      // F7 privacy: round player coords to 3 decimals (~110m) at write time.
-      coords: coords ? roundCoords(coords) : null,
-    })
-    .onConflictDoUpdate({
-      target: playerProfiles.userId,
-      set: {
-        ...rest,
-        coords: coords ? roundCoords(coords) : null,
-        updatedAt: new Date(),
-      },
-    })
+    .values({ userId: user.id, ...set })
+    .onConflictDoUpdate({ target: playerProfiles.userId, set })
 
   revalidatePath("/app")
+  revalidatePath("/app/profile")
   return { ok: true }
 }
 

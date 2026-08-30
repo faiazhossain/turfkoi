@@ -3,8 +3,11 @@ import { describe, expect, it } from "vitest"
 import { bn } from "../dictionaries/bn"
 import { en } from "../dictionaries/en"
 import {
+  AVATAR_SERIES_LABEL,
   BOOKING_STATUS_LABEL,
   MATCH_STATE_LABEL,
+  POSITION_LABEL,
+  SKILL_LABEL,
   SLOT_STATUS_LABEL,
   TEAM_MEMBER_ROLE_LABEL,
   TURF_FORMAT_LABEL,
@@ -61,6 +64,9 @@ describe("label maps resolve in both dictionaries", () => {
     ["teamMemberRoleLabel", TEAM_MEMBER_ROLE_LABEL],
     ["userRoleLabel", USER_ROLE_LABEL],
     ["turfFormatLabelKey", TURF_FORMAT_LABEL],
+    ["POSITION_LABEL", POSITION_LABEL],
+    ["SKILL_LABEL", SKILL_LABEL],
+    ["AVATAR_SERIES_LABEL", AVATAR_SERIES_LABEL],
   ] as const
 
   it.each(maps)("%s keys exist in en and bn", (_name, map) => {

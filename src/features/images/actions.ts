@@ -265,12 +265,14 @@ export async function setPlayerAvatarAction(publicId: string): Promise<
     .limit(1)
 
   try {
+    // Stamping avatarType="photo" switches the display mode; avatarPresetId
+    // is left untouched so switching back to a preset restores it.
     await db
       .insert(playerProfiles)
-      .values({ userId: user.id, avatarPublicId: parsed.data })
+      .values({ userId: user.id, avatarPublicId: parsed.data, avatarType: "photo" })
       .onConflictDoUpdate({
         target: playerProfiles.userId,
-        set: { avatarPublicId: parsed.data, updatedAt: new Date() },
+        set: { avatarPublicId: parsed.data, avatarType: "photo", updatedAt: new Date() },
       })
   } catch (err) {
     await destroyAsset(parsed.data)
@@ -283,5 +285,6 @@ export async function setPlayerAvatarAction(publicId: string): Promise<
 
   revalidatePath("/app/settings")
   revalidatePath("/app")
+  revalidatePath("/app/profile")
   return { ok: true }
 }

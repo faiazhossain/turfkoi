@@ -1,5 +1,7 @@
 import { z } from "zod"
 
+import { POSITION_IDS, SKILL_IDS } from "@/features/player/positions"
+
 import { isValidPhone } from "./phone"
 
 // Messages are dictionary keys (resolved client-side via useI18n).
@@ -53,8 +55,16 @@ export const onboardingFormSchema = z.object({
     .string()
     .min(2, "auth.errors.name_short")
     .max(60, "auth.errors.name_max"),
-  position: z.string().max(40).optional(),
-  skill: z.string().max(40).optional(),
+  // Canonical identity ids ("goalkeeper"…/"learning"…); "" (untouched
+  // picker) is dropped so nothing stale is stored.
+  position: z.preprocess(
+    (v) => (v === "" ? undefined : v),
+    z.enum(POSITION_IDS, "profile.errors.invalidPosition").optional()
+  ),
+  skill: z.preprocess(
+    (v) => (v === "" ? undefined : v),
+    z.enum(SKILL_IDS, "profile.errors.invalidSkill").optional()
+  ),
   area: z.string().max(80).optional(),
   // SS32: map pin during onboarding powers nearby discovery. Rounded to
   // ~110m at write time (audit F7) — never store exact coords for players.
@@ -71,4 +81,6 @@ export type LoginFormValues = z.infer<typeof loginFormSchema>
 export type ForgotPasswordFormValues = z.infer<typeof forgotPasswordFormSchema>
 export type ResetPasswordFormValues = z.infer<typeof resetPasswordFormSchema>
 export type OtpFormValues = z.infer<typeof otpFormSchema>
-export type OnboardingFormValues = z.infer<typeof onboardingFormSchema>
+/** Form-field (pre-transform) type — pickers submit "" until chosen. */
+export type OnboardingFormInput = z.input<typeof onboardingFormSchema>
+export type OnboardingFormValues = z.output<typeof onboardingFormSchema>

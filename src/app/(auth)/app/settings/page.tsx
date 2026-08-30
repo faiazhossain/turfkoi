@@ -1,9 +1,8 @@
 import type { Metadata } from "next"
+import Link from "next/link"
 import { redirect } from "next/navigation"
-import { eq } from "drizzle-orm"
 
-import { db } from "@/db"
-import { playerProfiles } from "@/db/schema"
+import { getPlayerProfile } from "@/features/player/queries"
 import { getSession } from "@/lib/auth"
 import { DeleteAccountButton } from "@/components/auth/delete-account-button"
 import { AvatarField } from "@/components/player/avatar-field"
@@ -19,11 +18,7 @@ export default async function SettingsPage() {
   const session = await getSession()
   if (!session?.user) redirect("/login")
 
-  const profileRows = await db
-    .select({ avatarPublicId: playerProfiles.avatarPublicId })
-    .from(playerProfiles)
-    .where(eq(playerProfiles.userId, session.user.id))
-    .limit(1)
+  const profile = await getPlayerProfile(session.user.id)
 
   return (
     <div className="mx-auto max-w-2xl space-y-8 px-4 py-12">
@@ -35,12 +30,23 @@ export default async function SettingsPage() {
       </header>
 
       <section className="space-y-3">
-        <h2 className="font-heading text-lg font-semibold">
-          {t("settings.profilePhoto")}
-        </h2>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="font-heading text-lg font-semibold">
+            {t("settings.profilePhoto")}
+          </h2>
+          <Link
+            href="/app/profile/edit"
+            className="text-sm text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+          >
+            {t("profile.editCta")}
+          </Link>
+        </div>
         <AvatarField
           userId={session.user.id}
-          avatarPublicId={profileRows[0]?.avatarPublicId ?? null}
+          avatarType={profile?.avatarType ?? null}
+          avatarPublicId={profile?.avatarPublicId ?? null}
+          avatarPresetId={profile?.avatarPresetId ?? null}
+          userName={session.user.name ?? null}
         />
       </section>
 

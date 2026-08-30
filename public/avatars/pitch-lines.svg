@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img">
+  <title>Pitch lines badge</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#16211B"/>
+      <stop offset="1" stop-color="#0D1310"/>
+    </linearGradient>
+  </defs>
+  <rect width="96" height="96" fill="#11161D"/>
+  <rect width="96" height="96" fill="url(#bg)"/>
+  <rect y="16" width="96" height="16" fill="#FFFFFF" opacity="0.025"/>
+  <rect y="48" width="96" height="16" fill="#FFFFFF" opacity="0.025"/>
+  <rect y="80" width="96" height="16" fill="#FFFFFF" opacity="0.025"/>
+  <path d="M32 22 V74" stroke="#F4F7FB" stroke-width="2" opacity="0.4"/>
+  <path d="M32 36 H60 V64 H32" fill="none" stroke="#F4F7FB" stroke-width="1.8" opacity="0.3"/>
+  <path d="M32 42 H44 V58 H32" fill="none" stroke="#F4F7FB" stroke-width="1.5" opacity="0.2"/>
+  <path d="M60 41 A9 9 0 0 1 60 59" fill="none" stroke="#F4F7FB" stroke-width="1.8" opacity="0.3"/>
+  <circle cx="48" cy="50" r="1.8" fill="#F4F7FB" opacity="0.5"/>
+  <path d="M32 28 A6 6 0 0 0 38 22" fill="none" stroke="#8CE000" stroke-width="2"/>
+</svg>

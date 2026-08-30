@@ -13,6 +13,11 @@ import type {
   teamMemberRole,
   userRole,
 } from "@/db/schema/enums"
+import type { AvatarSeries } from "@/features/player/avatar-catalog"
+import type {
+  PlayerPositionId,
+  PlayerSkillId,
+} from "@/features/player/positions"
 import type { TurfFormat } from "@/features/turfs/formats"
 
 type EnumValues<E extends { enumValues: readonly string[] }> = E["enumValues"][number]
@@ -111,4 +116,48 @@ export function userRoleLabel(role: string): string {
 
 export function turfFormatLabelKey(format: string): string {
   return TURF_FORMAT_LABEL[format as TurfFormat] ?? `turfs.format.${format}`
+}
+
+/**
+ * Player identity labels (position/skill). Unlike the enum maps above, the
+ * backing columns are free text that predates canonical ids, so the helpers
+ * return null for unknown/legacy values — callers then render the raw stored
+ * string instead of t()-ing a key that does not exist.
+ */
+export const POSITION_LABEL: Record<PlayerPositionId, string> = {
+  goalkeeper: "player.position.goalkeeper",
+  defender: "player.position.defender",
+  midfielder: "player.position.midfielder",
+  winger: "player.position.winger",
+  forward: "player.position.forward",
+  striker: "player.position.striker",
+  any: "player.position.any",
+}
+
+export const SKILL_LABEL: Record<PlayerSkillId, string> = {
+  learning: "player.skill.learning",
+  casual: "player.skill.casual",
+  intermediate: "player.skill.intermediate",
+  good: "player.skill.good",
+  competitive: "player.skill.competitive",
+}
+
+export const AVATAR_SERIES_LABEL: Record<AvatarSeries, string> = {
+  football: "player.avatarSeries.football",
+  equipment: "player.avatarSeries.equipment",
+  stadium: "player.avatarSeries.stadium",
+  numbers: "player.avatarSeries.numbers",
+  abstract: "player.avatarSeries.abstract",
+}
+
+/** Dict key for a canonical position id, or null for legacy free text. */
+export function positionLabelKey(
+  value: string | null | undefined
+): string | null {
+  return (POSITION_LABEL as Record<string, string>)[value ?? ""] ?? null
+}
+
+/** Dict key for a canonical skill id, or null for legacy free text. */
+export function skillLabelKey(value: string | null | undefined): string | null {
+  return (SKILL_LABEL as Record<string, string>)[value ?? ""] ?? null
 }

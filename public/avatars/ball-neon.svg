@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img">
+  <title>Neon street football badge</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#16211B"/>
+      <stop offset="1" stop-color="#0D1310"/>
+    </linearGradient>
+    <radialGradient id="spot" cx="0.5" cy="0.45" r="0.55">
+      <stop offset="0" stop-color="#8CE000" stop-opacity="0.12"/>
+      <stop offset="1" stop-color="#8CE000" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="1.8"/>
+    </filter>
+  </defs>
+  <rect width="96" height="96" fill="#11161D"/>
+  <rect width="96" height="96" fill="url(#bg)"/>
+  <circle cx="48" cy="46" r="32" fill="url(#spot)"/>
+  <ellipse cx="48" cy="70" rx="16" ry="3" fill="#000000" opacity="0.35"/>
+  <g filter="url(#glow)" opacity="0.85">
+    <circle cx="48" cy="48" r="20" fill="none" stroke="#8CE000" stroke-width="1.8"/>
+    <path d="M48 40.5 L55.1 45.7 L52.4 54.1 L43.6 54.1 L40.9 45.7 Z" fill="none" stroke="#8CE000" stroke-width="1.8"/>
+    <path d="M48 40.5 L48 28 M55.1 45.7 L67 41.8 M52.4 54.1 L59.8 64.2 M43.6 54.1 L36.2 64.2 M40.9 45.7 L29 41.8" fill="none" stroke="#8CE000" stroke-width="1.8" stroke-linecap="round"/>
+  </g>
+  <circle cx="48" cy="48" r="20" fill="none" stroke="#C6F58A" stroke-width="1.5"/>
+  <path d="M48 40.5 L55.1 45.7 L52.4 54.1 L43.6 54.1 L40.9 45.7 Z" fill="none" stroke="#C6F58A" stroke-width="1.5"/>
+  <path d="M48 40.5 L48 28 M55.1 45.7 L67 41.8 M52.4 54.1 L59.8 64.2 M43.6 54.1 L36.2 64.2 M40.9 45.7 L29 41.8" fill="none" stroke="#C6F58A" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M20 62 A32 32 0 0 1 44 18" fill="none" stroke="#8CE000" stroke-width="2" stroke-linecap="round" opacity="0.35"/>
+</svg>
