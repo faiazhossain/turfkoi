@@ -24,6 +24,8 @@ In-app notification system (Requirements §31: in-app only in MVP; push/email ar
 | `turf_application.submitted` | admin | info | `/admin/applications` |
 | `turf_application.approved` | applicant | transactional | `/turfs/{slug}` |
 | `turf_application.rejected` | applicant | info | — |
+| `turf.verified` | turf owner | transactional | `/turf-owner/turfs/{id}` |
+| `turf.unverified` | turf owner | transactional | `/turf-owner/turfs/{id}` |
 | `booking.confirmed` | booker | transactional | `/bookings/{id}` |
 | `booking.received` | turf owner | transactional | `/turf-owner` |
 | `booking.cancelled` | counterpart | critical | `/bookings/{id}` |
@@ -41,6 +43,7 @@ In-app notification system (Requirements §31: in-app only in MVP; push/email ar
 2. Approve/reject → applicant notified via `submitted_by`, falling back to a `users` lookup on the application email; anonymous submitters with no matching account get the claim-invite path instead.
 3. `confirmPaymentAction` → booker (`booking.confirmed`) + owner (`booking.received`), deduped when they're the same user.
 4. `cancelBookingAction` → the cancelling user's counterpart (`booking.cancelled`, refund amount only when notifying the booker).
+5. `verifyTurfAction` / `unverifyTurfAction` → the exact turf's owner (`turf.verified` / `turf.unverified`), resolved from the conditional update's returned row — per-turf, never a broadcast.
 
 ## Deferred (post-MVP)
 
