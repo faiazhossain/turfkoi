@@ -87,10 +87,6 @@ export default function OnboardingPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="area">{t("auth.areaLabel")}</Label>
-              <Input id="area" placeholder={t("auth.areaPlaceholder")} {...form.register("area")} />
-            </div>
-            <div className="space-y-2">
               <Label>{t("auth.yourLocation")}</Label>
               <p className="text-xs text-muted-foreground">
                 {t("auth.locationHelp")}
@@ -99,12 +95,16 @@ export default function OnboardingPage() {
                 value={form.watch("coords") ?? null}
                 onChange={(point, place) => {
                   form.setValue("coords", point, { shouldDirty: true })
-                  // Autofill area from the picked place unless already typed.
-                  if (place?.name && !form.getValues("area")) {
+                  // A pick resolves the area — overwrite whatever was typed.
+                  if (place?.name) {
                     form.setValue("area", place.name, { shouldDirty: true })
                   }
                 }}
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="area">{t("auth.areaLabel")}</Label>
+              <Input id="area" placeholder={t("auth.areaPlaceholder")} {...form.register("area")} />
             </div>
             {error && <StatusBadge status="danger">{error}</StatusBadge>}
             <Button

@@ -183,11 +183,6 @@ export function ProfileEditForm({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="area">{t("profile.areaLabel")}</Label>
-          <Input id="area" maxLength={80} {...form.register("area")} />
-        </div>
-
-        <div className="space-y-2">
           <Label htmlFor="bio">{t("profile.edit.bioLabel")}</Label>
           <Textarea
             id="bio"
@@ -208,11 +203,20 @@ export function ProfileEditForm({
           </p>
           <LocationPicker
             value={form.watch("coords") ?? null}
-            onChange={(point) => {
+            onChange={(point, place) => {
               setCoordsTouched(true)
               form.setValue("coords", point, { shouldDirty: true })
+              // A pick resolves the area — overwrite whatever was there.
+              if (place?.name) {
+                form.setValue("area", place.name, { shouldDirty: true })
+              }
             }}
           />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="area">{t("profile.areaLabel")}</Label>
+          <Input id="area" maxLength={80} {...form.register("area")} />
         </div>
       </section>
 
