@@ -1,4 +1,4 @@
-import { pgTable, uuid, timestamp, integer, primaryKey } from "drizzle-orm/pg-core"
+import { pgTable, uuid, timestamp, integer, index, primaryKey } from "drizzle-orm/pg-core"
 
 import {
   matchState,
@@ -12,31 +12,41 @@ import { users } from "./users"
 import { teams } from "./teams"
 import { bookings } from "./bookings"
 
-export const matches = pgTable("matches", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  // 1:1 with bookings.
-  bookingId: uuid("booking_id")
-    .notNull()
-    .references(() => bookings.id, { onDelete: "cascade" })
-    .unique(),
-  state: matchState("state").notNull().default("draft"),
-  matchType: matchType("match_type").notNull().default("fives"),
-  // F1: result fields - back the ONGOING -> COMPLETED (result submitted) transition.
-  homeScore: integer("home_score"),
-  awayScore: integer("away_score"),
-  resultStatus: resultStatus("result_status").notNull().default("pending"),
-  submittedBy: uuid("submitted_by").references(() => users.id, {
-    onDelete: "set null",
-  }),
-  submittedAt: timestamp("submitted_at", { withTimezone: true }),
-  kickoffAt: timestamp("kickoff_at", { withTimezone: true }),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .defaultNow()
-    .notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .defaultNow()
-    .notNull(),
-})
+export const matches = pgTable(
+  "matches",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    // 1:1 with bookings.
+    bookingId: uuid("booking_id")
+      .notNull()
+      .references(() => bookings.id, { onDelete: "cascade" })
+      .unique(),
+    // The match captain: the user who created the match (solo or team side).
+    // RESTRICT — deletion is soft with a grace period, so a user purge must
+    // never silently destroy a confirmed match.
+    captainId: uuid("captain_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "restrict" }),
+    state: matchState("state").notNull().default("draft"),
+    matchType: matchType("match_type").notNull().default("fives"),
+    // F1: result fields - back the ONGOING -> COMPLETED (result submitted) transition.
+    homeScore: integer("home_score"),
+    awayScore: integer("away_score"),
+    resultStatus: resultStatus("result_status").notNull().default("pending"),
+    submittedBy: uuid("submitted_by").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    submittedAt: timestamp("submitted_at", { withTimezone: true }),
+    kickoffAt: timestamp("kickoff_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [index("matches_captain_idx").on(t.captainId)]
+)
 
 export const matchTeams = pgTable(
   "match_teams",

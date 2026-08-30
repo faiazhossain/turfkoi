@@ -146,10 +146,18 @@ export async function getMatchSide(
   return rows[0]?.side ?? null
 }
 
-export async function countRoster(matchId: string, teamId: string): Promise<number> {
+/** Roster size — for one team side, or the whole match when teamId is omitted. */
+export async function countRoster(
+  matchId: string,
+  teamId?: string | null
+): Promise<number> {
   const rows = await db
     .select({ id: matchPlayers.userId })
     .from(matchPlayers)
-    .where(and(eq(matchPlayers.matchId, matchId), eq(matchPlayers.teamId, teamId)))
+    .where(
+      teamId
+        ? and(eq(matchPlayers.matchId, matchId), eq(matchPlayers.teamId, teamId))
+        : eq(matchPlayers.matchId, matchId)
+    )
   return rows.length
 }

@@ -29,6 +29,8 @@ In-app notification system (Requirements §31: in-app only in MVP; push/email ar
 | `booking.confirmed` | booker | transactional | `/bookings/{id}` |
 | `booking.received` | turf owner | transactional | `/turf-owner` |
 | `booking.cancelled` | counterpart | critical | `/bookings/{id}` |
+| `match.player_added` | added player | transactional | `/matches/{id}` |
+| `match.join_requested` | match captain | info | `/matches/{id}` |
 
 ## UI surfaces
 
@@ -44,10 +46,12 @@ In-app notification system (Requirements §31: in-app only in MVP; push/email ar
 3. `confirmPaymentAction` → booker (`booking.confirmed`) + owner (`booking.received`), deduped when they're the same user.
 4. `cancelBookingAction` → the cancelling user's counterpart (`booking.cancelled`, refund amount only when notifying the booker).
 5. `verifyTurfAction` / `unverifyTurfAction` → the exact turf's owner (`turf.verified` / `turf.unverified`), resolved from the conditional update's returned row — per-turf, never a broadcast.
+6. `addPlayerAction` → the added player (`match.player_added`), skipped for self-adds.
+7. `requestToJoinAction` → the match captain (`match.join_requested`), only when the request row was actually created (no repeat notifications for idempotent re-requests).
 
 ## Deferred (post-MVP)
 
-- Match/team/player events (opponent requests, player requests, results) — Requirements §31 lists the full set.
+- Remaining match/team events (opponent requests, results) — Requirements §31 lists the full set.
 - `match_reminder` via the existing Inngest scheduling.
 - Payout notifications (`payout.ready`) for turf owners.
 - Pusher private channels + `/api/pushers/auth`.

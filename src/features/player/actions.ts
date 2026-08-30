@@ -11,12 +11,16 @@ import {
   matchPlayers,
   matchTeams,
   matches,
+  bookings,
+  turfs,
 } from "@/db/schema"
 import { getCurrentUser } from "@/lib/auth"
 import { roundCoords } from "@/lib/geo"
 import { getTeamRole } from "@/features/teams/queries"
 import { countRoster } from "@/features/matches/queries"
+import { isCaptainRole, rosterOpen } from "@/features/matches/authority"
 import { ROSTER_LIMITS } from "@/features/matches/schemas"
+import { createNotifications } from "@/features/notifications/create"
 
 import { updateProfileSchema } from "./schemas"
 import type { z } from "zod"
@@ -109,7 +113,9 @@ export async function updateProfileAction(
 
 /**
  * Player requests to join a match as a guest (SS20). Creates a
- * player_request (status=pending) for the captain to accept/reject.
+ * player_request (status=pending) for the captain to accept/reject. Solo
+ * matches accept requests while OPEN; team matches while CONFIRMED /
+ * ROSTER_BUILDING. The captain is notified of new requests.
  */
 export async function requestToJoinAction(
   matchId: string
@@ -117,15 +123,20 @@ export async function requestToJoinAction(
   const user = await getCurrentUser()
   if (!user) return unauthorized()
 
-  // Match must be in roster_building or confirmed.
+  // Match must be in an open roster state.
   const [match] = await db
     .select()
     .from(matches)
     .where(eq(matches.id, matchId))
     .limit(1)
   if (!match) return { ok: false, error: "matches.errors.matchNotFound" }
-  if (!["roster_building", "confirmed"].includes(match.state)) {
+  if (!rosterOpen(match.state)) {
     return { ok: false, error: "matches.errors.joinNotOpen" }
+  }
+
+  // The captain doesn't request to join their own match.
+  if (match.captainId === user.id) {
+    return { ok: false, error: "matches.errors.ownMatch" }
   }
 
   // Can't request if already on the roster.
@@ -138,11 +149,39 @@ export async function requestToJoinAction(
     .limit(1)
   if (existing) return { ok: false, error: "matches.errors.alreadyOnRoster" }
 
-  // Idempotent: if a pending request already exists, no-op.
-  await db
+  // Idempotent: if a pending request already exists, no-op. returning() tells
+  // us whether the row was actually created, so a repeated request doesn't
+  // re-notify the captain.
+  const inserted = await db
     .insert(playerRequests)
     .values({ matchId, userId: user.id, status: "pending" })
     .onConflictDoNothing()
+    .returning({ userId: playerRequests.userId })
+
+  if (inserted.length > 0) {
+    const [turfRows, requesterRows] = await Promise.all([
+      db
+        .select({ name: turfs.name })
+        .from(bookings)
+        .innerJoin(turfs, eq(turfs.id, bookings.turfId))
+        .where(eq(bookings.id, match.bookingId))
+        .limit(1),
+      db.select({ name: users.name }).from(users).where(eq(users.id, user.id)).limit(1),
+    ])
+    await createNotifications(
+      {
+        type: "match.join_requested",
+        payload: {
+          matchId,
+          playerName: requesterRows[0]?.name ?? "",
+          turfName: turfRows[0]?.name ?? "",
+        },
+        entityType: "match",
+        entityId: matchId,
+      },
+      [match.captainId]
+    )
+  }
 
   revalidatePath(`/matches/${matchId}`)
   revalidatePath("/app")
@@ -151,18 +190,33 @@ export async function requestToJoinAction(
 
 /**
  * Captain accepts a player's join request. Creates a match_players row with
- * role=guest and marks the request as accepted.
+ * role=guest and marks the request as accepted. teamId selects which side the
+ * guest joins; null (solo match) adds them without a team.
  */
 export async function acceptPlayerRequestAction(
   matchId: string,
   playerId: string,
-  teamId: string
+  teamId: string | null
 ): Promise<ActionResult> {
   const user = await getCurrentUser()
   if (!user) return unauthorized()
 
-  const role = await getTeamRole(teamId, user.id)
-  if (role !== "owner" && role !== "captain") {
+  const [match] = await db
+    .select()
+    .from(matches)
+    .where(eq(matches.id, matchId))
+    .limit(1)
+  if (!match) return { ok: false, error: "matches.errors.matchNotFound" }
+  if (!rosterOpen(match.state)) {
+    return { ok: false, error: "matches.errors.rosterNotOpen" }
+  }
+
+  if (teamId) {
+    const role = await getTeamRole(teamId, user.id)
+    if (!isCaptainRole(role)) {
+      return { ok: false, error: "errors.noPermission" }
+    }
+  } else if (match.captainId !== user.id) {
     return { ok: false, error: "errors.noPermission" }
   }
 
@@ -181,14 +235,7 @@ export async function acceptPlayerRequestAction(
     return { ok: false, error: "matches.errors.requestNotPending" }
   }
 
-  const [match] = await db
-    .select()
-    .from(matches)
-    .where(eq(matches.id, matchId))
-    .limit(1)
-  if (!match) return { ok: false, error: "matches.errors.matchNotFound" }
-
-  // Roster limit check.
+  // Roster limit check — per-team for team sides, total roster for solo.
   const count = await countRoster(matchId, teamId)
   const limits = ROSTER_LIMITS[match.matchType] ?? ROSTER_LIMITS.fives
   if (count >= limits.max) {
@@ -235,20 +282,27 @@ export async function rejectPlayerRequestAction(
     .limit(1)
   if (!req) return { ok: false, error: "matches.errors.requestNotFound" }
 
-  // Verify the user is captain/owner of a team in this match.
-  const sides = await db
-    .select()
-    .from(matchTeams)
-    .where(eq(matchTeams.matchId, req.matchId))
-  let isCaptain = false
-  for (const s of sides) {
-    const r = await getTeamRole(s.teamId, user.id)
-    if (r === "owner" || r === "captain") {
-      isCaptain = true
-      break
+  // The match captain or the captain/owner of a team in this match.
+  const [match] = await db
+    .select({ captainId: matches.captainId })
+    .from(matches)
+    .where(eq(matches.id, req.matchId))
+    .limit(1)
+  let authorized = match?.captainId === user.id
+  if (!authorized) {
+    const sides = await db
+      .select()
+      .from(matchTeams)
+      .where(eq(matchTeams.matchId, req.matchId))
+    for (const s of sides) {
+      const r = await getTeamRole(s.teamId, user.id)
+      if (isCaptainRole(r)) {
+        authorized = true
+        break
+      }
     }
   }
-  if (!isCaptain) return { ok: false, error: "matches.errors.notAuthorized" }
+  if (!authorized) return { ok: false, error: "matches.errors.notAuthorized" }
 
   await db
     .update(playerRequests)
@@ -261,6 +315,48 @@ export async function rejectPlayerRequestAction(
     )
 
   revalidatePath(`/matches/${matchId}`)
+  return { ok: true }
+}
+
+/**
+ * A rostered player leaves a match on their own accord (opt-out after being
+ * added). Not allowed for the captain — they own the match — and blocked
+ * once the match is no longer in an open roster state.
+ */
+export async function leaveMatchAction(matchId: string): Promise<ActionResult> {
+  const user = await getCurrentUser()
+  if (!user) return unauthorized()
+
+  const [match] = await db
+    .select()
+    .from(matches)
+    .where(eq(matches.id, matchId))
+    .limit(1)
+  if (!match) return { ok: false, error: "matches.errors.matchNotFound" }
+  if (!rosterOpen(match.state)) {
+    return { ok: false, error: "matches.errors.leaveNotOpen" }
+  }
+  if (match.captainId === user.id) {
+    return { ok: false, error: "matches.errors.cannotLeaveAsCaptain" }
+  }
+
+  const [row] = await db
+    .select({ userId: matchPlayers.userId })
+    .from(matchPlayers)
+    .where(
+      and(eq(matchPlayers.matchId, matchId), eq(matchPlayers.userId, user.id))
+    )
+    .limit(1)
+  if (!row) return { ok: false, error: "matches.errors.notOnMatchRoster" }
+
+  await db
+    .delete(matchPlayers)
+    .where(
+      and(eq(matchPlayers.matchId, matchId), eq(matchPlayers.userId, user.id))
+    )
+
+  revalidatePath(`/matches/${matchId}`)
+  revalidatePath("/app")
   return { ok: true }
 }
 

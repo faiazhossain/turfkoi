@@ -733,6 +733,26 @@ export const bn: Dictionary = {
     creating: "তৈরি হচ্ছে…",
     create: "ম্যাচ তৈরি করুন",
     createdToast: "ম্যাচ তৈরি হয়েছে!",
+    // Solo (no team) matches — the booker becomes the match captain.
+    pickTeamOptional:
+      "টিম না থাকলেও সমস্যা নেই — \"টিম ছাড়া\" বেছে নিয়ে ম্যাচ বানাতে পারেন।",
+    noTeamOption: "টিম ছাড়া (একা)",
+    soloTitle: "{captain}-এর ম্যাচ",
+    soloGroup: "টিম-বিহীন খেলোয়াড়",
+    captainBadge: "ক্যাপ্টেন",
+    playerSearchLabel: "খেলোয়াড় খুঁজুন",
+    playerSearchPlaceholder: "নাম দিয়ে খুঁজুন",
+    playerSearchPosition: "পজিশন",
+    playerSearchAll: "সব পজিশন",
+    playerSearchEmpty: "কোনো খেলোয়াড় মেলেনি।",
+    addNearbyAria: "{name}-কে রোস্টারে যোগ করুন",
+    rosterFullHint: "রোস্টার পূর্ণ — আর নতুন কেউ যোগ করা যাবে না।",
+    addNearbyHint:
+      "নিচের \"কাছে available খেলোয়াড়\" লিস্ট থেকে সরাসরি যোগ করুন।",
+    leaveMatch: "ম্যাচ ছাড়ুন",
+    leftMatchToast: "আপনি ম্যাচটি ছেড়ে দিয়েছেন।",
+    requestToJoinSolo: "ম্যাচে যোগ দেওয়ার রিকোয়েস্ট ({count} খালি জায়গা)",
+    requestedJoinSolo: "যোগ দেওয়ার রিকোয়েস্ট পাঠানো হয়েছে।",
     requestToJoin: "{team}-এ যোগ দেওয়ার রিকোয়েস্ট ({count} খালি জায়গা)",
     requestedJoin: "{team}-এ যোগ দেওয়ার রিকোয়েস্ট পাঠানো হয়েছে।",
     joinRequests: "যোগ দেওয়ার রিকোয়েস্ট ({count})",
@@ -758,6 +778,11 @@ export const bn: Dictionary = {
       requestNotPending: "রিকোয়েস্টটি আর অপেক্ষমাণ নেই।",
       notAuthorized: "অনুমতি নেই।",
       notOnMatchRoster: "আপনি এই ম্যাচের রোস্টারে নেই।",
+      notBookingOwner: "এই booking-টি আপনার নয়।",
+      teamNotInMatch: "এই টিমটি ম্যাচে নেই।",
+      cannotRemoveCaptain: "ক্যাপ্টেনকে রোস্টার থেকে বাদ দেওয়া যায় না।",
+      cannotLeaveAsCaptain: "ক্যাপ্টেন হিসেবে নিজের ম্যাচ ছাড়া যায় না।",
+      leaveNotOpen: "ম্যাচ শুরু হওয়ার আগেই ছাড়তে হবে।",
     },
   },
 
@@ -1125,6 +1150,11 @@ export const bn: Dictionary = {
       "আপনার ERP Premium {months} মাসের জন্য চালু আছে। পুরো বিজনেস টুলকিট উপভোগ করুন!",
     erpPremiumRejectedTitle: "Premium payment যাচাই করা যায়নি",
     erpPremiumRejectedBody: "কারণ: {reason}",
+    matchPlayerAddedTitle: "{turf}-এ ম্যাচে যোগ হয়েছে",
+    matchPlayerAddedBody: "{captain} আপনাকে রোস্টারে যোগ করেছে • {start}",
+    matchJoinRequestedTitle: "{player} ম্যাচে যোগ দিতে চায়",
+    matchJoinRequestedBody:
+      "রিকোয়েস্টটি দেখে নিন — রোস্টারে যোগ করুন বা বাদ দিন।",
   },
 
   ownATurf: {

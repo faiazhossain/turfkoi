@@ -10,7 +10,11 @@ import {
   BanknoteIcon,
   BadgeCheckIcon,
   ShieldOffIcon,
+  UserPlusIcon,
+  ClipboardListIcon,
 } from "lucide-react"
+
+import { formatKickoffLabel } from "@/features/matches/authority"
 
 /**
  * Notification type registry (Requirements §31) — the single source of truth
@@ -97,6 +101,20 @@ export interface NotificationPayloads {
   /** Turf owner: their premium payment claim was rejected. */
   "erp.premium_rejected": {
     reason: string
+  }
+  /** The added player: a match captain put them on the match roster. */
+  "match.player_added": {
+    matchId: string
+    matchType: string
+    kickoffAt?: string | null
+    turfName: string
+    captainName: string
+  }
+  /** The match captain: a player asked to join the match. */
+  "match.join_requested": {
+    matchId: string
+    playerName: string
+    turfName: string
   }
 }
 
@@ -273,6 +291,37 @@ export const NOTIFICATION_TYPES: Registry = {
         ? { key: "notifications.erpPremiumRejectedBody", params: { reason: p.reason } }
         : null,
     href: () => "/turf-owner/erp/premium",
+  },
+  "match.player_added": {
+    priority: "transactional",
+    audience: "player",
+    icon: UserPlusIcon,
+    title: (p) => ({
+      key: "notifications.matchPlayerAddedTitle",
+      params: { turf: p.turfName },
+    }),
+    body: (p): LocalizedText | null =>
+      p.kickoffAt
+        ? {
+            key: "notifications.matchPlayerAddedBody",
+            params: {
+              captain: p.captainName,
+              start: formatKickoffLabel(p.kickoffAt) ?? "",
+            },
+          }
+        : null,
+    href: (p) => `/matches/${p.matchId}`,
+  },
+  "match.join_requested": {
+    priority: "info",
+    audience: "player",
+    icon: ClipboardListIcon,
+    title: (p) => ({
+      key: "notifications.matchJoinRequestedTitle",
+      params: { player: p.playerName },
+    }),
+    body: () => ({ key: "notifications.matchJoinRequestedBody" }),
+    href: (p) => `/matches/${p.matchId}`,
   },
 }
 

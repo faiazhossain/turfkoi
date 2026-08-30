@@ -23,6 +23,10 @@ interface TeamOption {
   role: string
 }
 
+// Sentinel for the "no team" option — the booker creates the match solo and
+// becomes its captain.
+const SOLO = "__solo__"
+
 export function CreateMatchButton({
   bookingId,
   teams,
@@ -33,14 +37,15 @@ export function CreateMatchButton({
   const router = useRouter()
   const { t } = useI18n()
   const [pending, start] = useTransition()
-  const [teamId, setTeamId] = useState(teams[0]?.id ?? "")
+  const [teamId, setTeamId] = useState(teams[0]?.id ?? SOLO)
   const [expanded, setExpanded] = useState(false)
-
-  if (teams.length === 0) return null
 
   function create() {
     start(async () => {
-      const res = await createMatchAction({ bookingId, teamId })
+      const res = await createMatchAction({
+        bookingId,
+        teamId: teamId === SOLO ? undefined : teamId,
+      })
       if (!res.ok) {
         toast.error(t(res.error ?? "errors.generic"))
         return
@@ -65,12 +70,15 @@ export function CreateMatchButton({
 
   return (
     <div className="space-y-2 rounded-lg border border-border bg-card p-3">
-      <p className="text-sm font-medium">{t("matches.pickTeam")}</p>
+      <p className="text-sm font-medium">
+        {teams.length > 0 ? t("matches.pickTeam") : t("matches.pickTeamOptional")}
+      </p>
       <Select value={teamId} onValueChange={(v) => v && setTeamId(v)}>
         <SelectTrigger className="w-full">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
+          <SelectItem value={SOLO}>{t("matches.noTeamOption")}</SelectItem>
           {teams.map((team) => (
             <SelectItem key={team.id} value={team.id}>
               {team.name} ({t(teamMemberRoleLabel(team.role))})

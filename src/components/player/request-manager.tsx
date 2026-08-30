@@ -21,7 +21,8 @@ interface RequestItem {
 }
 
 interface RequestManagerProps {
-  teamId: string
+  /** Team the accepted guest joins; null for solo matches (no team side). */
+  teamId: string | null
   requests: RequestItem[]
 }
 

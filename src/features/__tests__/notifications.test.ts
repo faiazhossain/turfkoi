@@ -55,6 +55,18 @@ const SAMPLE_PAYLOADS: {
   "erp.salary_pending": { count: 2 },
   "erp.premium_approved": { months: 3 },
   "erp.premium_rejected": { reason: "Transaction ID not found" },
+  "match.player_added": {
+    matchId: "m-1",
+    matchType: "fives",
+    kickoffAt: "2026-08-30T14:00:00.000Z",
+    turfName: "Dhanmondi Arena",
+    captainName: "Rahim",
+  },
+  "match.join_requested": {
+    matchId: "m-1",
+    playerName: "Karim",
+    turfName: "Dhanmondi Arena",
+  },
 }
 
 describe("notification registry", () => {

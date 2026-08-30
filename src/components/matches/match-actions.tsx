@@ -23,6 +23,8 @@ import {
   submitResultAction,
   confirmResultAction,
 } from "@/features/matches/actions"
+import { leaveMatchAction } from "@/features/player/actions"
+import { rosterOpen } from "@/features/matches/authority"
 
 interface TeamOption {
   teamId: string
@@ -57,6 +59,12 @@ interface MatchActionsProps {
   myTeams: TeamOption[]
   /** Members of each of the user's teams (for the roster add dropdown). */
   teamMembers: TeamMember[]
+  /** The match's captain (creator) — solo roster authority. */
+  captainId: string
+  /** Whether the current user is the match captain. */
+  isMatchCaptain: boolean
+  /** Whether the current user is a rostered non-captain who can leave. */
+  canLeave: boolean
   canConfirmResult: boolean
 }
 
@@ -72,8 +80,8 @@ export function MatchActions(props: MatchActionsProps) {
   const canAccept =
     props.matchState === "open" && props.myTeams.length > 0
   const canBuildRoster =
-    ["confirmed", "roster_building"].includes(props.matchState) &&
-    props.myTeams.length > 0
+    rosterOpen(props.matchState) &&
+    (props.myTeams.length > 0 || props.isMatchCaptain)
   const canSubmitResult =
     props.matchState === "ongoing" && props.myTeams.length > 0
   const canConfirm =
@@ -94,9 +102,13 @@ export function MatchActions(props: MatchActionsProps) {
   }
 
   function addPlayer() {
-    if (!addTeamId || !addPlayerId) return
+    if (!addPlayerId) return
     start(async () => {
-      const res = await addPlayerAction(props.matchId, addTeamId, addPlayerId)
+      const res = await addPlayerAction({
+        matchId: props.matchId,
+        playerId: addPlayerId,
+        teamId: addTeamId || null,
+      })
       if (!res.ok) {
         toast.error(t(res.error ?? "errors.generic"))
         return
@@ -117,6 +129,28 @@ export function MatchActions(props: MatchActionsProps) {
       toast.success(t("matches.playerRemoved"))
       router.refresh()
     })
+  }
+
+  function leaveMatch() {
+    start(async () => {
+      const res = await leaveMatchAction(props.matchId)
+      if (!res.ok) {
+        toast.error(t(res.error ?? "errors.generic"))
+        return
+      }
+      toast.success(t("matches.leftMatchToast"))
+      router.refresh()
+    })
+  }
+
+  /** Captain badge shown next to the match captain's roster row. */
+  function captainBadge(userId: string) {
+    if (userId !== props.captainId) return null
+    return (
+      <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+        {t("matches.captainBadge")}
+      </span>
+    )
   }
 
   function submitResult() {
@@ -192,12 +226,14 @@ export function MatchActions(props: MatchActionsProps) {
                         key={p.userId}
                         className="flex items-center justify-between gap-2 bg-card p-2 text-sm"
                       >
-                        <span>{p.name ?? p.phone}</span>
+                        <span className="min-w-0 truncate">{p.name ?? p.phone}</span>
+                        {captainBadge(p.userId)}
                         <Button
                           size="xs"
                           variant="ghost"
                           onClick={() => removePlayer(p.userId)}
                           loading={pending}
+                          disabled={p.userId === props.captainId}
                         >
                           {t("common.remove")}
                         </Button>
@@ -236,6 +272,56 @@ export function MatchActions(props: MatchActionsProps) {
               </div>
             )
           })}
+
+          {/* Solo roster: players added by the match captain without a team. */}
+          {props.roster.some((p) => p.teamId === null) ? (
+            <div className="space-y-2">
+              <p className="text-sm font-medium">{t("matches.soloGroup")}</p>
+              <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border">
+                {props.roster
+                  .filter((p) => p.teamId === null)
+                  .map((p) => (
+                    <li
+                      key={p.userId}
+                      className="flex items-center justify-between gap-2 bg-card p-2 text-sm"
+                    >
+                      <span className="min-w-0 truncate">{p.name ?? p.phone}</span>
+                      {captainBadge(p.userId)}
+                      <Button
+                        size="xs"
+                        variant="ghost"
+                        onClick={() => removePlayer(p.userId)}
+                        loading={pending}
+                        disabled={p.userId === props.captainId}
+                      >
+                        {t("common.remove")}
+                      </Button>
+                    </li>
+                  ))}
+              </ul>
+            </div>
+          ) : null}
+
+          {/* Solo captains recruit from the nearby list instead of a team. */}
+          {props.myTeams.length === 0 ? (
+            <p className="text-xs text-muted-foreground">
+              {t("matches.addNearbyHint")}
+            </p>
+          ) : null}
+        </section>
+      ) : null}
+
+      {/* Leave match — rostered players can opt out before the match starts. */}
+      {props.canLeave ? (
+        <section className="space-y-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={leaveMatch}
+            loading={pending}
+          >
+            {t("matches.leaveMatch")}
+          </Button>
         </section>
       ) : null}
 

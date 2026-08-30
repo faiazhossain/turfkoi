@@ -2,7 +2,9 @@ import { z } from "zod"
 
 export const createMatchSchema = z.object({
   bookingId: z.string().uuid(),
-  teamId: z.string().uuid(),
+  // Optional: a match can be created solo — the booker becomes the captain
+  // and recruits players afterwards.
+  teamId: z.string().uuid().optional(),
 })
 export type CreateMatchValues = z.infer<typeof createMatchSchema>
 

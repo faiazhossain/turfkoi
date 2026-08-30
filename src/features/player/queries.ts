@@ -1,5 +1,5 @@
 import "server-only"
-import { and, asc, desc, eq, gte, inArray, sql } from "drizzle-orm"
+import { and, asc, desc, eq, gte, ilike, inArray, or, sql } from "drizzle-orm"
 
 import { db } from "@/db"
 import {
@@ -41,8 +41,10 @@ export function isAvailabilityFresh(profile: {
 
 /**
  * SS20 / SS32: matches that need players. A match is "needs players" when:
- *   - state is roster_building or confirmed (roster is open)
- *   - at least one team has fewer than the format's max roster
+ *   - state is roster_building or confirmed and at least one team has fewer
+ *     than the format's max roster, or
+ *   - state is open with no teams yet — a solo-captain match recruiting
+ *     players (one synthetic spot covering the whole roster).
  *
  * Geo-sorted by distance from the player's coords when available.
  */
@@ -50,7 +52,8 @@ export async function listMatchesNeedingPlayers(
   playerCoords?: GeoPoint | null,
   limit = 20
 ) {
-  // Pull matches in roster_building / confirmed state with their turfs.
+  // Pull matches with an open roster (plus solo matches still OPEN for
+  // opponent discovery — they recruit players in parallel) with their turfs.
   const rows = await db
     .select({
       id: matches.id,
@@ -67,7 +70,12 @@ export async function listMatchesNeedingPlayers(
     .from(matches)
     .innerJoin(bookings, eq(bookings.id, matches.bookingId))
     .innerJoin(turfs, eq(turfs.id, bookings.turfId))
-    .where(inArray(matches.state, ["roster_building", "confirmed"]))
+    .where(
+      or(
+        inArray(matches.state, ["roster_building", "confirmed"]),
+        eq(matches.state, "open")
+      )
+    )
     .orderBy(asc(matches.kickoffAt))
     .limit(limit)
 
@@ -95,24 +103,43 @@ export async function listMatchesNeedingPlayers(
     .where(inArray(matchPlayers.matchId, matchIds))
 
   // Compute distance when coords are available.
-  const withMeta = rows.map((r) => {
-    const sides = teamRows.filter((t) => t.matchId === r.id)
-    const max = ROSTER_LIMITS[r.matchType]?.max ?? 8
-    const spots = sides
-      .map((s) => {
-        const filled = rosterRows.filter(
-          (p) => p.matchId === r.id && p.teamId === s.teamId
-        ).length
-        return { teamId: s.teamId, teamName: s.teamName, side: s.side, open: Math.max(0, max - filled) }
-      })
-      .filter((s) => s.open > 0)
+  const withMeta = rows
+    .map((r) => {
+      const sides = teamRows.filter((t) => t.matchId === r.id)
+      const max = ROSTER_LIMITS[r.matchType]?.max ?? 8
+      const spots: {
+        teamId: string | null
+        teamName: string | null
+        side: "home" | "away" | null
+        open: number
+      }[] = sides
+        .map((s) => {
+          const filled = rosterRows.filter(
+            (p) => p.matchId === r.id && p.teamId === s.teamId
+          ).length
+          return { teamId: s.teamId, teamName: s.teamName, side: s.side, open: Math.max(0, max - filled) }
+        })
+        .filter((s) => s.open > 0)
 
-    return {
-      ...r,
-      teams: sides,
-      openSpots: spots,
-    }
-  })
+      // Open matches WITH teams are looking for an opponent, not players.
+      if (r.state === "open" && sides.length > 0) return null
+
+      // Solo match (no teams yet): one synthetic spot over the whole roster.
+      if (sides.length === 0 && r.state === "open") {
+        const filled = rosterRows.filter((p) => p.matchId === r.id).length
+        const open = Math.max(0, max - filled)
+        if (open > 0) {
+          spots.push({ teamId: null, teamName: null, side: null, open })
+        }
+      }
+
+      return {
+        ...r,
+        teams: sides,
+        openSpots: spots,
+      }
+    })
+    .filter((m): m is NonNullable<typeof m> => m !== null)
 
   // Filter to matches that actually have open spots.
   const withOpenSpots = withMeta.filter((m) => m.openSpots.length > 0)
@@ -147,9 +174,9 @@ export async function listMatchesNeedingPlayers(
  */
 export async function listAvailablePlayersNearTurf(
   turfId: string,
-  radiusKm = 10,
-  limit = 20
+  opts: { radiusKm?: number; limit?: number; q?: string; position?: string } = {}
 ) {
+  const { radiusKm = 10, limit = 20, q, position } = opts
   // "Available tonight" freshness window (SS18): stale toggles drop out.
   const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000)
   const distanceExpr = sql<number>`ST_Distance(${playerProfiles.coords}, ${turfs.coords}) / 1000.0`
@@ -177,7 +204,17 @@ export async function listAvailablePlayersNearTurf(
       and(
         eq(playerProfiles.available, true),
         gte(playerProfiles.availableAt, cutoff),
-        sql`ST_DWithin(${playerProfiles.coords}, ${turfs.coords}, ${radiusKm * 1000})`
+        sql`ST_DWithin(${playerProfiles.coords}, ${turfs.coords}, ${radiusKm * 1000})`,
+        // Optional filters: name substring, position (primary or secondary).
+        ...(q ? [ilike(users.name, `%${q}%`)] : []),
+        ...(position
+          ? [
+              or(
+                eq(playerProfiles.position, position),
+                eq(playerProfiles.secondaryPosition, position)
+              ),
+            ]
+          : [])
       )
     )
     .orderBy(asc(distanceExpr))
@@ -247,6 +284,31 @@ export async function listPendingPlayerRequests(teamIds: string[]) {
     .where(
       and(
         inArray(playerRequests.matchId, matchIds),
+        eq(playerRequests.status, "pending")
+      )
+    )
+    .orderBy(asc(playerRequests.createdAt))
+}
+
+/**
+ * Pending player requests for one match — works for solo-captain matches
+ * (no team sides) where the team-based lookup above can't reach.
+ */
+export async function listPendingPlayerRequestsByMatch(matchId: string) {
+  return db
+    .select({
+      matchId: playerRequests.matchId,
+      userId: playerRequests.userId,
+      status: playerRequests.status,
+      createdAt: playerRequests.createdAt,
+      playerName: users.name,
+      playerPhone: users.phone,
+    })
+    .from(playerRequests)
+    .innerJoin(users, eq(users.id, playerRequests.userId))
+    .where(
+      and(
+        eq(playerRequests.matchId, matchId),
         eq(playerRequests.status, "pending")
       )
     )
