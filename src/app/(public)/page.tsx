@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { HeroAnimation } from "@/components/home/hero-animation"
 import { HeroBackdrop } from "@/components/home/hero-backdrop"
 import { StatsStrip } from "@/components/home/stats-strip"
+import { LiveResults } from "@/components/home/live-results"
 import { FeaturesSection } from "@/components/home/features-section"
 import { AudienceSection } from "@/components/home/audience-section"
 import { TrustStrip } from "@/components/home/trust-strip"
@@ -50,6 +51,7 @@ export default async function HomePage() {
       </section>
 
       <FeaturesSection />
+      <LiveResults />
       <AudienceSection />
       <TrustStrip />
       <CtaBanner />

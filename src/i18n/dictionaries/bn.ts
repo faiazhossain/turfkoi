@@ -73,12 +73,22 @@ export const bn: Dictionary = {
     featureRosterTitle: "Team পূর্ণ করুন",
     featureRosterDesc:
       "Team-এ Player কম? কাছের Solo Player-রা আপনার Match-এ Guest হিসেবে Join করার জন্য Request পাঠাতে পারবে।",
-    statTurfsValue: "৫০+",
     statTurfs: "তালিকাভুক্ত টার্ফ",
-    statCitiesValue: "৫",
     statCities: "শহর",
-    statSlotsValue: "১,০০০+",
-    statSlots: "বুক হওয়া slot",
+    statMatches: "খেলা হয়েছে এমন ম্যাচ",
+    liveTitle: "লাইভ স্কোরবোর্ড",
+    liveSubtitle:
+      "এখন খেলা হচ্ছে এমন ম্যাচ আর সদ্য শেষ হওয়া ফলাফল — স্কোর সোজা ডেটাবেস থেকে।",
+    liveTickerLabel: "লাইভ",
+    tickerLiveNow: "লাইভ: {home} vs {away}",
+    tickerLatestResult: "সর্বশেষ ফলাফল: {home} {score} {away}",
+    tickerOpenChallenges: "{count}টি ওপেন চ্যালেঞ্জ খোলা আছে",
+    tickerPlayersAvailable: "আজ রাতে {count} জন খেলোয়াড় available",
+    tickerMatchesPlayed: "এ পর্যন্ত {count}টি ম্যাচ খেলা হয়েছে",
+    liveEmpty:
+      "এই মুহূর্তে কোনো লাইভ বা শেষ হওয়া ম্যাচ নেই। Booking থেকে ম্যাচ খুললেই স্কোর এখানে দেখা যাবে।",
+    liveViewAll: "সব ম্যাচ দেখুন",
+    liveTbdSide: "TBD",
     featuresTitle: "আপনার খেলার সবকিছু",
     featuresSubtitle:
       "বুকিং থেকে খেলা শুরু — Player, team আর turf owner, সবার জন্যই তৈরি।",

@@ -302,3 +302,24 @@ html[lang="bn"] body {
 .maplibregl-popup.maplibregl-popup-anchor-right .maplibregl-popup-tip {
   border-left-color: var(--card);
 }
+
+/*
+ * Landing live ticker — LED-board marquee. The track renders its items
+ * twice; translating -50% loops seamlessly. Reduced motion: stop scrolling.
+ */
+@keyframes home-ticker-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.home-ticker-track {
+  animation: home-ticker-scroll 28s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-ticker-track {
+    animation: none;
+  }
+}
