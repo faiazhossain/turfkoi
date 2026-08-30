@@ -986,6 +986,11 @@ export const bn: Dictionary = {
     turfApplicationRejectedTitle: "আবেদনের আপডেট: {turf}",
     turfApplicationRejectedBody:
       "দুঃখিত, এই আবেদনটি এখন আমরা অনুমোদন করতে পারিনি।",
+    turfVerifiedTitle: "{turf} verified হয়েছে",
+    turfVerifiedBody: "আপনার turf এখন DeshiTurf-এ verified badge নিয়ে লাইভ।",
+    turfUnverifiedTitle: "{turf} আর verified নেই",
+    turfUnverifiedBody:
+      "আপনার turf থেকে verified badge সরানো হয়েছে — listing হালনাগাদ করুন।",
     bookingConfirmedTitle: "{turf}-এ booking কনফার্ম হয়েছে",
     bookingReceivedTitle: "{turf}-এ নতুন booking",
     bookingCancelledTitle: "{turf}-এ booking বাতিল হয়েছে",

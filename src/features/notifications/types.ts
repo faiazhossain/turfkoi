@@ -9,6 +9,7 @@ import {
   ReceiptTextIcon,
   BanknoteIcon,
   BadgeCheckIcon,
+  ShieldOffIcon,
 } from "lucide-react"
 
 /**
@@ -46,6 +47,16 @@ export interface NotificationPayloads {
   }
   /** Applicant: their application was rejected. */
   "turf_application.rejected": {
+    turfName: string
+  }
+  /** Turf owner: an admin verified their turf (SS35). */
+  "turf.verified": {
+    turfId: string
+    turfName: string
+  }
+  /** Turf owner: an admin pulled their turf's verification back. */
+  "turf.unverified": {
+    turfId: string
     turfName: string
   }
   /** Booker: payment succeeded, booking is confirmed. */
@@ -145,6 +156,28 @@ export const NOTIFICATION_TYPES: Registry = {
       params: { turf: p.turfName },
     }),
     body: () => ({ key: "notifications.turfApplicationRejectedBody" }),
+  },
+  "turf.verified": {
+    priority: "transactional",
+    audience: "turf_owner",
+    icon: BadgeCheckIcon,
+    title: (p) => ({
+      key: "notifications.turfVerifiedTitle",
+      params: { turf: p.turfName },
+    }),
+    body: () => ({ key: "notifications.turfVerifiedBody" }),
+    href: (p) => `/turf-owner/turfs/${p.turfId}`,
+  },
+  "turf.unverified": {
+    priority: "transactional",
+    audience: "turf_owner",
+    icon: ShieldOffIcon,
+    title: (p) => ({
+      key: "notifications.turfUnverifiedTitle",
+      params: { turf: p.turfName },
+    }),
+    body: () => ({ key: "notifications.turfUnverifiedBody" }),
+    href: (p) => `/turf-owner/turfs/${p.turfId}`,
   },
   "booking.confirmed": {
     priority: "transactional",

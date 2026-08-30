@@ -963,6 +963,11 @@ export const en = {
     turfApplicationRejectedTitle: "Application update: {turf}",
     turfApplicationRejectedBody:
       "Unfortunately we couldn't approve this application right now.",
+    turfVerifiedTitle: "{turf} is verified",
+    turfVerifiedBody: "Your turf is now live on DeshiTurf with the verified badge.",
+    turfUnverifiedTitle: "{turf} is no longer verified",
+    turfUnverifiedBody:
+      "The verified badge was removed from your turf — please update your listing.",
     bookingConfirmedTitle: "Booking confirmed at {turf}",
     bookingReceivedTitle: "New booking at {turf}",
     bookingCancelledTitle: "Booking cancelled at {turf}",

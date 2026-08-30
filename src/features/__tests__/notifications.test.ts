@@ -24,6 +24,14 @@ const SAMPLE_PAYLOADS: {
     slug: "dhanmondi-arena",
   },
   "turf_application.rejected": { turfName: "Dhanmondi Arena" },
+  "turf.verified": {
+    turfId: "t-1",
+    turfName: "Dhanmondi Arena",
+  },
+  "turf.unverified": {
+    turfId: "t-1",
+    turfName: "Dhanmondi Arena",
+  },
   "booking.confirmed": {
     bookingId: "b-1",
     turfName: "Dhanmondi Arena",

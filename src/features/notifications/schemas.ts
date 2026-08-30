@@ -21,6 +21,14 @@ export const notificationPayloadSchemas = {
   "turf_application.rejected": z.object({
     turfName: z.string(),
   }),
+  "turf.verified": z.object({
+    turfId: z.string(),
+    turfName: z.string(),
+  }),
+  "turf.unverified": z.object({
+    turfId: z.string(),
+    turfName: z.string(),
+  }),
   "booking.confirmed": z.object({
     bookingId: z.string(),
     turfName: z.string(),

@@ -20,6 +20,7 @@ import {
 } from "@/db/schema"
 import { getCurrentUser } from "@/lib/auth"
 import { logger } from "@/lib/logger"
+import { createNotifications } from "@/features/notifications/create"
 
 import {
   approveRefundSchema,
@@ -162,7 +163,7 @@ export async function verifyTurfAction(
         isNotNull(turfs.ownerId)
       )
     )
-    .returning({ id: turfs.id })
+    .returning({ id: turfs.id, ownerId: turfs.ownerId, name: turfs.name })
   if (updated.length === 0) {
     const seeded = await db
       .select({ id: turfs.id })
@@ -176,6 +177,22 @@ export async function verifyTurfAction(
       }
     }
     return { ok: false, error: "admin.errors.turfNotFoundVerified" }
+  }
+
+  // Notify the exact owner of the verified turf — a per-turf event, never a
+  // broadcast. The WHERE guard above (isNotNull(ownerId)) means the owner is
+  // always set here; the check keeps the type honest.
+  const [turf] = updated
+  if (turf.ownerId) {
+    await createNotifications(
+      {
+        type: "turf.verified",
+        payload: { turfId: turf.id, turfName: turf.name },
+        entityType: "turf",
+        entityId: turf.id,
+      },
+      [turf.ownerId]
+    )
   }
   revalidatePath("/admin/turfs")
   revalidatePath("/admin")
@@ -204,9 +221,24 @@ export async function unverifyTurfAction(
     .where(
       and(eq(turfs.id, parsed.data.turfId), eq(turfs.isVerified, true))
     )
-    .returning({ id: turfs.id })
+    .returning({ id: turfs.id, ownerId: turfs.ownerId, name: turfs.name })
   if (updated.length === 0) {
     return { ok: false, error: "admin.errors.turfNotFoundPending" }
+  }
+
+  // Notify the exact owner that their turf lost the verified badge — same
+  // per-turf scoping as verifyTurfAction.
+  const [turf] = updated
+  if (turf.ownerId) {
+    await createNotifications(
+      {
+        type: "turf.unverified",
+        payload: { turfId: turf.id, turfName: turf.name },
+        entityType: "turf",
+        entityId: turf.id,
+      },
+      [turf.ownerId]
+    )
   }
 
   logger.info("admin.turf_unverified", { turfId: parsed.data.turfId })
