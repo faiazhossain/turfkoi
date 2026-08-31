@@ -7,14 +7,15 @@ import { UserPlusIcon } from "lucide-react"
 
 import { useI18n } from "@/i18n/client"
 import { Button } from "@/components/ui/button"
-import { addPlayerAction } from "@/features/matches/actions"
+import { inviteMatchPlayersAction } from "@/features/matches/actions"
 
 /**
- * Per-row add button for the "players available nearby" list. Each row owns
- * its transition so N rows never share one spinner; disabled once the roster
- * is full.
+ * Per-row invite button for the "players available nearby" list. Each row
+ * owns its transition so N rows never share one spinner. Creates a pending
+ * invitation — the player must accept; it consumes a squad spot until
+ * answered.
  */
-export function AddPlayerButton({
+export function InvitePlayerButton({
   matchId,
   playerId,
   playerName,
@@ -29,14 +30,14 @@ export function AddPlayerButton({
   const { t } = useI18n()
   const [pending, start] = useTransition()
 
-  function add() {
+  function invite() {
     start(async () => {
-      const res = await addPlayerAction({ matchId, playerId })
+      const res = await inviteMatchPlayersAction({ matchId, userIds: [playerId] })
       if (!res.ok) {
         toast.error(t(res.error ?? "errors.generic"))
         return
       }
-      toast.success(t("matches.playerAdded"))
+      toast.success(t("matches.invite.sentToast", { name: playerName }))
       router.refresh()
     })
   }
@@ -45,13 +46,13 @@ export function AddPlayerButton({
     <Button
       size="sm"
       variant="outline"
-      onClick={add}
+      onClick={invite}
       disabled={disabled || pending}
       loading={pending}
-      aria-label={t("matches.addNearbyAria", { name: playerName })}
+      aria-label={t("matches.invite.aria", { name: playerName })}
     >
       <UserPlusIcon aria-hidden />
-      {t("common.add")}
+      {t("matches.invite.cta")}
     </Button>
   )
 }

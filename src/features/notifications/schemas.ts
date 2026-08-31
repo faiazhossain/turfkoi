@@ -61,17 +61,31 @@ export const notificationPayloadSchemas = {
   "erp.premium_rejected": z.object({
     reason: z.string(),
   }),
-  "match.player_added": z.object({
+  "match.invite_received": z.object({
     matchId: z.string(),
     matchType: z.string(),
     kickoffAt: z.string().nullish(),
     turfName: z.string(),
     captainName: z.string(),
   }),
+  "match.invite_accepted": z.object({
+    matchId: z.string(),
+    playerName: z.string(),
+  }),
+  "match.invite_declined": z.object({
+    matchId: z.string(),
+    playerName: z.string(),
+  }),
   "match.join_requested": z.object({
     matchId: z.string(),
     playerName: z.string(),
     turfName: z.string(),
+  }),
+  "friend.request_received": z.object({
+    friendName: z.string(),
+  }),
+  "friend.request_accepted": z.object({
+    friendName: z.string(),
   }),
 } satisfies Record<NotificationType, z.ZodType>
 

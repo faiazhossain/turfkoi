@@ -17,9 +17,8 @@ import {
 import { getCurrentUser } from "@/lib/auth"
 import { roundCoords } from "@/lib/geo"
 import { getTeamRole } from "@/features/teams/queries"
-import { countRoster } from "@/features/matches/queries"
 import { isCaptainRole, rosterOpen } from "@/features/matches/authority"
-import { ROSTER_LIMITS } from "@/features/matches/schemas"
+import { FORMATS, resolveSquadRole } from "@/features/matches/formats"
 import { createNotifications } from "@/features/notifications/create"
 
 import { updateProfileSchema } from "./schemas"
@@ -235,17 +234,29 @@ export async function acceptPlayerRequestAction(
     return { ok: false, error: "matches.errors.requestNotPending" }
   }
 
-  // Roster limit check — per-team for team sides, total roster for solo.
-  const count = await countRoster(matchId, teamId)
-  const limits = ROSTER_LIMITS[match.matchType] ?? ROSTER_LIMITS.fives
-  if (count >= limits.max) {
-    return { ok: false, error: "matches.errors.rosterFull" }
+  // Squad capacity check — squadSize is per side; pending invitations and
+  // count-first placeholders consume seats too. Seat as substitute once the
+  // side's starting slots are full.
+  const { getSquadCounts } = await import("@/features/matches/queries")
+  const { spotsLeft } = await import("@/features/matches/formats")
+  const counts = await getSquadCounts(matchId)
+  const side = counts.find((c) => (c.teamId ?? null) === teamId)
+  const cap = match.squadSize ?? FORMATS.fives.maxSquad
+  const free = spotsLeft(
+    cap,
+    side?.total ?? 0,
+    side?.pending ?? 0,
+    side?.placeholders ?? 0
+  )
+  if (free < 1) {
+    return { ok: false, error: "matches.errors.squadFull" }
   }
+  const squadRole = resolveSquadRole(side?.starting ?? 0, match.matchType)
 
   // Add as guest player.
   await db
     .insert(matchPlayers)
-    .values({ matchId, userId: playerId, teamId, role: "guest" })
+    .values({ matchId, userId: playerId, teamId, role: "guest", squadRole })
     .onConflictDoNothing()
 
   // Mark request accepted.

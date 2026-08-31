@@ -11,6 +11,10 @@ import {
   BadgeCheckIcon,
   ShieldOffIcon,
   UserPlusIcon,
+  UserCheckIcon,
+  UserXIcon,
+  UsersIcon,
+  MailPlusIcon,
   ClipboardListIcon,
 } from "lucide-react"
 
@@ -102,19 +106,37 @@ export interface NotificationPayloads {
   "erp.premium_rejected": {
     reason: string
   }
-  /** The added player: a match captain put them on the match roster. */
-  "match.player_added": {
+  /** The invited player: a captain invited them to a match squad. */
+  "match.invite_received": {
     matchId: string
     matchType: string
     kickoffAt?: string | null
     turfName: string
     captainName: string
   }
+  /** The inviter: an invitee accepted the match invitation. */
+  "match.invite_accepted": {
+    matchId: string
+    playerName: string
+  }
+  /** The inviter: an invitee declined the match invitation. */
+  "match.invite_declined": {
+    matchId: string
+    playerName: string
+  }
   /** The match captain: a player asked to join the match. */
   "match.join_requested": {
     matchId: string
     playerName: string
     turfName: string
+  }
+  /** The addressee: someone sent them a friend request. */
+  "friend.request_received": {
+    friendName: string
+  }
+  /** The requester: their friend request was accepted. */
+  "friend.request_accepted": {
+    friendName: string
   }
 }
 
@@ -292,24 +314,46 @@ export const NOTIFICATION_TYPES: Registry = {
         : null,
     href: () => "/turf-owner/erp/premium",
   },
-  "match.player_added": {
+  "match.invite_received": {
     priority: "transactional",
     audience: "player",
-    icon: UserPlusIcon,
+    icon: MailPlusIcon,
     title: (p) => ({
-      key: "notifications.matchPlayerAddedTitle",
-      params: { turf: p.turfName },
+      key: "notifications.matchInviteReceivedTitle",
+      params: { captain: p.captainName },
     }),
     body: (p): LocalizedText | null =>
       p.kickoffAt
         ? {
-            key: "notifications.matchPlayerAddedBody",
+            key: "notifications.matchInviteReceivedBody",
             params: {
-              captain: p.captainName,
+              turf: p.turfName,
               start: formatKickoffLabel(p.kickoffAt) ?? "",
             },
           }
         : null,
+    href: (p) => `/matches/${p.matchId}`,
+  },
+  "match.invite_accepted": {
+    priority: "info",
+    audience: "player",
+    icon: UserCheckIcon,
+    title: (p) => ({
+      key: "notifications.matchInviteAcceptedTitle",
+      params: { player: p.playerName },
+    }),
+    body: () => ({ key: "notifications.matchInviteAcceptedBody" }),
+    href: (p) => `/matches/${p.matchId}`,
+  },
+  "match.invite_declined": {
+    priority: "info",
+    audience: "player",
+    icon: UserXIcon,
+    title: (p) => ({
+      key: "notifications.matchInviteDeclinedTitle",
+      params: { player: p.playerName },
+    }),
+    body: () => ({ key: "notifications.matchInviteDeclinedBody" }),
     href: (p) => `/matches/${p.matchId}`,
   },
   "match.join_requested": {
@@ -322,6 +366,28 @@ export const NOTIFICATION_TYPES: Registry = {
     }),
     body: () => ({ key: "notifications.matchJoinRequestedBody" }),
     href: (p) => `/matches/${p.matchId}`,
+  },
+  "friend.request_received": {
+    priority: "info",
+    audience: "player",
+    icon: UserPlusIcon,
+    title: (p) => ({
+      key: "notifications.friendRequestReceivedTitle",
+      params: { friend: p.friendName },
+    }),
+    body: () => ({ key: "notifications.friendRequestReceivedBody" }),
+    href: () => "/app",
+  },
+  "friend.request_accepted": {
+    priority: "info",
+    audience: "player",
+    icon: UsersIcon,
+    title: (p) => ({
+      key: "notifications.friendRequestAcceptedTitle",
+      params: { friend: p.friendName },
+    }),
+    body: () => ({ key: "notifications.friendRequestAcceptedBody" }),
+    href: () => "/app",
   },
 }
 

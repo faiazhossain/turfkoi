@@ -89,7 +89,17 @@ export const payoutStatus = pgEnum("payout_status", [
   "failed",
 ])
 
-export const matchType = pgEnum("match_type", ["fives", "sevens"])
+// Played format — players per side ON THE FIELD. Squad size (incl.
+// substitutes) is a separate per-match column and is never implied by this.
+export const matchType = pgEnum("match_type", [
+  "fives",
+  "sevens",
+  "nines",
+  "elevens",
+])
+
+// Where a squad member sits: on the field at kickoff or on the bench.
+export const squadRole = pgEnum("squad_role", ["starting", "substitute"])
 
 // SS23 match state machine
 export const matchState = pgEnum("match_state", [
@@ -124,6 +134,22 @@ export const requestStatus = pgEnum("request_status", [
   "rejected",
   "cancelled",
   "expired",
+])
+
+// Outbound match invitations (captain → player). Separate from request_status:
+// the invitee "declines" (not "rejects"), and expiry semantics differ.
+export const invitationStatus = pgEnum("invitation_status", [
+  "pending",
+  "accepted",
+  "declined",
+  "cancelled",
+  "expired",
+])
+
+export const friendshipStatus = pgEnum("friendship_status", [
+  "pending",
+  "accepted",
+  "declined",
 ])
 
 // Money-flow model: per-turf-owner cancellation policy

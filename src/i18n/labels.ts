@@ -9,6 +9,8 @@
 import type {
   bookingStatus,
   matchState,
+  matchType,
+  squadRole,
   slotStatus,
   teamMemberRole,
   userRole,
@@ -24,6 +26,8 @@ type EnumValues<E extends { enumValues: readonly string[] }> = E["enumValues"][n
 
 export type BookingStatusValue = EnumValues<typeof bookingStatus>
 export type MatchStateValue = EnumValues<typeof matchState>
+export type MatchTypeValue = EnumValues<typeof matchType>
+export type SquadRoleValue = EnumValues<typeof squadRole>
 export type SlotStatusValue = EnumValues<typeof slotStatus>
 export type TeamMemberRoleValue = EnumValues<typeof teamMemberRole>
 export type UserRoleValue = EnumValues<typeof userRole>
@@ -53,6 +57,23 @@ export const MATCH_STATE_LABEL: Record<MatchStateValue, string> = {
   cancelled: "matches.state.cancelled",
   expired: "matches.state.expired",
   disputed: "matches.state.disputed",
+}
+
+/** Format labels stay English in BOTH locales (BD turf-scene convention). */
+export const MATCH_TYPE_LABEL: Record<MatchTypeValue, string> = {
+  fives: "matches.format.fives",
+  sevens: "matches.format.sevens",
+  nines: "matches.format.nines",
+  elevens: "matches.format.elevens",
+}
+
+export function matchTypeLabelKey(type: string): string {
+  return MATCH_TYPE_LABEL[type as MatchTypeValue] ?? `matches.format.${type}`
+}
+
+export const SQUAD_ROLE_LABEL: Record<SquadRoleValue, string> = {
+  starting: "matches.squad.starting",
+  substitute: "matches.squad.substitutes",
 }
 
 export const SLOT_STATUS_LABEL: Record<SlotStatusValue, string> = {
@@ -100,6 +121,22 @@ export function bookingStatusLabel(status: string): string {
 
 export function matchStateLabel(state: string): string {
   return MATCH_STATE_LABEL[state as MatchStateValue] ?? `matches.state.${state}`
+}
+
+/**
+ * Conversational, context-aware status line (replaces technical state names
+ * in the match room): open solo = recruiting players, open team = looking
+ * for an opponent, confirmed = match confirmed. Null → no sub-line.
+ */
+export function matchStateContextLabelKey(
+  state: string,
+  solo: boolean
+): string | null {
+  if (state === "open") {
+    return solo ? "matches.stateContext.openSolo" : "matches.stateContext.openTeam"
+  }
+  if (state === "confirmed") return "matches.stateContext.confirmed"
+  return null
 }
 
 export function slotStatusLabel(status: string): string {

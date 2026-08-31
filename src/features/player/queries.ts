@@ -6,6 +6,8 @@ import {
   matches,
   matchTeams,
   matchPlayers,
+  matchGuests,
+  matchInvitations,
   bookings,
   turfs,
   teams,
@@ -13,7 +15,7 @@ import {
   playerProfiles,
   users,
 } from "@/db/schema"
-import { ROSTER_LIMITS } from "@/features/matches/schemas"
+import { FORMATS } from "@/features/matches/formats"
 import type { GeoPoint } from "@/db/geo"
 
 export async function getPlayerProfile(userId: string) {
@@ -59,6 +61,8 @@ export async function listMatchesNeedingPlayers(
       id: matches.id,
       state: matches.state,
       matchType: matches.matchType,
+      squadSize: matches.squadSize,
+      soloPlaceholders: matches.placeholderCount,
       kickoffAt: matches.kickoffAt,
       date: bookings.date,
       slotStart: bookings.slotStart,
@@ -102,11 +106,55 @@ export async function listMatchesNeedingPlayers(
     .from(matchPlayers)
     .where(inArray(matchPlayers.matchId, matchIds))
 
+  // Count-first fill math per side: identities (players + guests) + pending
+  // invites + declared placeholders — a full-squad match stops advertising.
+  const [guestRows, pendingRows, teamPlaceholderRows] = await Promise.all([
+    db
+      .select({
+        matchId: matchGuests.matchId,
+        teamId: matchGuests.teamId,
+      })
+      .from(matchGuests)
+      .where(inArray(matchGuests.matchId, matchIds)),
+    db
+      .select({
+        matchId: matchInvitations.matchId,
+        teamId: matchInvitations.teamId,
+      })
+      .from(matchInvitations)
+      .where(
+        and(
+          inArray(matchInvitations.matchId, matchIds),
+          eq(matchInvitations.status, "pending")
+        )
+      ),
+    db
+      .select({
+        matchId: matchTeams.matchId,
+        teamId: matchTeams.teamId,
+        placeholderCount: matchTeams.placeholderCount,
+      })
+      .from(matchTeams)
+      .where(inArray(matchTeams.matchId, matchIds)),
+  ])
+
   // Compute distance when coords are available.
   const withMeta = rows
     .map((r) => {
       const sides = teamRows.filter((t) => t.matchId === r.id)
-      const max = ROSTER_LIMITS[r.matchType]?.max ?? 8
+      const max = r.squadSize ?? FORMATS[r.matchType as keyof typeof FORMATS]?.maxSquad ?? FORMATS.fives.maxSquad
+      const filledFor = (teamId: string | null) =>
+        rosterRows.filter((p) => p.matchId === r.id && p.teamId === teamId)
+          .length +
+        guestRows.filter((g) => g.matchId === r.id && g.teamId === teamId)
+          .length +
+        pendingRows.filter((i) => i.matchId === r.id && i.teamId === teamId)
+          .length +
+        (teamId
+          ? (teamPlaceholderRows.find(
+              (t) => t.matchId === r.id && t.teamId === teamId
+            )?.placeholderCount ?? 0)
+          : r.soloPlaceholders)
       const spots: {
         teamId: string | null
         teamName: string | null
@@ -114,10 +162,8 @@ export async function listMatchesNeedingPlayers(
         open: number
       }[] = sides
         .map((s) => {
-          const filled = rosterRows.filter(
-            (p) => p.matchId === r.id && p.teamId === s.teamId
-          ).length
-          return { teamId: s.teamId, teamName: s.teamName, side: s.side, open: Math.max(0, max - filled) }
+          const open = Math.max(0, max - filledFor(s.teamId))
+          return { teamId: s.teamId, teamName: s.teamName, side: s.side, open }
         })
         .filter((s) => s.open > 0)
 
@@ -126,8 +172,7 @@ export async function listMatchesNeedingPlayers(
 
       // Solo match (no teams yet): one synthetic spot over the whole roster.
       if (sides.length === 0 && r.state === "open") {
-        const filled = rosterRows.filter((p) => p.matchId === r.id).length
-        const open = Math.max(0, max - filled)
+        const open = Math.max(0, max - filledFor(null))
         if (open > 0) {
           spots.push({ teamId: null, teamName: null, side: null, open })
         }

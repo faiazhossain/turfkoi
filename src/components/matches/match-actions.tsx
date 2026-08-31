@@ -9,17 +9,11 @@ import { useI18n } from "@/i18n/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { MemberPicker, type PickerMember } from "@/components/matches/member-picker"
+import { GuestAddForm } from "@/components/matches/guest-add-form"
 import {
   acceptAsOpponentAction,
-  addPlayerAction,
-  removePlayerAction,
+  inviteMatchPlayersAction,
   submitResultAction,
   confirmResultAction,
 } from "@/features/matches/actions"
@@ -32,35 +26,21 @@ interface TeamOption {
   side: "home" | "away"
 }
 
-interface RosterPlayer {
-  userId: string
-  name: string | null
-  phone: string
-  teamId: string | null
-  role: string
-}
-
-interface TeamMember {
-  userId: string
-  name: string | null
-  phone: string
-}
-
 interface MatchActionsProps {
   matchId: string
   matchState: string
-  matchType: string
   homeScore: number | null
   awayScore: number | null
   resultStatus: string
   sides: TeamOption[]
-  roster: RosterPlayer[]
   /** Teams the current user can act on (is captain/owner of). */
   myTeams: TeamOption[]
-  /** Members of each of the user's teams (for the roster add dropdown). */
-  teamMembers: TeamMember[]
-  /** The match's captain (creator) — solo roster authority. */
-  captainId: string
+  /** Teams the user captains that are not in this match — can challenge. */
+  challengeTeams: { teamId: string; teamName: string }[]
+  /** Members of the user's first managed team (for the squad add panel). */
+  teamMembers: PickerMember[]
+  /** The user's friends not already on the roster — per-friend invite. */
+  friends: PickerMember[]
   /** Whether the current user is the match captain. */
   isMatchCaptain: boolean
   /** Whether the current user is a rostered non-captain who can leave. */
@@ -68,18 +48,25 @@ interface MatchActionsProps {
   canConfirmResult: boolean
 }
 
+/**
+ * Match-level actions: challenge (open team matches), squad additions from
+ * the user's team, leave, and result submission/confirmation. Squad display
+ * and promote/demote live in SquadGroups.
+ */
 export function MatchActions(props: MatchActionsProps) {
   const router = useRouter()
   const { t } = useI18n()
   const [pending, start] = useTransition()
   const [home, setHome] = useState(String(props.homeScore ?? 0))
   const [away, setAway] = useState(String(props.awayScore ?? 0))
-  const [addTeamId, setAddTeamId] = useState(props.myTeams[0]?.teamId ?? "")
-  const [addPlayerId, setAddPlayerId] = useState("")
+  const [picks, setPicks] = useState<string[]>([])
+  const [phone, setPhone] = useState("")
 
-  const canAccept =
-    props.matchState === "open" && props.myTeams.length > 0
-  const canBuildRoster =
+  const canChallenge =
+    props.matchState === "open" &&
+    props.challengeTeams.length > 0 &&
+    props.sides.length > 0
+  const canBuildSquad =
     rosterOpen(props.matchState) &&
     (props.myTeams.length > 0 || props.isMatchCaptain)
   const canSubmitResult =
@@ -89,44 +76,46 @@ export function MatchActions(props: MatchActionsProps) {
     props.resultStatus === "pending" &&
     props.canConfirmResult
 
-  function accept(teamId: string) {
+  function challenge(teamId: string) {
     start(async () => {
       const res = await acceptAsOpponentAction(props.matchId, teamId)
       if (!res.ok) {
         toast.error(t(res.error ?? "errors.generic"))
         return
       }
-      toast.success(t("matches.youAreOpponent"))
+      toast.success(t("matches.challengeSent"))
       router.refresh()
     })
   }
 
-  function addPlayer() {
-    if (!addPlayerId) return
+  /** Invite picked members (and optionally a phone) — they must accept. */
+  function invitePicked() {
+    if (picks.length === 0 && !phone.trim()) return
     start(async () => {
-      const res = await addPlayerAction({
+      const res = await inviteMatchPlayersAction({
         matchId: props.matchId,
-        playerId: addPlayerId,
-        teamId: addTeamId || null,
+        userIds: picks,
+        phones: phone.trim() ? [phone.trim()] : undefined,
       })
       if (!res.ok) {
         toast.error(t(res.error ?? "errors.generic"))
         return
       }
-      toast.success(t("matches.playerAdded"))
-      setAddPlayerId("")
+      toast.success(t("matches.invite.sent"))
+      setPicks([])
+      setPhone("")
       router.refresh()
     })
   }
 
-  function removePlayer(playerId: string) {
+  function inviteFriend(userId: string) {
     start(async () => {
-      const res = await removePlayerAction(props.matchId, playerId)
+      const res = await inviteMatchPlayersAction({ matchId: props.matchId, userIds: [userId] })
       if (!res.ok) {
         toast.error(t(res.error ?? "errors.generic"))
         return
       }
-      toast.success(t("matches.playerRemoved"))
+      toast.success(t("matches.invite.sent"))
       router.refresh()
     })
   }
@@ -141,16 +130,6 @@ export function MatchActions(props: MatchActionsProps) {
       toast.success(t("matches.leftMatchToast"))
       router.refresh()
     })
-  }
-
-  /** Captain badge shown next to the match captain's roster row. */
-  function captainBadge(userId: string) {
-    if (userId !== props.captainId) return null
-    return (
-      <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-        {t("matches.captainBadge")}
-      </span>
-    )
   }
 
   function submitResult() {
@@ -183,132 +162,98 @@ export function MatchActions(props: MatchActionsProps) {
 
   return (
     <div className="space-y-6">
-      {/* Accept as opponent */}
-      {canAccept ? (
+      {/* Challenge — captained teams not in this match can take the away side */}
+      {canChallenge ? (
         <section className="space-y-2">
-          <h3 className="font-heading text-sm font-semibold">{t("matches.acceptAsOpponent")}</h3>
+          <h3 className="font-heading text-sm font-semibold">{t("matches.challengeTitle")}</h3>
           <div className="flex flex-wrap gap-2">
-            {props.myTeams.map((tm) => (
+            {props.challengeTeams.map((tm) => (
               <Button
                 key={tm.teamId}
-                onClick={() => accept(tm.teamId)}
+                onClick={() => challenge(tm.teamId)}
                 loading={pending}
               >
-                {t("matches.acceptAs", { team: tm.teamName })}
+                {props.challengeTeams.length === 1
+                  ? t("matches.challengeCta")
+                  : t("matches.challengeAs", { team: tm.teamName })}
               </Button>
             ))}
           </div>
         </section>
       ) : null}
 
-      {/* Roster building */}
-      {canBuildRoster ? (
-        <section className="space-y-3">
-          <h3 className="font-heading text-sm font-semibold">{t("matches.roster")}</h3>
-          {props.myTeams.map((tm) => {
-            const players = props.roster.filter((p) => p.teamId === tm.teamId)
-            return (
-              <div key={tm.teamId} className="space-y-2">
-                <p className="text-sm font-medium">
-                  {tm.teamName}{" "}
-                  <span className="text-muted-foreground">
-                    ({t("matches.side" + (tm.side === "home" ? "Home" : "Away"))})
-                  </span>
-                </p>
-                {players.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">
-                    {t("matches.noPlayers")}
-                  </p>
-                ) : (
-                  <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border">
-                    {players.map((p) => (
-                      <li
-                        key={p.userId}
-                        className="flex items-center justify-between gap-2 bg-card p-2 text-sm"
-                      >
-                        <span className="min-w-0 truncate">{p.name ?? p.phone}</span>
-                        {captainBadge(p.userId)}
-                        <Button
-                          size="xs"
-                          variant="ghost"
-                          onClick={() => removePlayer(p.userId)}
-                          loading={pending}
-                          disabled={p.userId === props.captainId}
-                        >
-                          {t("common.remove")}
-                        </Button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                <div className="flex items-end gap-2">
-                  <Select
-                    value={addPlayerId}
-                    onValueChange={(v) => v && setAddPlayerId(v)}
-                  >
-                    <SelectTrigger size="sm" className="flex-1">
-                      <SelectValue placeholder={t("matches.addPlayer")} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {props.teamMembers.map((m) => (
-                        <SelectItem key={m.userId} value={m.userId}>
-                          {m.name ?? m.phone}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      setAddTeamId(tm.teamId)
-                      addPlayer()
-                    }}
-                    disabled={!addPlayerId}
-                    loading={pending}
-                  >
-                    {t("common.add")}
-                  </Button>
+      {/* Squad invitations from the user's team + manual guest add */}
+      {canBuildSquad ? (
+        <section id="add-guest" className="scroll-mt-20 space-y-2">
+          <h3 className="font-heading text-sm font-semibold">
+            {t("matches.squad.addMembers")}
+          </h3>
+          {props.myTeams.length > 0 && props.teamMembers.length > 0 ? (
+            <>
+              <MemberPicker
+                members={props.teamMembers}
+                selected={picks}
+                onToggle={(userId) =>
+                  setPicks((prev) =>
+                    prev.includes(userId)
+                      ? prev.filter((id) => id !== userId)
+                      : [...prev, userId]
+                  )
+                }
+              />
+              <div className="flex flex-wrap items-end gap-2">
+                <div className="space-y-1">
+                  <Label htmlFor="invite-phone" className="text-xs">
+                    {t("matches.invite.phoneLabel")}
+                  </Label>
+                  <Input
+                    id="invite-phone"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    inputMode="tel"
+                    className="w-40"
+                  />
                 </div>
+                <Button
+                  size="sm"
+                  onClick={invitePicked}
+                  loading={pending}
+                  disabled={picks.length === 0 && !phone.trim()}
+                >
+                  {t("matches.invite.cta")}
+                </Button>
               </div>
-            )
-          })}
-
-          {/* Solo roster: players added by the match captain without a team. */}
-          {props.roster.some((p) => p.teamId === null) ? (
+            </>
+          ) : null}
+          {props.friends.length > 0 ? (
             <div className="space-y-2">
-              <p className="text-sm font-medium">{t("matches.soloGroup")}</p>
+              <p className="text-sm font-medium">{t("matches.invite.friendsTitle")}</p>
               <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border">
-                {props.roster
-                  .filter((p) => p.teamId === null)
-                  .map((p) => (
-                    <li
-                      key={p.userId}
-                      className="flex items-center justify-between gap-2 bg-card p-2 text-sm"
+                {props.friends.map((f) => (
+                  <li key={f.userId} className="flex items-center justify-between gap-2 bg-card p-2.5 text-sm">
+                    <span className="min-w-0 truncate">{f.name ?? f.phone}</span>
+                    <Button
+                      size="xs"
+                      variant="outline"
+                      onClick={() => inviteFriend(f.userId)}
+                      loading={pending}
                     >
-                      <span className="min-w-0 truncate">{p.name ?? p.phone}</span>
-                      {captainBadge(p.userId)}
-                      <Button
-                        size="xs"
-                        variant="ghost"
-                        onClick={() => removePlayer(p.userId)}
-                        loading={pending}
-                        disabled={p.userId === props.captainId}
-                      >
-                        {t("common.remove")}
-                      </Button>
-                    </li>
-                  ))}
+                      {t("matches.invite.cta")}
+                    </Button>
+                  </li>
+                ))}
               </ul>
             </div>
           ) : null}
-
-          {/* Solo captains recruit from the nearby list instead of a team. */}
-          {props.myTeams.length === 0 ? (
-            <p className="text-xs text-muted-foreground">
-              {t("matches.addNearbyHint")}
-            </p>
-          ) : null}
+          <GuestAddForm matchId={props.matchId} />
         </section>
+      ) : null}
+
+      {/* Solo captains recruit from the nearby list instead of a team. */}
+      {canBuildSquad && props.myTeams.length === 0 ? (
+        <p className="text-xs text-muted-foreground">
+          {t("matches.addNearbyHint")}
+        </p>
       ) : null}
 
       {/* Leave match — rostered players can opt out before the match starts. */}

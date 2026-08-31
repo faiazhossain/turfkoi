@@ -7,7 +7,6 @@ import { FeeBreakdown } from "@/components/bookings/fee-breakdown"
 import { BookingActions } from "@/components/bookings/booking-actions"
 import { CreateMatchButton } from "@/components/bookings/create-match-button"
 import { getBooking } from "@/features/bookings/queries"
-import { listMyTeams } from "@/features/teams/queries"
 import { db } from "@/db"
 import { matches } from "@/db/schema"
 import { eq } from "drizzle-orm"
@@ -85,22 +84,15 @@ export default async function BookingDetailPage({
   const policyText =
     policyLabel === policyKey ? turf.cancellationPolicy.replace(/_/g, " ") : policyLabel
 
-  // For confirmed bookings: check if a match already exists + load teams.
+  // For confirmed bookings: check if a match already exists (1:1).
   let existingMatch: { id: string } | null = null
-  let userTeams: { id: string; name: string; role: string }[] = []
-  if (b.status === "confirmed" && user) {
+  if (b.status === "confirmed") {
     const [m] = await db
       .select({ id: matches.id })
       .from(matches)
       .where(eq(matches.bookingId, b.id))
       .limit(1)
     existingMatch = m ?? null
-    if (!existingMatch) {
-      const teams = await listMyTeams(user.id)
-      userTeams = teams
-        .filter((t) => t.role === "owner" || t.role === "captain")
-        .map((t) => ({ id: t.id, name: t.name, role: t.role }))
-    }
   }
 
   return (
@@ -167,7 +159,7 @@ export default async function BookingDetailPage({
       ) : null}
 
       {b.status === "confirmed" && !existingMatch ? (
-        <CreateMatchButton bookingId={b.id} teams={userTeams} />
+        <CreateMatchButton bookingId={b.id} />
       ) : null}
 
       <section className="space-y-1 text-xs text-muted-foreground">

@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { AvailabilityToggle } from "@/components/player/availability-toggle"
 import { JoinRequestButton } from "@/components/player/join-request-button"
 import { ConfirmPlayedButton } from "@/components/player/confirm-played-button"
+import { FriendsCard } from "@/components/friends/friends-card"
 import { getCurrentUser, getSession } from "@/lib/auth"
 import { listMyBookings } from "@/features/bookings/queries"
 import {
@@ -17,6 +18,7 @@ import {
   listPlayerMatchHistory,
   getPlayerProfile,
 } from "@/features/player/queries"
+import { listFriends, listPendingFriendRequests } from "@/features/friends/queries"
 import { getOrCreateReferralCode } from "@/features/auth/referrals"
 import { bookingStatusLabel, matchStateLabel } from "@/i18n/labels"
 
@@ -62,12 +64,15 @@ export default async function PlayerDashboardPage() {
   const extraRoles = roles.filter((r) => r !== "player")
 
   const profile = await getPlayerProfile(session.user.id)
-  const [bookings, nearbyMatches, history, refCode] = await Promise.all([
-    listMyBookings(session.user.id, 5),
-    listMatchesNeedingPlayers(profile?.coords ?? null, 5),
-    listPlayerMatchHistory(session.user.id, 5),
-    getOrCreateReferralCode(session.user.id),
-  ])
+  const [bookings, nearbyMatches, history, refCode, friends, friendRequests] =
+    await Promise.all([
+      listMyBookings(session.user.id, 5),
+      listMatchesNeedingPlayers(profile?.coords ?? null, 5),
+      listPlayerMatchHistory(session.user.id, 5),
+      getOrCreateReferralCode(session.user.id),
+      listFriends(session.user.id),
+      listPendingFriendRequests(session.user.id),
+    ])
   const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/invite/${refCode}`
 
   return (
@@ -110,6 +115,13 @@ export default async function PlayerDashboardPage() {
       <section>
         <AvailabilityToggle available={profile?.available ?? false} />
       </section>
+
+      {/* Friends */}
+      <FriendsCard
+        friends={friends}
+        requests={friendRequests}
+        friendIds={friends.map((f) => f.userId)}
+      />
 
       {/* Invite friends (A3 referral — minimal MVP scaffold) */}
       <section className="rounded-lg border border-border bg-card p-4">

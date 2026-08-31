@@ -1,7 +1,15 @@
 import { eq, and, isNull } from "drizzle-orm"
 
 import { db } from "@/db"
-import { users, userRoles, playerProfiles, teamMembers, teamInvitations } from "@/db/schema"
+import {
+  users,
+  userRoles,
+  playerProfiles,
+  teamMembers,
+  teamInvitations,
+  matchInvitations,
+  matchGuests,
+} from "@/db/schema"
 import type { Role } from "@/lib/capabilities"
 
 import type { Identifier } from "./identifier"
@@ -69,6 +77,29 @@ async function fulfillPendingInvitations(userId: string, phone: string): Promise
   }
 }
 
+/**
+ * Match invitations sent to an unregistered phone, and temp guest rows
+ * recorded with that phone, get linked to the real account on signup.
+ * LINKING ONLY — the user still accepts/declines the invitation themselves
+ * (unlike team invitations, which auto-fulfill into membership).
+ */
+async function linkMatchInvitationsAndGuests(userId: string, phone: string): Promise<void> {
+  await db
+    .update(matchInvitations)
+    .set({ inviteeUserId: userId })
+    .where(
+      and(
+        eq(matchInvitations.inviteePhone, phone),
+        isNull(matchInvitations.inviteeUserId),
+        eq(matchInvitations.status, "pending")
+      )
+    )
+  await db
+    .update(matchGuests)
+    .set({ linkedUserId: userId })
+    .where(and(eq(matchGuests.phone, phone), isNull(matchGuests.linkedUserId)))
+}
+
 export interface RegisterUserInput {
   name: string
   phone: string
@@ -114,6 +145,10 @@ export async function createRegisteredUser(
     await ensureProfileAndRole(created.id)
     // Fulfill any pending team invitations for this phone number.
     await fulfillPendingInvitations(created.id, input.phone)
+    // Link match invitations / guests that were created for this phone.
+    await linkMatchInvitationsAndGuests(created.id, input.phone).catch(() => {
+      /* non-fatal */
+    })
     // Attribute the signup to a referrer if a valid code was supplied.
     if (refCode) {
       const { attributeReferral } = await import("./referrals")

@@ -91,7 +91,9 @@ export async function getHomeStats() {
     db
       .select({
         completed: sql<number>`count(*) filter (where ${matches.state} = 'completed')::int`,
-        open: sql<number>`count(*) filter (where ${matches.state} = 'open')::int`,
+        // "Open challenge" = a team match waiting for an opponent (has a home
+        // side). Solo recruiting matches are not challenges.
+        open: sql<number>`count(*) filter (where ${matches.state} = 'open' and exists (select 1 from match_teams mt where mt.match_id = ${matches.id} and mt.side = 'home'))::int`,
         live: sql<number>`count(*) filter (where ${matches.state} = 'ongoing')::int`,
       })
       .from(matches),

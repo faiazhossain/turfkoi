@@ -1,20 +1,26 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { MapPinIcon, ClockIcon } from "lucide-react"
+import { MapPinIcon, ClockIcon, UserPlusIcon, ShieldPlusIcon } from "lucide-react"
 
 import { getT } from "@/i18n/server"
 import { StatusBadge, EmptyState } from "@/components/shared"
 import { MapView } from "@/components/map"
 import { MatchActions } from "@/components/matches/match-actions"
 import { PlayerSearch } from "@/components/matches/player-search"
-import { AddPlayerButton } from "@/components/matches/add-player-button"
+import { InvitePlayerButton } from "@/components/matches/invite-player-button"
+import { SquadGroups } from "@/components/matches/squad-groups"
+import { SquadSpots } from "@/components/matches/squad-spots"
+import { MatchmakingHelp } from "@/components/matches/matchmaking-help"
+import { InvitationManager } from "@/components/matches/invitation-manager"
+import { InvitationInbox } from "@/components/matches/invitation-inbox"
 import { JoinRequestButton } from "@/components/player/join-request-button"
 import { RequestManager } from "@/components/player/request-manager"
 import { PlayerAvatar } from "@/components/player/player-avatar"
-import { getMatch } from "@/features/matches/queries"
-import { ROSTER_LIMITS } from "@/features/matches/schemas"
+import { getMatch, getSquadCounts, listPendingInvitationsByMatch, listMyPendingInvitations, listMatchGuests } from "@/features/matches/queries"
+import { FORMATS, isMatchFormat, spotsLeft } from "@/features/matches/formats"
 import { rosterOpen } from "@/features/matches/authority"
-import { listTeamMembers, getTeamRole } from "@/features/teams/queries"
+import { listTeamMembers, getTeamRole, listMyTeams } from "@/features/teams/queries"
+import { listFriends } from "@/features/friends/queries"
 import {
   listPendingPlayerRequestsByMatch,
   listAvailablePlayersNearTurf,
@@ -24,6 +30,7 @@ import { POSITION_IDS } from "@/features/player/positions"
 import { getTurfLatLng } from "@/features/turfs/queries"
 import { getCurrentUser } from "@/lib/auth"
 import {
+  matchStateContextLabelKey,
   matchStateLabel,
   positionLabelKey,
   skillLabelKey,
@@ -78,6 +85,7 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
   // Determine the user's teams in this match (teams where they're captain/owner).
   const myTeamOptions: { teamId: string; teamName: string; side: "home" | "away" }[] = []
   let teamMembers: { userId: string; name: string | null; phone: string }[] = []
+  let challengeTeams: { teamId: string; teamName: string }[] = []
 
   if (user) {
     for (const s of sides) {
@@ -91,59 +99,102 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
       }
     }
 
-    // If the user manages a team in this match, load its members for the roster add dropdown.
+    // Teams the user captains that are NOT in this match — they can challenge
+    // the home team while the match is OPEN (FCFS: first challenger takes it).
+    if (m.state === "open" && sides.length > 0) {
+      const sideTeamIds = new Set(sides.map((s) => s.teamId))
+      challengeTeams = (await listMyTeams(user.id))
+        .filter(
+          (tm) =>
+            (tm.role === "owner" || tm.role === "captain") &&
+            !sideTeamIds.has(tm.id)
+        )
+        .map((tm) => ({ teamId: tm.id, teamName: tm.name }))
+    }
+
+    // If the user manages a team in this match, load its members for the squad add panel.
     if (myTeamOptions.length > 0 && rosterOpen(m.state)) {
       teamMembers = await listTeamMembers(myTeamOptions[0].teamId)
     }
   }
   const canManageAfterTeams = isMatchCaptain || myTeamOptions.length > 0
+  const managedTeamIds = myTeamOptions.map((tm) => tm.teamId)
 
-  // Compute open spots per team for the join button. A teamless (solo) match
-  // has one synthetic spot covering the whole roster.
-  const maxRoster = ROSTER_LIMITS[m.matchType]?.max ?? 8
-  const openSpots =
+  // Friends not already on the roster — offered in the squad invite panel.
+  let inviteFriends: { userId: string; name: string | null; phone: string }[] = []
+  if (user && canManageAfterTeams && rosterOpen(m.state)) {
+    const rosterIds = new Set(roster.map((p) => p.userId))
+    inviteFriends = (await listFriends(user.id))
+      .filter((f) => !rosterIds.has(f.userId))
+      .map((f) => ({ userId: f.userId, name: f.name, phone: f.phone }))
+  }
+
+  // Squad capacity per side — squadSize is per SIDE (solo = the one side).
+  // Legacy rows are backfilled; fall back defensively for the format max.
+  const squadSize =
+    m.squadSize ??
+    (isMatchFormat(m.matchType) ? FORMATS[m.matchType].maxSquad : FORMATS.fives.maxSquad)
+
+  const sideGroups =
     sides.length > 0
-      ? sides
-          .map((s) => {
-            const filled = roster.filter((p) => p.teamId === s.teamId).length
-            return {
-              teamId: s.teamId,
-              teamName: s.teamName as string | null,
-              open: Math.max(0, maxRoster - filled),
-            }
-          })
-          .filter((s) => s.open > 0)
-      : [
-          {
-            teamId: null,
-            teamName: null,
-            open: Math.max(0, maxRoster - roster.length),
-          },
-        ]
+      ? sides.map((s) => ({ teamId: s.teamId as string | null, teamName: s.teamName }))
+      : [{ teamId: null, teamName: null as string | null }]
+  // Count-first capacity per side: identities (players + guests) + pending
+  // invites + declared placeholders fill the squad (getSquadCounts).
+  const squadCounts = await getSquadCounts(m.id)
+  const sideStats = sideGroups.map((g) => {
+    const counts = squadCounts.find((c) => (c.teamId ?? null) === g.teamId)
+    const players = roster.filter((p) => p.teamId === g.teamId)
+    const total = counts?.total ?? players.length
+    const pending = counts?.pending ?? 0
+    const placeholders = counts?.placeholders ?? 0
+    return {
+      ...g,
+      total,
+      starting: counts?.starting ?? players.filter((p) => p.squadRole === "starting").length,
+      pending,
+      placeholders,
+      open: spotsLeft(squadSize, total, pending, placeholders),
+    }
+  })
+  const myManagedSideTeamIds = new Set(myTeamOptions.map((tm) => tm.teamId))
 
   // Load pending player requests for whoever manages this match (match
-  // captain or a side-team captain).
+  // captain or a side-team captain). Also load outbound pending invitations,
+  // temp guests, and — for the signed-in user — their own pending invites.
   let pendingRequests: {
     matchId: string; userId: string
     playerName: string | null; playerPhone: string
   }[] = []
+  let pendingInvitations: Awaited<ReturnType<typeof listPendingInvitationsByMatch>> = []
+  let guests: Awaited<ReturnType<typeof listMatchGuests>> = []
   if (canManageAfterTeams && rosterOpen(m.state)) {
-    const allReqs = await listPendingPlayerRequestsByMatch(m.id)
+    const [allReqs, invites, guestRows] = await Promise.all([
+      listPendingPlayerRequestsByMatch(m.id),
+      listPendingInvitationsByMatch(m.id),
+      listMatchGuests(m.id),
+    ])
     pendingRequests = allReqs.map((r) => ({
       matchId: r.matchId,
       userId: r.userId,
       playerName: r.playerName,
       playerPhone: r.playerPhone,
     }))
+    pendingInvitations = invites
+    guests = guestRows
+  } else if (user) {
+    guests = await listMatchGuests(m.id)
   }
+  const myInvitations = user
+    ? (await listMyPendingInvitations(user.id)).filter((inv) => inv.matchId === m.id)
+    : []
 
   // Is the current user already on the roster?
   const onRoster = user ? roster.some((p) => p.userId === user.id) : false
-  const rosterFull = roster.length >= maxRoster
 
   // Captains: solo players marked available near this turf (SS20/SS32).
   let nearbyPlayers: Awaited<ReturnType<typeof listAvailablePlayersNearTurf>> = []
-  if (canManageAfterTeams && openSpots.length > 0) {
+  if (canManageAfterTeams && sideStats.some((s) => s.open > 0)) {
     const all = await listAvailablePlayersNearTurf(t.id, {
       q: playerQ || undefined,
       position: playerPos,
@@ -179,6 +230,13 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
 
   // Join requests open up for solo matches while still OPEN (recruiting);
   // team matches keep their existing confirmed/roster_building behaviour.
+  const openSpots = sideStats
+    .filter((s) => s.open > 0)
+    .map((s) => ({
+      teamId: s.teamId,
+      teamName: s.teamName,
+      open: s.open,
+    }))
   const canRequestJoin =
     !!user &&
     !onRoster &&
@@ -202,7 +260,15 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
           <StatusBadge status={STATE_TONE[m.state] ?? "neutral"} showIcon={false}>
             {tr(matchStateLabel(m.state))}
           </StatusBadge>
+          <StatusBadge status="primary" showIcon={false}>
+            {tr(`matches.format.${m.matchType}`)}
+          </StatusBadge>
         </div>
+        {matchStateContextLabelKey(m.state, sides.length === 0) ? (
+          <p className="text-sm font-medium text-muted-foreground">
+            {tr(matchStateContextLabelKey(m.state, sides.length === 0)!)}
+          </p>
+        ) : null}
         <div className="flex items-center gap-1 text-sm text-muted-foreground">
           <MapPinIcon className="size-4" aria-hidden />
           <Link href={`/turfs/${t.slug}`} className="hover:text-foreground">
@@ -236,6 +302,78 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
         </div>
       ) : null}
 
+      {/* Squad fill per side — count-first summary */}
+      <div className="space-y-2">
+        {sideStats.map((s) => (
+          <SquadSpots
+            key={s.teamId ?? "solo"}
+            matchId={m.id}
+            matchType={m.matchType}
+            squadSize={squadSize}
+            teamId={s.teamId}
+            starting={s.starting}
+            total={s.total}
+            pending={s.pending}
+            placeholders={s.placeholders}
+            label={s.teamName ?? undefined}
+            editable={isMatchCaptain && rosterOpen(m.state)}
+            canEditCount={
+              s.teamId === null
+                ? isMatchCaptain
+                : myManagedSideTeamIds.has(s.teamId)
+            }
+            countEditable={rosterOpen(m.state)}
+          />
+        ))}
+      </div>
+
+      {/* What do I do next? — one obvious primary action per stage */}
+      {canManageAfterTeams && rosterOpen(m.state) ? (
+        (() => {
+          const mySide = sideStats.find(
+            (s) =>
+              s.teamId === null
+                ? isMatchCaptain && sides.length === 0
+                : myManagedSideTeamIds.has(s.teamId!)
+          ) ?? sideStats[0]
+          if (!mySide) return null
+          if (mySide.open > 0) {
+            return (
+              <div className="flex flex-wrap items-center gap-2">
+                <a
+                  href="#nearby"
+                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 sm:flex-none"
+                >
+                  <UserPlusIcon className="size-4" aria-hidden />
+                  {tr("matches.squad.findPlayersCta")}
+                </a>
+                <a
+                  href="#add-guest"
+                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-card px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-muted/40"
+                >
+                  <ShieldPlusIcon className="size-4" aria-hidden />
+                  {tr("matches.squad.addGuestCta")}
+                </a>
+              </div>
+            )
+          }
+          // Solo + open: the CTA row above already covers it; full solo
+          // squad needs no next action.
+          if (
+            m.state === "open" &&
+            sides.length > 0 &&
+            mySide.open === 0
+          ) {
+            return (
+              <p className="rounded-lg border border-primary/40 bg-primary/5 p-3 text-sm text-muted-foreground">
+                {tr("matches.squad.findOpponentHint")}
+              </p>
+            )
+          }
+          return null
+        })()
+      ) : null}
+
       {/* Player matchmaking: join request + captain request management */}
       {canRequestJoin ? (
         <JoinRequestButton matchId={m.id} spots={openSpots} />
@@ -248,14 +386,79 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
         />
       ) : null}
 
-      {/* Captains: solo players available near this turf */}
-      {canManageAfterTeams && openSpots.length > 0 ? (
+      {/* My pending squad invitations for this match */}
+      {myInvitations.length > 0 ? (
+        <InvitationInbox
+          invitations={myInvitations.map((inv) => ({
+            id: inv.id,
+            invitedByName: inv.invitedByName,
+            squadRoleWanted: inv.squadRoleWanted,
+            turfName: inv.turfName,
+            date: inv.date,
+            slotStart: inv.slotStart,
+          }))}
+        />
+      ) : null}
+
+      {/* Outbound pending invitations (managers can cancel) */}
+      {canManageAfterTeams && pendingInvitations.length > 0 ? (
+        <InvitationManager
+          matchId={m.id}
+          invitations={pendingInvitations.map((inv) => ({
+            id: inv.id,
+            playerName: inv.playerName,
+            playerPhone: inv.inviteePhone,
+          }))}
+        />
+      ) : null}
+
+      {/* Match room — full squad, Starting / Substitutes per side */}
+      {roster.length > 0 ? (
         <section className="space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="font-heading text-lg font-semibold">
+              {tr("matches.squad.title")}
+            </h2>
+            <MatchmakingHelp />
+          </div>
+          <SquadGroups
+            matchId={m.id}
+            sides={sides.map((s) => ({
+              teamId: s.teamId,
+              teamName: s.teamName,
+              side: s.side,
+            }))}
+            roster={roster.map((p) => ({
+              userId: p.userId,
+              name: p.name,
+              phone: p.phone,
+              teamId: p.teamId,
+              role: p.role,
+              squadRole: p.squadRole,
+            }))}
+            captainId={m.captainId}
+            managedTeamIds={managedTeamIds}
+            isMatchCaptain={isMatchCaptain}
+            guests={guests.map((g) => ({
+              id: g.id,
+              teamId: g.teamId,
+              name: g.name,
+              phone: g.phone,
+              linkedUserId: g.linkedUserId,
+              squadRole: g.squadRole,
+            }))}
+          />
+        </section>
+      ) : null}
+
+      {/* Captains: solo players available near this turf */}
+      {canManageAfterTeams && sideStats.some((s) => s.open > 0) ? (
+        <section id="nearby" className="scroll-mt-20 space-y-3">
           <h2 className="font-heading text-lg font-semibold">
             {tr("matches.nearbyTitle")}
           </h2>
           <p className="text-sm text-muted-foreground">{tr("matches.nearbyDesc")}</p>
-          {rosterFull ? (
+          {sideStats.every((s) => s.open === 0) ? (
             <p className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
               {tr("matches.rosterFullHint")}
             </p>
@@ -345,12 +548,12 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
                           {p.distanceKm.toFixed(1)} km
                         </span>
                       </div>
-                      {!rosterFull ? (
-                        <AddPlayerButton
+                      {!sideStats.every((s) => s.open === 0) ? (
+                        <InvitePlayerButton
                           matchId={m.id}
                           playerId={p.userId}
                           playerName={p.name ?? tr("matches.player")}
-                          disabled={rosterFull}
+                          disabled={sideStats.every((s) => s.open === 0)}
                         />
                       ) : null}
                     </li>
@@ -366,7 +569,6 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
         <MatchActions
           matchId={m.id}
           matchState={m.state}
-          matchType={m.matchType}
           homeScore={m.homeScore}
           awayScore={m.awayScore}
           resultStatus={m.resultStatus}
@@ -375,16 +577,10 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
             teamName: s.teamName,
             side: s.side,
           }))}
-          roster={roster.map((p) => ({
-            userId: p.userId,
-            name: p.name,
-            phone: p.phone,
-            teamId: p.teamId,
-            role: p.role,
-          }))}
           myTeams={myTeamOptions}
+          challengeTeams={challengeTeams}
           teamMembers={teamMembers}
-          captainId={m.captainId}
+          friends={inviteFriends}
           isMatchCaptain={isMatchCaptain}
           canLeave={canLeave}
           canConfirmResult={canConfirmResult}
