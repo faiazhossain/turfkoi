@@ -1,26 +1,26 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { and, eq, inArray } from "drizzle-orm"
+import { and, eq, inArray, isNull, sql } from "drizzle-orm"
 import type { z } from "zod"
 
 import { db } from "@/db"
 import {
   matches,
-  matchTeams,
   matchPlayers,
   matchInvitations,
   matchGuests,
   bookings,
-  opponentRequests,
   turfs,
   users,
 } from "@/db/schema"
 import { getCurrentUser } from "@/lib/auth"
-import { getTeamRole } from "@/features/teams/queries"
+import { isValidPhone, normalizePhone } from "@/features/auth/phone"
 import { createNotifications } from "@/features/notifications/create"
-import { isCaptainRole, rosterOpen } from "./authority"
+import { rosterOpen } from "./authority"
 import {
+  addGuestSchema,
+  claimOpponentSideSchema,
   createMatchSchema,
   submitResultSchema,
 } from "./schemas"
@@ -28,10 +28,17 @@ import {
   FORMATS,
   isMatchFormat,
   isValidSquadSize,
+  maxPendingInvitations,
   resolveSquadRole,
   spotsLeft,
   startersOf,
 } from "./formats"
+import {
+  countStarting,
+  getSquadCounts,
+  resolveSideCaptain,
+} from "./queries"
+import { lockMatchForSeatClaim, seatsFreeSql } from "./seat-claim"
 
 export type ActionResult =
   | { ok: true; id?: string }
@@ -57,13 +64,10 @@ async function userDisplayName(userId: string): Promise<string> {
 /**
  * C2 (audit): booking state = source of truth for payment/slot ownership;
  * match state = source of truth for the game flow. A match is only created
- * from a CONFIRMED booking (C1: payment happens before the match is published).
- *
- * With a team: the booker must be the owner/captain of the team they're
- * registering as home. Without a team (solo): only the booker may open a
- * match on their own booking — they become the match captain and recruit
- * players afterwards. Either way the creator lands on the roster and is
- * recorded as the match's captain.
+ * from a CONFIRMED booking (C1: payment happens before the match is published)
+ * and only by its booker — they become the home captain, declare how many
+ * players they already have, and recruit the rest afterwards. Everyone can
+ * book, so everyone can create a match.
  *
  * Count-first (owner spec): the captain only declares HOW MANY players they
  * already have (placeholderCount, excluding themselves) — no identities are
@@ -80,8 +84,7 @@ export async function createMatchAction(
   const user = await getCurrentUser()
   if (!user) return unauthorized()
 
-  const { bookingId, teamId, matchType, squadSize, placeholderCount } =
-    parsed.data
+  const { bookingId, matchType, squadSize, placeholderCount } = parsed.data
 
   // Booking must be confirmed (C1: pay before match).
   const [booking] = await db
@@ -93,13 +96,7 @@ export async function createMatchAction(
   if (booking.status !== "confirmed") {
     return { ok: false, error: "matches.errors.bookingConfirmedFirst" }
   }
-
-  if (teamId) {
-    // Must be captain/owner of the team.
-    const role = await getTeamRole(teamId, user.id)
-    if (!isCaptainRole(role)) return forbidden()
-  } else if (booking.bookerId !== user.id) {
-    // Solo creation: only the booker may open a match on their booking.
+  if (booking.bookerId !== user.id) {
     return { ok: false, error: "matches.errors.notBookingOwner" }
   }
 
@@ -126,48 +123,36 @@ export async function createMatchAction(
   // statements in one server-side transaction). The id is generated here
   // because batch takes pre-built builders (no read-back between statements).
   const matchId = crypto.randomUUID()
-  const matchValues = {
-    id: matchId,
-    bookingId,
-    captainId: user.id,
-    state: "open" as const,
-    matchType,
-    squadSize,
-    placeholderCount: placeholders,
-    kickoffAt: new Date(kickoff),
-  }
-  const creatorInsert = db.insert(matchPlayers).values({
-    matchId,
-    userId: user.id,
-    teamId: teamId ?? null,
-    role: "member",
-    squadRole: "starting",
-  })
-
-  if (teamId) {
-    // Register the creating team as home side; the declared count lives on
-    // the match_teams row (team sides carry their own placeholders).
-    await db.batch([
-      db.insert(matches).values(matchValues),
-      db
-        .insert(matchTeams)
-        .values({ matchId, teamId, side: "home" as const, placeholderCount: 0 }),
-      creatorInsert,
-    ])
-  } else {
-    // Solo side placeholders live on the match itself.
-    await db.batch([
-      db.insert(matches).values(matchValues),
-      creatorInsert,
-    ])
-  }
+  await db.batch([
+    db.insert(matches).values({
+      id: matchId,
+      bookingId,
+      captainId: user.id,
+      state: "open",
+      matchType,
+      squadSize,
+      placeholderCount: placeholders,
+      kickoffAt: new Date(kickoff),
+    }),
+    db.insert(matchPlayers).values({
+      matchId,
+      userId: user.id,
+      side: "home",
+      role: "member",
+      squadRole: "starting",
+    }),
+  ])
 
   revalidatePath("/matches")
   revalidatePath(`/bookings/${bookingId}`)
   return { ok: true, id: matchId, matchId }
 }
 
-/** Squad-size change: match captain only, while the roster is open. */
+/**
+ * Squad-size change: home captain only, while the roster is open. The away
+ * captain recruits inside the same squadSize — resizing is the match owner's
+ * call.
+ */
 export async function updateSquadSizeAction(
   matchId: string,
   squadSize: number
@@ -189,9 +174,9 @@ export async function updateSquadSizeAction(
     return { ok: false, error: "matches.errors.squadSizeInvalid" }
   }
 
-  // Can't shrink below the fullest side's claim: identities + pending
-  // invites + declared placeholders all consume seats.
-  const { getSquadCounts } = await import("./queries")
+  // Can't shrink below either side's claim: identities + declared
+  // placeholders. Pending invites don't block shrinking — they're candidates,
+  // not reservations, and simply lose at accept time if no seat remains.
   const counts = await getSquadCounts(matchId)
   const fullest = Math.max(0, ...counts.map((c) => c.filled))
   if (squadSize < fullest) {
@@ -208,37 +193,131 @@ export async function updateSquadSizeAction(
 }
 
 /**
+ * Claim the open opponent side (person-based FCFS — replaces the team
+ * challenge). Any signed-in player who isn't already part of the match
+ * declares how many players they bring (count-first, themselves included)
+ * and becomes the away captain. The conditional UPDATE makes the whole claim
+ * atomic: a single row transition, so a confirmed match always has an away
+ * captain even under concurrent claims.
+ */
+export async function claimOpponentSideAction(
+  input: z.infer<typeof claimOpponentSideSchema>
+): Promise<ActionResult> {
+  const parsed = claimOpponentSideSchema.safeParse(input)
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "errors.invalid" }
+  }
+  const user = await getCurrentUser()
+  if (!user) return unauthorized()
+
+  const { matchId, playerCount } = parsed.data
+  const [match] = await db
+    .select()
+    .from(matches)
+    .where(eq(matches.id, matchId))
+    .limit(1)
+  if (!match) return { ok: false, error: "matches.errors.matchNotFound" }
+  if (match.state !== "open") {
+    return { ok: false, error: "matches.errors.matchNotOpen" }
+  }
+  if (match.captainId === user.id) {
+    return { ok: false, error: "matches.errors.ownMatch" }
+  }
+  const [rosterRow] = await db
+    .select({ userId: matchPlayers.userId })
+    .from(matchPlayers)
+    .where(and(eq(matchPlayers.matchId, matchId), eq(matchPlayers.userId, user.id)))
+    .limit(1)
+  if (rosterRow) {
+    return { ok: false, error: "matches.errors.alreadyOnRoster" }
+  }
+
+  // The claimant's group (themselves + declared placeholders) must fit one
+  // side of the squad.
+  const cap = match.squadSize ?? FORMATS.fives.maxSquad
+  if (playerCount > cap) {
+    return { ok: false, error: "matches.errors.placeholderTooMany" }
+  }
+
+  // FCFS race guard: only one claim lands; everyone else gets "just taken".
+  const claimed = await db
+    .update(matches)
+    .set({
+      awayCaptainId: user.id,
+      awayPlaceholderCount: playerCount - 1,
+      state: "confirmed",
+      updatedAt: new Date(),
+    })
+    .where(
+      and(
+        eq(matches.id, matchId),
+        eq(matches.state, "open"),
+        isNull(matches.awayCaptainId)
+      )
+    )
+    .returning({ id: matches.id })
+  if (claimed.length === 0) {
+    return { ok: false, error: "matches.errors.matchJustTaken" }
+  }
+
+  await db.insert(matchPlayers).values({
+    matchId,
+    userId: user.id,
+    side: "away",
+    role: "member",
+    squadRole: "starting",
+  })
+
+  const [turfRow] = await db
+    .select({ name: turfs.name })
+    .from(bookings)
+    .innerJoin(turfs, eq(turfs.id, bookings.turfId))
+    .where(eq(bookings.id, match.bookingId))
+    .limit(1)
+  await createNotifications(
+    {
+      type: "match.opponent_claimed",
+      payload: {
+        matchId,
+        playerName: await userDisplayName(user.id),
+        turfName: turfRow?.name ?? "",
+      },
+      entityType: "match",
+      entityId: matchId,
+    },
+    [match.captainId]
+  )
+
+  revalidatePath("/matches")
+  revalidatePath(`/matches/${matchId}`)
+  return { ok: true }
+}
+
+/**
  * Count-first squad management: adjust the side's declared placeholder count
- * ("আমার ৭ জন player আছে"). Solo side (teamId null) is the match captain's;
- * team sides belong to their owner/captain. Bounded so a side can never
- * claim more seats than the squad has left (identities + pending included) —
- * lowering the count as real players are identified is the captain's call.
+ * ("আমার ৭ জন player আছে"). Each side's captain manages their own count —
+ * bounded so a side can never claim more seats than the squad has left
+ * (identities + pending included). Lowering the count as real players are
+ * identified is the captain's call.
  */
 export async function updatePlaceholderCountAction(
   matchId: string,
-  teamId: string | null,
+  side: "home" | "away",
   placeholderCount: number
 ): Promise<ActionResult> {
   const user = await getCurrentUser()
   if (!user) return unauthorized()
 
-  const match = await loadMatchOrError(matchId)
+  const [match] = await db
+    .select()
+    .from(matches)
+    .where(eq(matches.id, matchId))
+    .limit(1)
   if (!match) return { ok: false, error: "matches.errors.matchNotFound" }
   if (!rosterOpen(match.state)) {
     return { ok: false, error: "matches.errors.rosterNotOpen" }
   }
-
-  if (teamId) {
-    // Must be a side of this match, captained/owned by the requester.
-    const [side] = await db
-      .select({ teamId: matchTeams.teamId })
-      .from(matchTeams)
-      .where(and(eq(matchTeams.matchId, matchId), eq(matchTeams.teamId, teamId)))
-      .limit(1)
-    if (!side) return forbidden()
-    const role = await getTeamRole(teamId, user.id)
-    if (!isCaptainRole(role)) return forbidden()
-  } else if (match.captainId !== user.id) {
+  if ((await resolveSideCaptain(match, user.id)) !== side) {
     return forbidden()
   }
 
@@ -246,39 +325,34 @@ export async function updatePlaceholderCountAction(
     return { ok: false, error: "matches.errors.placeholderInvalid" }
   }
 
-  const { getSquadCounts } = await import("./queries")
-  const { placeholdersUpperBound, FORMATS } = await import("./formats")
+  const { placeholdersUpperBound } = await import("./formats")
   const counts = await getSquadCounts(matchId)
-  const sideCounts = counts.find((c) => (c.teamId ?? null) === (teamId ?? null))
+  const sideCounts = counts.find((c) => c.side === side)
   const bound = placeholdersUpperBound(
     match.squadSize ?? FORMATS.fives.maxSquad,
-    sideCounts?.total ?? 0,
-    sideCounts?.pending ?? 0
+    sideCounts?.total ?? 0
   )
   if (placeholderCount > bound) {
     return { ok: false, error: "matches.errors.placeholderTooMany" }
   }
 
-  if (teamId) {
-    await db
-      .update(matchTeams)
-      .set({ placeholderCount })
-      .where(and(eq(matchTeams.matchId, matchId), eq(matchTeams.teamId, teamId)))
-  } else {
-    await db
-      .update(matches)
-      .set({ placeholderCount, updatedAt: new Date() })
-      .where(eq(matches.id, matchId))
-  }
+  await db
+    .update(matches)
+    .set(
+      side === "home"
+        ? { placeholderCount, updatedAt: new Date() }
+        : { awayPlaceholderCount: placeholderCount, updatedAt: new Date() }
+    )
+    .where(eq(matches.id, matchId))
 
   revalidatePath(`/matches/${matchId}`)
   return { ok: true }
 }
 
 /**
- * Move a squad member between Starting and Substitutes. Team-rostered players
- * are managed by their side's owner/captain; solo-rostered by the match
- * captain — same authority model as removePlayerAction.
+ * Move a squad member between Starting and Substitutes. Managed by the
+ * captain of the member's own side (legacy team members via the team-role
+ * fallback inside resolveSideCaptain).
  */
 export async function setSquadRoleAction(
   matchId: string,
@@ -305,7 +379,7 @@ export async function setSquadRoleAction(
   }
 
   const [player] = await db
-    .select({ userId: matchPlayers.userId, teamId: matchPlayers.teamId })
+    .select({ userId: matchPlayers.userId, side: matchPlayers.side })
     .from(matchPlayers)
     .where(
       and(eq(matchPlayers.matchId, matchId), eq(matchPlayers.userId, playerId))
@@ -313,17 +387,13 @@ export async function setSquadRoleAction(
     .limit(1)
   if (!player) return { ok: false, error: "matches.errors.playerNotOnRoster" }
 
-  if (player.teamId) {
-    const role = await getTeamRole(player.teamId, user.id)
-    if (!isCaptainRole(role)) return forbidden()
-  } else if (match.captainId !== user.id) {
+  if ((await resolveSideCaptain(match, user.id)) !== player.side) {
     return forbidden()
   }
 
   if (squadRole === "starting") {
     // Promotions need a free starting slot on the player's own side.
-    const { countStarting } = await import("./queries")
-    const starting = await countStarting(matchId, player.teamId)
+    const starting = await countStarting(matchId, player.side)
     if (starting >= startersOf(match.matchType)) {
       return { ok: false, error: "matches.errors.startingFull" }
     }
@@ -341,112 +411,13 @@ export async function setSquadRoleAction(
 }
 
 /**
- * Accept as opponent. First-come-first-served: the first team to accept
- * becomes the away side. Creates an opponent_request (status=accepted) and
- * transitions the match to CONFIRMED (booking is already paid — C1).
- */
-export async function acceptAsOpponentAction(
-  matchId: string,
-  teamId: string
-): Promise<ActionResult> {
-  const user = await getCurrentUser()
-  if (!user) return unauthorized()
-
-  const role = await getTeamRole(teamId, user.id)
-  if (role !== "owner" && role !== "captain") return forbidden()
-
-  // Match must be open.
-  const [match] = await db
-    .select()
-    .from(matches)
-    .where(eq(matches.id, matchId))
-    .limit(1)
-  if (!match) return { ok: false, error: "matches.errors.matchNotFound" }
-  if (match.state !== "open") {
-    return { ok: false, error: "matches.errors.matchNotOpen" }
-  }
-
-  // Can't accept your own match — neither as the home team itself nor as
-  // another team captained by the same user.
-  if (match.captainId === user.id) {
-    return { ok: false, error: "matches.errors.ownMatch" }
-  }
-  const homeSide = await db
-    .select()
-    .from(matchTeams)
-    .where(and(eq(matchTeams.matchId, matchId), eq(matchTeams.side, "home")))
-    .limit(1)
-  if (homeSide[0]?.teamId === teamId) {
-    return { ok: false, error: "matches.errors.ownMatch" }
-  }
-
-  // Conditional update: only transition if still 'open'. Prevents races
-  // where two teams accept simultaneously.
-  const updated = await db
-    .update(matches)
-    .set({ state: "confirmed", updatedAt: new Date() })
-    .where(and(eq(matches.id, matchId), eq(matches.state, "open")))
-    .returning({ id: matches.id })
-
-  if (updated.length === 0) {
-    return { ok: false, error: "matches.errors.matchJustTaken" }
-  }
-
-  // Add the away team.
-  await db.insert(matchTeams).values({
-    matchId,
-    teamId,
-    side: "away",
-  })
-
-  // Record the acceptance.
-  await db.insert(opponentRequests).values({
-    matchId,
-    teamId,
-    status: "accepted",
-  })
-
-  revalidatePath("/matches")
-  revalidatePath(`/matches/${matchId}`)
-  return { ok: true }
-}
-
-/**
- * Resolve the acting user's squad side for a match: the first side team they
- * captain/own, or the solo side (teamId null) if they are the match captain
- * of a match with no team sides. Null = no authority.
- */
-async function resolveInviterSide(
-  match: typeof matches.$inferSelect,
-  userId: string
-): Promise<{ teamId: string | null } | null> {
-  const sides = await db
-    .select()
-    .from(matchTeams)
-    .where(eq(matchTeams.matchId, match.id))
-  for (const s of sides) {
-    const role = await getTeamRole(s.teamId, userId)
-    if (isCaptainRole(role)) return { teamId: s.teamId }
-  }
-  if (sides.length === 0 && match.captainId === userId) return { teamId: null }
-  return null
-}
-
-async function loadMatchOrError(matchId: string) {
-  const [match] = await db
-    .select()
-    .from(matches)
-    .where(eq(matches.id, matchId))
-    .limit(1)
-  return match ?? null
-}
-
-/**
  * Invite players to the match squad. Every registered player must accept for
  * themselves — there is no direct-add. Targets may be registered users
  * (userIds, or phones that resolve to a user) or unregistered phones (the
- * invite links to their account when they sign up). Capacity counts roster +
- * guests + pending invitations via getSquadCounts/spotsLeft.
+ * invite links to their account when they sign up). Pending invitations are
+ * prospects, not reservations: a side may hold up to maxPendingInvitations
+ * (open seats + buffer) — whoever accepts first claims a seat. Invites seat
+ * on the inviter's side.
  */
 export async function inviteMatchPlayersAction(
   input: { matchId: string; userIds?: string[]; phones?: string[] }
@@ -454,16 +425,31 @@ export async function inviteMatchPlayersAction(
   const user = await getCurrentUser()
   if (!user) return unauthorized()
 
-  const match = await loadMatchOrError(input.matchId)
+  const [match] = await db
+    .select()
+    .from(matches)
+    .where(eq(matches.id, input.matchId))
+    .limit(1)
   if (!match) return { ok: false, error: "matches.errors.matchNotFound" }
   if (!rosterOpen(match.state)) {
     return { ok: false, error: "matches.errors.rosterNotOpen" }
   }
-  const side = await resolveInviterSide(match, user.id)
+  const side = await resolveSideCaptain(match, user.id)
   if (!side) return forbidden()
-  const sideTeamId = side.teamId
 
-  const phones = [...new Set((input.phones ?? []).map((p) => p.trim()).filter(Boolean))]
+  // Phone invites are stored normalized so they match users.phone (invite
+  // becomes a user invite) and the signup link finds them later.
+  const phones = [
+    ...new Set(
+      (input.phones ?? [])
+        .map((p) => p.trim())
+        .filter(Boolean)
+        .map((p) => normalizePhone(p))
+    ),
+  ]
+  if (phones.some((p) => !isValidPhone(p))) {
+    return { ok: false, error: "matches.errors.phoneInvalid" }
+  }
   const requestedUserIds = [...new Set((input.userIds ?? []).filter((id) => id !== user.id))]
 
   // Registered phones become user invites; unknown phones stay phone invites.
@@ -520,34 +506,36 @@ export async function inviteMatchPlayersAction(
     phoneInvitees = phoneInvitees.filter((p) => !occupied.has(p))
   }
 
-  // Capacity: pending invitations consume spots until answered.
-  const { getSquadCounts } = await import("./queries")
+  // Capacity: open seats are claimed first-accept-wins, so a side may hold
+  // more pending invitations than it has open seats (over-invite buffer) —
+  // ignored invites no longer lock the captain out.
   const counts = await getSquadCounts(match.id)
-  const sideCounts = counts.find((c) => (c.teamId ?? null) === sideTeamId)
-  const free = spotsLeft(
+  const sideCounts = counts.find((c) => c.side === side)
+  const openSeats = spotsLeft(
     match.squadSize ?? FORMATS.fives.maxSquad,
     sideCounts?.total ?? 0,
-    sideCounts?.pending ?? 0,
     sideCounts?.placeholders ?? 0
   )
   const totalRequested = candidates.length + phoneInvitees.length
   if (totalRequested === 0) {
     return { ok: false, error: "matches.errors.alreadyInvited" }
   }
-  if (totalRequested > free) {
-    return { ok: false, error: "matches.errors.squadFull" }
+  if ((sideCounts?.pending ?? 0) + totalRequested > maxPendingInvitations(openSeats)) {
+    return { ok: false, error: "matches.errors.tooManyInvites" }
   }
+  // More invites out than open seats — invitees get the accept-fast copy.
+  const contested = (sideCounts?.pending ?? 0) + totalRequested > openSeats
 
   await db.insert(matchInvitations).values([
     ...candidates.map((inviteeUserId) => ({
       matchId: match.id,
-      teamId: sideTeamId,
+      side,
       inviteeUserId,
       invitedBy: user.id,
     })),
     ...phoneInvitees.map((inviteePhone) => ({
       matchId: match.id,
-      teamId: sideTeamId,
+      side,
       inviteePhone,
       invitedBy: user.id,
     })),
@@ -569,6 +557,7 @@ export async function inviteMatchPlayersAction(
           kickoffAt: match.kickoffAt?.toISOString() ?? null,
           turfName: turfRow?.name ?? "",
           captainName: await userDisplayName(user.id),
+          contested,
         },
         entityType: "match",
         entityId: match.id,
@@ -583,8 +572,11 @@ export async function inviteMatchPlayersAction(
 
 /**
  * Accept or decline a match invitation. Only the invitee may respond.
- * Declining is allowed anytime; accepting requires an open roster and a free
- * squad spot (the pending invite itself was holding a spot).
+ * Declining is allowed anytime. Accepting claims a seat on the inviter's
+ * side first-accept-wins: pending invites don't reserve seats, so when
+ * several invitees race for the last seat the batch below hands it to
+ * exactly one of them and the rest get matches.errors.seatTaken with their
+ * invite still pending.
  */
 export async function respondToMatchInvitationAction(
   invitationId: string,
@@ -614,7 +606,11 @@ export async function respondToMatchInvitationAction(
     return { ok: true }
   }
 
-  const match = await loadMatchOrError(inv.matchId)
+  const [match] = await db
+    .select()
+    .from(matches)
+    .where(eq(matches.id, inv.matchId))
+    .limit(1)
   if (!match) return { ok: false, error: "matches.errors.matchNotFound" }
   if (!rosterOpen(match.state)) {
     return { ok: false, error: "matches.errors.rosterNotOpen" }
@@ -623,41 +619,67 @@ export async function respondToMatchInvitationAction(
     return { ok: false, error: "matches.errors.matchNotFound" }
   }
 
-  // Capacity recheck — this invitation releases its held spot on response,
-  // but other pending invites still hold theirs: first to accept wins.
-  const { getSquadCounts, countStarting } = await import("./queries")
-  const cap = match.squadSize ?? FORMATS.fives.maxSquad
-  const counts = await getSquadCounts(inv.matchId)
-  const sideCounts = counts.find((c) => (c.teamId ?? null) === (inv.teamId ?? null))
-  const free = spotsLeft(
-    cap,
-    sideCounts?.total ?? 0,
-    Math.max(0, (sideCounts?.pending ?? 0) - 1),
-    sideCounts?.placeholders ?? 0
-  )
-  if (free < 1) {
-    return { ok: false, error: "matches.errors.squadFull" }
+  // A stale invite must not accept into a side the user already occupies
+  // through another path (join request, opponent claim, the other side).
+  const [existingSeat] = await db
+    .select({ userId: matchPlayers.userId })
+    .from(matchPlayers)
+    .where(
+      and(eq(matchPlayers.matchId, inv.matchId), eq(matchPlayers.userId, user.id))
+    )
+    .limit(1)
+  if (existingSeat) {
+    return { ok: false, error: "matches.errors.alreadyOnRoster" }
   }
 
   const squadRole =
     inv.squadRoleWanted === "substitute"
       ? "substitute"
-      : resolveSquadRole(await countStarting(inv.matchId, inv.teamId ?? null), match.matchType)
+      : resolveSquadRole(await countStarting(inv.matchId, inv.side), match.matchType)
 
-  await db
-    .insert(matchPlayers)
-    .values({
-      matchId: inv.matchId,
-      userId: user.id,
-      teamId: inv.teamId,
-      role: inv.teamId ? "member" : "guest",
-      squadRole,
-    })
-    .onConflictDoNothing()
-  await db
-    .update(matchInvitations)
-    .set({ status: "accepted", respondedAt: new Date() })
-    .where(eq(matchInvitations.id, invitationId))
+  // First-accept-wins seat claim, atomic in one server-side transaction
+  // (neon-http has no db.transaction — db.batch runs all statements as one):
+  // lock the match row so concurrent claims serialize, insert only while the
+  // side has a free seat, and flip the invite only if that insert landed
+  // (side-scoped EXISTS). A loser's insert is a no-op, their invite stays
+  // pending, and they can still claim a seat that opens up later.
+  await db.batch([
+    lockMatchForSeatClaim(inv.matchId),
+    db.execute(sql`
+      INSERT INTO match_players (match_id, user_id, side, role, squad_role)
+      SELECT ${inv.matchId}, ${user.id}, ${inv.side}, 'member', ${squadRole}
+      WHERE ${seatsFreeSql(inv.matchId, inv.side)}
+      ON CONFLICT DO NOTHING
+    `),
+    db.execute(sql`
+      UPDATE match_invitations
+      SET status = 'accepted', responded_at = now()
+      WHERE id = ${invitationId} AND status = 'pending'
+        AND EXISTS (
+          SELECT 1 FROM match_players
+          WHERE match_id = ${inv.matchId}
+            AND user_id = ${user.id}
+            AND side = ${inv.side}
+        )
+    `),
+  ])
+
+  const [seat] = await db
+    .select({ userId: matchPlayers.userId })
+    .from(matchPlayers)
+    .where(
+      and(
+        eq(matchPlayers.matchId, inv.matchId),
+        eq(matchPlayers.userId, user.id),
+        eq(matchPlayers.side, inv.side)
+      )
+    )
+    .limit(1)
+  if (!seat) {
+    // The seat went to another invitee — the invitation deliberately stays
+    // pending so they can still claim a seat that opens up later.
+    return { ok: false, error: "matches.errors.seatTaken" }
+  }
 
   await notifyInviter(inv.invitedBy, inv.matchId, user.id, false)
   revalidatePath(`/matches/${inv.matchId}`)
@@ -682,7 +704,7 @@ async function notifyInviter(
   )
 }
 
-/** Cancel a pending invitation — the inviter or a side captain. */
+/** Cancel a pending invitation — the inviter or the invite's side captain. */
 export async function cancelMatchInvitationAction(
   invitationId: string
 ): Promise<ActionResult> {
@@ -697,12 +719,13 @@ export async function cancelMatchInvitationAction(
   if (!inv) return { ok: false, error: "matches.errors.invitationNotFound" }
 
   if (inv.invitedBy !== user.id) {
-    if (inv.teamId) {
-      const role = await getTeamRole(inv.teamId, user.id)
-      if (!isCaptainRole(role)) return forbidden()
-    } else {
-      const match = await loadMatchOrError(inv.matchId)
-      if (!match || match.captainId !== user.id) return forbidden()
+    const [match] = await db
+      .select()
+      .from(matches)
+      .where(eq(matches.id, inv.matchId))
+      .limit(1)
+    if (!match || (await resolveSideCaptain(match, user.id)) !== inv.side) {
+      return forbidden()
     }
   }
   if (inv.status !== "pending") {
@@ -720,20 +743,34 @@ export async function cancelMatchInvitationAction(
 
 /**
  * Add a temporary (account-less) player to the squad directly — the one
- * exception to invite-only, since there is nobody to invite yet. If the
- * phone belongs to a registered user, refuse: invite them instead.
+ * exception to invite-only, since there is nobody to invite yet. Carries the
+ * squad-sheet basics (position, optional jersey number) and, when the phone
+ * belongs to a registered user, refuses: invite them instead. The guest
+ * joins the adder's side.
  */
 export async function addMatchGuestAction(
-  input: { matchId: string; name: string; phone?: string }
+  input: {
+    matchId: string
+    name: string
+    phone?: string
+    position?: string
+    jerseyNumber?: number
+  }
 ): Promise<ActionResult & { guestId?: string }> {
   const user = await getCurrentUser()
   if (!user) return unauthorized()
 
-  const name = input.name.trim().slice(0, 60)
-  const phone = input.phone?.trim()
-  if (!name) return { ok: false, error: "errors.invalid" }
+  const parsed = addGuestSchema.safeParse(input)
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "errors.invalid" }
+  }
+  const { matchId, name, phone, position, jerseyNumber } = parsed.data
 
-  const match = await loadMatchOrError(input.matchId)
+  const [match] = await db
+    .select()
+    .from(matches)
+    .where(eq(matches.id, matchId))
+    .limit(1)
   if (!match) return { ok: false, error: "matches.errors.matchNotFound" }
   if (!rosterOpen(match.state)) {
     return { ok: false, error: "matches.errors.rosterNotOpen" }
@@ -741,7 +778,7 @@ export async function addMatchGuestAction(
   if (!isMatchFormat(match.matchType)) {
     return { ok: false, error: "matches.errors.matchNotFound" }
   }
-  const side = await resolveInviterSide(match, user.id)
+  const side = await resolveSideCaptain(match, user.id)
   if (!side) return forbidden()
 
   if (phone) {
@@ -755,35 +792,49 @@ export async function addMatchGuestAction(
     }
   }
 
-  const { getSquadCounts } = await import("./queries")
+  // Fast capacity pre-check — the authoritative first-accept-wins claim
+  // happens atomically in the batch below.
   const counts = await getSquadCounts(match.id)
-  const sideCounts = counts.find((c) => (c.teamId ?? null) === side.teamId)
+  const sideCounts = counts.find((c) => c.side === side)
   const free = spotsLeft(
     match.squadSize ?? FORMATS.fives.maxSquad,
     sideCounts?.total ?? 0,
-    sideCounts?.pending ?? 0,
     sideCounts?.placeholders ?? 0
   )
   if (free < 1) return { ok: false, error: "matches.errors.squadFull" }
 
   const squadRole = resolveSquadRole(sideCounts?.starting ?? 0, match.matchType)
+
+  // First-accept-wins claim, same batch shape as the invite accept: lock the
+  // match row, insert the guest only while the side has a free seat. The id
+  // is generated here because batch takes pre-built statements (no read-back
+  // between them) — mirroring createMatchAction.
+  const guestId = crypto.randomUUID()
+  await db.batch([
+    lockMatchForSeatClaim(match.id),
+    db.execute(sql`
+      INSERT INTO match_guests
+        (id, match_id, side, name, phone, position, jersey_number, squad_role, added_by)
+      SELECT
+        ${guestId}, ${match.id}, ${side}, ${name}, ${phone ?? null},
+        ${position ?? null}, ${jerseyNumber ?? null}, ${squadRole}, ${user.id}
+      WHERE ${seatsFreeSql(match.id, side)}
+    `),
+  ])
   const [guest] = await db
-    .insert(matchGuests)
-    .values({
-      matchId: match.id,
-      teamId: side.teamId,
-      name,
-      phone: phone || null,
-      squadRole,
-      addedBy: user.id,
-    })
-    .returning({ id: matchGuests.id })
+    .select({ id: matchGuests.id })
+    .from(matchGuests)
+    .where(eq(matchGuests.id, guestId))
+    .limit(1)
+  if (!guest) {
+    return { ok: false, error: "matches.errors.squadFull" }
+  }
 
   revalidatePath(`/matches/${match.id}`)
-  return { ok: true, guestId: guest?.id }
+  return { ok: true, guestId: guest.id }
 }
 
-/** Remove a temp player — the side captain (or match captain for solo). */
+/** Remove a temp player — the captain of the guest's own side. */
 export async function removeMatchGuestAction(
   matchId: string,
   guestId: string
@@ -791,7 +842,11 @@ export async function removeMatchGuestAction(
   const user = await getCurrentUser()
   if (!user) return unauthorized()
 
-  const match = await loadMatchOrError(matchId)
+  const [match] = await db
+    .select()
+    .from(matches)
+    .where(eq(matches.id, matchId))
+    .limit(1)
   if (!match) return { ok: false, error: "matches.errors.matchNotFound" }
   if (!rosterOpen(match.state)) {
     return { ok: false, error: "matches.errors.rosterNotOpen" }
@@ -803,10 +858,7 @@ export async function removeMatchGuestAction(
     .limit(1)
   if (!guest) return { ok: false, error: "matches.errors.guestNotFound" }
 
-  if (guest.teamId) {
-    const role = await getTeamRole(guest.teamId, user.id)
-    if (!isCaptainRole(role)) return forbidden()
-  } else if (match.captainId !== user.id) {
+  if ((await resolveSideCaptain(match, user.id)) !== guest.side) {
     return forbidden()
   }
 
@@ -827,7 +879,11 @@ export async function setGuestSquadRoleAction(
     return { ok: false, error: "errors.invalid" }
   }
 
-  const match = await loadMatchOrError(matchId)
+  const [match] = await db
+    .select()
+    .from(matches)
+    .where(eq(matches.id, matchId))
+    .limit(1)
   if (!match) return { ok: false, error: "matches.errors.matchNotFound" }
   if (!rosterOpen(match.state)) {
     return { ok: false, error: "matches.errors.rosterNotOpen" }
@@ -842,16 +898,12 @@ export async function setGuestSquadRoleAction(
     .limit(1)
   if (!guest) return { ok: false, error: "matches.errors.guestNotFound" }
 
-  if (guest.teamId) {
-    const role = await getTeamRole(guest.teamId, user.id)
-    if (!isCaptainRole(role)) return forbidden()
-  } else if (match.captainId !== user.id) {
+  if ((await resolveSideCaptain(match, user.id)) !== guest.side) {
     return forbidden()
   }
 
   if (squadRole === "starting") {
-    const { countStarting } = await import("./queries")
-    const starting = await countStarting(matchId, guest.teamId)
+    const starting = await countStarting(matchId, guest.side)
     if (starting >= startersOf(match.matchType)) {
       return { ok: false, error: "matches.errors.startingFull" }
     }
@@ -866,11 +918,10 @@ export async function setGuestSquadRoleAction(
 }
 
 /**
- * Remove a player from the match roster. Team-rostered players can only be
- * removed by their team's owner/captain; solo (teamId null) players only by
- * the match captain. The captain themselves is never removable — they can
- * cancel the match instead. Roster edits are blocked once the match is no
- * longer in an open roster state.
+ * Remove a player from the match roster. Managed by the captain of the
+ * player's own side. Neither captain is removable — they can leave only via
+ * their own dedicated flows (the match captain can't leave at all). Roster
+ * edits are blocked once the match is no longer in an open roster state.
  */
 export async function removePlayerAction(
   matchId: string,
@@ -890,23 +941,21 @@ export async function removePlayerAction(
   }
 
   const [player] = await db
-    .select({ userId: matchPlayers.userId, teamId: matchPlayers.teamId })
+    .select({ userId: matchPlayers.userId, side: matchPlayers.side })
     .from(matchPlayers)
     .where(
       and(eq(matchPlayers.matchId, matchId), eq(matchPlayers.userId, playerId))
     )
     .limit(1)
   if (!player) return { ok: false, error: "matches.errors.playerNotOnRoster" }
-  if (player.userId === match.captainId) {
+  if (
+    player.userId === match.captainId ||
+    (match.awayCaptainId !== null && player.userId === match.awayCaptainId)
+  ) {
     return { ok: false, error: "matches.errors.cannotRemoveCaptain" }
   }
 
-  if (player.teamId) {
-    // Requester must be captain/owner of the player's team in this match.
-    const role = await getTeamRole(player.teamId, user.id)
-    if (!isCaptainRole(role)) return forbidden()
-  } else if (match.captainId !== user.id) {
-    // Solo-rostered players can only be removed by the match captain.
+  if ((await resolveSideCaptain(match, user.id)) !== player.side) {
     return forbidden()
   }
 
@@ -922,7 +971,8 @@ export async function removePlayerAction(
 
 /**
  * Submit match result (F1). Sets home/away score + resultStatus=pending.
- * Transitions match to COMPLETED. The other captain confirms separately.
+ * Transitions match to COMPLETED. Either side's captain can submit (solo
+ * matches included); the other captain confirms separately.
  */
 export async function submitResultAction(
   input: z.infer<typeof submitResultSchema>
@@ -945,21 +995,7 @@ export async function submitResultAction(
     return { ok: false, error: "matches.errors.notReadyForResults" }
   }
 
-  // Must be captain/owner of one of the teams.
-  const sides = await db
-    .select()
-    .from(matchTeams)
-    .where(eq(matchTeams.matchId, matchId))
-  const teamIds = sides.map((s) => s.teamId)
-  let requesterSide: "home" | "away" | null = null
-  for (const tid of teamIds) {
-    const role = await getTeamRole(tid, user.id)
-    if (role === "owner" || role === "captain") {
-      requesterSide = sides.find((s) => s.teamId === tid)?.side ?? null
-      break
-    }
-  }
-  if (!requesterSide) return forbidden()
+  if (!(await resolveSideCaptain(match, user.id))) return forbidden()
 
   await db
     .update(matches)
@@ -979,7 +1015,7 @@ export async function submitResultAction(
 }
 
 /**
- * Confirm the submitted result. Only the OTHER captain can confirm.
+ * Confirm the submitted result. Only the OTHER side's captain can confirm.
  * Transitions resultStatus pending → confirmed.
  */
 export async function confirmResultAction(matchId: string): Promise<ActionResult> {
@@ -996,22 +1032,9 @@ export async function confirmResultAction(matchId: string): Promise<ActionResult
     return { ok: false, error: "matches.errors.resultNotPending" }
   }
 
-  // Must be captain/owner of a team in this match, but NOT the submitter.
-  const sides = await db
-    .select()
-    .from(matchTeams)
-    .where(eq(matchTeams.matchId, matchId))
-  const teamIds = sides.map((s) => s.teamId)
-
-  let isAuthorized = false
-  for (const tid of teamIds) {
-    const role = await getTeamRole(tid, user.id)
-    if ((role === "owner" || role === "captain") && user.id !== match.submittedBy) {
-      isAuthorized = true
-      break
-    }
-  }
-  if (!isAuthorized) {
+  // A side captain — but not the submitter.
+  const isSideCaptain = await resolveSideCaptain(match, user.id)
+  if (!isSideCaptain || user.id === match.submittedBy) {
     return { ok: false, error: "matches.errors.onlyOpponentConfirm" }
   }
 

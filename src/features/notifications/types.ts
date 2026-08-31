@@ -16,6 +16,7 @@ import {
   UsersIcon,
   MailPlusIcon,
   ClipboardListIcon,
+  SwordsIcon,
 } from "lucide-react"
 
 import { formatKickoffLabel } from "@/features/matches/authority"
@@ -113,6 +114,8 @@ export interface NotificationPayloads {
     kickoffAt?: string | null
     turfName: string
     captainName: string
+    /** Over-invite: more invites out than open seats — urgency body copy. */
+    contested?: boolean
   }
   /** The inviter: an invitee accepted the match invitation. */
   "match.invite_accepted": {
@@ -126,6 +129,12 @@ export interface NotificationPayloads {
   }
   /** The match captain: a player asked to join the match. */
   "match.join_requested": {
+    matchId: string
+    playerName: string
+    turfName: string
+  }
+  /** The match captain: a player claimed the opponent side. */
+  "match.opponent_claimed": {
     matchId: string
     playerName: string
     turfName: string
@@ -325,7 +334,9 @@ export const NOTIFICATION_TYPES: Registry = {
     body: (p): LocalizedText | null =>
       p.kickoffAt
         ? {
-            key: "notifications.matchInviteReceivedBody",
+            key: p.contested
+              ? "notifications.matchInviteReceivedContestedBody"
+              : "notifications.matchInviteReceivedBody",
             params: {
               turf: p.turfName,
               start: formatKickoffLabel(p.kickoffAt) ?? "",
@@ -365,6 +376,23 @@ export const NOTIFICATION_TYPES: Registry = {
       params: { player: p.playerName },
     }),
     body: () => ({ key: "notifications.matchJoinRequestedBody" }),
+    href: (p) => `/matches/${p.matchId}`,
+  },
+  "match.opponent_claimed": {
+    priority: "transactional",
+    audience: "player",
+    icon: SwordsIcon,
+    title: (p) => ({
+      key: "notifications.matchOpponentClaimedTitle",
+      params: { player: p.playerName },
+    }),
+    body: (p): LocalizedText | null =>
+      p.turfName
+        ? {
+            key: "notifications.matchOpponentClaimedBody",
+            params: { turf: p.turfName },
+          }
+        : null,
     href: (p) => `/matches/${p.matchId}`,
   },
   "friend.request_received": {

@@ -5,7 +5,11 @@ import { useId } from "react"
 import { useI18n } from "@/i18n/client"
 import { cn } from "@/lib/utils"
 import { POSITION_LABEL, SKILL_LABEL } from "@/i18n/labels"
-import { POSITION_IDS, SKILL_IDS } from "@/features/player/positions"
+import {
+  POSITION_IDS,
+  SKILL_IDS,
+  type PlayerPositionId,
+} from "@/features/player/positions"
 
 export interface ChoiceOption {
   value: string
@@ -77,10 +81,14 @@ export function PositionPicker(props: {
   value: string
   onChange: (value: string) => void
   allowNone?: boolean
+  /** Defaults to all canonical ids; forms recording a real position pass
+   * FIELD_POSITION_IDS (no "any"). */
+  ids?: readonly PlayerPositionId[]
+  ariaLabel?: string
   className?: string
 }) {
   const { t } = useI18n()
-  const options: ChoiceOption[] = POSITION_IDS.map((id) => ({
+  const options: ChoiceOption[] = (props.ids ?? POSITION_IDS).map((id) => ({
     value: id,
     label: t(POSITION_LABEL[id]),
   }))
@@ -91,7 +99,7 @@ export function PositionPicker(props: {
     <ChoicePicker
       {...props}
       options={options}
-      ariaLabel={t("profile.positionLabel")}
+      ariaLabel={props.ariaLabel ?? t("profile.positionLabel")}
     />
   )
 }

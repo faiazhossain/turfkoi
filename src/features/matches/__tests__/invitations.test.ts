@@ -1,51 +1,70 @@
 import { describe, expect, it } from "vitest"
 
-import { spotsLeft } from "../formats"
+import { OVER_INVITE_BUFFER, maxPendingInvitations, spotsLeft } from "../formats"
 
 /**
- * Invitation capacity invariants (Phase 2): pending invitations CONSUME a
- * squad spot until they are answered — accepting inserts the player, so the
- * math must never allow roster + guests + pending to exceed squadSize.
+ * Invitation capacity invariants: pending invitations are PROSPECTS, not
+ * reservations — they never shrink a side's open seats. Seats are claimed
+ * first-accept-wins at accept time (atomic row-lock + conditional insert in
+ * the server actions, not unit-testable here), so the math only ever counts
+ * claimed seats: roster + guests + declared placeholders. A side may hold
+ * more pending invites than open seats (maxPendingInvitations) so ignored
+ * invites can't lock the captain out.
  */
 describe("invitation capacity", () => {
   const squadSize = 10
 
-  it("pending invites reduce the free spots", () => {
-    expect(spotsLeft(squadSize, 7, 2)).toBe(1)
+  it("pending invites never reduce the open seats", () => {
+    // There is no pending argument left to pass — outstanding invitations
+    // simply don't exist in the seat math.
+    expect(spotsLeft(squadSize, 7)).toBe(3)
+  })
+
+  it("a full squad has no open seats regardless of invites", () => {
+    expect(spotsLeft(squadSize, squadSize)).toBe(0)
+    // A pending invite next to one open seat keeps that seat open.
+    expect(spotsLeft(squadSize, 9)).toBe(1)
+  })
+
+  it("a decline removes a prospect; the seat math never changed", () => {
+    expect(spotsLeft(squadSize, 7)).toBe(3)
+  })
+
+  it("an accept converts a prospect into a claimed seat", () => {
+    // 7 accepted + 1 accepting → the atomic claim must see one fewer seat:
+    expect(spotsLeft(squadSize, 8)).toBe(2)
+  })
+
+  it("guests count as claimed squad members", () => {
+    // 6 players + 2 guests in a 10-squad → 2 seats left.
+    expect(spotsLeft(squadSize, 6 + 2)).toBe(2)
+  })
+
+  it("declared placeholders consume seats (count-first)", () => {
+    // 7 named + 3 un-named placeholders of a 10-player squad → full.
     expect(spotsLeft(squadSize, 7, 3)).toBe(0)
   })
 
-  it("a full squad cannot take more invites", () => {
-    expect(spotsLeft(squadSize, squadSize, 0)).toBe(0)
-    expect(spotsLeft(squadSize, 9, 1)).toBe(0)
+  it("sides are independent: one side's fill never shrinks the other", () => {
+    // Person-based sides share the squadSize per side, not between sides —
+    // a nearly-full home side leaves the away side's full budget intact.
+    expect(spotsLeft(squadSize, 9)).toBe(1)
+    expect(spotsLeft(squadSize, 0)).toBe(squadSize)
+  })
+})
+
+describe("over-invite budget", () => {
+  it("allows the buffer the product asked for: need 1 -> invite 4", () => {
+    expect(OVER_INVITE_BUFFER).toBe(3)
+    expect(maxPendingInvitations(1)).toBe(4)
   })
 
-  it("a decline releases the held spot", () => {
-    // 7 accepted, 3 pending — one declines:
-    expect(spotsLeft(squadSize, 7, 2)).toBe(1)
+  it("scales with open seats", () => {
+    expect(maxPendingInvitations(3)).toBe(6)
+    expect(maxPendingInvitations(12)).toBe(15)
   })
 
-  it("an accept converts a held spot into a roster row (no overfill)", () => {
-    // 7 accepted, 3 pending, one accepts → 8 accepted, 2 pending:
-    expect(spotsLeft(squadSize, 8, 2)).toBe(0)
-  })
-
-  it("accepting recheck ignores only the invitee's own held spot", () => {
-    // The invitee's invitation is one of the pending; the others still hold:
-    const accepted = 7
-    const pending = 3
-    const ownHeld = 1
-    const freeAtAccept = spotsLeft(squadSize, accepted, pending - ownHeld)
-    expect(freeAtAccept).toBe(1)
-    // Held spots make overfill impossible: the last invitee can always
-    // claim their own spot (accepted + pending never exceeds squadSize).
-    const lastInvitee = spotsLeft(squadSize, 9, 1 - ownHeld)
-    expect(lastInvitee).toBe(1)
-    expect(9 + 1).toBe(squadSize)
-  })
-
-  it("guests count as accepted squad members", () => {
-    // 6 players + 2 guests + 1 pending invite in a 10-squad → 1 left.
-    expect(spotsLeft(squadSize, 6 + 2, 1)).toBe(1)
+  it("a side with no open seats takes no new invites", () => {
+    expect(maxPendingInvitations(0)).toBe(0)
   })
 })

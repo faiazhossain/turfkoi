@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import { CalendarDaysIcon, ZapIcon, MapPinIcon, GiftIcon, ShieldIcon, StoreIcon } from "lucide-react"
+import { CalendarDaysIcon, ZapIcon, MapPinIcon, GiftIcon, ShieldIcon, StoreIcon, PlusIcon } from "lucide-react"
 
 import { EmptyState, StatusBadge } from "@/components/shared"
 import { buildMetadata } from "@/i18n/metadata"
@@ -68,7 +68,7 @@ export default async function PlayerDashboardPage() {
     await Promise.all([
       listMyBookings(session.user.id, 5),
       listMatchesNeedingPlayers(profile?.coords ?? null, 5),
-      listPlayerMatchHistory(session.user.id, 5),
+      listPlayerMatchHistory(session.user.id, session.user.phone ?? null, 5),
       getOrCreateReferralCode(session.user.id),
       listFriends(session.user.id),
       listPendingFriendRequests(session.user.id),
@@ -219,11 +219,20 @@ export default async function PlayerDashboardPage() {
 
       {/* Nearby matches needing players */}
       <section className="space-y-3">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <ZapIcon className="size-5 text-primary" aria-hidden />
           <h2 className="font-heading text-lg font-semibold">
             {t("player.playTonightTitle")}
           </h2>
+          <Button
+            size="sm"
+            variant="outline"
+            className="ml-auto"
+            render={<Link href="/matches/new" />}
+          >
+            <PlusIcon aria-hidden />
+            {t("matches.dashboardCreateCta")}
+          </Button>
         </div>
         <p className="text-sm text-muted-foreground">
           {t("player.playTonightDesc")}
@@ -245,8 +254,9 @@ export default async function PlayerDashboardPage() {
                       href={`/matches/${m.id}`}
                       className="truncate font-heading font-medium hover:underline"
                     >
-                      {m.teams.map((tm) => tm.teamName).join(` ${t("player.vs")} `) ||
-                        t("matches.breadcrumbMatch")}
+                      {t("matches.soloTitle", {
+                        captain: m.captainName ?? t("matches.player"),
+                      })}
                     </Link>
                     <div className="flex items-center gap-1 text-xs text-muted-foreground">
                       <MapPinIcon className="size-3" aria-hidden />
@@ -259,7 +269,13 @@ export default async function PlayerDashboardPage() {
                   </div>
                 </div>
                 <div className="mt-2">
-                  <JoinRequestButton matchId={m.id} spots={m.openSpots} />
+                  <JoinRequestButton
+                    matchId={m.id}
+                    spots={m.openSpots.reduce(
+                      (acc: number, s: { open: number }) => acc + s.open,
+                      0
+                    )}
+                  />
                 </div>
               </li>
             ))}
@@ -306,7 +322,13 @@ export default async function PlayerDashboardPage() {
                   >
                     {t(matchStateLabel(h.state))}
                   </StatusBadge>
-                  {h.state === "completed" && !h.playedConfirmedAt ? (
+                  {h.asGuest ? (
+                    <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                      {t("player.historyGuestBadge")}
+                    </span>
+                  ) : null}
+                  {/* Guest rows have no roster entry, so no "I played". */}
+                  {h.state === "completed" && !h.asGuest && !h.playedConfirmedAt ? (
                     <ConfirmPlayedButton matchId={h.id} />
                   ) : null}
                 </div>

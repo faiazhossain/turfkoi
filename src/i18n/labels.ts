@@ -125,16 +125,11 @@ export function matchStateLabel(state: string): string {
 
 /**
  * Conversational, context-aware status line (replaces technical state names
- * in the match room): open solo = recruiting players, open team = looking
- * for an opponent, confirmed = match confirmed. Null → no sub-line.
+ * in the match room): open = opponent wanted (recruiting happens in
+ * parallel), confirmed = match confirmed. Null → no sub-line.
  */
-export function matchStateContextLabelKey(
-  state: string,
-  solo: boolean
-): string | null {
-  if (state === "open") {
-    return solo ? "matches.stateContext.openSolo" : "matches.stateContext.openTeam"
-  }
+export function matchStateContextLabelKey(state: string): string | null {
+  if (state === "open") return "matches.stateContext.open"
   if (state === "confirmed") return "matches.stateContext.confirmed"
   return null
 }

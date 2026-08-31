@@ -67,6 +67,10 @@ export const notificationPayloadSchemas = {
     kickoffAt: z.string().nullish(),
     turfName: z.string(),
     captainName: z.string(),
+    // True when the batch was sent to more players than there are open
+    // seats — the body copy adds the accept-fast urgency line. Optional so
+    // older stored rows keep parsing.
+    contested: z.boolean().optional(),
   }),
   "match.invite_accepted": z.object({
     matchId: z.string(),
@@ -77,6 +81,11 @@ export const notificationPayloadSchemas = {
     playerName: z.string(),
   }),
   "match.join_requested": z.object({
+    matchId: z.string(),
+    playerName: z.string(),
+    turfName: z.string(),
+  }),
+  "match.opponent_claimed": z.object({
     matchId: z.string(),
     playerName: z.string(),
     turfName: z.string(),

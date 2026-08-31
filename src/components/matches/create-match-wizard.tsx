@@ -2,31 +2,24 @@
 
 import { useState, useTransition, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { toast } from "sonner"
 import {
+  CalendarCheckIcon,
   CheckIcon,
   ChevronLeftIcon,
   GoalIcon,
   UserCheckIcon,
-  UserPlusIcon,
   UsersIcon,
 } from "lucide-react"
 
 import { useI18n } from "@/i18n/client"
 import { toBnDigits } from "@/lib/format-time"
+import { formatSlotDate } from "@/lib/format-date"
 
 import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Progress } from "@/components/ui/progress"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import { createMatchAction, inviteMatchPlayersAction } from "@/features/matches/actions"
+import { createMatchAction } from "@/features/matches/actions"
 import {
   FORMATS,
   MATCH_FORMATS,
@@ -36,18 +29,29 @@ import {
   type MatchFormat,
 } from "@/features/matches/formats"
 
-export interface WizardTeam {
+export interface WizardBooking {
   id: string
-  name: string
+  turfName: string
+  turfArea: string | null
+  date: string
+  slotStart: string
+  slotEnd: string
 }
 
-export interface WizardNearbyPlayer {
-  userId: string
-  name: string | null
-  position: string | null
-  area: string | null
-  distanceKm: number
-}
+/**
+ * Match creation flow — booking-first, count-first (owner spec):
+ *   1. Pick the confirmed booking the match will be played on (a match is
+ *      always played on a platform booking — book a turf first if needed).
+ *   2. Format (7v7 etc.) — players per side ON THE FIELD.
+ *   3. Squad size — total incl. substitutes.
+ *   4. "How many players do you already have?" — a count, or Full squad.
+ *      NO identities and NO teams here: names/invites/guests all happen
+ *      later, progressively, from the match room.
+ *
+ * UX: a stepper header shows where you are, each step is a card whose badge
+ * turns into a check, squad fill is visualized with dots + a progress bar,
+ * and the create action sits in a sticky bottom bar with a live summary.
+ */
 
 /** One wizard step — numbered badge that turns into a check when done. */
 function StepCard({
@@ -151,50 +155,38 @@ function OptionCard({
   )
 }
 
-/**
- * Match creation flow — count-first (owner spec):
- *   1. Format (7v7 etc.) — players per side ON THE FIELD.
- *   2. Squad size — total incl. substitutes.
- *   3. "How many players do you already have?" — a count, or Full squad.
- *      NO identities here: names/numbers/invites/guests all happen later,
- *      progressively, from the match room.
- *   4. Still short? Optionally pre-invite nearby available players.
- *
- * UX: a stepper header shows where you are, each step is a card whose badge
- * turns into a check, squad fill is visualized with dots + a progress bar,
- * and the create action sits in a sticky bottom bar with a live summary.
- */
 export function CreateMatchWizard({
-  bookingId,
-  teams,
-  currentUserId,
-  nearbyPlayers,
+  bookings,
+  pendingPayment,
+  preselectedBookingId,
 }: {
-  bookingId: string
-  teams: WizardTeam[]
-  currentUserId: string
-  nearbyPlayers: WizardNearbyPlayer[]
+  bookings: WizardBooking[]
+  pendingPayment: WizardBooking[]
+  preselectedBookingId: string | null
 }) {
   const router = useRouter()
   const { t, locale } = useI18n()
   const [pending, start] = useTransition()
 
-  // Steps 1–2
+  // Step 1 — which confirmed booking is the match played on?
+  const preselected = bookings.some((b) => b.id === preselectedBookingId)
+    ? preselectedBookingId
+    : null
+  const [bookingId, setBookingId] = useState<string | null>(preselected)
+
+  // Steps 2–3
   const [format, setFormat] = useState<MatchFormat>("fives")
   const [squadSize, setSquadSize] = useState<number>(defaultSquadSize("fives"))
 
-  // Step 3 — count-first: how many players does the captain already have?
-  const [teamId, setTeamId] = useState<string>("")
+  // Step 4 — count-first: how many players does the captain already have?
   const [playerCount, setPlayerCount] = useState<number | null>(null)
-
-  // Step 4 — nearby available players (optional, progressive)
-  const [wantNearby, setWantNearby] = useState<boolean | null>(null)
-  const [pickedNearbyIds, setPickedNearbyIds] = useState<string[]>([])
 
   const starters = startersOf(format)
   const maxSquad = FORMATS[format].maxSquad
   const subs = squadSize - starters
   const num = (n: number) => (locale === "bn" ? toBnDigits(String(n)) : String(n))
+  const slotDate = (iso: string) => formatSlotDate(iso, locale)
+  const slotTime = (v: string) => v.slice(0, 5)
 
   function pickFormat(f: MatchFormat) {
     setFormat(f)
@@ -203,16 +195,18 @@ export function CreateMatchWizard({
     setPlayerCount((prev) => (prev === null ? null : Math.min(prev, next)))
   }
 
-  // Declared count excludes the creator (always on the roster); nearby picks
-  // are invitations (pending seats), not placeholders.
+  // Declared count excludes the creator (always on the roster).
   const placeholders = playerCount === null ? 0 : Math.max(0, playerCount - 1)
   const fullSquad = playerCount !== null && playerCount >= squadSize
   const spotsNeeded = playerCount === null ? 0 : Math.max(0, squadSize - playerCount)
-  const showNearbyStep = playerCount !== null && spotsNeeded > 0
-  const nearbyCount = pickedNearbyIds.length
-  const nearbyAtCap = nearbyCount >= spotsNeeded
 
   const steps = [
+    {
+      id: "booking",
+      label: t("matches.wizard.navBooking"),
+      icon: CalendarCheckIcon,
+      done: bookingId !== null,
+    },
     { id: "format", label: t("matches.wizard.navFormat"), icon: GoalIcon, done: true },
     { id: "squad", label: t("matches.wizard.navSquad"), icon: UsersIcon, done: true },
     {
@@ -221,34 +215,19 @@ export function CreateMatchWizard({
       icon: UserCheckIcon,
       done: playerCount !== null,
     },
-    {
-      id: "fill",
-      label: t("matches.wizard.navFill"),
-      icon: UserPlusIcon,
-      done: showNearbyStep ? wantNearby !== null : true,
-    },
   ]
   const activeIdx = Math.max(
     0,
     steps.findIndex((s) => !s.done)
   )
   const doneCount = steps.filter((s) => s.done).length
-
-  function toggleNearby(userId: string) {
-    setPickedNearbyIds((prev) =>
-      prev.includes(userId)
-        ? prev.filter((x) => x !== userId)
-        : prev.length >= spotsNeeded
-          ? prev
-          : [...prev, userId]
-    )
-  }
+  const selectedBooking = bookings.find((b) => b.id === bookingId) ?? null
 
   function create() {
+    if (!bookingId) return
     start(async () => {
       const res = await createMatchAction({
         bookingId,
-        teamId: teamId && teamId !== "solo" ? teamId : undefined,
         matchType: format,
         squadSize,
         placeholderCount: placeholders,
@@ -256,14 +235,6 @@ export function CreateMatchWizard({
       if (!res.ok) {
         toast.error(t(res.error ?? "errors.generic"))
         return
-      }
-      // Honor step 4's promise: pre-invite the nearby players picked above.
-      // Best-effort — the match room shows pending invites either way.
-      if (res.matchId && wantNearby && nearbyCount > 0) {
-        await inviteMatchPlayersAction({
-          matchId: res.matchId,
-          userIds: pickedNearbyIds,
-        }).catch(() => {})
       }
       toast.success(t("matches.createdToast"))
       if (res.matchId) router.push(`/matches/${res.matchId}`)
@@ -330,13 +301,99 @@ export function CreateMatchWizard({
         </ol>
       </nav>
 
-      {/* Step 1 — format */}
+      {/* Step 1 — the booking the match is played on */}
       <StepCard
         number={num(1)}
-        title={t("matches.wizard.stepFormat")}
-        help={t("matches.wizard.formatHelp")}
+        title={t("matches.wizard.stepBooking")}
+        help={t("matches.wizard.bookingHelp")}
         done={steps[0].done}
         active={activeIdx === 0}
+      >
+        {bookings.length > 0 ? (
+          <div className="space-y-2" role="radiogroup" aria-label={t("matches.wizard.stepBooking")}>
+            {bookings.map((b) => (
+              <button
+                key={b.id}
+                type="button"
+                role="radio"
+                aria-checked={bookingId === b.id}
+                onClick={() => setBookingId(b.id)}
+                className={`relative flex w-full items-center gap-3 rounded-xl border p-3 text-left transition-all duration-200 ${
+                  bookingId === b.id
+                    ? "border-primary bg-primary/10 ring-2 ring-primary/25"
+                    : "border-border bg-card hover:border-primary/40"
+                }`}
+              >
+                {bookingId === b.id ? (
+                  <CheckIcon
+                    aria-hidden
+                    className="size-4 shrink-0 text-primary animate-in zoom-in-50 duration-200 motion-reduce:animate-none"
+                  />
+                ) : (
+                  <span
+                    aria-hidden
+                    className="size-4 shrink-0 rounded-full border border-muted-foreground/40"
+                  />
+                )}
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-heading font-semibold leading-tight">
+                    {b.turfName}
+                    {b.turfArea ? (
+                      <span className="font-normal text-muted-foreground">
+                        {" "}
+                        · {b.turfArea}
+                      </span>
+                    ) : null}
+                  </span>
+                  <span className="mt-0.5 block font-mono text-xs text-muted-foreground">
+                    {slotDate(b.date)} · {slotTime(b.slotStart)}–{slotTime(b.slotEnd)}
+                  </span>
+                </span>
+              </button>
+            ))}
+          </div>
+        ) : null}
+
+        {pendingPayment.length > 0 ? (
+          <div className="mt-3 space-y-2">
+            {pendingPayment.map((b) => (
+              <div
+                key={b.id}
+                className="flex items-center justify-between gap-3 rounded-xl border border-dashed border-border p-3"
+              >
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-medium">{b.turfName}</span>
+                  <span className="block font-mono text-xs text-muted-foreground">
+                    {slotDate(b.date)} · {slotTime(b.slotStart)}
+                  </span>
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0"
+                  render={<Link href={`/bookings/${b.id}`} />}
+                >
+                  {t("matches.completePaymentCta")}
+                </Button>
+              </div>
+            ))}
+          </div>
+        ) : null}
+
+        {bookings.length === 0 ? (
+          <p className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
+            {t("matches.noEligibleBookingsShort")}
+          </p>
+        ) : null}
+      </StepCard>
+
+      {/* Step 2 — format */}
+      <StepCard
+        number={num(2)}
+        title={t("matches.wizard.stepFormat")}
+        help={t("matches.wizard.formatHelp")}
+        done={steps[1].done}
+        active={activeIdx === 1}
       >
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {MATCH_FORMATS.map((f) => (
@@ -351,13 +408,13 @@ export function CreateMatchWizard({
         </div>
       </StepCard>
 
-      {/* Step 2 — squad size */}
+      {/* Step 3 — squad size */}
       <StepCard
-        number={num(2)}
+        number={num(3)}
         title={t("matches.wizard.stepSquad")}
         help={t("matches.wizard.squadHelp")}
-        done={steps[1].done}
-        active={activeIdx === 1}
+        done={steps[2].done}
+        active={activeIdx === 2}
       >
         <div className="space-y-4">
           <div className="flex items-center gap-3">
@@ -421,39 +478,15 @@ export function CreateMatchWizard({
         </div>
       </StepCard>
 
-      {/* Step 3 — which team + how many players do you already have? */}
+      {/* Step 4 — how many players do you already have? */}
       <StepCard
-        number={num(3)}
+        number={num(4)}
         title={t("matches.wizard.stepCount")}
         help={t("matches.wizard.countHint")}
-        done={steps[2].done}
-        active={activeIdx === 2}
+        done={steps[3].done}
+        active={activeIdx === 3}
       >
         <div className="space-y-4">
-          {teams.length > 0 ? (
-            <div className="space-y-1">
-              <Select
-                value={teamId || undefined}
-                onValueChange={(v) => setTeamId(v ?? "")}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder={t("matches.wizard.teamPickLabel")} />
-                </SelectTrigger>
-                <SelectContent>
-                  {teams.map((tm) => (
-                    <SelectItem key={tm.id} value={tm.id}>
-                      {tm.name}
-                    </SelectItem>
-                  ))}
-                  <SelectItem value="solo">{t("matches.noTeamOption")}</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">
-                {t("matches.wizard.teamPickHelp")}
-              </p>
-            </div>
-          ) : null}
-
           <div className="grid grid-cols-2 gap-2">
             <OptionCard
               selected={fullSquad}
@@ -529,98 +562,15 @@ export function CreateMatchWizard({
         </div>
       </StepCard>
 
-      {/* Step 4 — fill remaining spots from nearby available players */}
-      {showNearbyStep ? (
-        <StepCard
-          number={num(4)}
-          title={t("matches.wizard.nearbyQuestion", { count: num(spotsNeeded) })}
-          done={steps[3].done}
-          active={activeIdx === 3}
-        >
-          <div className="animate-in space-y-3 fade-in slide-in-from-top-1 duration-300 motion-reduce:animate-none">
-            <div className="grid grid-cols-2 gap-2">
-              <OptionCard
-                selected={wantNearby === true}
-                onClick={() => setWantNearby(true)}
-                label={t("matches.wizard.nearbyYes")}
-              />
-              <OptionCard
-                selected={wantNearby === false}
-                onClick={() => setWantNearby(false)}
-                label={t("matches.wizard.nearbyNo")}
-              />
-            </div>
-            {wantNearby ? (
-              nearbyPlayers.filter((p) => p.userId !== currentUserId).length > 0 ? (
-                <>
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm text-muted-foreground">
-                      {t("matches.wizard.nearbyHelp", { count: num(spotsNeeded) })}
-                    </p>
-                    <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium tabular-nums text-primary">
-                      {t("matches.wizard.nearbyPicked", {
-                        count: num(nearbyCount),
-                        need: num(spotsNeeded),
-                      })}
-                    </span>
-                  </div>
-                  <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border">
-                    {nearbyPlayers
-                      .filter((p) => p.userId !== currentUserId)
-                      .map((p) => {
-                        const picked = pickedNearbyIds.includes(p.userId)
-                        return (
-                        <li
-                          key={p.userId}
-                          className={`flex items-center gap-3 p-2.5 text-sm transition-colors ${
-                            picked ? "bg-primary/5" : "bg-card"
-                          }`}
-                        >
-                          <Checkbox
-                            id={`nearby-${p.userId}`}
-                            disabled={!picked && nearbyAtCap}
-                            checked={picked}
-                            onCheckedChange={() => toggleNearby(p.userId)}
-                          />
-                          <Label
-                            htmlFor={`nearby-${p.userId}`}
-                            className="min-w-0 flex-1 cursor-pointer"
-                          >
-                            <span className="block truncate font-normal">
-                              {p.name ?? t("matches.player")}
-                            </span>
-                            <span className="block text-xs text-muted-foreground">
-                              {[
-                                p.position,
-                                p.area,
-                                `${p.distanceKm.toFixed(1)} km`,
-                              ]
-                                .filter(Boolean)
-                                .join(" · ")}
-                            </span>
-                          </Label>
-                        </li>
-                        )
-                      })}
-                  </ul>
-                </>
-              ) : (
-                <p className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
-                  {t("matches.nearbyEmpty")}
-                </p>
-              )
-            ) : null}
-          </div>
-        </StepCard>
-      ) : null}
-
       {/* Sticky action bar — summary + create always within reach */}
       <div className="sticky bottom-0 -mx-4 mt-8 border-t border-border bg-background/90 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-md">
         <p className="mb-2 truncate text-sm text-muted-foreground">
-          {t("matches.wizard.squadFill", {
-            count: num(playerCount ?? squadSize),
-            total: num(squadSize),
-          })}
+          {selectedBooking
+            ? t("matches.wizard.squadFill", {
+                count: num(playerCount ?? squadSize),
+                total: num(squadSize),
+              })
+            : t("matches.wizard.pickBookingFirst")}
         </p>
         <div className="flex items-center gap-2">
           <Button
@@ -635,7 +585,7 @@ export function CreateMatchWizard({
           <Button
             onClick={create}
             loading={pending}
-            disabled={playerCount === null}
+            disabled={bookingId === null || playerCount === null}
             className="flex-1"
           >
             {t("matches.create")}

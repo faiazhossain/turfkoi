@@ -4,9 +4,48 @@
  * registry).
  */
 
-/** Team-internal roles that confer captain authority over a side. */
+/** Team-internal roles that confer captain authority over a side. Kept for
+ * legacy team-based matches (match_teams fallback). */
 export function isCaptainRole(role: string | null | undefined): boolean {
   return role === "owner" || role === "captain"
+}
+
+/** The two sides of a match. Values match the match_side pg enum. */
+export type Side = "home" | "away"
+
+/**
+ * Which side (if any) the user captains: home = the creator, away = the
+ * player who claimed the opponent side. Legacy team-based matches resolve
+ * through getTeamRole before falling back to this (see actions).
+ */
+export function sideOfCaptain(
+  captainId: string,
+  awayCaptainId: string | null,
+  userId: string
+): Side | null {
+  if (userId === captainId) return "home"
+  if (awayCaptainId !== null && userId === awayCaptainId) return "away"
+  return null
+}
+
+export type ClaimOpponentInput = {
+  state: string
+  captainId: string
+  awayCaptainId: string | null
+  userId: string
+  /** True when the user already has a match_players row for this match. */
+  onRoster: boolean
+}
+
+/**
+ * Whether the user may claim the open opponent side. Eligibility only — the
+ * race itself is guarded by the conditional UPDATE in the action.
+ */
+export function canClaimOpponentSide(input: ClaimOpponentInput): boolean {
+  if (input.state !== "open") return false
+  if (input.awayCaptainId !== null) return false
+  if (input.userId === input.captainId) return false
+  return !input.onRoster
 }
 
 /** Match states in which the roster can still be edited. */

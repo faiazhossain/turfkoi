@@ -16,6 +16,10 @@ export interface MyInvitation {
   turfName: string
   date: string
   slotStart: string
+  /** More invites are out than open seats — first to accept wins. */
+  contested: boolean
+  /** False once the side has no claimable seat (show the "late" state). */
+  seatAvailable: boolean
 }
 
 /** Accept/decline for invitations addressed to the current user. */
@@ -58,8 +62,22 @@ export function InvitationInbox({ invitations }: { invitations: MyInvitation[] }
                 ? t("matches.squad.substitutes")
                 : t("matches.squad.starting")}
             </p>
+            {!inv.seatAvailable ? (
+              <p className="text-xs font-medium text-amber-700 dark:text-amber-400">
+                {t("matches.invite.seatTakenHint")}
+              </p>
+            ) : inv.contested ? (
+              <p className="text-xs font-medium text-amber-700 dark:text-amber-400">
+                {t("matches.invite.urgencyHint")}
+              </p>
+            ) : null}
             <div className="flex gap-2">
-              <Button size="sm" onClick={() => respond(inv.id, true)} loading={pending}>
+              <Button
+                size="sm"
+                onClick={() => respond(inv.id, true)}
+                loading={pending}
+                disabled={!inv.seatAvailable}
+              >
                 {t("matches.invite.accept")}
               </Button>
               <Button

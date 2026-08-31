@@ -6,9 +6,12 @@ import { toast } from "sonner"
 
 import { useI18n } from "@/i18n/client"
 
+import { positionLabelKey } from "@/i18n/labels"
+
 import { Button } from "@/components/ui/button"
 import { PlayerAvatar } from "@/components/player/player-avatar"
 import { initialsFromName } from "@/features/player/avatar"
+import type { Side } from "@/features/matches/authority"
 import {
   removePlayerAction,
   removeMatchGuestAction,
@@ -20,16 +23,18 @@ export interface SquadPlayer {
   userId: string
   name: string | null
   phone: string
-  teamId: string | null
+  side: Side
   role: string
   squadRole: "starting" | "substitute"
 }
 
 export interface SquadGuest {
   id: string
-  teamId: string | null
+  side: Side
   name: string
   phone: string | null
+  position: string | null
+  jerseyNumber: number | null
   linkedUserId: string | null
   squadRole: "starting" | "substitute"
 }
@@ -45,13 +50,15 @@ interface Row {
   guest: boolean
   userId?: string
   guestId?: string
+  position?: string | null
+  jerseyNumber?: number | null
 }
 
 /**
  * Match room squad: per side, Starting first then Substitutes. Registered
  * players and temp guests render in the same groups (guests get a badge).
- * Managers (the side's team captain, or the match captain for solo players)
- * can move rows between groups and remove them.
+ * Managers (the captain of the row's side) can move rows between groups and
+ * remove them.
  */
 export function SquadGroups({
   matchId,
@@ -59,24 +66,30 @@ export function SquadGroups({
   roster,
   guests = [],
   captainId,
-  managedTeamIds,
-  isMatchCaptain,
+  awayCaptainId,
+  managedSides,
 }: {
   matchId: string
-  sides: { teamId: string; teamName: string | null; side: "home" | "away" }[]
+  /** Legacy team matches label their sides with the team name. */
+  sides: { side: Side; legacyTeamLabel: string | null }[]
   roster: SquadPlayer[]
   guests?: SquadGuest[]
   captainId: string
-  /** Team ids in this match the current user can manage. */
-  managedTeamIds: string[]
-  isMatchCaptain: boolean
+  awayCaptainId: string | null
+  /** Sides the current user can manage. */
+  managedSides: Side[]
 }) {
   const router = useRouter()
   const { t } = useI18n()
   const [pending, start] = useTransition()
 
-  const manages = (teamId: string | null) =>
-    teamId ? managedTeamIds.includes(teamId) : isMatchCaptain
+  const manages = (side: Side) => managedSides.includes(side)
+
+  /** Canonical ids translate through the dictionary; legacy text renders raw. */
+  const positionLabelText = (value: string) => {
+    const key = positionLabelKey(value)
+    return key ? t(key) : value
+  }
 
   function setRole(row: Row, squadRole: "starting" | "substitute") {
     start(async () => {
@@ -116,6 +129,16 @@ export function SquadGroups({
         {row.guest ? (
           <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
             {t("matches.guest.badge")}
+          </span>
+        ) : null}
+        {row.jerseyNumber != null ? (
+          <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium tabular-nums text-primary">
+            #{row.jerseyNumber}
+          </span>
+        ) : null}
+        {row.position ? (
+          <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+            {positionLabelText(row.position)}
           </span>
         ) : null}
         {row.captain ? (
@@ -174,50 +197,42 @@ export function SquadGroups({
     )
   }
 
-  // Team match: one block per side. Solo: a single synthetic group.
-  const groups =
-    sides.length > 0
-      ? sides.map((s) => ({
-          label: `${s.teamName ?? ""} · ${t(
-            s.side === "home" ? "matches.sideHome" : "matches.sideAway"
-          )}`,
-          teamId: s.teamId as string | null,
-        }))
-      : [{ label: t("matches.soloGroup"), teamId: null as string | null }]
-
   return (
     <div className="space-y-5">
-      {groups.map((g) => {
+      {sides.map((s) => {
+        const label = s.legacyTeamLabel ?? t(s.side === "home" ? "matches.sideHome" : "matches.sideAway")
         const playerRows: Row[] = roster
-          .filter((p) => p.teamId === g.teamId)
+          .filter((p) => p.side === s.side)
           .map((p) => ({
             key: `p-${p.userId}`,
             displayName: p.name ?? p.phone,
             avatarName: p.name,
             squadRole: p.squadRole,
-            canManage: manages(p.teamId),
-            removable: p.userId !== captainId,
-            captain: p.userId === captainId,
+            canManage: manages(p.side),
+            removable: p.userId !== captainId && p.userId !== awayCaptainId,
+            captain: p.userId === captainId || p.userId === awayCaptainId,
             guest: false,
             userId: p.userId,
           }))
         const guestRows: Row[] = guests
-          .filter((g2) => g2.teamId === g.teamId)
+          .filter((g2) => g2.side === s.side)
           .map((g2) => ({
             key: `g-${g2.id}`,
             displayName: g2.name,
             avatarName: g2.name,
             squadRole: g2.squadRole,
-            canManage: manages(g2.teamId),
+            canManage: manages(g2.side),
             removable: true,
             captain: false,
             guest: true,
             guestId: g2.id,
+            position: g2.position,
+            jerseyNumber: g2.jerseyNumber,
           }))
         const all = [...playerRows, ...guestRows]
         return (
-          <div key={g.teamId ?? "solo"} className="space-y-2">
-            <p className="text-sm font-semibold">{g.label}</p>
+          <div key={s.side} className="space-y-2">
+            <p className="text-sm font-semibold">{label}</p>
             <div className="space-y-1">
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 {t("matches.squad.starting")}

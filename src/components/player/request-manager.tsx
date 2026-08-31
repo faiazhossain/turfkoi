@@ -21,12 +21,12 @@ interface RequestItem {
 }
 
 interface RequestManagerProps {
-  /** Team the accepted guest joins; null for solo matches (no team side). */
-  teamId: string | null
+  /** The accepting captain's side — the player is seated there. */
+  side: "home" | "away"
   requests: RequestItem[]
 }
 
-export function RequestManager({ teamId, requests }: RequestManagerProps) {
+export function RequestManager({ side, requests }: RequestManagerProps) {
   const router = useRouter()
   const { t } = useI18n()
   const [pending, start] = useTransition()
@@ -35,7 +35,7 @@ export function RequestManager({ teamId, requests }: RequestManagerProps) {
 
   function accept(matchId: string, userId: string) {
     start(async () => {
-      const res = await acceptPlayerRequestAction(matchId, userId, teamId)
+      const res = await acceptPlayerRequestAction(matchId, userId, side)
       if (!res.ok) {
         toast.error(t(res.error ?? "errors.generic"))
         return

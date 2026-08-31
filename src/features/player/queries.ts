@@ -1,21 +1,33 @@
 import "server-only"
-import { and, asc, desc, eq, gte, ilike, inArray, or, sql } from "drizzle-orm"
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  gte,
+  ilike,
+  inArray,
+  isNull,
+  or,
+  sql,
+} from "drizzle-orm"
 
 import { db } from "@/db"
 import {
   matches,
-  matchTeams,
   matchPlayers,
   matchGuests,
-  matchInvitations,
   bookings,
   turfs,
-  teams,
   playerRequests,
   playerProfiles,
   users,
 } from "@/db/schema"
 import { FORMATS } from "@/features/matches/formats"
+import {
+  mergeMatchHistory,
+  type MergedHistoryRow,
+} from "@/features/player/history"
 import type { GeoPoint } from "@/db/geo"
 
 export async function getPlayerProfile(userId: string) {
@@ -42,11 +54,11 @@ export function isAvailabilityFresh(profile: {
 }
 
 /**
- * SS20 / SS32: matches that need players. A match is "needs players" when:
- *   - state is roster_building or confirmed and at least one team has fewer
- *     than the format's max roster, or
- *   - state is open with no teams yet — a solo-captain match recruiting
- *     players (one synthetic spot covering the whole roster).
+ * SS20 / SS32: matches that need players. A match is "needs players" when the
+ * roster is open (open / confirmed / roster_building) and at least one side
+ * has free seats. Every open match also wants an opponent-side claim — that
+ * signal is surfaced by the claim UI, not here; joining players always go to
+ * a side with free seats (home while the away side is unclaimed).
  *
  * Geo-sorted by distance from the player's coords when available.
  */
@@ -54,15 +66,15 @@ export async function listMatchesNeedingPlayers(
   playerCoords?: GeoPoint | null,
   limit = 20
 ) {
-  // Pull matches with an open roster (plus solo matches still OPEN for
-  // opponent discovery — they recruit players in parallel) with their turfs.
   const rows = await db
     .select({
       id: matches.id,
       state: matches.state,
       matchType: matches.matchType,
       squadSize: matches.squadSize,
-      soloPlaceholders: matches.placeholderCount,
+      placeholderCount: matches.placeholderCount,
+      awayPlaceholderCount: matches.awayPlaceholderCount,
+      awayCaptainId: matches.awayCaptainId,
       kickoffAt: matches.kickoffAt,
       date: bookings.date,
       slotStart: bookings.slotStart,
@@ -70,10 +82,12 @@ export async function listMatchesNeedingPlayers(
       turfName: turfs.name,
       turfArea: turfs.area,
       turfCity: turfs.city,
+      captainName: users.name,
     })
     .from(matches)
     .innerJoin(bookings, eq(bookings.id, matches.bookingId))
     .innerJoin(turfs, eq(turfs.id, bookings.turfId))
+    .innerJoin(users, eq(users.id, matches.captainId))
     .where(
       or(
         inArray(matches.state, ["roster_building", "confirmed"]),
@@ -85,106 +99,47 @@ export async function listMatchesNeedingPlayers(
 
   if (rows.length === 0) return []
 
-  // Attach teams + roster counts.
   const matchIds = rows.map((r) => r.id)
-  const teamRows = await db
-    .select({
-      matchId: matchTeams.matchId,
-      teamId: matchTeams.teamId,
-      teamName: teams.name,
-      side: matchTeams.side,
-    })
-    .from(matchTeams)
-    .innerJoin(teams, eq(teams.id, matchTeams.teamId))
-    .where(inArray(matchTeams.matchId, matchIds))
-
   const rosterRows = await db
     .select({
       matchId: matchPlayers.matchId,
-      teamId: matchPlayers.teamId,
+      side: matchPlayers.side,
     })
     .from(matchPlayers)
     .where(inArray(matchPlayers.matchId, matchIds))
 
-  // Count-first fill math per side: identities (players + guests) + pending
-  // invites + declared placeholders — a full-squad match stops advertising.
-  const [guestRows, pendingRows, teamPlaceholderRows] = await Promise.all([
-    db
-      .select({
-        matchId: matchGuests.matchId,
-        teamId: matchGuests.teamId,
-      })
-      .from(matchGuests)
-      .where(inArray(matchGuests.matchId, matchIds)),
-    db
-      .select({
-        matchId: matchInvitations.matchId,
-        teamId: matchInvitations.teamId,
-      })
-      .from(matchInvitations)
-      .where(
-        and(
-          inArray(matchInvitations.matchId, matchIds),
-          eq(matchInvitations.status, "pending")
-        )
-      ),
-    db
-      .select({
-        matchId: matchTeams.matchId,
-        teamId: matchTeams.teamId,
-        placeholderCount: matchTeams.placeholderCount,
-      })
-      .from(matchTeams)
-      .where(inArray(matchTeams.matchId, matchIds)),
-  ])
+  // Count-first fill math per side: identities (players + guests) + declared
+  // placeholders — a side full of claimed seats stops advertising seats.
+  // Pending invitations don't fill: seats go first-accept-wins.
+  const guestRows = await db
+    .select({
+      matchId: matchGuests.matchId,
+      side: matchGuests.side,
+    })
+    .from(matchGuests)
+    .where(inArray(matchGuests.matchId, matchIds))
 
   // Compute distance when coords are available.
-  const withMeta = rows
-    .map((r) => {
-      const sides = teamRows.filter((t) => t.matchId === r.id)
-      const max = r.squadSize ?? FORMATS[r.matchType as keyof typeof FORMATS]?.maxSquad ?? FORMATS.fives.maxSquad
-      const filledFor = (teamId: string | null) =>
-        rosterRows.filter((p) => p.matchId === r.id && p.teamId === teamId)
-          .length +
-        guestRows.filter((g) => g.matchId === r.id && g.teamId === teamId)
-          .length +
-        pendingRows.filter((i) => i.matchId === r.id && i.teamId === teamId)
-          .length +
-        (teamId
-          ? (teamPlaceholderRows.find(
-              (t) => t.matchId === r.id && t.teamId === teamId
-            )?.placeholderCount ?? 0)
-          : r.soloPlaceholders)
-      const spots: {
-        teamId: string | null
-        teamName: string | null
-        side: "home" | "away" | null
-        open: number
-      }[] = sides
-        .map((s) => {
-          const open = Math.max(0, max - filledFor(s.teamId))
-          return { teamId: s.teamId, teamName: s.teamName, side: s.side, open }
-        })
-        .filter((s) => s.open > 0)
+  const withMeta = rows.map((r) => {
+    const max =
+      r.squadSize ?? FORMATS[r.matchType as keyof typeof FORMATS]?.maxSquad ??
+      FORMATS.fives.maxSquad
+    const filledFor = (side: "home" | "away") =>
+      rosterRows.filter((p) => p.matchId === r.id && p.side === side).length +
+      guestRows.filter((g) => g.matchId === r.id && g.side === side).length +
+      (side === "home" ? r.placeholderCount : r.awayPlaceholderCount)
 
-      // Open matches WITH teams are looking for an opponent, not players.
-      if (r.state === "open" && sides.length > 0) return null
+    const spots: { side: "home" | "away"; open: number }[] = []
+    const homeOpen = Math.max(0, max - filledFor("home"))
+    if (homeOpen > 0) spots.push({ side: "home", open: homeOpen })
+    // Away seats are only joinable once the opponent side is claimed.
+    if (r.awayCaptainId !== null) {
+      const awayOpen = Math.max(0, max - filledFor("away"))
+      if (awayOpen > 0) spots.push({ side: "away", open: awayOpen })
+    }
 
-      // Solo match (no teams yet): one synthetic spot over the whole roster.
-      if (sides.length === 0 && r.state === "open") {
-        const open = Math.max(0, max - filledFor(null))
-        if (open > 0) {
-          spots.push({ teamId: null, teamName: null, side: null, open })
-        }
-      }
-
-      return {
-        ...r,
-        teams: sides,
-        openSpots: spots,
-      }
-    })
-    .filter((m): m is NonNullable<typeof m> => m !== null)
+    return { ...r, openSpots: spots }
+  })
 
   // Filter to matches that actually have open spots.
   const withOpenSpots = withMeta.filter((m) => m.openSpots.length > 0)
@@ -273,72 +228,64 @@ export async function listAvailablePlayersNearTurf(
   }))
 }
 
-/** Matches the player has participated in (match_players row exists). */
-export async function listPlayerMatchHistory(userId: string, limit = 20) {
-  const myMatchRows = await db
-    .select({ matchId: matchPlayers.matchId })
-    .from(matchPlayers)
-    .where(eq(matchPlayers.userId, userId))
-
-  const matchIds = myMatchRows.map((r) => r.matchId)
-  if (matchIds.length === 0) return []
-
-  return db
-    .select({
-      id: matches.id,
-      state: matches.state,
-      matchType: matches.matchType,
-      homeScore: matches.homeScore,
-      awayScore: matches.awayScore,
-      date: bookings.date,
-      slotStart: bookings.slotStart,
-      turfName: turfs.name,
-      playedConfirmedAt: matchPlayers.playedConfirmedAt,
-    })
-    .from(matches)
-    .innerJoin(bookings, eq(bookings.id, matches.bookingId))
-    .innerJoin(turfs, eq(turfs.id, bookings.turfId))
-    .innerJoin(matchPlayers, eq(matchPlayers.matchId, matches.id))
-    .where(and(inArray(matches.id, matchIds), eq(matchPlayers.userId, userId)))
-    .orderBy(desc(matches.kickoffAt))
-    .limit(limit)
-}
-
-/** Pending player requests for the matches a captain manages. */
-export async function listPendingPlayerRequests(teamIds: string[]) {
-  if (teamIds.length === 0) return []
-  // Matches involving the captain's teams.
-  const matchTeamRows = await db
-    .select({ matchId: matchTeams.matchId })
-    .from(matchTeams)
-    .where(inArray(matchTeams.teamId, teamIds))
-  const matchIds = matchTeamRows.map((r) => r.matchId)
-  if (matchIds.length === 0) return []
-
-  return db
-    .select({
-      matchId: playerRequests.matchId,
-      userId: playerRequests.userId,
-      status: playerRequests.status,
-      createdAt: playerRequests.createdAt,
-      playerName: users.name,
-      playerPhone: users.phone,
-    })
-    .from(playerRequests)
-    .innerJoin(users, eq(users.id, playerRequests.userId))
-    .where(
-      and(
-        inArray(playerRequests.matchId, matchIds),
-        eq(playerRequests.status, "pending")
-      )
-    )
-    .orderBy(asc(playerRequests.createdAt))
-}
-
 /**
- * Pending player requests for one match — works for solo-captain matches
- * (no team sides) where the team-based lookup above can't reach.
+ * Matches the player participated in — their own match_players rows plus
+ * match_guests rows recorded for them before they had an account (linked at
+ * signup by user id, or by the same normalized phone). The rostered row wins
+ * for a match where both exist. `phone` is the user's normalized users.phone.
  */
+export async function listPlayerMatchHistory(
+  userId: string,
+  phone: string | null,
+  limit = 20
+): Promise<MergedHistoryRow[]> {
+  const base = {
+    matchId: matches.id,
+    state: matches.state,
+    matchType: matches.matchType,
+    homeScore: matches.homeScore,
+    awayScore: matches.awayScore,
+    date: bookings.date,
+    slotStart: bookings.slotStart,
+    turfName: turfs.name,
+    kickoffAt: matches.kickoffAt,
+  }
+  // Per-source limit: with enough rostered matches a guest-only match could
+  // fall outside the merged window — acceptable at the limits used (5/20).
+  const [playerRows, guestRows] = await Promise.all([
+    db
+      .select({ ...base, playedConfirmedAt: matchPlayers.playedConfirmedAt })
+      .from(matchPlayers)
+      .innerJoin(matches, eq(matches.id, matchPlayers.matchId))
+      .innerJoin(bookings, eq(bookings.id, matches.bookingId))
+      .innerJoin(turfs, eq(turfs.id, bookings.turfId))
+      .where(eq(matchPlayers.userId, userId))
+      .orderBy(desc(matches.kickoffAt))
+      .limit(limit),
+    db
+      .select(base)
+      .from(matchGuests)
+      .innerJoin(matches, eq(matches.id, matchGuests.matchId))
+      .innerJoin(bookings, eq(bookings.id, matches.bookingId))
+      .innerJoin(turfs, eq(turfs.id, bookings.turfId))
+      .where(
+        phone
+          ? or(
+              eq(matchGuests.linkedUserId, userId),
+              and(
+                isNull(matchGuests.linkedUserId),
+                eq(matchGuests.phone, phone)
+              )
+            )
+          : eq(matchGuests.linkedUserId, userId)
+      )
+      .orderBy(desc(matches.kickoffAt))
+      .limit(limit),
+  ])
+  return mergeMatchHistory(playerRows, guestRows, limit)
+}
+
+/** Pending player requests for one match — shown to both side captains. */
 export async function listPendingPlayerRequestsByMatch(matchId: string) {
   return db
     .select({

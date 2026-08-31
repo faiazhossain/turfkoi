@@ -116,13 +116,16 @@ export const bn: Dictionary = {
   metadata: {
     rootTitle: "DeshiTurf — টার্ফ বুক করুন। প্রতিপক্ষ খুঁজুন। খেলুন।",
     rootDescription:
-      "বাংলাদেশে টার্ফ বুক করুন, প্রতিপক্ষ টিম খুঁজুন, টিমের খালি জায়গা পূরণ করে খেলুন। দাম টাকায়, পেমেন্ট bKash-এ।",
+      "বাংলাদেশে টার্ফ বুক করুন, আপনার booking-এর ওপর ম্যাচ বানান, প্রতিপক্ষ আর player খুঁজে নিন। দাম টাকায়, পেমেন্ট bKash-এ।",
     turfsTitle: "Turf খুঁজুন",
     turfsDescription:
       "বাংলাদেশের Verified Turf খুঁজে নিন—এলাকা দিয়ে Filter করুন বা Map-এ দেখে নিন।",
     matchesTitle: "Match খুঁজুন",
     matchesDescription:
-      "যেসব Open Match-এ এখনো Opponent Team দরকার, সেগুলো এখানে খুঁজে নিন।",
+      "যেসব Open Match-এ এখনো Opponent দরকার, সেগুলো এখানে খুঁজে নিন।",
+    matchesNewTitle: "Match Create করুন",
+    matchesNewDescription:
+      "নিজের কনফার্মড booking বেছে নিয়ে সেই slot-এর জন্য ম্যাচ বানান — opponent আর player খুঁজে নিন।",
     ownATurfTitle: "আপনার টার্ফ লিস্ট করুন",
     ownATurfDescription:
       "DeshiTurf-এ আপনার টার্ফ লিস্ট করার আবেদন করুন। প্রতিটি আবেদন আমরা নিজে দেখে claim link পাঠাই — slot, দাম আর booking ম্যানেজ করার জন্য।",
@@ -686,18 +689,23 @@ export const bn: Dictionary = {
   matches: {
     title: "Match খুঁজুন",
     subtitle:
-      "টিমদের ওপেন চ্যালেঞ্জ আর player খোঁজা solo match — সব এখানে পাবেন।",
+      "প্রতিপক্ষ খোঁজা ওপেন ম্যাচ — আপনার confirmed booking থেকেই ম্যাচ বানান।",
     emptyTitle: "এই মুহূর্তে কোনো ওপেন ম্যাচ নেই",
-    emptyDesc: "কনফার্মড booking-এর টিমরা প্রতিপক্ষ খুঁজলে এখানে দেখা যাবে।",
-    challengesTitle: "ওপেন চ্যালেঞ্জ",
+    emptyDesc: "কনফার্মড booking-এর ম্যাচগুলো প্রতিপক্ষ খোঁজার সময় এখানে দেখা যাবে।",
+    challengesTitle: "ওপেন ম্যাচ",
     challengesDesc:
-      "প্রতিপক্ষের অপেক্ষায় থাকা টিম — চ্যালেঞ্জ পাঠালেই ম্যাচ কনফার্ম হয়ে যাবে।",
-    noChallenges: "এই মুহূর্তে কোনো টিম চ্যালেঞ্জ নেই।",
-    soloOpenTitle: "Player খুঁজছেন যারা",
-    soloOpenDesc:
-      "Solo captain-রা player জোগাড় করছেন — match page থেকে join request পাঠান।",
-    signInChallenge: "চ্যালেঞ্জ করতে সাইন ইন করুন",
+      "প্রতিপক্ষের অপেক্ষায় থাকা ম্যাচ — opponent side নিলেই ম্যাচ কনফার্ম হয়ে যাবে।",
     breadcrumbMatch: "ম্যাচ",
+    hubCreateCta: "Match তৈরি করুন",
+    newSubtitle: "Booking বাছুন, format ঠিক করুন — বাকিটা ম্যাচ রুম সামলে নেবে।",
+    noEligibleBookingsTitle: "খেলার মতো কোনো booking নেই",
+    noEligibleBookingsDesc:
+      "ম্যাচ সবসময় প্ল্যাটফর্মের একটি কনফার্মড booking-এর ওপর হয়। আগে টার্ফ বুক করুন, তারপর সেই slot-এর জন্য ম্যাচ তৈরি করুন।",
+    noEligibleBookingsShort:
+      "ভবিষ্যতের কোনো কনফার্মড booking নেই — আগে টার্ফ বুক করুন।",
+    bookTurfCta: "টার্ফ বুক করুন",
+    completePaymentCta: "Payment সম্পন্ন করুন",
+    pendingPaymentTitle: "Payment বাকি",
     createTitle: "Match Create করুন",
     format: {
       fives: "5-a-side",
@@ -709,40 +717,42 @@ export const bn: Dictionary = {
       title: "ম্যাচ রুম",
       starting: "স্টার্টিং",
       substitutes: "সাবস্টিটিউট",
-      startingCount: "স্টার্টিং {count}/{total}",
-      squadCount: "স্কোয়াড {count}/{total}",
       hubFill: "স্কোয়াডে {count}/{total}",
       bench: "বেঞ্চে",
       field: "ফিল্ডে",
-      addMembers: "আপনার team থেকে player যোগ করুন",
+      addMembers: "আপনার side-এ player যোগ করুন",
       squadUpdated: "স্কোয়াড সাইজ আপডেট হয়েছে।",
       emptyGroup: "{group}-এ এখনো কেউ নেই।",
-      spotsSummary: "{count} / {total} player · আরও {need} জন দরকার",
-      spotsFull: "{count} / {total} player — squad ready ✓",
-      placeholdersHint:
-        "{count} জন এখনো নাম ধরে যোগ করা হয়নি — invite বা যোগ করার সাথে সাথে এই সংখ্যা কমিয়ে নিন।",
+      seatsFull: "স্কোয়াড পূর্ণ ✓",
+      seatsNeed: "আরও {need} জন দরকার",
+      onField: "মাঠে {count}/{total}",
+      benchCount: "বেঞ্চে {count}/{total}",
+      unnamed: "বর্তমান Team-এর {count} জন Player",
+      pendingCount: "invite বাকি {count}",
+      squadSizeLabel: "স্কোয়াড সাইজ:",
       countUpdated: "Player সংখ্যা আপডেট হয়েছে।",
-      countDecrease: "Player কমান",
-      countIncrease: "Player বাড়ান",
+      unnamedDecrease: "বর্তমান Team-এর player কমান",
+      unnamedIncrease: "বর্তমান Team-এর player বাড়ান",
       findPlayersCta: "Player খুঁজুন",
       addGuestCta: "Guest যোগ করুন",
       findOpponentHint:
-        "Squad ready ✓ — এখন অন্য team-রা আপনার ম্যাচ challenge করতে পারবে। কেউ accept করলে খবর পাবেন।",
+        "স্কোয়াড পূর্ণ ✓ — এখন শুধু opponent-এর অপেক্ষা। যেকোনো player তার group নিয়ে opponent side নিতে পারবে; কেউ নিলে খবর পাবেন।",
     },
     help: {
       triggerAria: "Matchmaking কীভাবে কাজ করে",
       title: "কীভাবে Matchmaking কাজ করে?",
       step1Title: "Match Create করুন",
       step1:
-        "শুধু বলুন আপনার Team-এ কতজন Player আছে। এখনই কারও নাম বা Phone Number দেওয়ার দরকার নেই।",
+        "শুধু বলুন আপনার কতজন Player আছে। এখনই কারও নাম বা Phone Number দেওয়ার দরকার নেই।",
       step2Title: "Player কম?",
       step2:
         "Match Room থেকেই কাছাকাছি Available Player-দের Invite করুন, অথবা Guest Player Add করুন।",
-      step3Title: "Team Ready?",
+      step3Title: "Squad Ready?",
       step3:
-        "এবার Opponent খুঁজুন। অন্য Team-রা আপনার Match দেখতে পারবে এবং Challenge পাঠাতে পারবে।",
-      step4Title: "Opponent পেয়ে গেছেন?",
-      step4: "অন্য Team Request Accept করলেই Match Confirm হয়ে যাবে।",
+        "এবার Opponent খুঁজুন। যেকোনো Player তার নিজের group নিয়ে Opponent Side নিতে পারবে।",
+      step4Title: "Opponent Side নেওয়া হয়েছে?",
+      step4:
+        "কেউ Opponent Side নিলেই Match Confirm হয়ে যাবে — দুই side নিজেদের Player জোগাড় করবে।",
       step5Title: "সবাই নিজের Request নিজে Accept করবে",
       step5:
         "Registered Player হোক বা Guest—যে Player Join করবে, সে নিজের Request নিজেই Accept করবে।",
@@ -763,32 +773,43 @@ export const bn: Dictionary = {
       acceptedToast: "আপনি এখন স্কোয়াডে!",
       declinedToast: "Invitation decline করা হয়েছে।",
       aria: "{name}-কে ম্যাচে invite করুন",
+      urgencyHint:
+        "দ্রুত Accept করুন — একাধিক player-কে invitation গেছে। যে আগে accept করবে, seat তার।",
+      seatTakenHint: "এই স্কোয়াডের seat আর খালি নেই — অন্য কেউ নিয়ে নিয়েছে।",
+      overInviteHint:
+        "খালি seat-এর চেয়ে বেশি player-কে invite করা যায় (সর্বোচ্চ ৩টি বেশি) — যে আগে accept করবে, seat তার।",
     },
     guest: {
       addTitle: "Account ছাড়া player যোগ করুন",
       name: "নাম",
       phone: "Phone (ঐচ্ছিক)",
+      position: "পজিশন (ঐচ্ছিক)",
+      jersey: "জার্সি নাম্বার (ঐচ্ছিক)",
+      recentTitle: "আগে যোগ করা player-রা",
+      recentAria: "আগে যোগ করা player-এর তথ্য বসান",
       add: "যোগ করুন",
       added: "Player স্কোয়াডে যোগ হয়েছে।",
       badge: "Guest",
       removed: "Player বাদ দেওয়া হয়েছে।",
     },
     wizard: {
+      stepBooking: "আপনার Booking",
+      bookingHelp:
+        "ম্যাচটি হবে এই booking-এর slot-এ। এখনো booking নেই? আগে টার্ফ বুক করুন।",
+      navBooking: "Booking",
+      pickBookingFirst: "চালিয়ে যেতে একটি booking বাছুন।",
       stepFormat: "Match Format",
       formatHelp:
-        "আপনার Match-এ প্রতি Team থেকে মাঠে একসাথে কতজন Player খেলবে, সেটা Select করুন। Squad-এ Substitute থাকলে তারা এর বাইরে থাকবে।",
-      starters: "প্রতি Team থেকে মাঠে {count} জন",
+        "আপনার Match-এ প্রতি side থেকে মাঠে একসাথে কতজন Player খেলবে, সেটা Select করুন। Squad-এ Substitute থাকলে তারা এর বাইরে থাকবে।",
+      starters: "প্রতি side থেকে মাঠে {count} জন",
       stepSquad: "Squad Size",
       squadHelp:
-        "Substitute সহ আপনার Team-এ মোট কতজন Player থাকবে, সেটা ঠিক করুন। পরে Match Room থেকে এটি পরিবর্তন করতে পারবেন।",
+        "Substitute সহ প্রতি side-এ মোট কতজন Player থাকবে, সেটা ঠিক করুন। পরে Match Room থেকে এটি পরিবর্তন করতে পারবেন।",
       squadSummary:
         "Starting {starters} জন + Substitute {subs} জন = মোট {total} জন",
       decrease: "কমান",
       increase: "বাড়ান",
-      teamPickLabel: "কোন team খেলবে?",
-      teamPickHelp:
-        "আপনার team home side হিসেবে registered হবে। একা খেলতে চাইলে \"টিম ছাড়া\" বেছে নিন।",
-      stepCount: "আপনার Team-এ এখন কতজন Player আছে?",
+      stepCount: "আপনার Group-এ এখন মোট কতজন Player আছেন (আপনিসহ)?",
       fullSquad: "Full Squad",
       haveCountMessage:
         "আপনার {count} জন player আছে। আরও {need} জন player দরকার।",
@@ -796,21 +817,13 @@ export const bn: Dictionary = {
         "Full squad — ম্যাচ তৈরি করলেই সোজা opponent খোঁজা শুরু করতে পারবেন।",
       countHint:
         "এখানে শুধু কতজন player ready আছেন সেটাই বলুন। এখনই সবার নাম বা নাম্বার দেওয়ার দরকার নেই — পরে ম্যাচ রুম থেকে সবাইকে invite বা যোগ করতে পারবেন।",
-      nearbyQuestion:
-        "আর {count} জন Player দরকার — কাছাকাছি Available Player খুঁজবেন?",
-      nearbyYes: "হ্যাঁ — কাছাকাছি Available Player দেখান",
-      nearbyNo: "না — Slot খালি থাক",
-      nearbyHelp:
-        "Available Player-দের কাছে Invite যাবে। তারা Accept করলেই তাদের Slot Confirm হবে। পরে Match Room থেকে সবকিছু দেখে নিতে পারবেন।",
       squadFill:
         "Squad: {count}/{total} — সবাই Accept করলেই আপনার Squad Ready হবে।",
       stepProgress: "ধাপ {done}/{total}",
       navFormat: "Format",
       navSquad: "Squad Size",
       navCount: "Player",
-      navFill: "Slot পূরণ",
       yourSquad: "আপনার Squad",
-      nearbyPicked: "{count}/{need} জন বেছে নেওয়া হয়েছে",
     },
     state: {
       draft: "ড্রাফট",
@@ -830,22 +843,20 @@ export const bn: Dictionary = {
       pending: "অপেক্ষমাণ",
       confirmed: "নিশ্চিত",
     },
-    signInTitle: "ইন্টারঅ্যাক্ট করতে সাইন ইন করুন",
-    signInAccept: "এই টিমকে চ্যালেঞ্জ করতে সাইন ইন করুন।",
-    signInView: "ম্যাচের পূর্ণ বিবরণ দেখতে সাইন ইন করুন।",
-    nearbyTitle: "কাছে available খেলোয়াড়",
-    nearbyDesc:
-      "এই টার্ফের ১০ কিমির মধ্যে available বলে চিহ্নিত solo player-রা। অবস্থান আনুমানিক (~১০০ মিটার)।",
-    nearbyEmpty:
-      "কাছে এই মুহূর্তে কোনো available খেলোয়াড় নেই। আপনার খালি জায়গাগুলো এই এলাকায় খেলোয়াড়দের কাছে এখনো দেখা যাচ্ছে।",
-    nearbyMapAria: "এই টার্ফের কাছে available খেলোয়াড়",
-    player: "খেলোয়াড়",
-    positionNotSet: "পজিশন সেট করা হয়নি",
-    nearby: "কাছাকাছি",
-    challengeTitle: "এই টিমকে চ্যালেঞ্জ করুন",
-    challengeCta: "চ্যালেঞ্জ",
-    challengeAs: "{team} দিয়ে চ্যালেঞ্জ করুন",
-    challengeSent: "চ্যালেঞ্জ পাঠানো হয়েছে — ম্যাচ কনফার্ম!",
+    claim: {
+      title: "Opponent চাই",
+      desc: "নিজের group নিয়ে আসুন — আপনাসহ কতজন player আছেন বলুন, আপনার side হয়ে যাবে।",
+      cta: "Opponent Side নিন",
+      successToast: "Opponent side নেওয়া হয়েছে — ম্যাচ কনফার্ম!",
+      ownMatchNote:
+        "Squad ready ✓ — আপনার ম্যাচ ওপেন। যেকোনো player তার group নিয়ে opponent side নিতে পারবে; কেউ নিলে খবর পাবেন।",
+    },
+    hub: {
+      opponentWanted: "Opponent চাই",
+      playersWanted: "Player চাই",
+    },
+    yourMatchBadge: "আপনার ম্যাচ",
+    dashboardCreateCta: "Match তৈরি করুন",
     roster: "রোস্টার",
     sideHome: "হোম",
     sideAway: "অ্যাওয়ে",
@@ -861,16 +872,10 @@ export const bn: Dictionary = {
     score: "স্কোর: {score}",
     resultConfirmed: "রেজাল্ট নিশ্চিত হয়েছে।",
     createCta: "Match Create করুন — Opponent খুঁজুন",
-    pickTeam: "আপনার টিম বাছুন",
     creating: "তৈরি হচ্ছে…",
     create: "ম্যাচ তৈরি করুন",
     createdToast: "ম্যাচ তৈরি হয়েছে!",
-    // Solo (no team) matches — the booker becomes the match captain.
-    pickTeamOptional:
-      "টিম না থাকলেও সমস্যা নেই — \"টিম ছাড়া\" বেছে নিয়ে ম্যাচ বানাতে পারেন।",
-    noTeamOption: "টিম ছাড়া (একা)",
     soloTitle: "{captain}-এর ম্যাচ",
-    soloGroup: "টিম-বিহীন খেলোয়াড়",
     captainBadge: "ক্যাপ্টেন",
     playerSearchLabel: "খেলোয়াড় খুঁজুন",
     playerSearchPlaceholder: "নাম দিয়ে খুঁজুন",
@@ -885,8 +890,6 @@ export const bn: Dictionary = {
     leftMatchToast: "আপনি ম্যাচটি ছেড়ে দিয়েছেন।",
     requestToJoinSolo: "ম্যাচে যোগ দেওয়ার রিকোয়েস্ট ({count} খালি জায়গা)",
     requestedJoinSolo: "যোগ দেওয়ার রিকোয়েস্ট পাঠানো হয়েছে।",
-    requestToJoin: "{team}-এ যোগ দেওয়ার রিকোয়েস্ট ({count} খালি জায়গা)",
-    requestedJoin: "{team}-এ যোগ দেওয়ার রিকোয়েস্ট পাঠানো হয়েছে।",
     joinRequests: "যোগ দেওয়ার রিকোয়েস্ট ({count})",
     requestRejected: "রিকোয়েস্ট বাতিল করা হয়েছে।",
     errors: {
@@ -898,16 +901,20 @@ export const bn: Dictionary = {
       ownMatch: "নিজের ম্যাচ নিজে accept করা যায় না।",
       matchJustTaken: "ম্যাচটি এইমাত্র অন্য কেউ নিয়ে নিয়েছে।",
       rosterNotOpen: "এই ম্যাচের রোস্টার এখনো খোলা হয়নি।",
-      playerNotOnTeam: "সেই খেলোয়াড় এই টিমে নেই।",
-      rosterFull: "রোস্টার পূর্ণ।",
       squadSizeInvalid: "স্কোয়াড সাইজ ফরম্যাটের সীমার মধ্যে হতে হবে।",
       squadFull: "স্কোয়াড পূর্ণ।",
+      seatTaken: "আপনি একটু দেরি করেছেন — অন্য কেউ seat-টা নিয়ে নিয়েছে।",
+      tooManyInvites:
+        "একসাথে এত invitation পাঠানো যাবে না — খালি seat-এর চেয়ে সর্বোচ্চ ৩টি বেশি invitation pending রাখা যায়।",
       startingFull: "স্টার্টিং লাইনআপ পূর্ণ — player-কে বেঞ্চে পাঠান।",
       alreadyInvited: "ইতোমধ্যে রোস্টারে আছে বা invitation গেছে।",
       invitationNotFound: "Invitation পাওয়া যায়নি।",
       invitationNoLongerPending: "Invitation-টির উত্তর হয়ে গেছে।",
       guestIsRegistered: "এই phone নাম্বারে account আছে — player-কে invite করুন।",
       guestNotFound: "Player পাওয়া যায়নি।",
+      phoneInvalid: "সঠিক মোবাইল নাম্বার দিন (যেমন 01712345678)।",
+      guestJerseyInvalid: "জার্সি নাম্বার ০ থেকে ৯৯-এর মধ্যের পূর্ণসংখ্যা হতে হবে।",
+      guestPositionInvalid: "এই position টি সঠিক নয়।",
       playerNotOnRoster: "খেলোয়াড় রোস্টারে নেই।",
       notReadyForResults: "ম্যাচটি এখনো রেজাল্টের জন্য প্রস্তুত নয়।",
       resultNotPending: "রেজাল্ট নিশ্চিতকরণের অপেক্ষায় নেই।",
@@ -919,18 +926,29 @@ export const bn: Dictionary = {
       notAuthorized: "অনুমতি নেই।",
       notOnMatchRoster: "আপনি এই ম্যাচের রোস্টারে নেই।",
       notBookingOwner: "এই booking-টি আপনার নয়।",
-      teamNotInMatch: "এই টিমটি ম্যাচে নেই।",
       cannotRemoveCaptain: "ক্যাপ্টেনকে রোস্টার থেকে বাদ দেওয়া যায় না।",
       cannotLeaveAsCaptain: "ক্যাপ্টেন হিসেবে নিজের ম্যাচ ছাড়া যায় না।",
       leaveNotOpen: "ম্যাচ শুরু হওয়ার আগেই ছাড়তে হবে।",
       placeholderInvalid: "Player সংখ্যা পূর্ণসংখ্যা হতে হবে।",
       placeholderTooMany: "স্কোয়াডে এত জনের জায়গা নেই।",
+      claimCountInvalid: "Player সংখ্যা ১ থেকে ১৮-এর মধ্যে হতে হবে।",
     },
     stateContext: {
-      openSolo: "Player খোঁজা হচ্ছে",
-      openTeam: "Opponent খোঁজা হচ্ছে",
+      open: "Opponent চাই — মাঝপথে player-রাও যোগ দিতে পারবে",
       confirmed: "ম্যাচ কনফার্ম হয়েছে",
     },
+    signInTitle: "ইন্টারঅ্যাক্ট করতে সাইন ইন করুন",
+    signInAccept: "Opponent side নিতে সাইন ইন করুন।",
+    signInView: "ম্যাচের পূর্ণ বিবরণ দেখতে সাইন ইন করুন।",
+    nearbyTitle: "কাছে available খেলোয়াড়",
+    nearbyDesc:
+      "এই টার্ফের ১০ কিমির মধ্যে available বলে চিহ্নিত solo player-রা। অবস্থান আনুমানিক (~১০০ মিটার)।",
+    nearbyEmpty:
+      "কাছে এই মুহূর্তে কোনো available খেলোয়াড় নেই। আপনার খালি জায়গাগুলো এই এলাকায় খেলোয়াড়দের কাছে এখনো দেখা যাচ্ছে।",
+    nearbyMapAria: "এই টার্ফের কাছে available খেলোয়াড়",
+    player: "খেলোয়াড়",
+    positionNotSet: "পজিশন সেট করা হয়নি",
+    nearby: "কাছাকাছি",
   },
 
   friends: {
@@ -1117,6 +1135,7 @@ export const bn: Dictionary = {
       "এই মুহূর্তে কোনো Match-এ Player দরকার নেই। একটু পরে আবার দেখুন, অথবা নিজেকে Available করে রাখুন।",
     historyTitle: "ম্যাচের ইতিহাস",
     noHistory: "আপনি এখনো কোনো ম্যাচে খেলেননি।",
+    historyGuestBadge: "Guest হিসেবে রেকর্ড করা",
     vs: "বনাম",
     availableOn: "Available — বন্ধ করুন",
     availableOff: "আজ রাতের জন্য available করুন",
@@ -1324,6 +1343,7 @@ export const bn: Dictionary = {
     erpPremiumRejectedBody: "কারণ: {reason}",
     matchInviteReceivedTitle: "{captain} আপনাকে স্কোয়াডে ডেকেছে",
     matchInviteReceivedBody: "{turf} • {start}",
+    matchInviteReceivedContestedBody: "{turf} • {start} — seat কম, দ্রুত accept করুন!",
     matchInviteAcceptedTitle: "{player} invitation accept করেছে",
     matchInviteAcceptedBody: "স্কোয়াডে ঢুকেছে — ম্যাচ রুমে দেখুন।",
     matchInviteDeclinedTitle: "{player} invitation decline করেছে",
@@ -1331,6 +1351,9 @@ export const bn: Dictionary = {
     matchJoinRequestedTitle: "{player} ম্যাচে যোগ দিতে চায়",
     matchJoinRequestedBody:
       "রিকোয়েস্টটি দেখে নিন — রোস্টারে যোগ করুন বা বাদ দিন।",
+    matchOpponentClaimedTitle: "{player} opponent side নিয়েছে",
+    matchOpponentClaimedBody:
+      "আপনার {turf}-এর ম্যাচ কনফার্ম — ম্যাচ রুমে দেখুন।",
     friendRequestReceivedTitle: "{friend} friend request পাঠিয়েছে",
     friendRequestReceivedBody: "Accept করলে friends লিস্টে যোগ হবে।",
     friendRequestAcceptedTitle: "{friend} আপনার friend request accept করেছে",

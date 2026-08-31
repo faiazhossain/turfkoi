@@ -69,6 +69,11 @@ const SAMPLE_PAYLOADS: {
     playerName: "Karim",
     turfName: "Dhanmondi Arena",
   },
+  "match.opponent_claimed": {
+    matchId: "m-1",
+    playerName: "Karim",
+    turfName: "Dhanmondi Arena",
+  },
   "friend.request_received": { friendName: "Rahim" },
   "friend.request_accepted": { friendName: "Karim" },
 }
@@ -115,6 +120,20 @@ describe("notification registry", () => {
     expect(translate(en, body.key, body.params)).toBe(
       "2026-08-24 • 20:00 • refund ৳250"
     )
+  })
+
+  it("contested invites render the accept-fast body variant", () => {
+    const config = getNotificationConfig("match.invite_received")!
+    const payload = { ...SAMPLE_PAYLOADS["match.invite_received"], contested: true }
+    // Optional flag round-trips through the zod schema.
+    expect(
+      notificationPayloadSchemas["match.invite_received"].safeParse(payload).success
+    ).toBe(true)
+    const body = config.body(payload as never)!
+    expect(body.key).toBe("notifications.matchInviteReceivedContestedBody")
+    const rendered = translate(en, body.key, body.params)
+    expect(rendered).toContain("Dhanmondi Arena")
+    expect(rendered).not.toBe(translate(en, "notifications.matchInviteReceivedBody", body.params))
   })
 
   it("hrefs are internal routes starting with /", () => {

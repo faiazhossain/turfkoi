@@ -4,6 +4,7 @@ import { and, desc, eq, gte, lte, inArray } from "drizzle-orm"
 import { db } from "@/db"
 import {
   bookings,
+  matches,
   transactions,
   turfs,
   payouts,
@@ -78,6 +79,56 @@ export async function getActiveBookingForSlot(
     )
     .limit(1)
   return rows[0] ?? null
+}
+
+/**
+ * Booker's bookings for the match-creation picker. Split: `eligible` rows are
+ * confirmed, kick off in the future, and have no match yet (matches are 1:1
+ * with bookings); `pendingPayment` rows still need payment before a match can
+ * be created on them. Kickoff is computed here (not SQL) from the date-only
+ * + time-only columns — the same UTC epoch math match creation uses.
+ */
+export async function listCreateMatchBookings(userId: string) {
+  const rows = await db
+    .select({
+      id: bookings.id,
+      turfName: turfs.name,
+      turfArea: turfs.area,
+      date: bookings.date,
+      slotStart: bookings.slotStart,
+      slotEnd: bookings.slotEnd,
+      status: bookings.status,
+      matchId: matches.id,
+    })
+    .from(bookings)
+    .innerJoin(turfs, eq(turfs.id, bookings.turfId))
+    .leftJoin(matches, eq(matches.bookingId, bookings.id))
+    .where(
+      and(
+        eq(bookings.bookerId, userId),
+        inArray(bookings.status, ["confirmed", "held", "payment_pending"])
+      )
+    )
+    .orderBy(desc(bookings.date), desc(bookings.createdAt))
+    .limit(50)
+
+  const kickoffMs = (date: string, slotStart: string) => {
+    const [y, mo, d] = date.split("-").map(Number)
+    const [h, mi] = slotStart.slice(0, 5).split(":").map(Number)
+    return Date.UTC(y!, mo! - 1, d!, h!, mi!)
+  }
+
+  const eligible: typeof rows = []
+  const pendingPayment: typeof rows = []
+  for (const row of rows) {
+    if (kickoffMs(row.date, row.slotStart) <= Date.now()) continue
+    if (row.status === "confirmed") {
+      if (row.matchId === null) eligible.push(row)
+    } else {
+      pendingPayment.push(row)
+    }
+  }
+  return { eligible, pendingPayment }
 }
 
 /**

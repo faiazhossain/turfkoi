@@ -6,6 +6,7 @@ import {
   defaultSquadSize,
   isMatchFormat,
   isValidSquadSize,
+  maxPendingInvitations,
   placeholdersUpperBound,
   resolveSquadRole,
   spotsLeft,
@@ -58,38 +59,52 @@ describe("resolveSquadRole", () => {
 })
 
 describe("spotsLeft", () => {
-  it("subtracts accepted and pending, never negative", () => {
+  it("subtracts accepted and placeholders, never negative", () => {
     expect(spotsLeft(10, 7, 2)).toBe(1)
     expect(spotsLeft(10, 10, 0)).toBe(0)
     expect(spotsLeft(10, 9, 3)).toBe(0)
   })
 
-  it("defaults pending to zero", () => {
+  it("defaults placeholders to zero", () => {
     expect(spotsLeft(12, 4)).toBe(8)
   })
 
   it("placeholder seats consume spots (count-first)", () => {
     // 7 named + 3 un-named placeholders of a 10-player squad → full.
-    expect(spotsLeft(10, 7, 0, 3)).toBe(0)
-    // Placeholders + pending together with identities can't exceed the squad.
-    expect(spotsLeft(10, 5, 2, 3)).toBe(0)
-    expect(spotsLeft(10, 5, 1, 3)).toBe(1)
+    expect(spotsLeft(10, 7, 3)).toBe(0)
+    expect(spotsLeft(10, 5, 3)).toBe(2)
+  })
+
+  it("pending invitations are prospects, not seat reservations", () => {
+    // Seats go first-accept-wins — invites never shrink the open count.
+    expect(spotsLeft(10, 5, 0)).toBe(5)
   })
 
   it("full-squad declaration leaves no spots", () => {
-    expect(spotsLeft(10, 0, 0, 10)).toBe(0)
+    expect(spotsLeft(10, 0, 10)).toBe(0)
+  })
+})
+
+describe("maxPendingInvitations", () => {
+  it("adds the over-invite buffer while seats are open", () => {
+    expect(maxPendingInvitations(1)).toBe(4)
+    expect(maxPendingInvitations(3)).toBe(6)
+  })
+
+  it("a full side takes no new invites", () => {
+    expect(maxPendingInvitations(0)).toBe(0)
   })
 })
 
 describe("placeholdersUpperBound", () => {
   it("is the seats nobody claims yet", () => {
-    expect(placeholdersUpperBound(10, 7, 2)).toBe(1)
-    expect(placeholdersUpperBound(10, 0, 0)).toBe(10)
+    expect(placeholdersUpperBound(10, 7)).toBe(3)
+    expect(placeholdersUpperBound(10, 0)).toBe(10)
   })
 
   it("never negative and zero when the squad is claimed", () => {
-    expect(placeholdersUpperBound(10, 10, 2)).toBe(0)
-    expect(placeholdersUpperBound(8, 8)).toBe(0)
+    expect(placeholdersUpperBound(10, 10)).toBe(0)
+    expect(placeholdersUpperBound(8, 12)).toBe(0)
   })
 })
 

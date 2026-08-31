@@ -1,5 +1,6 @@
 import "server-only"
 import { desc, eq, inArray, sql } from "drizzle-orm"
+import { alias } from "drizzle-orm/pg-core"
 
 import { db } from "@/db"
 import {
@@ -23,6 +24,7 @@ import {
  * back to the captain's name for solo matches.
  */
 export async function listLiveAndRecentMatches(limit = 8) {
+  const awayCaptain = alias(users, "away_captain")
   const rows = await db
     .select({
       id: matches.id,
@@ -36,11 +38,13 @@ export async function listLiveAndRecentMatches(limit = 8) {
       turfName: turfs.name,
       turfSlug: turfs.slug,
       captainName: users.name,
+      awayCaptainName: awayCaptain.name,
     })
     .from(matches)
     .innerJoin(bookings, eq(bookings.id, matches.bookingId))
     .innerJoin(turfs, eq(turfs.id, bookings.turfId))
     .leftJoin(users, eq(users.id, matches.captainId))
+    .leftJoin(awayCaptain, eq(awayCaptain.id, matches.awayCaptainId))
     .where(inArray(matches.state, ["ongoing", "completed"]))
     // Live matches first, then newest results.
     .orderBy(
@@ -71,9 +75,9 @@ export async function listLiveAndRecentMatches(limit = 8) {
     const away = sides.find((s) => s.matchId === r.id && s.side === "away")
     return {
       ...r,
-      // Solo matches have no team sides — the captain's name stands in.
+      // Person-based matches have no team sides — the captains' names stand in.
       homeName: home?.teamName ?? r.captainName ?? null,
-      awayName: away?.teamName ?? null,
+      awayName: away?.teamName ?? r.awayCaptainName ?? null,
     }
   })
 }
@@ -91,9 +95,8 @@ export async function getHomeStats() {
     db
       .select({
         completed: sql<number>`count(*) filter (where ${matches.state} = 'completed')::int`,
-        // "Open challenge" = a team match waiting for an opponent (has a home
-        // side). Solo recruiting matches are not challenges.
-        open: sql<number>`count(*) filter (where ${matches.state} = 'open' and exists (select 1 from match_teams mt where mt.match_id = ${matches.id} and mt.side = 'home'))::int`,
+        // "Open challenge" = a match still waiting for an opponent-side claim.
+        open: sql<number>`count(*) filter (where ${matches.state} = 'open' and ${matches.awayCaptainId} is null)::int`,
         live: sql<number>`count(*) filter (where ${matches.state} = 'ongoing')::int`,
       })
       .from(matches),

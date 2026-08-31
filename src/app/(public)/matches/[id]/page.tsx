@@ -6,20 +6,30 @@ import { getT } from "@/i18n/server"
 import { StatusBadge, EmptyState } from "@/components/shared"
 import { MapView } from "@/components/map"
 import { MatchActions } from "@/components/matches/match-actions"
+import { SquadInvitePanel } from "@/components/matches/squad-invite-panel"
 import { PlayerSearch } from "@/components/matches/player-search"
 import { InvitePlayerButton } from "@/components/matches/invite-player-button"
 import { SquadGroups } from "@/components/matches/squad-groups"
 import { SquadSpots } from "@/components/matches/squad-spots"
+import { ClaimOpponentButton } from "@/components/matches/claim-opponent-button"
 import { MatchmakingHelp } from "@/components/matches/matchmaking-help"
 import { InvitationManager } from "@/components/matches/invitation-manager"
 import { InvitationInbox } from "@/components/matches/invitation-inbox"
 import { JoinRequestButton } from "@/components/player/join-request-button"
 import { RequestManager } from "@/components/player/request-manager"
 import { PlayerAvatar } from "@/components/player/player-avatar"
-import { getMatch, getSquadCounts, listPendingInvitationsByMatch, listMyPendingInvitations, listMatchGuests } from "@/features/matches/queries"
+import {
+  getMatch,
+  getSquadCounts,
+  listPendingInvitationsByMatch,
+  listMyPendingInvitations,
+  listMatchGuests,
+  listRecentGuestsAddedBy,
+  resolveSideCaptain,
+} from "@/features/matches/queries"
+import type { RecentGuestPick } from "@/features/matches/guests"
 import { FORMATS, isMatchFormat, spotsLeft } from "@/features/matches/formats"
-import { rosterOpen } from "@/features/matches/authority"
-import { listTeamMembers, getTeamRole, listMyTeams } from "@/features/teams/queries"
+import { canClaimOpponentSide, rosterOpen } from "@/features/matches/authority"
 import { listFriends } from "@/features/friends/queries"
 import {
   listPendingPlayerRequestsByMatch,
@@ -69,7 +79,14 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
   if (!match) notFound()
 
   const user = await getCurrentUser()
-  const { match: m, booking: b, turf: t, sides, roster } = match
+  const {
+    match: m,
+    booking: b,
+    turf: t,
+    sides: legacySides,
+    roster,
+    awayCaptainName,
+  } = match
 
   // Player-search filters (URL-driven; sanitized server-side).
   const playerQ = (sp.player_q ?? "").trim().slice(0, 50)
@@ -78,101 +95,58 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
       ? sp.player_pos
       : undefined
 
-  // The match captain (creator) — solo matches have no team sides, so
-  // captaincy is the match-level authority.
-  const isMatchCaptain = !!user && m.captainId === user.id
-
-  // Determine the user's teams in this match (teams where they're captain/owner).
-  const myTeamOptions: { teamId: string; teamName: string; side: "home" | "away" }[] = []
-  let teamMembers: { userId: string; name: string | null; phone: string }[] = []
-  let challengeTeams: { teamId: string; teamName: string }[] = []
-
-  if (user) {
-    for (const s of sides) {
-      const role = await getTeamRole(s.teamId, user.id)
-      if (role === "owner" || role === "captain") {
-        myTeamOptions.push({
-          teamId: s.teamId,
-          teamName: s.teamName,
-          side: s.side,
-        })
-      }
-    }
-
-    // Teams the user captains that are NOT in this match — they can challenge
-    // the home team while the match is OPEN (FCFS: first challenger takes it).
-    if (m.state === "open" && sides.length > 0) {
-      const sideTeamIds = new Set(sides.map((s) => s.teamId))
-      challengeTeams = (await listMyTeams(user.id))
-        .filter(
-          (tm) =>
-            (tm.role === "owner" || tm.role === "captain") &&
-            !sideTeamIds.has(tm.id)
-        )
-        .map((tm) => ({ teamId: tm.id, teamName: tm.name }))
-    }
-
-    // If the user manages a team in this match, load its members for the squad add panel.
-    if (myTeamOptions.length > 0 && rosterOpen(m.state)) {
-      teamMembers = await listTeamMembers(myTeamOptions[0].teamId)
-    }
-  }
-  const canManageAfterTeams = isMatchCaptain || myTeamOptions.length > 0
-  const managedTeamIds = myTeamOptions.map((tm) => tm.teamId)
+  // Authority: home captain = creator, away captain = the opponent-side
+  // claimant. Legacy team matches resolve through team roles (fallback
+  // inside resolveSideCaptain).
+  const mySide = user ? await resolveSideCaptain(m, user.id) : null
+  const isHomeCaptain = mySide === "home"
+  const managesMatch = mySide !== null
 
   // Friends not already on the roster — offered in the squad invite panel.
   let inviteFriends: { userId: string; name: string | null; phone: string }[] = []
-  if (user && canManageAfterTeams && rosterOpen(m.state)) {
+  if (user && managesMatch && rosterOpen(m.state)) {
     const rosterIds = new Set(roster.map((p) => p.userId))
     inviteFriends = (await listFriends(user.id))
       .filter((f) => !rosterIds.has(f.userId))
       .map((f) => ({ userId: f.userId, name: f.name, phone: f.phone }))
   }
 
-  // Squad capacity per side — squadSize is per SIDE (solo = the one side).
+  // Squad capacity per side — squadSize is per SIDE.
   // Legacy rows are backfilled; fall back defensively for the format max.
   const squadSize =
     m.squadSize ??
     (isMatchFormat(m.matchType) ? FORMATS[m.matchType].maxSquad : FORMATS.fives.maxSquad)
 
-  const sideGroups =
-    sides.length > 0
-      ? sides.map((s) => ({ teamId: s.teamId as string | null, teamName: s.teamName }))
-      : [{ teamId: null, teamName: null as string | null }]
-  // Count-first capacity per side: identities (players + guests) + pending
-  // invites + declared placeholders fill the squad (getSquadCounts).
+  // Count-first capacity per side: identities (players + guests) + declared
+  // placeholders fill the squad; pending invites are prospects competing
+  // first-accept-wins for the open seats (getSquadCounts).
   const squadCounts = await getSquadCounts(m.id)
-  const sideStats = sideGroups.map((g) => {
-    const counts = squadCounts.find((c) => (c.teamId ?? null) === g.teamId)
-    const players = roster.filter((p) => p.teamId === g.teamId)
-    const total = counts?.total ?? players.length
-    const pending = counts?.pending ?? 0
-    const placeholders = counts?.placeholders ?? 0
-    return {
-      ...g,
-      total,
-      starting: counts?.starting ?? players.filter((p) => p.squadRole === "starting").length,
-      pending,
-      placeholders,
-      open: spotsLeft(squadSize, total, pending, placeholders),
-    }
-  })
-  const myManagedSideTeamIds = new Set(myTeamOptions.map((tm) => tm.teamId))
+  const twoSides = squadCounts.length > 1
+  const sideStats = squadCounts.map((c) => ({
+    ...c,
+    label:
+      c.legacyTeamLabel ??
+      (twoSides
+        ? tr(c.side === "home" ? "matches.sideHome" : "matches.sideAway")
+        : undefined),
+    open: spotsLeft(squadSize, c.total, c.placeholders),
+  }))
 
-  // Load pending player requests for whoever manages this match (match
-  // captain or a side-team captain). Also load outbound pending invitations,
-  // temp guests, and — for the signed-in user — their own pending invites.
+  // Pending player requests, outbound invitations, guests, and the captain's
+  // quick-add picks from previous matches.
   let pendingRequests: {
     matchId: string; userId: string
     playerName: string | null; playerPhone: string
   }[] = []
   let pendingInvitations: Awaited<ReturnType<typeof listPendingInvitationsByMatch>> = []
   let guests: Awaited<ReturnType<typeof listMatchGuests>> = []
-  if (canManageAfterTeams && rosterOpen(m.state)) {
-    const [allReqs, invites, guestRows] = await Promise.all([
+  let recentGuests: RecentGuestPick[] = []
+  if (user && managesMatch && rosterOpen(m.state)) {
+    const [allReqs, invites, guestRows, recent] = await Promise.all([
       listPendingPlayerRequestsByMatch(m.id),
       listPendingInvitationsByMatch(m.id),
       listMatchGuests(m.id),
+      listRecentGuestsAddedBy(user.id, m.id),
     ])
     pendingRequests = allReqs.map((r) => ({
       matchId: r.matchId,
@@ -182,6 +156,7 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
     }))
     pendingInvitations = invites
     guests = guestRows
+    recentGuests = recent
   } else if (user) {
     guests = await listMatchGuests(m.id)
   }
@@ -192,9 +167,23 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
   // Is the current user already on the roster?
   const onRoster = user ? roster.some((p) => p.userId === user.id) : false
 
+  // Person-based opponent claim — anyone not part of the match can take the
+  // away side while it's open (FCFS guarded in the action).
+  const canClaim =
+    !!user &&
+    canClaimOpponentSide({
+      state: m.state,
+      captainId: m.captainId,
+      awayCaptainId: m.awayCaptainId,
+      userId: user.id,
+      onRoster,
+    })
+  const homeCaptainWaitsForOpponent =
+    isHomeCaptain && m.state === "open" && m.awayCaptainId === null
+
   // Captains: solo players marked available near this turf (SS20/SS32).
   let nearbyPlayers: Awaited<ReturnType<typeof listAvailablePlayersNearTurf>> = []
-  if (canManageAfterTeams && sideStats.some((s) => s.open > 0)) {
+  if (managesMatch && sideStats.some((s) => s.open > 0)) {
     const all = await listAvailablePlayersNearTurf(t.id, {
       q: playerQ || undefined,
       position: playerPos,
@@ -212,38 +201,28 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
     m.state === "completed" &&
     m.resultStatus === "pending" &&
     user.id !== m.submittedBy &&
-    myTeamOptions.length > 0
+    managesMatch
 
-  const home = sides.find((s) => s.side === "home")
-  const away = sides.find((s) => s.side === "away")
-
-  // Solo matches have no home team — the captain's name is the title.
+  // Title: legacy team names when present, else the two captains' names.
   const captainName =
     roster.find((r) => r.userId === m.captainId)?.name ?? tr("matches.player")
-  const title = home
-    ? `${home.teamName}${away ? ` vs ${away.teamName}` : ""}`
-    : tr("matches.soloTitle", { captain: captainName })
+  const legacyHome = legacySides.find((s) => s.side === "home")
+  const legacyAway = legacySides.find((s) => s.side === "away")
+  const title = legacyHome
+    ? `${legacyHome.teamName}${legacyAway ? ` ${tr("player.vs")} ${legacyAway.teamName}` : ""}`
+    : m.awayCaptainId
+      ? `${captainName} ${tr("player.vs")} ${awayCaptainName ?? tr("matches.player")}`
+      : tr("matches.soloTitle", { captain: captainName })
 
   // A rostered non-captain can leave while the roster is open.
   const canLeave =
-    !!user && onRoster && !isMatchCaptain && rosterOpen(m.state)
+    !!user && onRoster && !isHomeCaptain && m.awayCaptainId !== user.id && rosterOpen(m.state)
 
-  // Join requests open up for solo matches while still OPEN (recruiting);
-  // team matches keep their existing confirmed/roster_building behaviour.
-  const openSpots = sideStats
-    .filter((s) => s.open > 0)
-    .map((s) => ({
-      teamId: s.teamId,
-      teamName: s.teamName,
-      open: s.open,
-    }))
+  // Join requests: match-level — the accepting captain seats the player on
+  // their own side.
+  const totalOpen = sideStats.reduce((acc, s) => acc + s.open, 0)
   const canRequestJoin =
-    !!user &&
-    !onRoster &&
-    myTeamOptions.length === 0 &&
-    openSpots.length > 0 &&
-    rosterOpen(m.state) &&
-    (m.state !== "open" || sides.length === 0)
+    !!user && !onRoster && totalOpen > 0 && rosterOpen(m.state)
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-12">
@@ -264,9 +243,9 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
             {tr(`matches.format.${m.matchType}`)}
           </StatusBadge>
         </div>
-        {matchStateContextLabelKey(m.state, sides.length === 0) ? (
+        {matchStateContextLabelKey(m.state) ? (
           <p className="text-sm font-medium text-muted-foreground">
-            {tr(matchStateContextLabelKey(m.state, sides.length === 0)!)}
+            {tr(matchStateContextLabelKey(m.state)!)}
           </p>
         ) : null}
         <div className="flex items-center gap-1 text-sm text-muted-foreground">
@@ -283,6 +262,21 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
           </span>
         </div>
       </header>
+
+      {/* Opponent wanted — the person-based claim */}
+      {canClaim ? (
+        <section className="space-y-2 rounded-lg border border-primary/40 bg-primary/5 p-4">
+          <h2 className="font-heading text-sm font-semibold">
+            {tr("matches.claim.title")}
+          </h2>
+          <p className="text-sm text-muted-foreground">{tr("matches.claim.desc")}</p>
+          <ClaimOpponentButton matchId={m.id} squadSize={squadSize} size="default" />
+        </section>
+      ) : homeCaptainWaitsForOpponent ? (
+        <p className="rounded-lg border border-primary/40 bg-primary/5 p-3 text-sm text-muted-foreground">
+          {tr("matches.claim.ownMatchNote")}
+        </p>
+      ) : null}
 
       {/* Score */}
       {m.state === "completed" || m.state === "ongoing" ? (
@@ -306,38 +300,29 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
       <div className="space-y-2">
         {sideStats.map((s) => (
           <SquadSpots
-            key={s.teamId ?? "solo"}
+            key={s.side}
             matchId={m.id}
             matchType={m.matchType}
             squadSize={squadSize}
-            teamId={s.teamId}
+            side={s.side}
             starting={s.starting}
             total={s.total}
             pending={s.pending}
             placeholders={s.placeholders}
-            label={s.teamName ?? undefined}
-            editable={isMatchCaptain && rosterOpen(m.state)}
-            canEditCount={
-              s.teamId === null
-                ? isMatchCaptain
-                : myManagedSideTeamIds.has(s.teamId)
-            }
+            label={s.label}
+            editable={isHomeCaptain && rosterOpen(m.state)}
+            canEditCount={mySide === s.side}
             countEditable={rosterOpen(m.state)}
           />
         ))}
       </div>
 
       {/* What do I do next? — one obvious primary action per stage */}
-      {canManageAfterTeams && rosterOpen(m.state) ? (
+      {managesMatch && rosterOpen(m.state) ? (
         (() => {
-          const mySide = sideStats.find(
-            (s) =>
-              s.teamId === null
-                ? isMatchCaptain && sides.length === 0
-                : myManagedSideTeamIds.has(s.teamId!)
-          ) ?? sideStats[0]
-          if (!mySide) return null
-          if (mySide.open > 0) {
+          const mySideStats = sideStats.find((s) => s.side === mySide) ?? sideStats[0]
+          if (!mySideStats) return null
+          if (mySideStats.open > 0) {
             return (
               <div className="flex flex-wrap items-center gap-2">
                 <a
@@ -357,51 +342,54 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
               </div>
             )
           }
-          // Solo + open: the CTA row above already covers it; full solo
-          // squad needs no next action.
-          if (
-            m.state === "open" &&
-            sides.length > 0 &&
-            mySide.open === 0
-          ) {
-            return (
-              <p className="rounded-lg border border-primary/40 bg-primary/5 p-3 text-sm text-muted-foreground">
-                {tr("matches.squad.findOpponentHint")}
-              </p>
-            )
-          }
           return null
         })()
       ) : null}
 
       {/* Player matchmaking: join request + captain request management */}
       {canRequestJoin ? (
-        <JoinRequestButton matchId={m.id} spots={openSpots} />
+        <JoinRequestButton matchId={m.id} spots={totalOpen} />
       ) : null}
 
-      {canManageAfterTeams && pendingRequests.length > 0 ? (
+      {managesMatch && pendingRequests.length > 0 ? (
         <RequestManager
-          teamId={myTeamOptions[0]?.teamId ?? null}
+          side={mySide!}
           requests={pendingRequests}
+        />
+      ) : null}
+
+      {/* Add players to your side — phone, friends, and guest add */}
+      {managesMatch && rosterOpen(m.state) ? (
+        <SquadInvitePanel
+          matchId={m.id}
+          friends={inviteFriends}
+          recentGuests={recentGuests}
         />
       ) : null}
 
       {/* My pending squad invitations for this match */}
       {myInvitations.length > 0 ? (
         <InvitationInbox
-          invitations={myInvitations.map((inv) => ({
-            id: inv.id,
-            invitedByName: inv.invitedByName,
-            squadRoleWanted: inv.squadRoleWanted,
-            turfName: inv.turfName,
-            date: inv.date,
-            slotStart: inv.slotStart,
-          }))}
+          invitations={myInvitations.map((inv) => {
+            const sideStat = sideStats.find((s) => s.side === inv.side)
+            return {
+              id: inv.id,
+              invitedByName: inv.invitedByName,
+              squadRoleWanted: inv.squadRoleWanted,
+              turfName: inv.turfName,
+              date: inv.date,
+              slotStart: inv.slotStart,
+              // Over-invite context: contested when more invites are out
+              // than open seats; a filled side shows the "late" state.
+              contested: (sideStat?.pending ?? 0) > (sideStat?.open ?? 0),
+              seatAvailable: (sideStat?.open ?? 0) > 0,
+            }
+          })}
         />
       ) : null}
 
       {/* Outbound pending invitations (managers can cancel) */}
-      {canManageAfterTeams && pendingInvitations.length > 0 ? (
+      {managesMatch && pendingInvitations.length > 0 ? (
         <InvitationManager
           matchId={m.id}
           invitations={pendingInvitations.map((inv) => ({
@@ -423,27 +411,28 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
           </div>
           <SquadGroups
             matchId={m.id}
-            sides={sides.map((s) => ({
-              teamId: s.teamId,
-              teamName: s.teamName,
+            sides={sideStats.map((s) => ({
               side: s.side,
+              legacyTeamLabel: s.legacyTeamLabel,
             }))}
             roster={roster.map((p) => ({
               userId: p.userId,
               name: p.name,
               phone: p.phone,
-              teamId: p.teamId,
+              side: p.side,
               role: p.role,
               squadRole: p.squadRole,
             }))}
             captainId={m.captainId}
-            managedTeamIds={managedTeamIds}
-            isMatchCaptain={isMatchCaptain}
+            awayCaptainId={m.awayCaptainId}
+            managedSides={mySide ? [mySide] : []}
             guests={guests.map((g) => ({
               id: g.id,
-              teamId: g.teamId,
+              side: g.side,
               name: g.name,
               phone: g.phone,
+              position: g.position,
+              jerseyNumber: g.jerseyNumber,
               linkedUserId: g.linkedUserId,
               squadRole: g.squadRole,
             }))}
@@ -452,7 +441,7 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
       ) : null}
 
       {/* Captains: solo players available near this turf */}
-      {canManageAfterTeams && sideStats.some((s) => s.open > 0) ? (
+      {managesMatch && sideStats.some((s) => s.open > 0) ? (
         <section id="nearby" className="scroll-mt-20 space-y-3">
           <h2 className="font-heading text-lg font-semibold">
             {tr("matches.nearbyTitle")}
@@ -572,16 +561,15 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
           homeScore={m.homeScore}
           awayScore={m.awayScore}
           resultStatus={m.resultStatus}
-          sides={sides.map((s) => ({
-            teamId: s.teamId,
-            teamName: s.teamName,
-            side: s.side,
-          }))}
-          myTeams={myTeamOptions}
-          challengeTeams={challengeTeams}
-          teamMembers={teamMembers}
-          friends={inviteFriends}
-          isMatchCaptain={isMatchCaptain}
+          homeLabel={
+            sideStats.find((s) => s.side === "home")?.label ??
+            tr("matches.home")
+          }
+          awayLabel={
+            sideStats.find((s) => s.side === "away")?.label ??
+            tr("matches.away")
+          }
+          mySide={mySide}
           canLeave={canLeave}
           canConfirmResult={canConfirmResult}
         />

@@ -4,15 +4,21 @@
  * in ../player/schemas.ts, and unknown/legacy values fall back to their raw
  * stored text at display time (see src/i18n/labels.ts).
  */
-export const POSITION_IDS = [
+/**
+ * On-field positions — real positions a player can be recorded as playing.
+ * "any" below is a profile-level availability flag, not a position, so
+ * forms that record what someone plays (e.g. match guests) use this list.
+ */
+export const FIELD_POSITION_IDS = [
   "goalkeeper",
   "defender",
   "midfielder",
   "winger",
   "forward",
   "striker",
-  "any",
 ] as const
+
+export const POSITION_IDS = [...FIELD_POSITION_IDS, "any"] as const
 
 export const SKILL_IDS = [
   "learning",

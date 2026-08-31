@@ -1,7 +1,7 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { and, eq } from "drizzle-orm"
+import { and, eq, sql } from "drizzle-orm"
 
 import { db } from "@/db"
 import {
@@ -9,16 +9,16 @@ import {
   playerProfiles,
   playerRequests,
   matchPlayers,
-  matchTeams,
   matches,
   bookings,
   turfs,
 } from "@/db/schema"
 import { getCurrentUser } from "@/lib/auth"
 import { roundCoords } from "@/lib/geo"
-import { getTeamRole } from "@/features/teams/queries"
-import { isCaptainRole, rosterOpen } from "@/features/matches/authority"
+import { rosterOpen } from "@/features/matches/authority"
 import { FORMATS, resolveSquadRole } from "@/features/matches/formats"
+import { resolveSideCaptain } from "@/features/matches/queries"
+import { lockMatchForSeatClaim, seatsFreeSql } from "@/features/matches/seat-claim"
 import { createNotifications } from "@/features/notifications/create"
 
 import { updateProfileSchema } from "./schemas"
@@ -111,10 +111,10 @@ export async function updateProfileAction(
 }
 
 /**
- * Player requests to join a match as a guest (SS20). Creates a
- * player_request (status=pending) for the captain to accept/reject. Solo
- * matches accept requests while OPEN; team matches while CONFIRMED /
- * ROSTER_BUILDING. The captain is notified of new requests.
+ * Player requests to join a match (SS20). Creates a player_request
+ * (status=pending); the request is match-level — whichever side's captain
+ * accepts seats the player on their own side. Requests are accepted while
+ * the roster is open. Both captains are notified of new requests.
  */
 export async function requestToJoinAction(
   matchId: string
@@ -133,8 +133,11 @@ export async function requestToJoinAction(
     return { ok: false, error: "matches.errors.joinNotOpen" }
   }
 
-  // The captain doesn't request to join their own match.
-  if (match.captainId === user.id) {
+  // The captains don't request to join their own match.
+  if (
+    match.captainId === user.id ||
+    (match.awayCaptainId !== null && match.awayCaptainId === user.id)
+  ) {
     return { ok: false, error: "matches.errors.ownMatch" }
   }
 
@@ -178,7 +181,9 @@ export async function requestToJoinAction(
         entityType: "match",
         entityId: matchId,
       },
-      [match.captainId]
+      [match.captainId, match.awayCaptainId].filter(
+        (id): id is string => id !== null
+      )
     )
   }
 
@@ -188,14 +193,13 @@ export async function requestToJoinAction(
 }
 
 /**
- * Captain accepts a player's join request. Creates a match_players row with
- * role=guest and marks the request as accepted. teamId selects which side the
- * guest joins; null (solo match) adds them without a team.
+ * Side captain accepts a player's join request. Creates a match_players row
+ * on the ACCEPTING captain's own side and marks the request as accepted.
  */
 export async function acceptPlayerRequestAction(
   matchId: string,
   playerId: string,
-  teamId: string | null
+  side: "home" | "away"
 ): Promise<ActionResult> {
   const user = await getCurrentUser()
   if (!user) return unauthorized()
@@ -210,12 +214,7 @@ export async function acceptPlayerRequestAction(
     return { ok: false, error: "matches.errors.rosterNotOpen" }
   }
 
-  if (teamId) {
-    const role = await getTeamRole(teamId, user.id)
-    if (!isCaptainRole(role)) {
-      return { ok: false, error: "errors.noPermission" }
-    }
-  } else if (match.captainId !== user.id) {
+  if ((await resolveSideCaptain(match, user.id)) !== side) {
     return { ok: false, error: "errors.noPermission" }
   }
 
@@ -234,41 +233,64 @@ export async function acceptPlayerRequestAction(
     return { ok: false, error: "matches.errors.requestNotPending" }
   }
 
-  // Squad capacity check — squadSize is per side; pending invitations and
-  // count-first placeholders consume seats too. Seat as substitute once the
-  // side's starting slots are full.
+  // Squad capacity check — squadSize is per side; count-first placeholders
+  // consume seats (pending invitations don't — seats go first-accept-wins).
+  // Fast pre-check; the authoritative claim happens atomically in the batch
+  // below. Seat as substitute once the side's starting slots are full.
   const { getSquadCounts } = await import("@/features/matches/queries")
   const { spotsLeft } = await import("@/features/matches/formats")
   const counts = await getSquadCounts(matchId)
-  const side = counts.find((c) => (c.teamId ?? null) === teamId)
+  const sideCounts = counts.find((c) => c.side === side)
   const cap = match.squadSize ?? FORMATS.fives.maxSquad
   const free = spotsLeft(
     cap,
-    side?.total ?? 0,
-    side?.pending ?? 0,
-    side?.placeholders ?? 0
+    sideCounts?.total ?? 0,
+    sideCounts?.placeholders ?? 0
   )
   if (free < 1) {
     return { ok: false, error: "matches.errors.squadFull" }
   }
-  const squadRole = resolveSquadRole(side?.starting ?? 0, match.matchType)
+  const squadRole = resolveSquadRole(sideCounts?.starting ?? 0, match.matchType)
 
-  // Add as guest player.
-  await db
-    .insert(matchPlayers)
-    .values({ matchId, userId: playerId, teamId, role: "guest", squadRole })
-    .onConflictDoNothing()
-
-  // Mark request accepted.
-  await db
-    .update(playerRequests)
-    .set({ status: "accepted" })
+  // First-accept-wins claim, same batch shape as the invite accept: lock the
+  // match row, insert the player only while the side has a free seat, and
+  // mark the request accepted only if that insert landed. On a loss the
+  // request stays pending so the captain can retry when a seat frees up.
+  await db.batch([
+    lockMatchForSeatClaim(matchId),
+    db.execute(sql`
+      INSERT INTO match_players (match_id, user_id, side, role, squad_role)
+      SELECT ${matchId}, ${playerId}, ${side}, 'guest', ${squadRole}
+      WHERE ${seatsFreeSql(matchId, side)}
+      ON CONFLICT DO NOTHING
+    `),
+    db.execute(sql`
+      UPDATE player_requests
+      SET status = 'accepted'
+      WHERE match_id = ${matchId} AND user_id = ${playerId}
+        AND status = 'pending'
+        AND EXISTS (
+          SELECT 1 FROM match_players
+          WHERE match_id = ${matchId}
+            AND user_id = ${playerId}
+            AND side = ${side}
+        )
+    `),
+  ])
+  const [seat] = await db
+    .select({ userId: matchPlayers.userId })
+    .from(matchPlayers)
     .where(
       and(
-        eq(playerRequests.matchId, matchId),
-        eq(playerRequests.userId, playerId)
+        eq(matchPlayers.matchId, matchId),
+        eq(matchPlayers.userId, playerId),
+        eq(matchPlayers.side, side)
       )
     )
+    .limit(1)
+  if (!seat) {
+    return { ok: false, error: "matches.errors.squadFull" }
+  }
 
   revalidatePath(`/matches/${matchId}`)
   return { ok: true }
@@ -293,27 +315,15 @@ export async function rejectPlayerRequestAction(
     .limit(1)
   if (!req) return { ok: false, error: "matches.errors.requestNotFound" }
 
-  // The match captain or the captain/owner of a team in this match.
+  // Either side's captain.
   const [match] = await db
-    .select({ captainId: matches.captainId })
+    .select()
     .from(matches)
     .where(eq(matches.id, req.matchId))
     .limit(1)
-  let authorized = match?.captainId === user.id
-  if (!authorized) {
-    const sides = await db
-      .select()
-      .from(matchTeams)
-      .where(eq(matchTeams.matchId, req.matchId))
-    for (const s of sides) {
-      const r = await getTeamRole(s.teamId, user.id)
-      if (isCaptainRole(r)) {
-        authorized = true
-        break
-      }
-    }
+  if (!match || !(await resolveSideCaptain(match, user.id))) {
+    return { ok: false, error: "matches.errors.notAuthorized" }
   }
-  if (!authorized) return { ok: false, error: "matches.errors.notAuthorized" }
 
   await db
     .update(playerRequests)
@@ -347,7 +357,10 @@ export async function leaveMatchAction(matchId: string): Promise<ActionResult> {
   if (!rosterOpen(match.state)) {
     return { ok: false, error: "matches.errors.leaveNotOpen" }
   }
-  if (match.captainId === user.id) {
+  if (
+    match.captainId === user.id ||
+    (match.awayCaptainId !== null && match.awayCaptainId === user.id)
+  ) {
     return { ok: false, error: "matches.errors.cannotLeaveAsCaptain" }
   }
 

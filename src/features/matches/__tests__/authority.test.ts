@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  canClaimOpponentSide,
   isCaptainRole,
   rosterOpen,
   hasFreeSpot,
   formatKickoffLabel,
+  sideOfCaptain,
   ROSTER_OPEN_STATES,
 } from "../authority"
 
@@ -69,5 +71,64 @@ describe("formatKickoffLabel", () => {
     expect(formatKickoffLabel(null)).toBeNull()
     expect(formatKickoffLabel(undefined)).toBeNull()
     expect(formatKickoffLabel("not-a-date")).toBeNull()
+  })
+})
+
+describe("sideOfCaptain", () => {
+  const captainId = "11111111-1111-4111-8111-111111111111"
+  const awayCaptainId = "22222222-2222-4222-8222-222222222222"
+  const someoneElse = "33333333-3333-4333-8333-333333333333"
+
+  it("resolves the creator to home", () => {
+    expect(sideOfCaptain(captainId, awayCaptainId, captainId)).toBe("home")
+    expect(sideOfCaptain(captainId, null, captainId)).toBe("home")
+  })
+
+  it("resolves the opponent-side claimant to away", () => {
+    expect(sideOfCaptain(captainId, awayCaptainId, awayCaptainId)).toBe("away")
+  })
+
+  it("never resolves away while the side is unclaimed", () => {
+    expect(sideOfCaptain(captainId, null, someoneElse)).toBeNull()
+  })
+
+  it("returns null for anyone else", () => {
+    expect(sideOfCaptain(captainId, awayCaptainId, someoneElse)).toBeNull()
+  })
+})
+
+describe("canClaimOpponentSide", () => {
+  const captainId = "11111111-1111-4111-8111-111111111111"
+  const awayCaptainId = "22222222-2222-4222-8222-222222222222"
+  const claimant = "33333333-3333-4333-8333-333333333333"
+
+  const base = {
+    state: "open",
+    captainId,
+    awayCaptainId: null,
+    userId: claimant,
+    onRoster: false,
+  }
+
+  it("allows an outside player to claim an open match", () => {
+    expect(canClaimOpponentSide(base)).toBe(true)
+  })
+
+  it("refuses once the match leaves the open state", () => {
+    for (const state of ["confirmed", "ongoing", "completed", "cancelled"]) {
+      expect(canClaimOpponentSide({ ...base, state }), state).toBe(false)
+    }
+  })
+
+  it("refuses when the away side is already claimed", () => {
+    expect(canClaimOpponentSide({ ...base, awayCaptainId })).toBe(false)
+  })
+
+  it("refuses the match captain", () => {
+    expect(canClaimOpponentSide({ ...base, userId: captainId })).toBe(false)
+  })
+
+  it("refuses players already on the roster", () => {
+    expect(canClaimOpponentSide({ ...base, onRoster: true })).toBe(false)
   })
 })

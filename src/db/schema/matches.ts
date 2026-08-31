@@ -23,23 +23,35 @@ export const matches = pgTable(
       .notNull()
       .references(() => bookings.id, { onDelete: "cascade" })
       .unique(),
-    // The match captain: the user who created the match (solo or team side).
-    // RESTRICT — deletion is soft with a grace period, so a user purge must
-    // never silently destroy a confirmed match.
+    // The home captain: the user who created the match. RESTRICT — deletion
+    // is soft with a grace period, so a user purge must never silently
+    // destroy a confirmed match.
     captainId: uuid("captain_id")
       .notNull()
       .references(() => users.id, { onDelete: "restrict" }),
+    // The away captain: the player who claimed the opponent side (person-based
+    // FCFS — set by a conditional update that also flips state to confirmed).
+    // Null while the match is open (opponent wanted).
+    awayCaptainId: uuid("away_captain_id").references(() => users.id, {
+      onDelete: "restrict",
+    }),
     state: matchState("state").notNull().default("draft"),
     matchType: matchType("match_type").notNull().default("fives"),
     // Total squad size per SIDE (solo match = the single side; team-vs-team =
     // each side fields its own squad of this size). Includes substitutes —
     // never implied by matchType (format is on-field count only).
     squadSize: integer("squad_size"),
-    // Count-first matchmaking: un-named seats the captain claims on the SOLO
-    // side ("আমার ৭ জন player আছে") without match_players/match_guests rows.
-    // Identities fill in progressively later. Team sides store their own count
-    // in match_teams.placeholder_count.
+    // Count-first matchmaking: un-named seats the HOME captain claims
+    // ("আমার ৭ জন player আছে") without match_players/match_guests rows.
+    // Identities fill in progressively later. The away side's declared count
+    // lives in away_placeholder_count. Legacy team sides keep their count in
+    // match_teams.placeholder_count (reads only).
     placeholderCount: integer("placeholder_count").notNull().default(0),
+    // Count-first for the away side: un-named seats the away captain claims
+    // when they take the opponent side for their own group.
+    awayPlaceholderCount: integer("away_placeholder_count")
+      .notNull()
+      .default(0),
     // F1: result fields - back the ONGOING -> COMPLETED (result submitted) transition.
     homeScore: integer("home_score"),
     awayScore: integer("away_score"),
@@ -56,9 +68,18 @@ export const matches = pgTable(
       .defaultNow()
       .notNull(),
   },
-  (t) => [index("matches_captain_idx").on(t.captainId)]
+  (t) => [
+    index("matches_captain_idx").on(t.captainId),
+    index("matches_away_captain_idx").on(t.awayCaptainId),
+  ]
 )
 
+/**
+ * Legacy team sides (matches created before teams left the match flow).
+ * Read-only: new matches never write here — sides are the `side` column on
+ * match_players / match_guests / match_invitations. Kept so old matches
+ * still render their team names and remain manageable.
+ */
 export const matchTeams = pgTable(
   "match_teams",
   {
@@ -69,8 +90,7 @@ export const matchTeams = pgTable(
       .notNull()
       .references(() => teams.id, { onDelete: "cascade" }),
     side: matchSide("side").notNull(),
-    // Same as matches.placeholder_count but per TEAM side (home/away) — each
-    // captain independently declares how many un-named players they have.
+    // Same as matches.placeholder_count but per legacy TEAM side (home/away).
     placeholderCount: integer("placeholder_count").notNull().default(0),
   },
   (t) => [primaryKey({ columns: [t.matchId, t.teamId] })]
@@ -85,6 +105,10 @@ export const matchPlayers = pgTable(
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
+    // home = creator side, away = claimed opponent side. Legacy team rows
+    // were backfilled from match_teams.side (migration 0024).
+    side: matchSide("side").notNull().default("home"),
+    // Legacy team-based matches only; null for person-based sides.
     teamId: uuid("team_id").references(() => teams.id, { onDelete: "set null" }),
     role: matchPlayerRole("role").notNull().default("member"),
     // Starting XI vs bench for this match. Defaults to starting so legacy
@@ -114,6 +138,10 @@ export const playerRequests = pgTable(
   (t) => [primaryKey({ columns: [t.matchId, t.userId] })]
 )
 
+/**
+ * Legacy team challenges (matches created before teams left the match flow).
+ * Read-only: the person-based opponent side is matches.away_captain_id.
+ */
 export const opponentRequests = pgTable(
   "opponent_requests",
   {
@@ -151,6 +179,8 @@ export const matchInvitations = pgTable(
     teamId: uuid("team_id").references(() => teams.id, {
       onDelete: "cascade",
     }),
+    // Side the invite seats the player on (the inviter's side).
+    side: matchSide("side").notNull().default("home"),
     inviteeUserId: uuid("invitee_user_id").references(() => users.id, {
       onDelete: "cascade",
     }),
@@ -191,8 +221,15 @@ export const matchGuests = pgTable(
     teamId: uuid("team_id").references(() => teams.id, {
       onDelete: "set null",
     }),
+    // Side this guest plays on (the adder's side).
+    side: matchSide("side").notNull().default("home"),
     name: text("name").notNull(),
     phone: text("phone"),
+    // Canonical position id (POSITION_IDS); plain text like player_profiles
+    // so legacy free text still renders. Writes go through Zod.
+    position: text("position"),
+    // 0..99 (CHECK via migration 0025). Null = no number recorded.
+    jerseyNumber: integer("jersey_number"),
     linkedUserId: uuid("linked_user_id").references(() => users.id, {
       onDelete: "set null",
     }),
