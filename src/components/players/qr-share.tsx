@@ -96,7 +96,7 @@ export function QrShare({ playerId, playerName }: { playerId: string; playerName
               <img
                 src={qrDataUrl}
                 alt={`${t("players.qrTitle")} ${playerId}`}
-                className="h-60 w-60 rounded-lg border border-border bg-white p-2"
+                className="h-60 w-60 rounded-lg border border-dt-line bg-white p-2"
               />
             ) : null}
             <p className="font-mono text-sm font-semibold tracking-wide">{playerId}</p>

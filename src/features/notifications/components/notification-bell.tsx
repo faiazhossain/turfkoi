@@ -20,7 +20,7 @@ function UnreadBadge({ count }: { count: number }) {
   if (count <= 0) return null
   return (
     <span
-      className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] leading-none font-semibold text-primary-foreground"
+      className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-dt-green px-1 text-[10px] leading-none font-semibold text-dt-ink"
       aria-label={t("notifications.unreadCountAria", { count })}
     >
       {count > 9 ? "9+" : count}
@@ -74,7 +74,7 @@ export function NotificationBell({
         href="/notifications"
         aria-label={bellAria}
         className={cn(
-          "relative flex size-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground",
+          "relative flex size-11 items-center justify-center rounded-lg text-dt-dim transition-colors hover:bg-dt-card2/50 hover:text-dt-txt",
           className
         )}
       >
@@ -124,7 +124,7 @@ export function NotificationBell({
             <NotificationList feed={feed} onOpen={onOpen} />
           </div>
         )}
-        <div className="border-t border-border pt-1 mt-1">
+        <div className="border-t border-dt-line pt-1 mt-1">
           <Button
             variant="ghost"
             size="sm"

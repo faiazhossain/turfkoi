@@ -90,7 +90,7 @@ export function InviteToMatchDialog({
               <Loader size={40} label={t("common.loading")} />
             </div>
           ) : matches.length === 0 ? (
-            <p className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+            <p className="rounded-lg border border-dashed border-dt-line p-6 text-center text-sm text-dt-dim">
               {t("players.noEligibleMatch")}
             </p>
           ) : (
@@ -101,17 +101,17 @@ export function InviteToMatchDialog({
                     type="button"
                     disabled={pending}
                     onClick={() => invite(m.id)}
-                    className="flex w-full items-center justify-between gap-3 rounded-lg border border-border bg-card p-3 text-left text-sm transition-colors hover:border-primary disabled:opacity-60"
+                    className="flex w-full items-center justify-between gap-3 rounded-lg border border-dt-line bg-dt-card p-3 text-left text-sm transition-colors hover:border-dt-green disabled:opacity-60"
                   >
                     <span className="min-w-0">
                       <span className="block font-medium">
                         {m.date} {m.slotStart} · {m.matchType}
                       </span>
-                      <span className="block truncate text-xs text-muted-foreground">
+                      <span className="block truncate text-xs text-dt-dim">
                         {m.turfName}
                       </span>
                     </span>
-                    <span className="shrink-0 text-xs font-semibold text-primary">
+                    <span className="shrink-0 text-xs font-semibold text-dt-green">
                       {t("players.inviteToMatch")} ›
                     </span>
                   </button>

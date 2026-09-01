@@ -46,9 +46,9 @@ function renderNotification(n: NotificationDTO, t: Translator): Rendered {
 }
 
 const PRIORITY_TONE: Record<string, string> = {
-  info: "text-muted-foreground",
-  transactional: "text-primary",
-  critical: "text-destructive",
+  info: "text-dt-dim",
+  transactional: "text-dt-green",
+  critical: "text-dt-red",
 }
 
 export function NotificationRow({
@@ -66,13 +66,13 @@ export function NotificationRow({
       type="button"
       onClick={() => onOpen(item, href)}
       className={cn(
-        "flex w-full items-start gap-2.5 rounded-lg p-2.5 text-left transition-colors hover:bg-muted/60",
-        unread && "bg-muted/40"
+        "flex w-full items-start gap-2.5 rounded-lg p-2.5 text-left transition-colors hover:bg-dt-card2/60",
+        unread && "bg-dt-card2/40"
       )}
     >
       <span
         className={cn(
-          "mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-muted",
+          "mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-dt-card2",
           PRIORITY_TONE[item.priority] ?? PRIORITY_TONE.info
         )}
       >
@@ -83,24 +83,24 @@ export function NotificationRow({
           <span
             className={cn(
               "truncate text-sm",
-              unread ? "font-medium text-foreground" : "text-foreground/80"
+              unread ? "font-medium text-dt-txt" : "text-dt-txt/80"
             )}
           >
             {title}
           </span>
           {unread ? (
             <span
-              className="ml-auto size-2 shrink-0 rounded-full bg-primary"
+              className="ml-auto size-2 shrink-0 rounded-full bg-dt-green"
               aria-label={t("notifications.unreadAria")}
             />
           ) : null}
         </span>
         {body ? (
-          <span className="block truncate text-xs text-muted-foreground">
+          <span className="block truncate text-xs text-dt-dim">
             {body}
           </span>
         ) : null}
-        <span className="block text-xs text-muted-foreground">
+        <span className="block text-xs text-dt-dim">
           {formatDistanceToNowIn(new Date(item.createdAt), locale, { addSuffix: true })}
         </span>
       </span>

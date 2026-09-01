@@ -58,7 +58,7 @@ export default async function PlayerProfilePage({
 
   return (
     <div className="mx-auto max-w-md space-y-4 px-4 py-8">
-      <section className="rounded-lg border border-border bg-card p-6 text-center">
+      <section className="rounded-lg border border-dt-line bg-dt-card p-6 text-center">
         <div className="relative mx-auto w-fit">
           <PlayerAvatar
             display={resolveAvatarDisplay({
@@ -72,18 +72,18 @@ export default async function PlayerProfilePage({
           <span
             aria-hidden
             title={online ? t("friends.online") : t("friends.offline")}
-            className={`absolute bottom-0 right-0 size-4 rounded-full border-2 border-card ${
-              online ? "bg-green-500" : "bg-muted-foreground/40"
+            className={`absolute bottom-0 right-0 size-4 rounded-full border-2 border-dt-card ${
+              online ? "bg-dt-green" : "bg-dt-off/40"
             }`}
           />
         </div>
 
         <h1 className="mt-3 font-heading text-xl font-semibold">{player.name}</h1>
         {player.username ? (
-          <p className="text-sm text-muted-foreground">@{player.username}</p>
+          <p className="text-sm text-dt-dim">@{player.username}</p>
         ) : null}
 
-        <div className="mt-3 inline-flex items-center gap-2 rounded-md border border-border bg-accent px-3 py-1.5">
+        <div className="mt-3 inline-flex items-center gap-2 rounded-md border border-dt-line bg-dt-card2 px-3 py-1.5">
           <span className="font-mono text-sm font-semibold tracking-wide">
             {player.playerId}
           </span>
@@ -92,35 +92,35 @@ export default async function PlayerProfilePage({
           <QrShare playerId={player.playerId ?? code} playerName={player.name ?? ""} />
         </div>
 
-        <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs text-muted-foreground">
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs text-dt-dim">
           {positionKey ? (
-            <span className="rounded-full border border-border px-3 py-1 font-semibold text-foreground">
+            <span className="rounded-full border border-dt-line px-3 py-1 font-semibold text-dt-txt">
               {t(positionKey)}
             </span>
           ) : null}
           {skillKey ? (
-            <span className="rounded-full border border-border px-3 py-1">
+            <span className="rounded-full border border-dt-line px-3 py-1">
               {t(skillKey)}
             </span>
           ) : null}
-          {player.area ? <span className="rounded-full border border-border px-3 py-1">{player.area}</span> : null}
+          {player.area ? <span className="rounded-full border border-dt-line px-3 py-1">{player.area}</span> : null}
         </div>
       </section>
 
       {!viewerId ? (
-        <section className="rounded-lg border border-dashed border-border p-6 text-center">
-          <p className="text-sm text-muted-foreground">{t("players.signInToConnect")}</p>
+        <section className="rounded-lg border border-dashed border-dt-line p-6 text-center">
+          <p className="text-sm text-dt-dim">{t("players.signInToConnect")}</p>
           <Button render={<Link href="/login" />} size="sm" className="mt-3">
             {t("nav.signIn")}
           </Button>
         </section>
       ) : isSelf ? (
-        <p className="text-center text-sm text-muted-foreground">
+        <p className="text-center text-sm text-dt-dim">
           {t("players.playerIdPermanent")}
         </p>
       ) : relation === "blocked" ? (
-        <section className="rounded-lg border border-dashed border-border p-6 text-center">
-          <p className="text-sm text-muted-foreground">
+        <section className="rounded-lg border border-dashed border-dt-line p-6 text-center">
+          <p className="text-sm text-dt-dim">
             {blockDir === "byViewer" ? t("players.blockedNotice") : t("players.blockedByNotice")}
           </p>
         </section>
