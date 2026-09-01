@@ -37,7 +37,7 @@ export default async function AdminReportsPage({
           <select
             name="status"
             defaultValue={status ?? ""}
-            className="rounded-lg border border-border bg-background px-2 py-1.5"
+            className="rounded-lg border border-dt-line bg-dt-bg px-2 py-1.5"
           >
             <option value="">{t("admin.all")}</option>
             {["pending", "reviewing", "resolved", "dismissed"].map((s) => (
@@ -48,14 +48,14 @@ export default async function AdminReportsPage({
           </select>
           <button
             type="submit"
-            className="rounded-lg border border-border px-3 py-1.5 font-medium hover:bg-muted"
+            className="rounded-lg border border-dt-line px-3 py-1.5 font-medium hover:bg-dt-card2"
           >
             {t("admin.filter")}
           </button>
         </form>
       </div>
       {reports.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+        <p className="rounded-lg border border-dashed border-dt-line p-6 text-center text-sm text-dt-dim">
           {t("admin.reports.empty")}
         </p>
       ) : (
@@ -63,19 +63,19 @@ export default async function AdminReportsPage({
           {reports.map((r) => (
             <li
               key={r.id}
-              className="flex flex-wrap items-start justify-between gap-3 rounded-lg border border-border bg-card p-4"
+              className="flex flex-wrap items-start justify-between gap-3 rounded-lg border border-dt-line bg-dt-card p-4"
             >
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
                   <StatusBadge status={TONE[r.status] ?? "neutral"} showIcon={false}>
                     {t(`admin.reports.status.${r.status}`)}
                   </StatusBadge>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-xs text-dt-dim">
                     {r.entityType} · {r.entityId.slice(0, 8)}
                   </span>
                 </div>
                 <p className="mt-1 text-sm">{r.reason}</p>
-                <p className="font-mono text-xs text-muted-foreground">
+                <p className="font-mono text-xs text-dt-dim">
                   {t("admin.reports.by", { phone: r.reporterPhone })} · {r.createdAt.toISOString().slice(0, 10)}
                 </p>
               </div>

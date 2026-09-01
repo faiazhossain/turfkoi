@@ -47,7 +47,7 @@ export default async function AdminTransactionsPage({
           <select
             name="status"
             defaultValue={status ?? ""}
-            className="rounded-lg border border-border bg-background px-2 py-1.5"
+            className="rounded-lg border border-dt-line bg-dt-bg px-2 py-1.5"
           >
             <option value="">{t("admin.allStatuses")}</option>
             {[
@@ -66,14 +66,14 @@ export default async function AdminTransactionsPage({
           </select>
           <button
             type="submit"
-            className="rounded-lg border border-border px-3 py-1.5 font-medium hover:bg-muted"
+            className="rounded-lg border border-dt-line px-3 py-1.5 font-medium hover:bg-dt-card2"
           >
             {t("admin.filter")}
           </button>
         </form>
       </div>
       {txns.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+        <p className="rounded-lg border border-dashed border-dt-line p-6 text-center text-sm text-dt-dim">
           {t("admin.txns.empty")}
         </p>
       ) : (
@@ -96,7 +96,7 @@ export default async function AdminTransactionsPage({
                 <TableCell className="tabular-nums">
                   ৳{Number(txn.amount).toLocaleString()}
                 </TableCell>
-                <TableCell className="tabular-nums text-muted-foreground">
+                <TableCell className="tabular-nums text-dt-dim">
                   ৳{Number(txn.platformFee).toLocaleString()}
                 </TableCell>
                 <TableCell className="text-xs">{txn.provider}</TableCell>
@@ -105,7 +105,7 @@ export default async function AdminTransactionsPage({
                     {t(`admin.txns.status.${txn.status}`)}
                   </StatusBadge>
                 </TableCell>
-                <TableCell className="font-mono text-xs text-muted-foreground">
+                <TableCell className="font-mono text-xs text-dt-dim">
                   {txn.providerReference ?? "—"}
                 </TableCell>
                 <TableCell className="font-mono text-xs">

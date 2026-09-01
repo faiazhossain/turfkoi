@@ -68,8 +68,8 @@ export function RefundRequestButton({
   }
 
   return (
-    <div className="flex flex-col gap-2 rounded-lg border border-border bg-muted/30 p-3 text-sm">
-      <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+    <div className="flex flex-col gap-2 rounded-lg border border-dt-line bg-dt-card2/30 p-3 text-sm">
+      <label className="text-xs font-medium uppercase tracking-wide text-dt-dim">
         {t("admin.refunds.amountLabel")}
       </label>
       <Input
@@ -86,7 +86,7 @@ export function RefundRequestButton({
         onChange={(e) => setReason(e.target.value)}
         placeholder={t("admin.refunds.reasonPlaceholder")}
         rows={2}
-        className="bg-background"
+        className="bg-dt-bg"
       />
       {needsApproval ? (
         <p className="flex items-center gap-1.5 text-xs text-warning">

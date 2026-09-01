@@ -214,7 +214,7 @@ function Field({
 }) {
   return (
     <div className="space-y-1.5">
-      <Label className="text-xs font-medium text-muted-foreground">{label}</Label>
+      <Label className="text-xs font-medium text-dt-dim">{label}</Label>
       {children}
       {error ? <p className="text-xs text-destructive">{error}</p> : null}
     </div>

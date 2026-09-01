@@ -67,7 +67,7 @@ export function DeleteTurfControl({
       >
         {t("admin.cockpit.deleteTurf")}
       </Button>
-      <p className="text-xs text-muted-foreground">
+      <p className="text-xs text-dt-dim">
         {t("admin.cockpit.deleteDesc")}
       </p>
     </div>

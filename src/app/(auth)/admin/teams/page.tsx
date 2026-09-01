@@ -17,15 +17,15 @@ export default async function AdminTeamsPage() {
     <div className="space-y-4">
       <h2 className="font-heading text-lg font-semibold">{t("admin.sections.teams")}</h2>
       {teams.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+        <p className="rounded-lg border border-dashed border-dt-line p-6 text-center text-sm text-dt-dim">
           {t("admin.teams.empty")}
         </p>
       ) : (
-        <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border">
+        <ul className="divide-y divide-dt-line overflow-hidden rounded-lg border border-dt-line">
           {teams.map((team) => (
             <li
               key={team.id}
-              className="flex items-center justify-between gap-3 bg-card p-4 text-sm"
+              className="flex items-center justify-between gap-3 bg-dt-card p-4 text-sm"
             >
               <div className="min-w-0">
                 <Link
@@ -34,7 +34,7 @@ export default async function AdminTeamsPage() {
                 >
                   {team.name}
                 </Link>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-dt-dim">
                   {t(team.memberCount === 1 ? "admin.teams.membersOne" : "admin.teams.membersMany", {
                     count: team.memberCount,
                   })}{" "}

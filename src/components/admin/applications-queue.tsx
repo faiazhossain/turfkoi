@@ -116,7 +116,7 @@ export function ApproveApplicationPanel({ application }: { application: PendingA
   }
 
   return (
-    <div className="w-full space-y-4 rounded-lg border border-border bg-muted/40 p-3">
+    <div className="w-full space-y-4 rounded-lg border border-dt-line bg-dt-card2/40 p-3">
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label={t("ownATurf.turfName")} error={form.formState.errors.name?.message}>
@@ -245,7 +245,7 @@ function Field({
 }) {
   return (
     <div className="space-y-1.5">
-      <Label className="text-xs font-medium text-muted-foreground">{label}</Label>
+      <Label className="text-xs font-medium text-dt-dim">{label}</Label>
       {children}
       {error ? <p className="text-xs text-destructive">{error}</p> : null}
     </div>

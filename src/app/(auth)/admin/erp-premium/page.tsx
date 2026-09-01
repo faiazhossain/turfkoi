@@ -61,12 +61,12 @@ export default async function AdminErpPremiumPage() {
         ) : (
           <ul className="space-y-3">
             {pending.map((r) => (
-              <li key={r.id} className="rounded-xl border border-border bg-card p-4">
+              <li key={r.id} className="rounded-xl border border-dt-line bg-dt-card p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="space-y-1 text-sm">
                     <p className="font-heading font-semibold">
                       {r.ownerName ?? "—"}{" "}
-                      <span className="font-mono text-xs font-normal text-muted-foreground">
+                      <span className="font-mono text-xs font-normal text-dt-dim">
                         {r.ownerPhone}
                       </span>
                     </p>
@@ -77,19 +77,19 @@ export default async function AdminErpPremiumPage() {
                         {formatBdt(Number(r.amount))}
                       </span>
                     </p>
-                    <p className="font-mono text-xs text-muted-foreground">
+                    <p className="font-mono text-xs text-dt-dim">
                       {t("erp.premium.senderNumber")}: {r.senderNumber} · TxID:{" "}
                       {r.transactionId}
                     </p>
                     {r.ownerNote ? (
-                      <p className="text-xs text-muted-foreground">“{r.ownerNote}”</p>
+                      <p className="text-xs text-dt-dim">“{r.ownerNote}”</p>
                     ) : null}
                   </div>
                   <ReviewButtons requestId={r.id} />
                 </div>
                 {r.receiptPublicId ? (
                   <div className="mt-3">
-                    <p className="mb-1 flex items-center gap-1 text-xs text-muted-foreground">
+                    <p className="mb-1 flex items-center gap-1 text-xs text-dt-dim">
                       <BadgeCheckIcon className="size-3.5" aria-hidden />
                       {t("erp.premiumAdmin.receipt")}
                     </p>
@@ -97,7 +97,7 @@ export default async function AdminErpPremiumPage() {
                     <img
                       src={imageUrl(r.receiptPublicId, "card")}
                       alt={t("erp.premiumAdmin.receipt")}
-                      className="max-h-64 rounded-lg border border-border"
+                      className="max-h-64 rounded-lg border border-dt-line"
                     />
                   </div>
                 ) : null}
@@ -123,7 +123,7 @@ export default async function AdminErpPremiumPage() {
         <h2 className="font-heading text-lg font-semibold">
           {t("erp.premiumAdmin.ownersTitle")}
         </h2>
-        <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
+        <ul className="divide-y divide-dt-line overflow-hidden rounded-xl border border-dt-line bg-dt-card">
           {profiles.map((p) => {
             const state = planState(p)
             return (
@@ -131,7 +131,7 @@ export default async function AdminErpPremiumPage() {
                 <div>
                   <p className="font-medium">
                     {p.ownerName ?? "—"}{" "}
-                    <span className="font-mono text-xs text-muted-foreground">
+                    <span className="font-mono text-xs text-dt-dim">
                       {p.ownerPhone}
                     </span>
                   </p>

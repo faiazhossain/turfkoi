@@ -88,7 +88,7 @@ export default async function AdminOverviewPage() {
           <h2 className="font-heading text-lg font-semibold">{t("admin.overview.needsAttention")}</h2>
           <ul className="grid gap-2 sm:grid-cols-3">
             {pendingRefunds.length > 0 ? (
-              <li className="rounded-lg border border-border bg-card p-4">
+              <li className="rounded-lg border border-dt-line bg-dt-card p-4">
                 <div className="flex items-center gap-2">
                   <AlertTriangleIcon className="size-4 text-warning" aria-hidden />
                   <Link
@@ -100,13 +100,13 @@ export default async function AdminOverviewPage() {
                     })}
                   </Link>
                 </div>
-                <p className="mt-1 text-xs text-muted-foreground">
+                <p className="mt-1 text-xs text-dt-dim">
                   {t("admin.overview.refundsSecondAdminHint")}
                 </p>
               </li>
             ) : null}
             {disputes.length > 0 ? (
-              <li className="rounded-lg border border-border bg-card p-4">
+              <li className="rounded-lg border border-dt-line bg-dt-card p-4">
                 <div className="flex items-center gap-2">
                   <ShieldAlertIcon className="size-4 text-destructive" aria-hidden />
                   <Link
@@ -118,13 +118,13 @@ export default async function AdminOverviewPage() {
                     })}
                   </Link>
                 </div>
-                <p className="mt-1 text-xs text-muted-foreground">
+                <p className="mt-1 text-xs text-dt-dim">
                   {t("admin.overview.disputedHint")}
                 </p>
               </li>
             ) : null}
             {openReports.length > 0 ? (
-              <li className="rounded-lg border border-border bg-card p-4">
+              <li className="rounded-lg border border-dt-line bg-dt-card p-4">
                 <div className="flex items-center gap-2">
                   <ShieldAlertIcon className="size-4 text-info" aria-hidden />
                   <Link

@@ -55,11 +55,11 @@ export default async function AdminBookingsPage({
     <div className="space-y-8">
       <section className="space-y-3">
         <h2 className="font-heading text-lg font-semibold">{t("admin.bookings.pendingRefundsTitle")}</h2>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-dt-dim">
           {t("admin.bookings.refundsNote")}
         </p>
         {pendingRefunds.length === 0 ? (
-          <p className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
+          <p className="rounded-lg border border-dashed border-dt-line p-4 text-sm text-dt-dim">
             {t("admin.bookings.noPendingRefunds")}
           </p>
         ) : (
@@ -70,20 +70,20 @@ export default async function AdminBookingsPage({
               return (
                 <li
                   key={r.id}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-card p-4"
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-dt-line bg-dt-card p-4"
                 >
                   <div className="min-w-0">
                     <p className="font-heading font-medium">
                       ৳{amount.toLocaleString()}{" "}
-                      <span className="text-xs font-normal text-muted-foreground">
+                      <span className="text-xs font-normal text-dt-dim">
                         {t("admin.bookings.refund")}
                       </span>
                     </p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-dt-dim">
                       {r.turfName} · {t("admin.bookings.requestedBy", { phone: r.requestedByPhone })}
                     </p>
                     {r.reason ? (
-                      <p className="text-xs italic text-muted-foreground">
+                      <p className="text-xs italic text-dt-dim">
                         &quot;{r.reason}&quot;
                       </p>
                     ) : null}
@@ -106,7 +106,7 @@ export default async function AdminBookingsPage({
             <select
               name="status"
               defaultValue={status ?? ""}
-              className="rounded-lg border border-border bg-background px-2 py-1.5"
+              className="rounded-lg border border-dt-line bg-dt-bg px-2 py-1.5"
             >
               <option value="">{t("admin.allStatuses")}</option>
               {[
@@ -124,14 +124,14 @@ export default async function AdminBookingsPage({
             </select>
             <button
               type="submit"
-              className="rounded-lg border border-border px-3 py-1.5 font-medium hover:bg-muted"
+              className="rounded-lg border border-dt-line px-3 py-1.5 font-medium hover:bg-dt-card2"
             >
               {t("admin.filter")}
             </button>
           </form>
         </div>
         {bookings.length === 0 ? (
-          <p className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+          <p className="rounded-lg border border-dashed border-dt-line p-6 text-center text-sm text-dt-dim">
             {t("admin.bookings.empty")}
           </p>
         ) : (
@@ -182,7 +182,7 @@ export default async function AdminBookingsPage({
                           maxAmount={Number(b.totalAmount)}
                         />
                       ) : (
-                        <span className="text-xs text-muted-foreground">—</span>
+                        <span className="text-xs text-dt-dim">—</span>
                       )}
                     </TableCell>
                   </TableRow>

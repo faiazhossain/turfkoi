@@ -146,14 +146,14 @@ export function OwnerLoginCodePanel({
               {t("admin.ownerCode.copyMessage")}
             </Button>
           </div>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-dt-dim">
             {minted.passwordLocked
               ? t("admin.ownerCode.passwordLocked")
               : t("admin.ownerCode.passwordStillWorks", { phone: minted.phone })}
           </p>
         </div>
       ) : (
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-dt-dim">
           {t("admin.ownerCode.hint", { phone: ownerPhone })}
         </p>
       )}

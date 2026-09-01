@@ -38,7 +38,7 @@ export default async function AdminUsersPage({
           />
           <button
             type="submit"
-            className="rounded-lg border border-border px-3 py-1.5 text-sm font-medium hover:bg-muted"
+            className="rounded-lg border border-dt-line px-3 py-1.5 text-sm font-medium hover:bg-dt-card2"
           >
             {t("common.search")}
           </button>
@@ -46,7 +46,7 @@ export default async function AdminUsersPage({
       </div>
 
       {users.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+        <p className="rounded-lg border border-dashed border-dt-line p-6 text-center text-sm text-dt-dim">
           {t("admin.users.empty")}
         </p>
       ) : (
@@ -54,7 +54,7 @@ export default async function AdminUsersPage({
           {users.map((u) => (
             <li
               key={u.id}
-              className="flex flex-wrap items-start justify-between gap-3 rounded-lg border border-border bg-card p-4"
+              className="flex flex-wrap items-start justify-between gap-3 rounded-lg border border-dt-line bg-dt-card p-4"
             >
               <div className="min-w-0">
                 <p className="font-heading font-medium">
@@ -65,9 +65,9 @@ export default async function AdminUsersPage({
                     </StatusBadge>
                   ) : null}
                 </p>
-                <p className="font-mono text-xs text-muted-foreground">{u.phone}</p>
+                <p className="font-mono text-xs text-dt-dim">{u.phone}</p>
                 {u.email ? (
-                  <p className="text-xs text-muted-foreground">{u.email}</p>
+                  <p className="text-xs text-dt-dim">{u.email}</p>
                 ) : null}
                 <div className="mt-2 flex flex-wrap items-center gap-1">
                   {ALL_ROLES.map((role) => (
@@ -85,7 +85,7 @@ export default async function AdminUsersPage({
           ))}
         </ul>
       )}
-      <p className="text-xs text-muted-foreground">
+      <p className="text-xs text-dt-dim">
         <Link href="/admin" className="hover:underline">
           {t("admin.backToOverview")}
         </Link>

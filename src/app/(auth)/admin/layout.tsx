@@ -43,7 +43,7 @@ export default async function AdminLayout({
     <div className="mx-auto max-w-6xl px-4 py-12">
       <header className="mb-6">
         <h1 className="font-heading text-2xl font-semibold">{t("admin.title")}</h1>
-        <p className="text-sm text-muted-foreground">{t("admin.subtitle")}</p>
+        <p className="text-sm text-dt-dim">{t("admin.subtitle")}</p>
       </header>
       <AdminSubNav
         pendingApplications={pendingApplications}

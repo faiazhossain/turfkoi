@@ -36,7 +36,7 @@ export default async function AdminTurfsPage({
           <h2 className="font-heading text-lg font-semibold">{t("admin.turfs.title")}</h2>
           <Link
             href="/admin/turfs/new"
-            className="rounded-lg border border-border px-3 py-1.5 text-sm hover:bg-muted/50"
+            className="rounded-lg border border-dt-line px-3 py-1.5 text-sm hover:bg-dt-card2/50"
           >
             {t("admin.turfs.seedTurf")}
           </Link>
@@ -49,8 +49,8 @@ export default async function AdminTurfsPage({
               className={
                 "rounded-lg border px-3 py-1.5 " +
                 (filter === f
-                  ? "border-border bg-muted text-foreground"
-                  : "border-transparent text-muted-foreground hover:bg-muted/50")
+                  ? "border-dt-line bg-dt-card2 text-dt-txt"
+                  : "border-transparent text-dt-dim hover:bg-dt-card2/50")
               }
             >
               {t(`admin.turfs.filters.${f}`)}
@@ -60,7 +60,7 @@ export default async function AdminTurfsPage({
       </div>
 
       {turfs.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+        <p className="rounded-lg border border-dashed border-dt-line p-6 text-center text-sm text-dt-dim">
           {t("admin.turfs.empty")}
         </p>
       ) : (
@@ -68,7 +68,7 @@ export default async function AdminTurfsPage({
           {turfs.map((trf) => (
             <li
               key={trf.id}
-              className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-card p-4"
+              className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-dt-line bg-dt-card p-4"
             >
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
@@ -80,7 +80,7 @@ export default async function AdminTurfsPage({
                   </Link>
                   <Link
                     href={`/turfs/${trf.slug}`}
-                    className="text-xs text-muted-foreground hover:text-foreground hover:underline"
+                    className="text-xs text-dt-dim hover:text-dt-txt hover:underline"
                   >
                     {t("admin.turfs.viewPublic")}
                   </Link>
@@ -103,7 +103,7 @@ export default async function AdminTurfsPage({
                     </StatusBadge>
                   ) : null}
                 </div>
-                <p className="truncate text-xs text-muted-foreground">
+                <p className="truncate text-xs text-dt-dim">
                   {[trf.area, trf.city].filter(Boolean).join(", ") || t("turfs.locationTbd")}
                   {" · "}
                   {turfFormatLabel(trf.format)}

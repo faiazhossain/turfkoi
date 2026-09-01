@@ -110,7 +110,7 @@ export function UserStatusToggle({
     })
   }
   if (status === "deleted") {
-    return <span className="text-xs text-muted-foreground">{t("admin.users.status.deleted")}</span>
+    return <span className="text-xs text-dt-dim">{t("admin.users.status.deleted")}</span>
   }
   return (
     <Button

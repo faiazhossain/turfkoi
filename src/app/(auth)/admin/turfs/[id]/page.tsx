@@ -80,14 +80,14 @@ export default async function AdminTurfCockpitPage({ params }: PageProps) {
       <nav className="flex flex-wrap items-center justify-between gap-2 text-sm">
         <Link
           href="/admin/turfs"
-          className="text-muted-foreground hover:text-foreground"
+          className="text-dt-dim hover:text-dt-txt"
         >
           ← {t("admin.cockpit.allTurfs")}
         </Link>
         <div className="flex items-center gap-2">
           <Link
             href={`/turfs/${turf.slug}`}
-            className="text-primary hover:underline"
+            className="text-dt-green hover:underline"
           >
             {t("turfOwner.publicView")}
           </Link>
@@ -114,7 +114,7 @@ export default async function AdminTurfCockpitPage({ params }: PageProps) {
 
       <div>
         <h2 className="font-heading text-2xl font-semibold">{turf.name}</h2>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-dt-dim">
           {[turf.area, turf.city].filter(Boolean).join(", ") ||
             t("turfs.locationTbd")}
           {" · "}
@@ -133,13 +133,13 @@ export default async function AdminTurfCockpitPage({ params }: PageProps) {
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex flex-wrap items-center gap-2 text-sm">
-            <span className="text-muted-foreground">
+            <span className="text-dt-dim">
               {t("admin.cockpit.ownerLabel")}
             </span>
             {ownerPhone ? (
               <span className="font-medium">{ownerPhone}</span>
             ) : (
-              <span className="text-muted-foreground">
+              <span className="text-dt-dim">
                 {t("admin.cockpit.noOwnerInvite")}
               </span>
             )}
@@ -242,7 +242,7 @@ export default async function AdminTurfCockpitPage({ params }: PageProps) {
           {bookingCount === 0 ? (
             <DeleteTurfControl turfId={turf.id} name={turf.name} />
           ) : (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-dt-dim">
               {t("admin.cockpit.bookingHistoryBlocked")}
             </p>
           )}

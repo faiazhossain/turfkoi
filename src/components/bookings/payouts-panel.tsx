@@ -76,7 +76,7 @@ export function PayoutsPanel({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h2 className="font-heading text-lg font-semibold">{t("admin.payouts.title")}</h2>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-dt-dim">
             {t("admin.payouts.period", { start: periodStart, end: periodEnd })}
           </p>
         </div>
@@ -86,25 +86,25 @@ export function PayoutsPanel({
       </div>
 
       {payouts.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+        <p className="rounded-lg border border-dashed border-dt-line p-6 text-center text-sm text-dt-dim">
           {t("admin.payouts.empty")}
         </p>
       ) : (
-        <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border">
+        <ul className="divide-y divide-dt-line overflow-hidden rounded-lg border border-dt-line">
           {payouts.map((p) => (
             <li
               key={p.id}
-              className="flex flex-wrap items-center justify-between gap-3 bg-card p-3 text-sm"
+              className="flex flex-wrap items-center justify-between gap-3 bg-dt-card p-3 text-sm"
             >
               <div>
-                <p className="font-mono text-xs text-muted-foreground">
+                <p className="font-mono text-xs text-dt-dim">
                   {p.periodStart} → {p.periodEnd}
                 </p>
                 <p className="font-semibold tabular-nums">
                   ৳{Number(p.amount).toLocaleString()}
                 </p>
                 {p.providerReference ? (
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-dt-dim">
                     bKash: {p.providerReference}
                   </p>
                 ) : null}

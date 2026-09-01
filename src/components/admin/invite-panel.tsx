@@ -117,10 +117,10 @@ export function InvitePanel({
   }
 
   return (
-    <div className="space-y-2 border-border bg-muted/40 p-3 rounded-lg w-full sm:w-96">
+    <div className="space-y-2 border-dt-line bg-dt-card2/40 p-3 rounded-lg w-full sm:w-96">
       {invite ? (
         <div className="space-y-2">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <div className="flex items-center gap-2 text-xs text-dt-dim">
             <LinkIcon className="size-3.5" aria-hidden />
             <span>
               {t("admin.invite.expires", { date: invite.expiresAt.toDateString() })}
@@ -153,7 +153,7 @@ export function InvitePanel({
           </div>
           {invite.otp ? (
             <div className="space-y-2">
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-dt-dim">
                 {t("admin.invite.otpEnabled", { phone: invite.phone ?? "" })}
               </p>
               <div className="flex items-center gap-2">
@@ -178,7 +178,7 @@ export function InvitePanel({
               </div>
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between gap-2">
-                  <Label className="text-xs text-muted-foreground">
+                  <Label className="text-xs text-dt-dim">
                     {t("admin.invite.whatsappLabel")}
                   </Label>
                   <Button
@@ -206,12 +206,12 @@ export function InvitePanel({
               </div>
             </div>
           ) : null}
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-dt-dim">
             {t("admin.invite.shownOnce")}
           </p>
         </div>
       ) : (
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-dt-dim">
           {t("admin.invite.singleUse")}
         </p>
       )}

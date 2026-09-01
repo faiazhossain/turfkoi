@@ -40,8 +40,8 @@ export default async function AdminApplicationsPage({
               className={
                 "rounded-lg border px-3 py-1.5 " +
                 (filter === f
-                  ? "border-border bg-muted text-foreground"
-                  : "border-transparent text-muted-foreground hover:bg-muted/50")
+                  ? "border-dt-line bg-dt-card2 text-dt-txt"
+                  : "border-transparent text-dt-dim hover:bg-dt-card2/50")
               }
             >
               {t(`admin.applications.filters.${f}`)}
@@ -51,7 +51,7 @@ export default async function AdminApplicationsPage({
       </div>
 
       {applications.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+        <p className="rounded-lg border border-dashed border-dt-line p-6 text-center text-sm text-dt-dim">
           {t("admin.applications.empty")}
         </p>
       ) : (
@@ -59,7 +59,7 @@ export default async function AdminApplicationsPage({
           {applications.map((app) => (
             <li
               key={app.id}
-              className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-card p-4"
+              className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-dt-line bg-dt-card p-4"
             >
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
@@ -82,24 +82,24 @@ export default async function AdminApplicationsPage({
                   {app.turfSlug ? (
                     <Link
                       href={`/turfs/${app.turfSlug}`}
-                      className="text-xs text-muted-foreground hover:underline"
+                      className="text-xs text-dt-dim hover:underline"
                     >
                       {t("admin.applications.viewTurf")}
                     </Link>
                   ) : null}
                 </div>
-                <p className="truncate text-xs text-muted-foreground">
+                <p className="truncate text-xs text-dt-dim">
                   {app.contactName} · {app.phone}
                   {app.email ? ` · ${app.email}` : ""}
                   {" · "}
                   {[app.area, app.city].filter(Boolean).join(", ") || t("turfs.locationTbd")}
                 </p>
                 {app.address ? (
-                  <p className="truncate text-xs text-muted-foreground">{app.address}</p>
+                  <p className="truncate text-xs text-dt-dim">{app.address}</p>
                 ) : null}
                 {app.notes ? (
-                  <p className="mt-1 max-w-xl whitespace-pre-line text-xs text-muted-foreground">
-                    <span className="font-medium text-foreground">
+                  <p className="mt-1 max-w-xl whitespace-pre-line text-xs text-dt-dim">
+                    <span className="font-medium text-dt-txt">
                       {t("admin.applications.directions")}
                     </span>{" "}
                     {app.notes}

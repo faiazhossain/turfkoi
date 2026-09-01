@@ -68,14 +68,14 @@ export function AdminSubNav({
                 className={cn(
                   "inline-flex h-9 items-center gap-1.5 rounded-lg border px-3 text-sm font-medium transition-colors",
                   active
-                    ? "border-border bg-muted text-foreground"
-                    : "border-transparent text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                    ? "border-dt-line bg-dt-card2 text-dt-txt"
+                    : "border-transparent text-dt-dim hover:bg-dt-card2/50 hover:text-dt-txt"
                 )}
               >
                 <Icon className="size-4" aria-hidden />
                 {t(item.labelKey)}
                 {badge ? (
-                  <span className="ml-0.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] leading-none font-semibold text-primary-foreground">
+                  <span className="ml-0.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-dt-green px-1 text-[10px] leading-none font-semibold text-dt-ink">
                     {badge}
                   </span>
                 ) : null}
