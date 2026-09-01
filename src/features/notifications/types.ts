@@ -460,7 +460,7 @@ export const NOTIFICATION_TYPES: Registry = {
       params: { friend: p.friendName },
     }),
     body: () => ({ key: "notifications.friendRequestReceivedBody" }),
-    href: () => "/friends",
+    href: () => "/app/friends",
   },
   "friend.request_accepted": {
     priority: "info",
@@ -471,7 +471,7 @@ export const NOTIFICATION_TYPES: Registry = {
       params: { friend: p.friendName },
     }),
     body: () => ({ key: "notifications.friendRequestAcceptedBody" }),
-    href: () => "/friends",
+    href: () => "/app/friends",
   },
 }
 

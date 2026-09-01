@@ -90,7 +90,7 @@ export function FriendsCard({
       <div className="flex items-center justify-between">
         <h2 className="font-heading text-lg font-semibold">{t("friends.title")}</h2>
         <a
-          href="/friends"
+          href="/app/friends"
           className="text-sm font-medium text-primary hover:underline"
         >
           {t("friends.viewAll")}

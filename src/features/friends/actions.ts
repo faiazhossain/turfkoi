@@ -75,7 +75,7 @@ export async function sendFriendRequestAction(
           .set({ status: "accepted", respondedAt: new Date() })
           .where(eq(friendships.id, prior.id))
         revalidatePath("/app")
-        revalidatePath("/friends")
+        revalidatePath("/app/friends")
         return { ok: true }
       }
       return { ok: false, error: "friends.errors.requestPending" }
@@ -108,7 +108,7 @@ export async function sendFriendRequestAction(
   )
 
   revalidatePath("/app")
-  revalidatePath("/friends")
+  revalidatePath("/app/friends")
   return { ok: true }
 }
 
@@ -156,7 +156,7 @@ export async function respondToFriendRequestAction(
   }
 
   revalidatePath("/app")
-  revalidatePath("/friends")
+  revalidatePath("/app/friends")
   return { ok: true }
 }
 
@@ -181,7 +181,7 @@ export async function removeFriendAction(
 
   await db.delete(friendships).where(eq(friendships.id, row.id))
   revalidatePath("/app")
-  revalidatePath("/friends")
+  revalidatePath("/app/friends")
   return { ok: true }
 }
 
@@ -217,8 +217,8 @@ export async function blockUserAction(input: { userId: string }): Promise<Action
     )
 
   revalidatePath("/app")
-  revalidatePath("/friends")
-  revalidatePath("/players")
+  revalidatePath("/app/friends")
+  revalidatePath("/players/[code]")
   return { ok: true }
 }
 
@@ -234,7 +234,7 @@ export async function unblockUserAction(input: { userId: string }): Promise<Acti
     .where(and(eq(userBlocks.blockerId, user.id), eq(userBlocks.blockedId, parsed.data.userId)))
 
   revalidatePath("/app")
-  revalidatePath("/friends")
-  revalidatePath("/players")
+  revalidatePath("/app/friends")
+  revalidatePath("/players/[code]")
   return { ok: true }
 }
