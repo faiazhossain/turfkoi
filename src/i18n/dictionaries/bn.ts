@@ -730,11 +730,11 @@ export const bn: Dictionary = {
       seatsFull: "স্কোয়াড পূর্ণ ✓",
       seatsNeed: "আরও {need} জন দরকার",
       saidLine:
-        "স্কোয়াড সাইজ {squadSize} জন — আপনি বলেছিলেন {said} জন আসবে, এখন পর্যন্ত {joined} জন জয়েন করেছে।",
+        "Squad Size {squadSize} — {said} জন আসার কথা, এখন পর্যন্ত {joined} জন Join করেছে।",
       toJoinLine:
-        "এখনো আসতে বাকি {remaining} জন — friends লিস্ট থেকে invite করুন, তাদের তথ্য নিজে যোগ করুন, অথবা সিটগুলো এভাবেই রাখুন।",
+        "আরও {remaining} জন বাকি। Friends List থেকে Invite করুন, Player Add করুন বা Slot খালি রাখুন।",
       communityLine:
-        "আরও {open} জন দরকার — DeshiTurf-এ দেখুন কারা খেলতে available; তারা নিজে নিজে join করতে পারবে, অথবা আপনি invite পাঠাতে পারবেন।",
+        "আরও {open} জন দরকার? DeshiTurf-এর Available Player-দের Invite করুন বা তাদের Join করার Request-এর অপেক্ষায় থাকুন।",
       onField: "মাঠে {count}/{total}",
       benchCount: "বেঞ্চে {count}/{total}",
       unnamed: "{count} জন এখনো আসতে বাকি",
