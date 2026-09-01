@@ -173,7 +173,7 @@ function popupContent(m: MapMarker): HTMLElement {
     a.href = m.href
     a.textContent = "View details →"
     a.className =
-      "mt-0.5 block text-xs text-muted-foreground underline-offset-2 transition-colors hover:text-foreground hover:underline"
+      "mt-0.5 block text-xs text-dt-dim underline-offset-2 transition-colors hover:text-dt-txt hover:underline"
     el.appendChild(a)
   }
   return el

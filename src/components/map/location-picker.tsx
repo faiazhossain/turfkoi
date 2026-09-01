@@ -282,7 +282,7 @@ export function LocationPicker({
     <div className={cn("space-y-2", className)}>
       <div className="relative">
         <SearchIcon
-          className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+          className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-dt-dim"
           aria-hidden
         />
         <Input
@@ -308,7 +308,7 @@ export function LocationPicker({
           <ul
             role="listbox"
             aria-label={t("map.resultsAria")}
-            className="absolute z-20 mt-1 w-full overflow-hidden rounded-lg border border-border bg-card shadow-lg"
+            className="absolute z-20 mt-1 w-full overflow-hidden rounded-lg border border-dt-line bg-dt-card shadow-lg"
           >
             {results.map((f, i) => {
               const place = photonToPlace(f)
@@ -319,13 +319,13 @@ export function LocationPicker({
                     role="option"
                     aria-selected={false}
                     onClick={() => selectResult(f)}
-                    className="flex w-full items-start gap-2 px-3 py-2 text-left text-sm hover:bg-muted"
+                    className="flex w-full items-start gap-2 px-3 py-2 text-left text-sm hover:bg-dt-card2"
                   >
-                    <MapPinIcon className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" aria-hidden />
+                    <MapPinIcon className="mt-0.5 size-3.5 shrink-0 text-dt-dim" aria-hidden />
                     <span>
                       <span className="font-medium">{place.name}</span>
                       {place.area && place.area !== place.name ? (
-                        <span className="block text-xs text-muted-foreground">
+                        <span className="block text-xs text-dt-dim">
                           {place.area}
                         </span>
                       ) : null}
@@ -346,7 +346,7 @@ export function LocationPicker({
         fullscreen
       />
 
-      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-dt-dim">
         <span aria-live="polite">
           {reverseLoading ? (
             <Loader size={14} className="size-3.5" aria-hidden />

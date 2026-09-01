@@ -105,19 +105,19 @@ export function MapCanvas({
       role="application"
       aria-label={ariaLabel}
       className={cn(
-        "relative h-64 w-full overflow-hidden rounded-lg border border-border fullscreen:rounded-none fullscreen:border-none",
+        "relative h-64 w-full overflow-hidden rounded-lg border border-dt-line fullscreen:rounded-none fullscreen:border-none",
         className
       )}
     >
       {!ready && !failed ? (
-        <div className="absolute inset-0 z-10 flex items-center justify-center bg-muted/60">
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-dt-card2/60">
           <Loader size={96} className="max-h-24 max-w-24" label={t("map.loading")} />
         </div>
       ) : null}
       {failed ? (
         <div
           role="status"
-          className="absolute inset-0 z-10 flex items-center justify-center bg-muted/80 p-4 text-center text-sm text-muted-foreground"
+          className="absolute inset-0 z-10 flex items-center justify-center bg-dt-card2/80 p-4 text-center text-sm text-dt-dim"
         >
           {t("map.loadFailed")}
         </div>
