@@ -122,13 +122,13 @@ export function ScheduleBuilderForm({
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1.5">
-          <Label className="text-xs font-medium text-muted-foreground">
+          <Label className="text-xs font-medium text-dt-dim">
             {t("turfOwner.schedule.scheduleName")}
           </Label>
           <Input {...form.register("name")} />
         </div>
         <div className="space-y-1.5">
-          <Label className="text-xs font-medium text-muted-foreground">
+          <Label className="text-xs font-medium text-dt-dim">
             {t("turfOwner.schedule.status")}
           </Label>
           <Select
@@ -153,7 +153,7 @@ export function ScheduleBuilderForm({
       </div>
 
       <div className="space-y-1.5">
-        <Label className="text-xs font-medium text-muted-foreground">
+        <Label className="text-xs font-medium text-dt-dim">
           {t("turfOwner.schedule.editingDay")}
         </Label>
         <div className="flex flex-wrap gap-2">
@@ -166,8 +166,8 @@ export function ScheduleBuilderForm({
               className={
                 "rounded-md border px-3 py-1.5 text-sm transition-colors " +
                 (selectedDay === day
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "border-border bg-card text-foreground hover:bg-muted")
+                  ? "border-dt-green bg-dt-green text-dt-ink"
+                  : "border-dt-line bg-dt-card text-dt-txt hover:bg-dt-card2")
               }
             >
               {t(`turfOwner.generate.day${day}`)}
@@ -178,7 +178,7 @@ export function ScheduleBuilderForm({
 
       <div className="space-y-3">
         {daySections.length === 0 ? (
-          <p className="rounded-lg border border-dashed border-border p-4 text-center text-sm text-muted-foreground">
+          <p className="rounded-lg border border-dashed border-dt-line p-4 text-center text-sm text-dt-dim">
             {t("turfOwner.schedule.noSectionsThatDay", {
               day: t(`turfOwner.generate.day${selectedDay}`),
             })}
@@ -192,7 +192,7 @@ export function ScheduleBuilderForm({
             return (
               <div
                 key={field.id}
-                className="space-y-2 rounded-lg border border-border bg-card p-3"
+                className="space-y-2 rounded-lg border border-dt-line bg-dt-card p-3"
               >
                 <div className="flex items-center justify-between gap-2">
                   <Input
@@ -212,7 +212,7 @@ export function ScheduleBuilderForm({
                 </div>
                 <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-5">
                   <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">
+                    <Label className="text-xs text-dt-dim">
                       {t("turfOwner.schedule.from")}
                     </Label>
                     <Input
@@ -221,7 +221,7 @@ export function ScheduleBuilderForm({
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">
+                    <Label className="text-xs text-dt-dim">
                       {t("turfOwner.schedule.to")}
                     </Label>
                     <Input
@@ -230,7 +230,7 @@ export function ScheduleBuilderForm({
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">
+                    <Label className="text-xs text-dt-dim">
                       {t("turfOwner.schedule.slotLabel")}
                     </Label>
                     <Select
@@ -256,7 +256,7 @@ export function ScheduleBuilderForm({
                     </Select>
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">
+                    <Label className="text-xs text-dt-dim">
                       {t("turfOwner.schedule.gapLabel")}
                     </Label>
                     <Select
@@ -284,7 +284,7 @@ export function ScheduleBuilderForm({
                     </Select>
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">
+                    <Label className="text-xs text-dt-dim">
                       {t("turfOwner.generate.basePrice")}
                     </Label>
                     <Input
@@ -308,7 +308,7 @@ export function ScheduleBuilderForm({
             day: t(`turfOwner.generate.day${selectedDay}`),
           })}
         </Button>
-        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+        <div className="flex items-center gap-1 text-sm text-dt-dim">
           {t("turfOwner.schedule.copyDayTo", {
             day: t(`turfOwner.generate.day${selectedDay}`),
           })}
@@ -343,7 +343,7 @@ export function ScheduleBuilderForm({
 
       {preview.length > 0 ? (
         <div className="space-y-1">
-          <p className="text-xs font-medium text-muted-foreground">
+          <p className="text-xs font-medium text-dt-dim">
             {t("turfOwner.schedule.previewCount", {
               day: t(`turfOwner.generate.day${selectedDay}`),
               count: preview.length,
@@ -353,10 +353,10 @@ export function ScheduleBuilderForm({
             {preview.map((p, i) => (
               <span
                 key={`${p.startTime}-${i}`}
-                className="rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-xs"
+                className="rounded border border-dt-line bg-dt-card2 px-1.5 py-0.5 font-mono text-xs"
               >
                 {p.startTime}
-                <span className="ml-1 text-muted-foreground">
+                <span className="ml-1 text-dt-dim">
                   {p.durationMinutes}m
                 </span>
               </span>
@@ -393,7 +393,7 @@ export function ScheduleBuilderForm({
       ) : null}
       {summary ? <StatusBadge status="success">{summary}</StatusBadge> : null}
       {conflicts.length > 0 ? (
-        <div className="rounded-lg border border-warning bg-warning/10 p-3 text-xs text-foreground">
+        <div className="rounded-lg border border-warning bg-warning/10 p-3 text-xs text-dt-txt">
           <p className="mb-1 font-medium">
             {t("turfOwner.schedule.leftInPlace")}
           </p>

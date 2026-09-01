@@ -79,12 +79,12 @@ function ChoiceCard({
       className={
         "rounded-xl border p-3 text-left transition-colors " +
         (selected
-          ? "border-primary bg-primary/10"
-          : "border-border bg-card hover:bg-muted/50")
+          ? "border-dt-green bg-dt-green/10"
+          : "border-dt-line bg-dt-card hover:bg-dt-card2/50")
       }
     >
       <span className="block text-sm font-medium">{title}</span>
-      <span className="block text-xs text-muted-foreground">{description}</span>
+      <span className="block text-xs text-dt-dim">{description}</span>
     </button>
   )
 }
@@ -98,7 +98,7 @@ function Field({
 }) {
   return (
     <div className="space-y-1.5">
-      <Label className="text-xs font-medium text-muted-foreground">{label}</Label>
+      <Label className="text-xs font-medium text-dt-dim">{label}</Label>
       {children}
     </div>
   )
@@ -278,13 +278,13 @@ export function ScheduleWizardDialog({
               <span
                 className={
                   "h-1.5 w-full rounded-full " +
-                  (i + 1 <= step ? "bg-primary" : "bg-border")
+                  (i + 1 <= step ? "bg-dt-green" : "bg-dt-line")
                 }
               />
               <span
                 className={
                   "text-[10px] " +
-                  (i + 1 === step ? "text-foreground" : "text-muted-foreground")
+                  (i + 1 === step ? "text-dt-txt" : "text-dt-dim")
                 }
               >
                 {t(key)}
@@ -473,8 +473,8 @@ export function ScheduleWizardDialog({
                           className={
                             "h-9 w-9 rounded-lg border text-sm transition-colors " +
                             (on
-                              ? "border-primary bg-primary text-primary-foreground"
-                              : "border-border bg-card text-muted-foreground hover:bg-muted")
+                              ? "border-dt-green bg-dt-green text-dt-ink"
+                              : "border-dt-line bg-dt-card text-dt-dim hover:bg-dt-card2")
                           }
                         >
                           {abbr}
@@ -491,14 +491,14 @@ export function ScheduleWizardDialog({
         {step === 4 ? (
           <div className="space-y-3">
             <p className="text-sm font-medium">{t("turfOwner.wizard.yourWeek")}</p>
-            <div className="max-h-64 space-y-2 overflow-y-auto rounded-lg border border-border p-3">
+            <div className="max-h-64 space-y-2 overflow-y-auto rounded-lg border border-dt-line p-3">
               {[0, 1, 2, 3, 4, 5, 6].map((day) => {
                 const daySecs = sections.filter((s) => s.dayOfWeek === day)
                 return (
                   <div key={day} className="text-xs">
                     <p className="font-medium">{t(`turfOwner.generate.day${day}`)}</p>
                     {daySecs.length === 0 ? (
-                      <p className="text-muted-foreground">
+                      <p className="text-dt-dim">
                         {t("turfOwner.wizard.closedDay")}
                       </p>
                     ) : (
@@ -506,7 +506,7 @@ export function ScheduleWizardDialog({
                         {daySecs.map((s) => (
                           <p
                             key={`${s.startTime}-${s.endTime}`}
-                            className="flex items-center justify-between text-muted-foreground"
+                            className="flex items-center justify-between text-dt-dim"
                           >
                             <span className="font-mono">
                               {formatSlotTimeRange(s.startTime, s.endTime, locale)}

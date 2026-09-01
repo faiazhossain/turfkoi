@@ -115,7 +115,7 @@ export function SlotGrid({ turfId, slots }: SlotGridProps) {
 
   if (byDate.size === 0) {
     return (
-      <p className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+      <p className="rounded-lg border border-dashed border-dt-line p-6 text-center text-sm text-dt-dim">
         {t("turfOwner.slots.empty")}
       </p>
     )
@@ -126,18 +126,18 @@ export function SlotGrid({ turfId, slots }: SlotGridProps) {
       {Array.from(byDate.entries()).map(([date, daySlots]) => (
         <section key={date} className="space-y-2">
           <h4 className="font-heading text-sm font-semibold">{fmtDate(date, locale)}</h4>
-          <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border">
+          <ul className="divide-y divide-dt-line overflow-hidden rounded-lg border border-dt-line">
             {daySlots.map((slot) => {
               const key = `${slot.date}|${slot.startTime}`
               const isImmutable = slot.status === "booked" || slot.status === "held"
               return (
                 <li
                   key={key}
-                  className="flex flex-wrap items-center gap-2 bg-card p-3 text-sm"
+                  className="flex flex-wrap items-center gap-2 bg-dt-card p-3 text-sm"
                 >
                   <div className="w-20 font-mono text-xs">
                     {slot.startTime}
-                    <span className="ml-1 text-muted-foreground">
+                    <span className="ml-1 text-dt-dim">
                       {t("turfOwner.slots.minutesShort", {
                         count: slot.durationMinutes,
                       })}

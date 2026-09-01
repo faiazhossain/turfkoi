@@ -69,7 +69,7 @@ export function BookingHorizonSelect({
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-muted/40 px-3 py-2.5">
+    <div className="flex flex-wrap items-center gap-3 rounded-lg border border-dt-line bg-dt-card2/40 px-3 py-2.5">
       <div className="flex min-w-0 items-center gap-2">
         {pending ? (
           <Loader size={16} label={t("turfOwner.schedule.saving")} />
@@ -98,7 +98,7 @@ export function BookingHorizonSelect({
           ))}
         </SelectContent>
       </Select>
-      <p className="w-full text-xs text-muted-foreground sm:w-auto sm:flex-1">
+      <p className="w-full text-xs text-dt-dim sm:w-auto sm:flex-1">
         {t("turfOwner.schedule.windowHint", {
           count: locale === "bn" ? toBnDigits(String(days)) : days,
         })}

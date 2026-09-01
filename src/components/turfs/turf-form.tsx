@@ -299,7 +299,7 @@ export function TurfForm({ mode, turfId, defaultValues }: TurfFormProps) {
 
       <section className="space-y-3">
         <h3 className="font-heading text-sm font-semibold">{t("turfs.facilities")}</h3>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-dt-dim">
           {t("turfOwner.form.facilitiesHint")}
         </p>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
@@ -311,8 +311,8 @@ export function TurfForm({ mode, turfId, defaultValues }: TurfFormProps) {
                 className={cn(
                   "flex cursor-pointer items-center gap-3 rounded-lg border px-3 py-3 text-sm font-medium transition-colors",
                   checked
-                    ? "border-primary bg-primary/5 text-foreground"
-                    : "border-border bg-card text-muted-foreground hover:border-input hover:bg-muted/50 hover:text-foreground",
+                    ? "border-dt-green bg-dt-green/5 text-dt-txt"
+                    : "border-dt-line bg-dt-card text-dt-dim hover:border-dt-input hover:bg-dt-card2/50 hover:text-dt-txt",
                 )}
               >
                 <Checkbox
@@ -334,7 +334,7 @@ export function TurfForm({ mode, turfId, defaultValues }: TurfFormProps) {
           })}
         </div>
         <div className="space-y-2">
-          <Label className="text-xs font-medium text-muted-foreground">
+          <Label className="text-xs font-medium text-dt-dim">
             {t("turfOwner.form.anythingElse")}
           </Label>
           <div className="flex items-center gap-2">
@@ -371,13 +371,13 @@ export function TurfForm({ mode, turfId, defaultValues }: TurfFormProps) {
               {customFacilities.map((name) => (
                 <li
                   key={name}
-                  className="inline-flex items-center gap-1 rounded-full border border-border bg-muted/40 px-2.5 py-1 text-sm"
+                  className="inline-flex items-center gap-1 rounded-full border border-dt-line bg-dt-card2/40 px-2.5 py-1 text-sm"
                 >
                   {name}
                   <button
                     type="button"
                     onClick={() => removeCustomFacility(name)}
-                    className="text-muted-foreground hover:text-foreground"
+                    className="text-dt-dim hover:text-dt-txt"
                     aria-label={t("turfOwner.form.removeAria", { name })}
                   >
                     <XIcon className="size-3.5" aria-hidden />
@@ -418,7 +418,7 @@ export function TurfForm({ mode, turfId, defaultValues }: TurfFormProps) {
               <SelectItem key={o.value} value={o.value}>
                 <span>
                   <span className="font-medium">{t(o.labelKey)}</span>
-                  <span className="block text-xs font-normal text-muted-foreground">
+                  <span className="block text-xs font-normal text-dt-dim">
                     {t(o.hintKey)}
                   </span>
                 </span>
@@ -426,7 +426,7 @@ export function TurfForm({ mode, turfId, defaultValues }: TurfFormProps) {
             ))}
           </SelectContent>
         </Select>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-dt-dim">
           {t("turfOwner.form.policyNote")}
         </p>
       </section>
@@ -468,7 +468,7 @@ function Field({
   const { t } = useI18n();
   return (
     <div className="space-y-1.5">
-      <Label className="text-xs font-medium text-muted-foreground">
+      <Label className="text-xs font-medium text-dt-dim">
         {label}
       </Label>
       {children}

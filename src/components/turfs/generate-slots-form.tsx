@@ -66,13 +66,13 @@ export function GenerateSlotsForm({ turfId }: { turfId: string }) {
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1.5">
-          <Label className="text-xs font-medium text-muted-foreground">
+          <Label className="text-xs font-medium text-dt-dim">
             {t("turfOwner.generate.startDate")}
           </Label>
           <Input type="date" {...form.register("dateFrom")} />
         </div>
         <div className="space-y-1.5">
-          <Label className="text-xs font-medium text-muted-foreground">
+          <Label className="text-xs font-medium text-dt-dim">
             {t("turfOwner.generate.endDate")}
           </Label>
           <Input type="date" {...form.register("dateTo")} />
@@ -80,7 +80,7 @@ export function GenerateSlotsForm({ turfId }: { turfId: string }) {
       </div>
 
       <div className="space-y-1.5">
-        <Label className="text-xs font-medium text-muted-foreground">{t("turfOwner.generate.daysOfWeek")}</Label>
+        <Label className="text-xs font-medium text-dt-dim">{t("turfOwner.generate.daysOfWeek")}</Label>
         <div className="flex flex-wrap gap-3">
           {WEEKDAYS.map((label, idx) => {
             const checked = watchedWeekdays.includes(idx)
@@ -109,13 +109,13 @@ export function GenerateSlotsForm({ turfId }: { turfId: string }) {
 
       <div className="grid gap-3 sm:grid-cols-3">
         <div className="space-y-1.5">
-          <Label className="text-xs font-medium text-muted-foreground">
+          <Label className="text-xs font-medium text-dt-dim">
             {t("turfOwner.generate.firstSlot")}
           </Label>
           <Input type="time" {...form.register("startTime")} />
         </div>
         <div className="space-y-1.5">
-          <Label className="text-xs font-medium text-muted-foreground">
+          <Label className="text-xs font-medium text-dt-dim">
             {t("turfOwner.generate.duration")}
           </Label>
           <Select
@@ -139,7 +139,7 @@ export function GenerateSlotsForm({ turfId }: { turfId: string }) {
           </Select>
         </div>
         <div className="space-y-1.5">
-          <Label className="text-xs font-medium text-muted-foreground">
+          <Label className="text-xs font-medium text-dt-dim">
             {t("turfOwner.generate.slotsPerDay")}
           </Label>
           <Input
@@ -153,7 +153,7 @@ export function GenerateSlotsForm({ turfId }: { turfId: string }) {
 
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1.5">
-          <Label className="text-xs font-medium text-muted-foreground">
+          <Label className="text-xs font-medium text-dt-dim">
             {t("turfOwner.generate.basePrice")}
           </Label>
           <Input

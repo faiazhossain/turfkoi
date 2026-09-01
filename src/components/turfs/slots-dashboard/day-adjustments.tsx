@@ -22,21 +22,21 @@ export function DayAdjustments({ children }: { children: React.ReactNode }) {
         type="button"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 text-left transition-colors hover:bg-muted/50"
+        className="flex w-full items-center gap-3 rounded-xl border border-dt-line bg-dt-card px-4 py-3 text-left transition-colors hover:bg-dt-card2/50"
       >
-        <CalendarDaysIcon className="size-5 shrink-0 text-primary" aria-hidden />
+        <CalendarDaysIcon className="size-5 shrink-0 text-dt-green" aria-hidden />
         <span className="min-w-0 flex-1">
-          <span className="block text-sm font-medium text-foreground">
+          <span className="block text-sm font-medium text-dt-txt">
             {t("turfOwner.schedule.dayAdjustmentsTitle")}
           </span>
-          <span className="block text-xs text-muted-foreground">
+          <span className="block text-xs text-dt-dim">
             {t("turfOwner.schedule.dayAdjustmentsDesc")}
           </span>
         </span>
         <ChevronDownIcon
           aria-hidden
           className={cn(
-            "size-4 shrink-0 text-muted-foreground transition-transform duration-200",
+            "size-4 shrink-0 text-dt-dim transition-transform duration-200",
             open ? "rotate-180" : "rotate-0"
           )}
         />

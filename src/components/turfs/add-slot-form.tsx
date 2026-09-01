@@ -74,11 +74,11 @@ export function AddSlotForm({
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1.5">
-          <Label className="text-xs font-medium text-muted-foreground">
+          <Label className="text-xs font-medium text-dt-dim">
             {t("turfOwner.generate.startDate")}
           </Label>
           {defaultDate ? (
-            <p className="rounded-lg border border-border bg-muted px-3 py-2 text-sm">
+            <p className="rounded-lg border border-dt-line bg-dt-card2 px-3 py-2 text-sm">
               {defaultDate}
             </p>
           ) : (
@@ -86,7 +86,7 @@ export function AddSlotForm({
           )}
         </div>
         <div className="space-y-1.5">
-          <Label className="text-xs font-medium text-muted-foreground">
+          <Label className="text-xs font-medium text-dt-dim">
             {t("turfOwner.schedule.startTime")}
           </Label>
           <Input type="time" {...form.register("startTime")} />
@@ -95,7 +95,7 @@ export function AddSlotForm({
 
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1.5">
-          <Label className="text-xs font-medium text-muted-foreground">
+          <Label className="text-xs font-medium text-dt-dim">
             {t("turfOwner.wizard.gameLength")}
           </Label>
           <Select
@@ -119,7 +119,7 @@ export function AddSlotForm({
           </Select>
         </div>
         <div className="space-y-1.5">
-          <Label className="text-xs font-medium text-muted-foreground">
+          <Label className="text-xs font-medium text-dt-dim">
             {t("turfOwner.generate.basePrice")}
           </Label>
           <Input

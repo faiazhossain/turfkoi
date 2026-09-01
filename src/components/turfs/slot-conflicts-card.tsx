@@ -36,10 +36,10 @@ export async function SlotConflictsCard({
             <span className="font-mono text-xs">
               {c.date} · {c.startTime}
             </span>
-            <span className="rounded border border-border bg-card px-1.5 py-0.5 text-[0.65rem] text-foreground">
+            <span className="rounded border border-dt-line bg-dt-card px-1.5 py-0.5 text-[0.65rem] text-dt-txt">
               {t(`turfOwner.schedule.conflictBadge.${c.kind}`)}
             </span>
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-dt-dim">
               {c.kind === "booked_duration_mismatch" &&
               c.wantedMinutes != null
                 ? t("turfOwner.schedule.conflictMinutes", {

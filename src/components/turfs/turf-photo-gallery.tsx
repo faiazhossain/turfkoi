@@ -79,7 +79,7 @@ export function TurfPhotoGallery({
         {photos.map((photo, i) => (
           <div
             key={photo.id}
-            className="relative size-24 overflow-hidden rounded-md bg-muted"
+            className="relative size-24 overflow-hidden rounded-md bg-dt-card2"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -92,13 +92,13 @@ export function TurfPhotoGallery({
               className="size-full object-cover"
             />
             {photo.isCover ? (
-              <span className="absolute left-0.5 top-0.5 inline-flex items-center gap-0.5 rounded-full bg-background/80 px-1.5 py-0.5 text-[10px] font-medium">
+              <span className="absolute left-0.5 top-0.5 inline-flex items-center gap-0.5 rounded-full bg-dt-bg/80 px-1.5 py-0.5 text-[10px] font-medium">
                 <StarIcon className="size-3" aria-hidden />
                 {t("turfOwner.photosUi.coverBadge")}
               </span>
             ) : null}
             {busyId === photo.id ? (
-              <span className="absolute inset-0 flex items-center justify-center bg-background/60">
+              <span className="absolute inset-0 flex items-center justify-center bg-dt-bg/60">
                 <Loader size={14} className="size-4" aria-hidden />
               </span>
             ) : null}
@@ -145,7 +145,7 @@ export function TurfPhotoGallery({
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={uploading || full}
-          className={`flex flex-col items-center justify-center gap-1 rounded-md border border-dashed border-border text-xs text-muted-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50 ${
+          className={`flex flex-col items-center justify-center gap-1 rounded-md border border-dashed border-dt-line text-xs text-dt-dim hover:bg-dt-card2 disabled:cursor-not-allowed disabled:opacity-50 ${
             photos.length === 0 ? "size-16" : "size-24"
           }`}
         >
@@ -169,7 +169,7 @@ export function TurfPhotoGallery({
         className="hidden"
         onChange={(e) => handleFiles(e.target.files)}
       />
-      <p className="text-xs text-muted-foreground">
+      <p className="text-xs text-dt-dim">
         {t("turfOwner.photosUi.help")}
       </p>
       {uploadError ? (
@@ -201,8 +201,8 @@ function GalleryButton({
       aria-label={label}
       title={label}
       className={
-        "inline-flex size-5 items-center justify-center rounded-full bg-background/85 disabled:opacity-40 " +
-        (danger ? "text-destructive hover:text-destructive" : "text-foreground hover:text-foreground")
+        "inline-flex size-5 items-center justify-center rounded-full bg-dt-bg/85 disabled:opacity-40 " +
+        (danger ? "text-destructive hover:text-destructive" : "text-dt-txt hover:text-dt-txt")
       }
     >
       {children}

@@ -217,14 +217,14 @@ export default async function EditTurfPage({
       <nav className="flex items-center justify-between text-sm">
         <Link
           href="/turf-owner"
-          className="text-muted-foreground hover:text-foreground"
+          className="text-dt-dim hover:text-dt-txt"
         >
           ← {t("turfOwner.backToDashboard")}
         </Link>
         <div className="flex items-center gap-2">
           <Link
             href={`/turfs/${turf.slug}`}
-            className="text-primary hover:underline"
+            className="text-dt-green hover:underline"
           >
             {t("turfOwner.publicView")}
           </Link>
@@ -298,7 +298,7 @@ export default async function EditTurfPage({
               <CardHeader>
                 <CardTitle className="flex flex-wrap items-center gap-2 font-heading text-lg">
                   {t("turfOwner.schedule.weeklyHours")}
-                  <span className="text-xs font-normal text-muted-foreground">
+                  <span className="text-xs font-normal text-dt-dim">
                     {t("turfOwner.schedule.activeName", { name: activeSchedule.name })}
                   </span>
                 </CardTitle>
@@ -318,7 +318,7 @@ export default async function EditTurfPage({
               </CardContent>
             </Card>
           ) : (
-            <Card className="border-primary/40">
+            <Card className="border-dt-green/40">
               <CardHeader>
                 <CardTitle className="font-heading text-lg">
                   {t("turfOwner.schedule.setupTitle")}

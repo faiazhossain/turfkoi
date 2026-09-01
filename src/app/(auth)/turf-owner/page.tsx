@@ -51,7 +51,7 @@ export default async function TurfOwnerDashboardPage() {
           <h1 className="font-heading text-2xl font-semibold">
             {t("turfOwner.title")}
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-dt-dim">
             {myTurfs.length === 1
               ? t("turfOwner.turfCountOne")
               : t("turfOwner.turfCountMany", { count: myTurfs.length })}
@@ -136,12 +136,12 @@ export default async function TurfOwnerDashboardPage() {
 
       <section className="space-y-3">
         <div className="flex items-center gap-2">
-          <MegaphoneIcon className="size-5 text-primary" aria-hidden />
+          <MegaphoneIcon className="size-5 text-dt-green" aria-hidden />
           <h2 className="font-heading text-lg font-semibold">
             {t("turfOwner.fillThisSlot")}
           </h2>
         </div>
-        <p className="text-sm text-muted-foreground">{t("turfOwner.fillDesc")}</p>
+        <p className="text-sm text-dt-dim">{t("turfOwner.fillDesc")}</p>
         {fillable.length === 0 ? (
           <EmptyState
             icon={CalendarClockIcon}
@@ -153,13 +153,13 @@ export default async function TurfOwnerDashboardPage() {
             {fillable.map((s) => (
               <li
                 key={`${s.turfId}-${s.date}-${s.startTime}`}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-card p-4"
+                className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-dt-line bg-dt-card p-4"
               >
                 <div>
                   <p className="font-heading text-sm font-semibold">
                     {s.turfName}
                   </p>
-                  <p className="font-mono text-xs text-muted-foreground">
+                  <p className="font-mono text-xs text-dt-dim">
                     {s.date} · {s.startTime.slice(0, 5)} ({s.durationMinutes}m)
                   </p>
                   <p className="mt-1 text-sm">

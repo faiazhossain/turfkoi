@@ -81,15 +81,15 @@ export function DayPanel({
     daySlots.length > 0 ? (
       <SlotGrid turfId={turfId} slots={daySlots} />
     ) : exception?.isClosed ? (
-      <p className="rounded-lg border border-dashed border-border p-4 text-center text-sm text-muted-foreground">
+      <p className="rounded-lg border border-dashed border-dt-line p-4 text-center text-sm text-dt-dim">
         {t("turfOwner.schedule.dayClosedReopen")}
       </p>
     ) : weekdayHasSections ? (
-      <p className="rounded-lg border border-dashed border-border p-4 text-center text-sm text-muted-foreground">
+      <p className="rounded-lg border border-dashed border-dt-line p-4 text-center text-sm text-dt-dim">
         {t("turfOwner.schedule.noSlotsThisDate")}
       </p>
     ) : (
-      <p className="rounded-lg border border-dashed border-border p-4 text-center text-sm text-muted-foreground">
+      <p className="rounded-lg border border-dashed border-dt-line p-4 text-center text-sm text-dt-dim">
         {t("turfOwner.schedule.noSlotsThisWeekday")}
       </p>
     )

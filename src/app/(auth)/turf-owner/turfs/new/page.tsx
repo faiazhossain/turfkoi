@@ -24,7 +24,7 @@ export default async function NewTurfPage() {
   if (!user.roles.includes("turf_owner")) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-16">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-dt-dim">
           {t("turfOwner.needRole")}
         </p>
       </div>

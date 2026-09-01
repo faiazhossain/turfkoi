@@ -36,9 +36,9 @@ export async function MyTurfCard({
   return (
     <Link
       href={`/turf-owner/turfs/${id}`}
-      className="group block overflow-hidden rounded-xl border border-border bg-card transition-all duration-200 hover:-translate-y-1 hover:border-primary/50 hover:shadow-high"
+      className="group block overflow-hidden rounded-xl border border-dt-line bg-dt-card transition-all duration-200 hover:-translate-y-1 hover:border-dt-green/50 hover:shadow-high"
     >
-      <div className="relative aspect-video w-full overflow-hidden bg-muted">
+      <div className="relative aspect-video w-full overflow-hidden bg-dt-card2">
         {photo ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -48,7 +48,7 @@ export async function MyTurfCard({
             loading="lazy"
           />
         ) : (
-          <div className="flex size-full items-center justify-center bg-gradient-to-br from-primary/15 to-transparent text-xs text-muted-foreground">
+          <div className="flex size-full items-center justify-center bg-gradient-to-br from-dt-green/15 to-transparent text-xs text-dt-dim">
             {t("turfs.noPhoto")}
           </div>
         )}
@@ -81,10 +81,10 @@ export async function MyTurfCard({
       </div>
       <div className="flex items-center justify-between gap-3 p-4 pt-3">
         <div className="min-w-0">
-          <h3 className="truncate font-heading text-base font-semibold leading-tight transition-colors group-hover:text-primary">
+          <h3 className="truncate font-heading text-base font-semibold leading-tight transition-colors group-hover:text-dt-green">
             {name}
           </h3>
-          <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+          <div className="mt-1 flex items-center gap-1 text-xs text-dt-dim">
             <MapPinIcon className="size-3 shrink-0" aria-hidden />
             <span className="truncate">
               {[area, city].filter(Boolean).join(", ") ||
@@ -92,7 +92,7 @@ export async function MyTurfCard({
             </span>
           </div>
         </div>
-        <span className="flex shrink-0 items-center gap-1 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-primary transition-colors group-hover:border-primary/50 group-hover:bg-primary/10">
+        <span className="flex shrink-0 items-center gap-1 rounded-md border border-dt-line px-2.5 py-1.5 text-xs font-medium text-dt-green transition-colors group-hover:border-dt-green/50 group-hover:bg-dt-green/10">
           {t("turfOwner.manage")}
           <ChevronRightIcon
             className="size-3.5 transition-transform group-hover:translate-x-0.5"

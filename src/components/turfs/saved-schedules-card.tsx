@@ -143,12 +143,12 @@ export function SavedSchedulesCard({
             return (
               <li
                 key={s.id}
-                className="space-y-2 rounded-lg border border-border bg-card p-3"
+                className="space-y-2 rounded-lg border border-dt-line bg-dt-card p-3"
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
                     <p className="text-sm font-medium">{s.name}</p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-dt-dim">
                       {t("turfOwner.schedule.sectionCount", {
                         count: s.sectionCount,
                       })}
@@ -189,7 +189,7 @@ export function SavedSchedulesCard({
                     <div className="space-y-1">
                       <Label
                         htmlFor={`from-${s.id}`}
-                        className="text-xs text-muted-foreground"
+                        className="text-xs text-dt-dim"
                       >
                         {t("turfOwner.schedule.from")}
                       </Label>
@@ -207,7 +207,7 @@ export function SavedSchedulesCard({
                     <div className="space-y-1">
                       <Label
                         htmlFor={`to-${s.id}`}
-                        className="text-xs text-muted-foreground"
+                        className="text-xs text-dt-dim"
                       >
                         {t("turfOwner.schedule.to")}
                       </Label>

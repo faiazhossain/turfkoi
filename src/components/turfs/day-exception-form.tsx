@@ -103,7 +103,7 @@ export function DayExceptionForm({
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
       <div className="space-y-1.5">
-        <Label className="text-xs font-medium text-muted-foreground">
+        <Label className="text-xs font-medium text-dt-dim">
           {t("turfOwner.schedule.bookingStatusLabel")}
         </Label>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -131,7 +131,7 @@ export function DayExceptionForm({
           </Button>
         </div>
         {isClosed ? (
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-dt-dim">
             {t("turfOwner.schedule.statusClosedHint")}
           </p>
         ) : null}
@@ -139,7 +139,7 @@ export function DayExceptionForm({
 
       {isClosed ? (
         <div className="space-y-1.5">
-          <Label className="text-xs font-medium text-muted-foreground">
+          <Label className="text-xs font-medium text-dt-dim">
             {t("turfOwner.schedule.reasonLabel")}
           </Label>
           <Input
@@ -150,7 +150,7 @@ export function DayExceptionForm({
       ) : (
         <>
           <div className="space-y-1.5">
-            <Label className="text-xs font-medium text-muted-foreground">
+            <Label className="text-xs font-medium text-dt-dim">
               {t("turfOwner.schedule.specialPrice")}
             </Label>
             <Select
@@ -184,7 +184,7 @@ export function DayExceptionForm({
           </div>
           {priceMode ? (
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-muted-foreground">
+              <Label className="text-xs font-medium text-dt-dim">
                 {priceMode === "multiplier"
                   ? t("turfOwner.schedule.multiplierLabel")
                   : t("turfOwner.schedule.flatPriceLabel")}

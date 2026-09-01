@@ -11,7 +11,7 @@ import { useI18n } from "@/i18n/client"
 export function EmptyDayState() {
   const { t } = useI18n()
   return (
-    <div className="hidden flex-col items-center gap-1.5 rounded-xl border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground lg:flex">
+    <div className="hidden flex-col items-center gap-1.5 rounded-xl border border-dashed border-dt-line px-4 py-8 text-center text-sm text-dt-dim lg:flex">
       <CalendarDaysIcon className="size-4" aria-hidden />
       <span>{t("turfOwner.schedule.emptyDay")}</span>
     </div>

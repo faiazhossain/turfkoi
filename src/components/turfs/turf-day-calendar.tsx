@@ -83,22 +83,22 @@ export function TurfDayCalendar({
         }}
         modifiersClassNames={{
           closed:
-            "bg-destructive/15 text-destructive line-through hover:bg-destructive/25",
-          priceRule: "bg-primary/10 ring-1 ring-primary/50",
-          holiday: "ring-1 ring-muted-foreground/50",
+            "bg-dt-red/15 text-dt-red line-through hover:bg-dt-red/25",
+          priceRule: "bg-dt-green/10 ring-1 ring-dt-green/50",
+          holiday: "ring-1 ring-dt-dim/50",
         }}
       />
-      <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+      <div className="flex flex-wrap gap-3 text-xs text-dt-dim">
         <span className="flex items-center gap-1.5">
-          <span className="size-2.5 rounded-full bg-destructive/60" aria-hidden />
+          <span className="size-2.5 rounded-full bg-dt-red/60" aria-hidden />
           {t("turfOwner.schedule.legendClosed")}
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="size-2.5 rounded-full bg-primary/60" aria-hidden />
+          <span className="size-2.5 rounded-full bg-dt-green/60" aria-hidden />
           {t("turfOwner.schedule.legendSpecialPrice")}
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="size-2.5 rounded-full border border-muted-foreground" aria-hidden />
+          <span className="size-2.5 rounded-full border border-dt-dim" aria-hidden />
           {t("turfOwner.schedule.legendPublicHoliday")}
         </span>
       </div>
