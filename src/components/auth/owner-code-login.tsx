@@ -187,7 +187,7 @@ export function OwnerCodeLogin() {
                   {t("admin.ownerCode.copy")}
                 </Button>
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-dt-dim">
                 {t("claim.shownOnce", { phone })}
               </p>
               {modalError ? (

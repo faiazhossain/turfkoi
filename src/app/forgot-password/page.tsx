@@ -111,7 +111,7 @@ export default function ForgotPasswordPage() {
                   {...emailForm.register("email")}
                 />
                 {emailForm.formState.errors.email && (
-                  <p className="text-sm text-destructive">
+                  <p className="text-sm text-dt-red">
                     {t(emailForm.formState.errors.email.message ?? "")}
                   </p>
                 )}
@@ -144,7 +144,7 @@ export default function ForgotPasswordPage() {
                     {...resetForm.register("code")}
                   />
                   {resetForm.formState.errors.code && (
-                    <p className="text-sm text-destructive">
+                    <p className="text-sm text-dt-red">
                       {t(resetForm.formState.errors.code.message ?? "")}
                     </p>
                   )}
@@ -159,7 +159,7 @@ export default function ForgotPasswordPage() {
                     {...resetForm.register("password")}
                   />
                   {resetForm.formState.errors.password && (
-                    <p className="text-sm text-destructive">
+                    <p className="text-sm text-dt-red">
                       {t(resetForm.formState.errors.password.message ?? "")}
                     </p>
                   )}
@@ -173,7 +173,7 @@ export default function ForgotPasswordPage() {
                     {...resetForm.register("confirmPassword")}
                   />
                   {resetForm.formState.errors.confirmPassword && (
-                    <p className="text-sm text-destructive">
+                    <p className="text-sm text-dt-red">
                       {t(resetForm.formState.errors.confirmPassword.message ?? "")}
                     </p>
                   )}
@@ -189,7 +189,7 @@ export default function ForgotPasswordPage() {
                 </Button>
               </form>
               <div className="text-center text-sm">
-                <Link href="/forgot-password" className="text-muted-foreground hover:text-foreground">
+                <Link href="/forgot-password" className="text-dt-dim hover:text-dt-txt">
                   {t("auth.useDifferentEmail")}
                 </Link>
               </div>
@@ -197,9 +197,9 @@ export default function ForgotPasswordPage() {
           )}
         </CardContent>
       </Card>
-      <p className="text-center text-sm text-muted-foreground">
+      <p className="text-center text-sm text-dt-dim">
         {t("auth.rememberedIt")}{" "}
-        <Link href="/login" className="text-foreground underline-offset-4 hover:underline">
+        <Link href="/login" className="text-dt-txt underline-offset-4 hover:underline">
           {t("auth.backToSignIn")}
         </Link>
       </p>

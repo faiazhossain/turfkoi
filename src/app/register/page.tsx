@@ -138,7 +138,7 @@ export default function RegisterPage() {
                 <Input id="name" autoComplete="name" placeholder={t("auth.namePlaceholder")}
                   {...detailsForm.register("name")} />
                 {detailsForm.formState.errors.name && (
-                  <p className="text-sm text-destructive">
+                  <p className="text-sm text-dt-red">
                     {t(detailsForm.formState.errors.name.message ?? "")}
                   </p>
                 )}
@@ -153,7 +153,7 @@ export default function RegisterPage() {
                   {...detailsForm.register("phone")}
                 />
                 {detailsForm.formState.errors.phone && (
-                  <p className="text-sm text-destructive">
+                  <p className="text-sm text-dt-red">
                     {t(detailsForm.formState.errors.phone.message ?? "")}
                   </p>
                 )}
@@ -168,7 +168,7 @@ export default function RegisterPage() {
                   {...detailsForm.register("email")}
                 />
                 {detailsForm.formState.errors.email && (
-                  <p className="text-sm text-destructive">
+                  <p className="text-sm text-dt-red">
                     {t(detailsForm.formState.errors.email.message ?? "")}
                   </p>
                 )}
@@ -183,7 +183,7 @@ export default function RegisterPage() {
                   {...detailsForm.register("password")}
                 />
                 {detailsForm.formState.errors.password && (
-                  <p className="text-sm text-destructive">
+                  <p className="text-sm text-dt-red">
                     {t(detailsForm.formState.errors.password.message ?? "")}
                   </p>
                 )}
@@ -197,7 +197,7 @@ export default function RegisterPage() {
                   {...detailsForm.register("confirmPassword")}
                 />
                 {detailsForm.formState.errors.confirmPassword && (
-                  <p className="text-sm text-destructive">
+                  <p className="text-sm text-dt-red">
                     {t(detailsForm.formState.errors.confirmPassword.message ?? "")}
                   </p>
                 )}
@@ -230,7 +230,7 @@ export default function RegisterPage() {
                     {...codeForm.register("code")}
                   />
                   {codeForm.formState.errors.code && (
-                    <p className="text-sm text-destructive">
+                    <p className="text-sm text-dt-red">
                       {t(codeForm.formState.errors.code.message ?? "")}
                     </p>
                   )}
@@ -249,7 +249,7 @@ export default function RegisterPage() {
                 <button
                   type="button"
                   onClick={() => setStep("details")}
-                  className="text-muted-foreground hover:text-foreground"
+                  className="text-dt-dim hover:text-dt-txt"
                 >
                   {t("auth.changeDetails")}
                 </button>
@@ -257,7 +257,7 @@ export default function RegisterPage() {
                   type="button"
                   onClick={resendCode}
                   disabled={detailsForm.formState.isSubmitting}
-                  className="text-muted-foreground hover:text-foreground"
+                  className="text-dt-dim hover:text-dt-txt"
                 >
                   {detailsForm.formState.isSubmitting && (
                     <Loader size={14} className="size-3.5" aria-hidden />
@@ -269,9 +269,9 @@ export default function RegisterPage() {
           )}
         </CardContent>
       </Card>
-      <p className="text-center text-sm text-muted-foreground">
+      <p className="text-center text-sm text-dt-dim">
         {t("auth.alreadyHaveAccount")}{" "}
-        <Link href="/login" className="text-foreground underline-offset-4 hover:underline">
+        <Link href="/login" className="text-dt-txt underline-offset-4 hover:underline">
           {t("nav.signIn")}
         </Link>
       </p>

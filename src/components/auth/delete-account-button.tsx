@@ -37,12 +37,12 @@ export function DeleteAccountButton() {
   }
 
   return (
-    <div className="space-y-3 rounded-lg border border-destructive/30 bg-destructive/5 p-4">
-      <p className="flex items-center gap-2 text-sm font-medium text-destructive">
+    <div className="space-y-3 rounded-lg border border-dt-red/30 bg-dt-red/5 p-4">
+      <p className="flex items-center gap-2 text-sm font-medium text-dt-red">
         <AlertTriangleIcon className="size-4" aria-hidden />
         {t("settings.deleteConfirmTitle")}
       </p>
-      <p className="text-sm text-muted-foreground">
+      <p className="text-sm text-dt-dim">
         {t("settings.deleteConfirmBody")}
       </p>
       <div className="flex items-center gap-1">

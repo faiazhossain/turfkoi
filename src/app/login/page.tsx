@@ -69,7 +69,7 @@ export default function LoginPage() {
                 {...form.register("identifier")}
               />
               {form.formState.errors.identifier && (
-                <p className="text-sm text-destructive">
+                <p className="text-sm text-dt-red">
                   {t(form.formState.errors.identifier.message ?? "")}
                 </p>
               )}
@@ -79,7 +79,7 @@ export default function LoginPage() {
                 <Label htmlFor="password">{t("auth.passwordLabel")}</Label>
                 <Link
                   href="/forgot-password"
-                  className="text-xs text-muted-foreground hover:text-foreground"
+                  className="text-xs text-dt-dim hover:text-dt-txt"
                 >
                   {t("auth.forgotPassword")}
                 </Link>
@@ -91,7 +91,7 @@ export default function LoginPage() {
                 {...form.register("password")}
               />
               {form.formState.errors.password && (
-                <p className="text-sm text-destructive">
+                <p className="text-sm text-dt-red">
                   {t(form.formState.errors.password.message ?? "")}
                 </p>
               )}
@@ -115,7 +115,7 @@ export default function LoginPage() {
               setError(null)
               setMode(mode === "password" ? "code" : "password")
             }}
-            className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+            className="text-xs text-dt-dim underline-offset-4 hover:text-dt-txt hover:underline"
           >
             {mode === "password"
               ? t("auth.haveSignInCode")
@@ -123,9 +123,9 @@ export default function LoginPage() {
           </button>
         </div>
       </Card>
-      <p className="text-center text-sm text-muted-foreground">
+      <p className="text-center text-sm text-dt-dim">
         {t("auth.newHere")}{" "}
-        <Link href="/register" className="text-foreground underline-offset-4 hover:underline">
+        <Link href="/register" className="text-dt-txt underline-offset-4 hover:underline">
           {t("auth.createAccount")}
         </Link>
       </p>

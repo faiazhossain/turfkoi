@@ -53,18 +53,18 @@ export function OwnerHelpButton() {
             <li key={step.titleKey} className="flex gap-3">
               <span
                 aria-hidden
-                className="flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium"
+                className="flex size-6 shrink-0 items-center justify-center rounded-full bg-dt-card2 text-xs font-medium"
               >
                 {index + 1}
               </span>
               <div className="space-y-0.5">
                 <p className="font-medium">{t(step.titleKey)}</p>
-                <p className="text-sm text-muted-foreground">{t(step.bodyKey)}</p>
+                <p className="text-sm text-dt-dim">{t(step.bodyKey)}</p>
               </div>
             </li>
           ))}
         </ol>
-        <p className="text-sm text-muted-foreground">{t(OWNER_HELP_NOTE_KEY)}</p>
+        <p className="text-sm text-dt-dim">{t(OWNER_HELP_NOTE_KEY)}</p>
         <DialogFooter showCloseButton>
           <Button render={<Link href={OWNER_APPLY_PATH} />}>
             {t("auth.listYourTurf")}

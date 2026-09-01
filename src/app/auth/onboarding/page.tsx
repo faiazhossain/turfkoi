@@ -73,7 +73,7 @@ export default function OnboardingPage() {
               <Label htmlFor="name">{t("auth.displayName")}</Label>
               <Input id="name" autoComplete="name" {...form.register("name")} />
               {form.formState.errors.name && (
-                <p className="text-sm text-destructive">
+                <p className="text-sm text-dt-red">
                   {t(form.formState.errors.name.message ?? "")}
                 </p>
               )}
@@ -91,11 +91,11 @@ export default function OnboardingPage() {
                 }}
               />
               {form.formState.errors.username && (
-                <p className="text-sm text-destructive">
+                <p className="text-sm text-dt-red">
                   {t(form.formState.errors.username.message ?? "")}
                 </p>
               )}
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-dt-dim">
                 {t("players.onboardingUsernameHint")}
               </p>
             </div>
@@ -121,7 +121,7 @@ export default function OnboardingPage() {
             </div>
             <div className="space-y-2">
               <Label>{t("auth.yourLocation")}</Label>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-dt-dim">
                 {t("auth.locationHelp")}
               </p>
               <LocationPicker
