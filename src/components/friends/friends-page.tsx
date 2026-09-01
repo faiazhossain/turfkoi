@@ -7,8 +7,6 @@ import { CheckIcon, CopyIcon, SearchIcon, XIcon } from "lucide-react"
 
 import { useI18n } from "@/i18n/client"
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { PlayerAvatar } from "@/components/player/player-avatar"
 import { resolveAvatarDisplay } from "@/features/player/avatar"
 import { isPresenceOnline } from "@/lib/presence"
@@ -24,11 +22,146 @@ import type { PlayerCardRow } from "@/features/player/queries"
 
 type Tab = "friends" | "requests" | "sent"
 
+/*
+ * friends.html palette, applied as raw Tailwind (no global theme tokens) so
+ * this page is fully hand-controlled:
+ *   bg #0b1220 · card #151f33 · card2 #1b2740 · line #24324e
+ *   txt #e8eef7 · dim #93a4bf · green #22c55e · blue #3b82f6 · red #ef4444
+ */
+
+const CARD =
+  "rounded-[14px] border border-[#24324e] bg-[#1b2740] transition-colors"
+
+/** Solid green CTA (mockup .btn-primary: green→teal gradient, dark text). */
+function GreenButton({
+  onClick,
+  loading,
+  disabled,
+  children,
+  className = "",
+  small = true,
+}: {
+  onClick?: () => void
+  loading?: boolean
+  disabled?: boolean
+  children: React.ReactNode
+  className?: string
+  small?: boolean
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled || loading}
+      aria-busy={loading || undefined}
+      className={`inline-flex items-center justify-center gap-1.5 rounded-[10px] bg-gradient-to-br from-[#22c55e] to-[#14b8a6] font-bold text-[#04240f] shadow-[0_4px_14px_rgba(34,197,94,0.3)] transition active:scale-95 disabled:opacity-60 ${
+        small ? "px-2.5 py-1.5 text-xs" : "px-4 py-2.5 text-sm"
+      } ${className}`}
+    >
+      {loading ? <Spinner /> : null}
+      {children}
+    </button>
+  )
+}
+
+/** Solid blue action (mockup .btn-blue). */
+function BlueButton({
+  onClick,
+  loading,
+  children,
+  className = "",
+}: {
+  onClick?: () => void
+  loading?: boolean
+  children: React.ReactNode
+  className?: string
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={loading}
+      aria-busy={loading || undefined}
+      className={`inline-flex items-center justify-center gap-1.5 rounded-[10px] bg-[#3b82f6] px-2.5 py-1.5 text-xs font-bold text-white shadow-[0_4px_14px_rgba(59,130,246,0.3)] transition active:scale-95 disabled:opacity-60 ${className}`}
+    >
+      {loading ? <Spinner /> : null}
+      {children}
+    </button>
+  )
+}
+
+/** Outlined green (mockup .btn-outline-green). */
+function OutlineGreenButton({
+  onClick,
+  loading,
+  children,
+}: {
+  onClick?: () => void
+  loading?: boolean
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={loading}
+      aria-busy={loading || undefined}
+      className="inline-flex items-center justify-center gap-1.5 rounded-[10px] border border-[#22c55e] px-2.5 py-1.5 text-xs font-bold text-[#22c55e] transition hover:bg-[#22c55e]/10 active:scale-95 disabled:opacity-60"
+    >
+      {loading ? <Spinner /> : null}
+      {children}
+    </button>
+  )
+}
+
+/** Bare ghost / icon action (mockup .btn-ghost). */
+function GhostButton({
+  onClick,
+  loading,
+  label,
+  children,
+  danger = false,
+}: {
+  onClick?: () => void
+  loading?: boolean
+  label?: string
+  children: React.ReactNode
+  danger?: boolean
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={loading}
+      aria-label={label}
+      aria-busy={loading || undefined}
+      className={`inline-flex items-center justify-center rounded-[10px] px-2 py-1.5 text-xs font-bold transition active:scale-95 disabled:opacity-60 ${
+        danger
+          ? "text-[#ef4444] hover:bg-[#ef4444]/10"
+          : "text-[#e8eef7] hover:bg-[#151f33]"
+      }`}
+    >
+      {loading ? <Spinner /> : null}
+      {children}
+    </button>
+  )
+}
+
+function Spinner() {
+  return (
+    <span
+      aria-hidden
+      className="size-3 animate-spin rounded-full border-2 border-current border-t-transparent"
+    />
+  )
+}
+
 /**
  * Player Network hub (/friends), mirroring the approved friends.html mockup:
  * inline search box with icon trigger, three pill tabs (Friends / Requests /
  * Sent), section dividers with Online/Offline legends, player cards with
  * avatar + status dot + ID chip + position, and per-friend match invites.
+ * Styled with raw Tailwind hex values (see palette above), page-by-page.
  */
 export function FriendsPage({
   myPlayerId,
@@ -112,275 +245,277 @@ export function FriendsPage({
   const visibleHits = (hits ?? []).filter((h) => !friendIds.includes(h.userId))
 
   return (
-    <div className="space-y-4">
-      {/* Your Player ID — the shareable handle (id-chip from the mockup) */}
-      {myPlayerId && (
-        <div className="flex justify-center">
+    <div className="text-[#e8eef7]">
+      <div className="space-y-4">
+        {/* Your Player ID — mockup's blue id-chip */}
+        {myPlayerId && (
+          <div className="flex justify-center">
+            <button
+              type="button"
+              onClick={copyId}
+              title={t("players.copyId")}
+              className="inline-flex items-center gap-2 rounded-xl border border-[#3b82f6]/30 bg-[#3b82f6]/10 px-4 py-2 font-mono text-sm font-bold tracking-wide text-[#3b82f6] transition hover:bg-[#3b82f6]/15"
+            >
+              {myPlayerId}
+              {copied ? (
+                <CheckIcon className="size-4" aria-hidden />
+              ) : (
+                <CopyIcon className="size-4" aria-hidden />
+              )}
+            </button>
+          </div>
+        )}
+
+        {/* Search box (mockup: input + icon trigger inside one bordered pill) */}
+        <div className="flex items-center gap-2 rounded-[14px] border border-[#24324e] bg-[#151f33] px-3">
+          <input
+            ref={searchRef}
+            value={term}
+            onChange={(e) => setTerm(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") search()
+            }}
+            placeholder={t("players.searchPlaceholder")}
+            maxLength={50}
+            className="h-11 flex-1 bg-transparent text-sm text-[#e8eef7] outline-none placeholder:text-[#93a4bf]"
+          />
           <button
             type="button"
-            onClick={copyId}
-            className="inline-flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/10 px-4 py-2 font-mono text-sm font-bold tracking-wide text-primary transition-colors hover:bg-primary/15"
-            title={t("players.copyId")}
+            onClick={search}
+            disabled={term.trim().length < 2 || pending}
+            aria-label={t("friends.search")}
+            className="text-[#22c55e] disabled:opacity-40"
           >
-            {myPlayerId}
-            {copied ? (
-              <CheckIcon className="size-4" aria-hidden />
-            ) : (
-              <CopyIcon className="size-4" aria-hidden />
-            )}
+            <SearchIcon className="size-5" aria-hidden />
           </button>
         </div>
-      )}
+        <p className="text-xs text-[#93a4bf]">
+          {t("players.searchHint", { code: myPlayerId ?? "DT-XXXXXX" })}
+        </p>
 
-      {/* Search box (mockup: input + icon trigger inside one bordered pill) */}
-      <div className="flex items-center gap-2 rounded-xl border border-border bg-card px-3">
-        <Input
-          ref={searchRef}
-          value={term}
-          onChange={(e) => setTerm(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") search()
-          }}
-          placeholder={t("players.searchPlaceholder")}
-          className="h-11 flex-1 border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
-          maxLength={50}
-        />
-        <button
-          type="button"
-          onClick={search}
-          disabled={term.trim().length < 2 || pending}
-          aria-label={t("friends.search")}
-          className="text-primary disabled:opacity-40"
-        >
-          <SearchIcon className="size-5" aria-hidden />
-        </button>
-      </div>
-      <p className="text-xs text-muted-foreground">
-        {t("players.searchHint", { code: myPlayerId ?? "DT-XXXXXX" })}
-      </p>
+        {/* Search results (same player-card row as the friends list) */}
+        {searched ? (
+          visibleHits.length > 0 ? (
+            <ul className="space-y-2">
+              {visibleHits.map((h) => (
+                <PlayerRow
+                  key={h.userId}
+                  row={{
+                    userId: h.userId,
+                    name: h.name,
+                    playerId: h.playerId,
+                    username: h.username,
+                    position: h.position,
+                    lastSeenAt: h.lastSeenAt,
+                    avatarType: h.avatarType,
+                    avatarPresetId: h.avatarPresetId,
+                    avatarPublicId: h.avatarPublicId,
+                  }}
+                  onClick={() => h.playerId && router.push(`/players/${h.playerId}`)}
+                >
+                  <GreenButton onClick={() => request(h.userId)} loading={pending}>
+                    {t("friends.addFriend")}
+                  </GreenButton>
+                </PlayerRow>
+              ))}
+            </ul>
+          ) : (
+            <EmptyBlock icon="🔍" title={t("players.searchEmptyTitle")} desc={t("players.searchEmptyDesc")} />
+          )
+        ) : null}
 
-      {/* Search results (same player-card row as the friends list) */}
-      {searched ? (
-        visibleHits.length > 0 ? (
-          <ul className="space-y-2">
-            {visibleHits.map((h) => (
-              <PlayerRow
-                key={h.userId}
-                row={{
-                  userId: h.userId,
-                  name: h.name,
-                  playerId: h.playerId,
-                  username: h.username,
-                  position: h.position,
-                  lastSeenAt: h.lastSeenAt,
-                  avatarType: h.avatarType,
-                  avatarPresetId: h.avatarPresetId,
-                  avatarPublicId: h.avatarPublicId,
-                }}
-                onClick={() => h.playerId && router.push(`/players/${h.playerId}`)}
-              >
-                <Button size="xs" onClick={() => request(h.userId)} loading={pending}>
-                  {t("friends.addFriend")}
-                </Button>
-              </PlayerRow>
-            ))}
-          </ul>
-        ) : (
-          // Mockup empty state: icon / title / hint
-          <div className="py-8 text-center">
-            <div className="text-4xl opacity-70">🔍</div>
-            <h4 className="mt-2 font-heading text-base font-semibold">
-              {t("players.searchEmptyTitle")}
-            </h4>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {t("players.searchEmptyDesc")}
-            </p>
-          </div>
-        )
-      ) : null}
-
-      {/* Pills tabs (mockup: three equal pills, active = tinted) */}
-      <div className="grid grid-cols-3 gap-2" role="tablist">
-        {(
-          [
-            ["friends", t("friends.tabFriends"), friends.length, false],
-            ["requests", t("friends.tabRequests"), requests.length, requests.length > 0],
-            ["sent", t("friends.tabSent"), sent.length, false],
-          ] as const
-        ).map(([key, label, count, alert]) => (
-          <button
-            key={key}
-            role="tab"
-            aria-selected={tab === key}
-            onClick={() => setTab(key)}
-            className={`rounded-xl border px-2 py-2.5 text-sm font-bold transition-colors ${
-              tab === key
-                ? "border-primary bg-primary/10 text-primary"
-                : "border-border bg-card text-muted-foreground hover:bg-accent"
-            }`}
-          >
-            {label}{" "}
-            <span className={alert && tab !== key ? "text-destructive" : undefined}>
-              ({count})
-            </span>
-          </button>
-        ))}
-      </div>
-
-      {tab === "friends" ? (
-        friends.length === 0 ? (
-          // Mockup empty state with CTA back to search
-          <div className="py-8 text-center">
-            <div className="text-4xl opacity-70">⚽</div>
-            <h4 className="mt-2 font-heading text-base font-semibold">
-              {t("friends.emptyTitle")}
-            </h4>
-            <p className="mt-1 text-sm text-muted-foreground">{t("friends.emptyDesc")}</p>
-            <Button
-              size="sm"
-              className="mt-3"
-              onClick={() => {
-                setTab("friends")
-                searchRef.current?.focus()
-              }}
+        {/* Pills tabs (mockup: active pill goes BLUE) */}
+        <div className="grid grid-cols-3 gap-2" role="tablist">
+          {(
+            [
+              ["friends", t("friends.tabFriends"), friends.length, false],
+              ["requests", t("friends.tabRequests"), requests.length, requests.length > 0],
+              ["sent", t("friends.tabSent"), sent.length, false],
+            ] as const
+          ).map(([key, label, count, alert]) => (
+            <button
+              key={key}
+              role="tab"
+              aria-selected={tab === key}
+              onClick={() => setTab(key)}
+              className={`rounded-xl border px-2 py-2.5 text-[12.5px] font-bold transition ${
+                tab === key
+                  ? "border-[#3b82f6] bg-[#3b82f6]/10 text-[#3b82f6]"
+                  : "border-[#24324e] bg-[#151f33] text-[#93a4bf] hover:bg-[#1b2740]"
+              }`}
             >
-              {t("friends.findPlayers")}
-            </Button>
-          </div>
-        ) : (
-          <div className="space-y-1">
-            <SectionDivider legend={`${t("friends.online")} · ${online.length}`} dot="online" />
-            {online.length === 0 ? (
-              <p className="px-1 pb-2 text-xs text-muted-foreground">
-                {t("friends.emptyOnline")}
-              </p>
-            ) : (
-              online.map((f) => (
-                <PlayerRow key={f.friendshipId} row={f}>
-                  <Button
-                    size="xs"
-                    onClick={() => setInviteTarget({ userId: f.userId, name: f.name ?? "" })}
-                    loading={pending}
-                  >
-                    {t("friends.invite")}
-                  </Button>
-                </PlayerRow>
-              ))
-            )}
-            <SectionDivider legend={`${t("friends.offline")} · ${offline.length}`} dot="offline" />
-            {offline.length === 0 ? (
-              <p className="px-1 text-xs text-muted-foreground">
-                {t("friends.emptyOffline")}
-              </p>
-            ) : (
-              offline.map((f) => (
-                <PlayerRow key={f.friendshipId} row={f}>
-                  <Button
-                    size="xs"
-                    onClick={() => setInviteTarget({ userId: f.userId, name: f.name ?? "" })}
-                    loading={pending}
-                  >
-                    {t("friends.invite")}
-                  </Button>
-                </PlayerRow>
-              ))
-            )}
-          </div>
-        )
-      ) : null}
+              {label}{" "}
+              <span className={alert && tab !== key ? "text-[#ef4444]" : undefined}>
+                ({count})
+              </span>
+            </button>
+          ))}
+        </div>
 
-      {tab === "requests" ? (
-        requests.length === 0 ? (
-          <div className="py-8 text-center">
-            <div className="text-4xl opacity-70">📭</div>
-            <h4 className="mt-2 font-heading text-base font-semibold">
-              {t("friends.emptyRequests")}
-            </h4>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {t("friends.emptyRequestsDesc")}
-            </p>
-          </div>
-        ) : (
-          <ul className="space-y-2">
-            {requests.map((r) => (
-              <PlayerRow
-                key={r.friendshipId}
-                row={{
-                  userId: r.userId,
-                  name: r.name,
-                  playerId: null,
-                  username: null,
-                  position: null,
-                  lastSeenAt: null,
-                  avatarType: r.avatarType,
-                  avatarPresetId: r.avatarPresetId,
-                  avatarPublicId: r.avatarPublicId,
-                }}
-                subtitle={t("friends.incomingRequest")}
-              >
-                <Button size="xs" onClick={() => respond(r.friendshipId, true)} loading={pending}>
-                  {t("friends.accept")}
-                </Button>
-                <Button
-                  size="xs"
-                  variant="ghost"
-                  aria-label={t("friends.decline")}
-                  onClick={() => respond(r.friendshipId, false)}
-                  loading={pending}
-                >
-                  <XIcon className="size-3.5" aria-hidden />
-                </Button>
-              </PlayerRow>
-            ))}
-          </ul>
-        )
-      ) : null}
-
-      {tab === "sent" ? (
-        sent.length === 0 ? (
-          <div className="py-8 text-center">
-            <div className="text-4xl opacity-70">📤</div>
-            <h4 className="mt-2 font-heading text-base font-semibold">
-              {t("friends.emptySent")}
-            </h4>
-            <p className="mt-1 text-sm text-muted-foreground">{t("friends.emptySentDesc")}</p>
-          </div>
-        ) : (
-          <ul className="space-y-2">
-            {sent.map((r) => (
-              <PlayerRow
-                key={r.friendshipId}
-                row={{
-                  userId: r.userId,
-                  name: r.name,
-                  playerId: null,
-                  username: null,
-                  position: null,
-                  lastSeenAt: null,
-                  avatarType: r.avatarType,
-                  avatarPresetId: r.avatarPresetId,
-                  avatarPublicId: r.avatarPublicId,
+        {tab === "friends" ? (
+          friends.length === 0 ? (
+            <div className="py-8 text-center">
+              <EmptyBlock
+                icon="⚽"
+                title={t("friends.emptyTitle")}
+                desc={t("friends.emptyDesc")}
+              />
+              <GreenButton
+                small={false}
+                className="mt-3"
+                onClick={() => {
+                  searchRef.current?.focus()
                 }}
               >
-                <Button
-                  size="xs"
-                  variant="outline"
-                  onClick={() => cancelSent(r.friendshipId)}
-                  loading={pending}
+                {t("friends.findPlayers")}
+              </GreenButton>
+            </div>
+          ) : (
+            <div className="space-y-1">
+              <SectionDivider
+                legend={`${t("friends.online")} · ${online.length}`}
+                dot="online"
+              />
+              {online.length === 0 ? (
+                <p className="px-1 pb-2 text-xs text-[#93a4bf]">
+                  {t("friends.emptyOnline")}
+                </p>
+              ) : (
+                online.map((f) => (
+                  <PlayerRow key={f.friendshipId} row={f}>
+                    <BlueButton
+                      onClick={() =>
+                        setInviteTarget({ userId: f.userId, name: f.name ?? "" })
+                      }
+                      loading={pending}
+                    >
+                      {t("friends.invite")}
+                    </BlueButton>
+                  </PlayerRow>
+                ))
+              )}
+              <SectionDivider
+                legend={`${t("friends.offline")} · ${offline.length}`}
+                dot="offline"
+              />
+              {offline.length === 0 ? (
+                <p className="px-1 text-xs text-[#93a4bf]">{t("friends.emptyOffline")}</p>
+              ) : (
+                offline.map((f) => (
+                  <PlayerRow key={f.friendshipId} row={f}>
+                    <BlueButton
+                      onClick={() =>
+                        setInviteTarget({ userId: f.userId, name: f.name ?? "" })
+                      }
+                      loading={pending}
+                    >
+                      {t("friends.invite")}
+                    </BlueButton>
+                  </PlayerRow>
+                ))
+              )}
+            </div>
+          )
+        ) : null}
+
+        {tab === "requests" ? (
+          requests.length === 0 ? (
+            <EmptyBlock icon="📭" title={t("friends.emptyRequests")} desc={t("friends.emptyRequestsDesc")} />
+          ) : (
+            <ul className="space-y-2">
+              {requests.map((r) => (
+                <PlayerRow
+                  key={r.friendshipId}
+                  row={{
+                    userId: r.userId,
+                    name: r.name,
+                    playerId: null,
+                    username: null,
+                    position: null,
+                    lastSeenAt: null,
+                    avatarType: r.avatarType,
+                    avatarPresetId: r.avatarPresetId,
+                    avatarPublicId: r.avatarPublicId,
+                  }}
+                  subtitle={t("friends.incomingRequest")}
                 >
-                  {t("friends.cancelRequest")}
-                </Button>
-              </PlayerRow>
-            ))}
-          </ul>
-        )
-      ) : null}
+                  <GreenButton
+                    onClick={() => respond(r.friendshipId, true)}
+                    loading={pending}
+                  >
+                    {t("friends.accept")}
+                  </GreenButton>
+                  <GhostButton
+                    label={t("friends.decline")}
+                    danger
+                    onClick={() => respond(r.friendshipId, false)}
+                    loading={pending}
+                  >
+                    <XIcon className="size-3.5" aria-hidden />
+                  </GhostButton>
+                </PlayerRow>
+              ))}
+            </ul>
+          )
+        ) : null}
+
+        {tab === "sent" ? (
+          sent.length === 0 ? (
+            <EmptyBlock icon="📤" title={t("friends.emptySent")} desc={t("friends.emptySentDesc")} />
+          ) : (
+            <ul className="space-y-2">
+              {sent.map((r) => (
+                <PlayerRow
+                  key={r.friendshipId}
+                  row={{
+                    userId: r.userId,
+                    name: r.name,
+                    playerId: null,
+                    username: null,
+                    position: null,
+                    lastSeenAt: null,
+                    avatarType: r.avatarType,
+                    avatarPresetId: r.avatarPresetId,
+                    avatarPublicId: r.avatarPublicId,
+                  }}
+                >
+                  <OutlineGreenButton
+                    onClick={() => cancelSent(r.friendshipId)}
+                    loading={pending}
+                  >
+                    {t("friends.cancelRequest")}
+                  </OutlineGreenButton>
+                </PlayerRow>
+              ))}
+            </ul>
+          )
+        ) : null}
+      </div>
 
       <InviteToMatchDialog
         key={inviteTarget?.userId ?? "none"}
         target={inviteTarget}
         onClose={() => setInviteTarget(null)}
       />
+    </div>
+  )
+}
+
+/** Mockup empty state: big emoji / title / dim description. */
+function EmptyBlock({
+  icon,
+  title,
+  desc,
+}: {
+  icon: string
+  title: string
+  desc?: string
+}) {
+  return (
+    <div className="py-8 text-center">
+      <div className="text-4xl opacity-70">{icon}</div>
+      <h4 className="mt-2 text-base font-bold">{title}</h4>
+      {desc ? <p className="mt-1 text-sm text-[#93a4bf]">{desc}</p> : null}
     </div>
   )
 }
@@ -395,16 +530,16 @@ function SectionDivider({
 }) {
   return (
     <div className="flex items-center gap-2.5 py-2">
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-1 text-xs font-semibold text-muted-foreground">
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-[#24324e] bg-[#151f33] px-2.5 py-1 text-[10.5px] font-semibold text-[#93a4bf]">
         <span
           aria-hidden
           className={`size-2 rounded-full ${
-            dot === "online" ? "bg-green-500" : "bg-muted-foreground/40"
+            dot === "online" ? "bg-[#22c55e]" : "bg-[#64748b]"
           }`}
         />
         {legend}
       </span>
-      <span className="h-px flex-1 bg-border" aria-hidden />
+      <span className="h-px flex-1 bg-[#24324e]" aria-hidden />
     </div>
   )
 }
@@ -442,26 +577,24 @@ function PlayerRow({
   const info = (
     <>
       <span className="flex min-w-0 items-center gap-1.5">
-        <span className="truncate text-sm font-bold">{row.name ?? ""}</span>
+        <span className="truncate text-sm font-bold text-[#e8eef7]">{row.name ?? ""}</span>
         {row.username ? (
-          <span className="truncate text-xs font-semibold text-muted-foreground">
+          <span className="truncate text-xs font-semibold text-[#93a4bf]">
             @{row.username}
           </span>
         ) : null}
       </span>
       {subtitle ? (
-        <span className="mt-0.5 block truncate text-xs text-muted-foreground">{subtitle}</span>
+        <span className="mt-0.5 block truncate text-xs text-[#93a4bf]">{subtitle}</span>
       ) : (
         <span className="mt-0.5 flex items-center gap-2">
           {row.playerId ? (
-            <span className="rounded-md bg-primary/10 px-2 py-0.5 font-mono text-[11px] font-semibold text-primary">
+            <span className="rounded-md bg-[#3b82f6]/10 px-2 py-0.5 font-mono text-[11px] font-semibold text-[#3b82f6]">
               {row.playerId}
             </span>
           ) : null}
           {row.position ? (
-            <span className="text-[11px] font-bold text-muted-foreground">
-              {row.position}
-            </span>
+            <span className="text-[11px] font-bold text-[#93a4bf]">{row.position}</span>
           ) : null}
         </span>
       )}
@@ -469,7 +602,9 @@ function PlayerRow({
   )
 
   return (
-    <li className="flex items-center gap-3 rounded-xl border border-border bg-card p-3 transition-colors hover:border-primary/50">
+    <li
+      className={`flex items-center gap-3 p-3 ${CARD} hover:border-[#3b82f6]`}
+    >
       <span className="relative shrink-0">
         <PlayerAvatar
           display={resolveAvatarDisplay({
@@ -484,8 +619,8 @@ function PlayerRow({
           <span
             aria-hidden
             title={online ? t("friends.online") : t("friends.offline")}
-            className={`absolute -bottom-0.5 -right-0.5 size-3 rounded-full border-2 border-card ${
-              online ? "bg-green-500" : "bg-muted-foreground/40"
+            className={`absolute -bottom-0.5 -right-0.5 size-3 rounded-full border-2 border-[#1b2740] ${
+              online ? "bg-[#22c55e]" : "bg-[#64748b]"
             }`}
           />
         ) : null}
