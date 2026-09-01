@@ -734,6 +734,7 @@ export const en = {
         "Squad full ✓ — waiting for an opponent. Any player can claim the opponent side; you'll be notified when someone does.",
       gridAria: "Squad roster slots",
       slotOpen: "Open",
+      slotOpenCta: "Open seat — see how to fill it",
       spotsExplainer:
         "Open seats are first come, first served — an invite is not a reservation. Whoever accepts first takes the seat.",
       fillTitle: "Fill your squad",

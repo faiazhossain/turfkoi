@@ -750,6 +750,7 @@ export const bn: Dictionary = {
         "স্কোয়াড পূর্ণ ✓ — এখন শুধু opponent-এর অপেক্ষা। যেকোনো player তার group নিয়ে opponent side নিতে পারবে; কেউ নিলে খবর পাবেন।",
       gridAria: "স্কোয়াড রোস্টার স্লট",
       slotOpen: "খালি",
+      slotOpenCta: "খালি সিট — ভরার উপায় দেখুন",
       spotsExplainer:
         "খালি Seat প্রথমে accept করলেই সেটাই তার — Invite মানেই Seat বুক হয়ে যাওয়া না।",
       fillTitle: "Team ভরো করো",

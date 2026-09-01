@@ -47,6 +47,7 @@ export function SquadSpots({
   canEditCount = false,
   countEditable = false,
   slotNames = [],
+  fillHref,
 }: {
   matchId: string
   matchType: string
@@ -68,6 +69,10 @@ export function SquadSpots({
   /** Display names of the named identities, in squad order — rendered as
    * the roster-slot grid (filled tiles) with dashed open tiles after. */
   slotNames?: string[]
+  /** When the viewer can act on open seats (captain → fill actions,
+   * visitor → join request), open tiles link there instead of being
+   * inert decorations that only look clickable. */
+  fillHref?: string
 }) {
   const { t, locale } = useI18n()
   const router = useRouter()
@@ -174,7 +179,9 @@ export function SquadSpots({
       {/* Roster-slot grid (matchmaking.html §roster-box): filled tiles in
           squad order, dashed pulsing open tiles after. The first open tile
           carries the open-count badge. Placeholders are unnamed claimed
-          seats — they render as open (recruitable) tiles. */}
+          seats — they render as open (recruitable) tiles. Open tiles link
+          to the viewer's next action (fill section / join request) so they
+          behave the way they look. */}
       {slotNames.length > 0 || open > 0 ? (
         <div className="flex flex-wrap gap-2" aria-label={t("matches.squad.gridAria")}>
           {slotNames.slice(0, squadSize).map((name, i) => (
@@ -191,27 +198,43 @@ export function SquadSpots({
               </span>
             </div>
           ))}
-          {Array.from({ length: open }, (_, i) => (
-            <div
-              key={`open-${i}`}
-              className="match-slot-open relative flex h-13 w-13 flex-col items-center justify-center rounded-xl border border-dashed"
-            >
-              {i === 0 && open > 1 ? (
-                <span
-                  className="absolute -right-1.5 -top-1.5 flex size-5 items-center justify-center rounded-full bg-warning text-[10px] font-bold tabular-nums text-warning-foreground"
-                  aria-hidden
-                >
-                  {num(open)}
+          {Array.from({ length: open }, (_, i) => {
+            const tile = (
+              <>
+                {i === 0 && open > 1 ? (
+                  <span
+                    className="absolute -right-1.5 -top-1.5 flex size-5 items-center justify-center rounded-full bg-warning text-[10px] font-bold tabular-nums text-warning-foreground"
+                    aria-hidden
+                  >
+                    {num(open)}
+                  </span>
+                ) : null}
+                <span className="text-sm font-bold text-warning">
+                  +
                 </span>
-              ) : null}
-              <span className="text-sm font-bold text-warning">
-                +
-              </span>
-              <span className="text-[10px] leading-tight text-dt-dim">
-                {t("matches.squad.slotOpen")}
-              </span>
-            </div>
-          ))}
+                <span className="text-[10px] leading-tight text-dt-dim">
+                  {t("matches.squad.slotOpen")}
+                </span>
+              </>
+            )
+            return fillHref ? (
+              <a
+                key={`open-${i}`}
+                href={fillHref}
+                aria-label={t("matches.squad.slotOpenCta")}
+                className="match-slot-open relative flex h-13 w-13 flex-col items-center justify-center rounded-xl border border-dashed transition-colors hover:border-warning hover:bg-warning/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-dt-green/40"
+              >
+                {tile}
+              </a>
+            ) : (
+              <div
+                key={`open-${i}`}
+                className="match-slot-open relative flex h-13 w-13 flex-col items-center justify-center rounded-xl border border-dashed"
+              >
+                {tile}
+              </div>
+            )
+          })}
         </div>
       ) : null}
 

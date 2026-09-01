@@ -365,6 +365,17 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
             editable={isHomeCaptain && rosterOpen(m.state)}
             canEditCount={mySide === s.side}
             countEditable={rosterOpen(m.state)}
+            fillHref={
+              managesMatch && rosterOpen(m.state)
+                ? // Captain/recruiter: open tiles jump to the fill actions.
+                  mySide === s.side
+                  ? "#fill-squad"
+                  : undefined
+                : canRequestJoin
+                  ? // Visitor: open tiles lead to the join request.
+                    "#request-join"
+                  : undefined
+            }
             slotNames={[
               ...roster
                 .filter((p) => p.side === s.side)
@@ -389,7 +400,7 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
           const mySideStats = sideStats.find((s) => s.side === mySide) ?? sideStats[0]
           if (!mySideStats || mySideStats.open <= 0) return null
           return (
-            <section className="space-y-3">
+            <section id="fill-squad" className="space-y-3">
               <div className="space-y-1">
                 <h2 className="font-heading text-lg font-semibold">
                   {tr("matches.squad.fillTitle")}
@@ -549,7 +560,9 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
 
       {/* Player matchmaking: join request for visitors while seats are open */}
       {canRequestJoin ? (
-        <JoinRequestButton matchId={m.id} spots={totalOpen} />
+        <div id="request-join">
+          <JoinRequestButton matchId={m.id} spots={totalOpen} />
+        </div>
       ) : null}
 
       {/* Invite link — the shareable /m/<token> handle with copy + shares */}
