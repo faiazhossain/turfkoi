@@ -38,8 +38,8 @@ export function LocaleToggle({ className }: { className?: string }) {
         className={cn(
           "rounded px-1.5 py-0.5 leading-none transition-colors",
           active
-            ? "bg-primary/15 font-semibold text-primary underline underline-offset-2"
-            : "text-muted-foreground hover:text-foreground"
+            ? "bg-dt-green/15 font-semibold text-dt-green underline underline-offset-2"
+            : "text-dt-dim hover:text-dt-txt"
         )}
       >
         {code}
@@ -52,13 +52,13 @@ export function LocaleToggle({ className }: { className?: string }) {
       role="group"
       aria-label={t("nav.language")}
       className={cn(
-        "flex select-none items-center gap-0.5 rounded-md border border-border p-0.5 text-xs",
+        "flex select-none items-center gap-0.5 rounded-md border border-dt-line p-0.5 text-xs",
         pending && "opacity-60",
         className
       )}
     >
       {item("BN", "bn")}
-      <span aria-hidden className="text-muted-foreground">
+      <span aria-hidden className="text-dt-dim">
         |
       </span>
       {item("EN", "en")}

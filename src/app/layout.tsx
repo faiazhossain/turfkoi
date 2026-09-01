@@ -74,7 +74,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export const viewport: Viewport = {
-  themeColor: "#080B10",
+  themeColor: "#0b1220",
 }
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
@@ -85,7 +85,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} ${bengali.variable} ${spaceGrotesk.variable} ${orbitron.variable}`}
     >
-      <body className="flex min-h-dvh flex-col bg-background text-foreground">
+      <body className="flex min-h-dvh flex-col bg-dt-bg text-dt-txt">
         <I18nProvider locale={locale}>
           <Providers>
             <SiteHeader />

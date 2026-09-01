@@ -82,7 +82,7 @@ async function SessionActions() {
 export async function SiteHeader() {
   const t = await getT()
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur supports-backdrop-filter:bg-background/60">
+    <header className="sticky top-0 z-40 border-b border-dt-line bg-dt-bg/80 backdrop-blur supports-backdrop-filter:bg-dt-bg/60">
       <div className="mx-auto flex h-14 max-w-6xl items-center gap-1.5 px-3 sm:gap-2 sm:px-4">
         <Link href="/" aria-label="DeshiTurf" className="flex shrink-0 items-center">
           <Image
