@@ -358,6 +358,9 @@ html[lang="bn"] body {
  * @theme inline mapped names) makes every token-based utility inside the
  * wrapper (bg-card, border-border, text-muted-foreground, Button,
  * StatusBadge, ...) adopt the mockup palette via normal CSS inheritance.
+ * The --color-dt-* overrides do the same for the dt-* utilities (they
+ * compile to var(--color-dt-*) references), so primitives and restyled
+ * pages inside the room recolor to the neon palette — gradients included.
  */
 .match-hq {
   --background: #080d18;
@@ -383,6 +386,22 @@ html[lang="bn"] body {
   --input: rgb(255 255 255 / 0.14);
   --ring: #b4ff39;
   --radius: 1.25rem;
+
+  /* dt-* palette, room edition (matchmaking.html values). */
+  --color-dt-bg: #080d18;
+  --color-dt-bg2: #0b1322;
+  --color-dt-card: #111a2e;
+  --color-dt-card2: #182238;
+  --color-dt-line: rgb(255 255 255 / 0.07);
+  --color-dt-input: rgb(255 255 255 / 0.14);
+  --color-dt-txt: #eef3ff;
+  --color-dt-dim: #93a0bd;
+  --color-dt-green: #b4ff39;
+  --color-dt-teal: #00e07a;
+  --color-dt-blue: #00e5ff;
+  --color-dt-red: #ff3b3b;
+  --color-dt-ink: #0a1206;
+  --color-dt-off: #64748b;
 }
 
 /* Mockup display fonts (latin-only) — Bangla glyphs must fall through to
