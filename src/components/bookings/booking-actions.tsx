@@ -72,7 +72,7 @@ export function BookingActions({
   return (
     <div className="space-y-3">
       {paymentFailed ? (
-        <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+        <div className="rounded-lg border border-dt-red/40 bg-dt-red/10 p-3 text-sm text-dt-red">
           {t("booking.payFailedBanner")}
         </div>
       ) : null}
@@ -85,9 +85,9 @@ export function BookingActions({
 
       {canCancel ? (
         confirmingCancel ? (
-          <div className="space-y-2 rounded-lg border border-border bg-card p-3 text-sm">
+          <div className="space-y-2 rounded-lg border border-dt-line bg-dt-card p-3 text-sm">
             <p className="font-medium">{t("booking.cancelTitle")}</p>
-            <p className="text-muted-foreground">
+            <p className="text-dt-dim">
               {t("booking.cancelPolicyNote")}
             </p>
             <div className="flex gap-2">

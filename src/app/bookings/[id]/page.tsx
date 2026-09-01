@@ -97,11 +97,11 @@ export default async function BookingDetailPage({
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-12">
-      <nav className="text-sm text-muted-foreground">
-        <Link href="/app" className="hover:text-foreground">
+      <nav className="text-sm text-dt-dim">
+        <Link href="/app" className="hover:text-dt-txt">
           {t("player.bookingsTitle")}
         </Link>{" "}
-        / <span className="text-foreground">{t("booking.breadcrumb")}</span>
+        / <span className="text-dt-txt">{t("booking.breadcrumb")}</span>
       </nav>
 
       <header className="space-y-2">
@@ -111,11 +111,11 @@ export default async function BookingDetailPage({
             {statusText}
           </StatusBadge>
         </div>
-        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+        <div className="flex items-center gap-1 text-sm text-dt-dim">
           <MapPinIcon className="size-4" aria-hidden />
           {[turf.area, turf.city].filter(Boolean).join(", ") || t("turfs.locationTbd")}
         </div>
-        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+        <div className="flex items-center gap-1 text-sm text-dt-dim">
           <ClockIcon className="size-4" aria-hidden />
           <span className="font-mono">
             {b.date} · {fmt(b.slotStart)}–{fmt(b.slotEnd)}
@@ -124,8 +124,8 @@ export default async function BookingDetailPage({
       </header>
 
       {b.status === "confirmed" || b.status === "completed" ? (
-        <div className="flex items-center gap-2 rounded-lg border border-border bg-card p-3 text-sm">
-          <CheckCircle2Icon className="size-4 text-primary" aria-hidden />
+        <div className="flex items-center gap-2 rounded-lg border border-dt-line bg-dt-card p-3 text-sm">
+          <CheckCircle2Icon className="size-4 text-dt-green" aria-hidden />
           {b.status === "completed"
             ? t("booking.playedSettled")
             : t("booking.confirmedNote")}
@@ -148,10 +148,10 @@ export default async function BookingDetailPage({
       />
 
       {b.status === "confirmed" && existingMatch ? (
-        <div className="rounded-lg border border-border bg-card p-3 text-sm">
+        <div className="rounded-lg border border-dt-line bg-dt-card p-3 text-sm">
           <a
             href={`/matches/${existingMatch.id}`}
-            className="text-primary hover:underline"
+            className="text-dt-green hover:underline"
           >
             {t("booking.viewMatch")}
           </a>
@@ -162,10 +162,10 @@ export default async function BookingDetailPage({
         <CreateMatchButton bookingId={b.id} />
       ) : null}
 
-      <section className="space-y-1 text-xs text-muted-foreground">
+      <section className="space-y-1 text-xs text-dt-dim">
         <p>
           {t("booking.cancellationPolicy")}{" "}
-          <span className="capitalize text-foreground">
+          <span className="capitalize text-dt-txt">
             {policyText}
           </span>
         </p>
