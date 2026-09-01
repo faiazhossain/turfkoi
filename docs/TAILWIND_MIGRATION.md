@@ -1,6 +1,6 @@
 # Tailwind Migration Plan — from global theme tokens to direct Tailwind control
 
-**Status:** planning (not started beyond Phase 0's proof of concept)
+**Status:** in progress — Phase 0 done, Phase 1 done
 **Owner decision (2026-09-01):** style pages with explicit Tailwind classes instead of the
 CSS-variable token layer (`--card`, `--primary`, … mapped to `bg-card`/`text-primary`), so
 page-level styling is hand-controlled. Proven page-by-page on `/friends` (commits `106692a`,
@@ -52,7 +52,8 @@ and grep-replaceable (still "direct Tailwind", just named hex):
 --color-dt-bg2:   #0f172a   /* raised backdrop / modal bg             */
 --color-dt-card:  #151f33   /* card surface                           */
 --color-dt-card2: #1b2740   /* inset surface (rows, tiles)            */
---color-dt-line:  #24324e   /* borders, dividers                      */
+--color-dt-line:  #354770   /* borders, dividers                      */
+--color-dt-input: #64789a   /* input/control borders                  */
 --color-dt-txt:   #e8eef7   /* primary text                           */
 --color-dt-dim:   #93a4bf   /* secondary text                         */
 --color-dt-green: #22c55e   /* primary action / online                */
@@ -60,7 +61,17 @@ and grep-replaceable (still "direct Tailwind", just named hex):
 --color-dt-blue:  #3b82f6   /* secondary action / ID chips            */
 --color-dt-red:   #ef4444   /* destructive / alerts                   */
 --color-dt-ink:   #04240f   /* text on green                          */
+--color-dt-off:   #64748b   /* offline presence dot                   */
 ```
+
+Two constants deviate from the raw mockup hex to hold the contrast floors
+(enforced against the palette in `contrast.test.ts` since Phase 1):
+
+- `dt-line`: friends.html's `#24324e` measures 1.29:1 vs `dt-card2`, below the
+  1.5:1 delineation floor — brightened to `#354770` (1.62:1).
+- `dt-input`: the mockup has no input-border color; `#64789a` keeps the WCAG
+  1.4.11 3:1 control boundary on every dt surface (the old `#5A6C86` fails
+  vs `dt-card2` at 2.78:1).
 
 Usage: `bg-dt-card border-dt-line text-dt-dim` — explicit, controlled, and one grep away
 from a re-skin. Pages may also use arbitrary values (`bg-[#151f33]`) where a one-off value
@@ -74,7 +85,7 @@ is genuinely one-off; anything repeated twice goes into the palette instead.
 on the page. Remaining on this area: `friends-card.tsx` (dashboard widget),
 `/players/[code]`, `invite-to-match-dialog.tsx`, `qr-share.tsx` still use tokens.
 
-### Phase 1 — Palette + guards
+### Phase 1 — Palette + guards ✅ (done)
 - Add the `dt-*` palette block to `@theme` in `globals.css`; convert `/friends`' arbitrary
   hex values to `dt-*` classes (mechanical).
 - Retarget `contrast.test.ts`: assert the **new** palette constants meet the same floors
@@ -160,4 +171,5 @@ surfaces). Consider 2–3 commits by module.
 | `bg-primary` / `text-primary` | green action: gradient `from-dt-green to-dt-teal text-dt-ink` / accents `text-dt-green` |
 | `bg-secondary` | `bg-dt-blue` |
 | destructive | `text-dt-red` / `bg-dt-red/10 border-dt-red/30` |
-| online / offline dot | `bg-dt-green` / `bg-[#64748b]` |
+| online / offline dot | `bg-dt-green` / `bg-dt-off` |
+| input border | `border-dt-input` (plain dividers stay `border-dt-line`) |

@@ -56,6 +56,50 @@ function designTokens() {
 
 const t = designTokens()
 
+/**
+ * Raw page palette (docs/TAILWIND_MIGRATION.md): flat dt-* colors registered
+ * in the globals.css @theme block. Parsed from the stylesheet like the token
+ * layer so mockup-driven palette changes stay floor-guarded.
+ */
+function dtPalette() {
+  const css = readFileSync(new URL("../globals.css", import.meta.url), "utf8")
+  const palette: Record<string, string> = {}
+  for (const [, name, value] of css.matchAll(
+    /--color-dt-([a-z0-9]+):\s*(#[0-9A-Fa-f]{6})/g
+  )) {
+    palette[name] = value
+  }
+  return palette
+}
+
+const dt = dtPalette()
+
+const DT_KEYS = [
+  "bg",
+  "bg2",
+  "card",
+  "card2",
+  "line",
+  "input",
+  "txt",
+  "dim",
+  "green",
+  "teal",
+  "blue",
+  "red",
+  "ink",
+  "off",
+] as const
+
+describe("dt palette completeness", () => {
+  it("declares every palette constant the migration contract names", () => {
+    expect(Object.keys(dt).sort()).toEqual([...DT_KEYS].sort())
+  })
+})
+
+/** dt surfaces a text-bearing component can rest on. */
+const DT_SURFACES = ["bg", "bg2", "card", "card2"] as const
+
 /** Body-text floors: anything a user reads needs 4.5:1. */
 describe("token text contrast (WCAG AA, 4.5:1)", () => {
   it("keeps muted-foreground readable on every surface it appears on", () => {
@@ -134,5 +178,50 @@ describe("token delineation floor (1.5:1)", () => {
     expect(contrast(t["border"], t["card"])).toBeGreaterThanOrEqual(1.5)
     expect(contrast(t["border"], t["background"])).toBeGreaterThanOrEqual(1.5)
     expect(contrast(t["sidebar-border"], t["sidebar"])).toBeGreaterThanOrEqual(1.5)
+  })
+})
+
+/**
+ * Floors for the raw dt-* palette (docs/TAILWIND_MIGRATION.md). The mockup
+ * hexes set the look; these floors are why dt-line/dt-input sit a step above
+ * friends.html's raw values (its #24324e line is 1.29:1 vs dt-card2).
+ * Removed together with the token assertions in the final migration phase.
+ */
+describe("dt palette text contrast (WCAG AA, 4.5:1)", () => {
+  it("keeps dt-txt and dt-dim readable on every dt surface", () => {
+    for (const surface of DT_SURFACES) {
+      expect(contrast(dt["txt"], dt[surface])).toBeGreaterThanOrEqual(4.5)
+      expect(contrast(dt["dim"], dt[surface])).toBeGreaterThanOrEqual(4.5)
+    }
+  })
+
+  it("keeps CTA labels readable on both ends of the green-to-teal gradient", () => {
+    expect(contrast(dt["ink"], dt["green"])).toBeGreaterThanOrEqual(4.5)
+    expect(contrast(dt["ink"], dt["teal"])).toBeGreaterThanOrEqual(4.5)
+  })
+})
+
+describe("dt palette accent text (WCAG 1.4.11, 3:1)", () => {
+  it("keeps accent-colored text distinguishable on card surfaces", () => {
+    for (const color of ["green", "blue", "red"] as const) {
+      expect(contrast(dt[color], dt["card"])).toBeGreaterThanOrEqual(3)
+      expect(contrast(dt[color], dt["card2"])).toBeGreaterThanOrEqual(3)
+    }
+  })
+})
+
+describe("dt palette control contrast (WCAG 1.4.11, 3:1)", () => {
+  it("keeps input borders visible on every surface inputs rest on", () => {
+    for (const surface of DT_SURFACES) {
+      expect(contrast(dt["input"], dt[surface])).toBeGreaterThanOrEqual(3)
+    }
+  })
+})
+
+describe("dt palette delineation floor (1.5:1)", () => {
+  it("keeps dt-line borders distinguishable from their surroundings", () => {
+    for (const surface of DT_SURFACES) {
+      expect(contrast(dt["line"], dt[surface])).toBeGreaterThanOrEqual(1.5)
+    }
   })
 })

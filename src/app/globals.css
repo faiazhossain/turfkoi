@@ -78,6 +78,34 @@
 }
 
 /*
+ * Raw page palette (docs/TAILWIND_MIGRATION.md). Flat, non-semantic colors
+ * from the approved mockups (friends.html) so restyled pages are
+ * hand-controlled instead of converging on the semantic token theme.
+ * Two constants are contrast-guarded deviations from the mockup hex
+ * (floors asserted in src/app/__tests__/contrast.test.ts):
+ *   dt-line  #24324e in friends.html measures 1.29:1 vs dt-card2 — brightened
+ *            to #354770 to hold the 1.5:1 delineation floor.
+ *   dt-input the mockup has no input border color; #64789a keeps the WCAG
+ *            1.4.11 3:1 control boundary on every dt surface.
+ */
+@theme {
+  --color-dt-bg: #0b1220;    /* page backdrop (friends.html --bg) */
+  --color-dt-bg2: #0f172a;   /* raised backdrop / modal bg */
+  --color-dt-card: #151f33;  /* card surface */
+  --color-dt-card2: #1b2740; /* inset surface (rows, tiles) */
+  --color-dt-line: #354770;  /* borders, dividers */
+  --color-dt-input: #64789a; /* input/control borders */
+  --color-dt-txt: #e8eef7;   /* primary text */
+  --color-dt-dim: #93a4bf;   /* secondary text */
+  --color-dt-green: #22c55e; /* primary action / online */
+  --color-dt-teal: #14b8a6;  /* gradient pair for green CTAs */
+  --color-dt-blue: #3b82f6;  /* secondary action / ID chips */
+  --color-dt-red: #ef4444;   /* destructive / alerts */
+  --color-dt-ink: #04240f;   /* text on green */
+  --color-dt-off: #64748b;   /* offline presence dot */
+}
+
+/*
  * MVP is dark-only (audit I2). :root mirrors .dark so the app never renders
  * unstyled if the .dark class is absent. P1 will introduce a true light theme.
  */

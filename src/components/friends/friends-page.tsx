@@ -23,14 +23,15 @@ import type { PlayerCardRow } from "@/features/player/queries"
 type Tab = "friends" | "requests" | "sent"
 
 /*
- * friends.html palette, applied as raw Tailwind (no global theme tokens) so
- * this page is fully hand-controlled:
- *   bg #0b1220 · card #151f33 · card2 #1b2740 · line #24324e
- *   txt #e8eef7 · dim #93a4bf · green #22c55e · blue #3b82f6 · red #ef4444
+ * friends.html palette via the shared dt-* Tailwind colors (registered in
+ * globals.css @theme, contract in docs/TAILWIND_MIGRATION.md) — explicit
+ * per-page control without the semantic token theme, one grep from a
+ * re-skin. dt-line/dt-input sit a step above the raw mockup hex to hold the
+ * contrast floors asserted in src/app/__tests__/contrast.test.ts.
  */
 
 const CARD =
-  "rounded-[14px] border border-[#24324e] bg-[#1b2740] transition-colors"
+  "rounded-[14px] border border-dt-line bg-dt-card2 transition-colors"
 
 /** Solid green CTA (mockup .btn-primary: green→teal gradient, dark text). */
 function GreenButton({
@@ -54,7 +55,7 @@ function GreenButton({
       onClick={onClick}
       disabled={disabled || loading}
       aria-busy={loading || undefined}
-      className={`inline-flex items-center justify-center gap-1.5 rounded-[10px] bg-gradient-to-br from-[#22c55e] to-[#14b8a6] font-bold text-[#04240f] shadow-[0_4px_14px_rgba(34,197,94,0.3)] transition active:scale-95 disabled:opacity-60 ${
+      className={`inline-flex items-center justify-center gap-1.5 rounded-[10px] bg-gradient-to-br from-dt-green to-dt-teal font-bold text-dt-ink shadow-[0_4px_14px_rgba(34,197,94,0.3)] transition active:scale-95 disabled:opacity-60 ${
         small ? "px-2.5 py-1.5 text-xs" : "px-4 py-2.5 text-sm"
       } ${className}`}
     >
@@ -82,7 +83,7 @@ function BlueButton({
       onClick={onClick}
       disabled={loading}
       aria-busy={loading || undefined}
-      className={`inline-flex items-center justify-center gap-1.5 rounded-[10px] bg-[#3b82f6] px-2.5 py-1.5 text-xs font-bold text-white shadow-[0_4px_14px_rgba(59,130,246,0.3)] transition active:scale-95 disabled:opacity-60 ${className}`}
+      className={`inline-flex items-center justify-center gap-1.5 rounded-[10px] bg-dt-blue px-2.5 py-1.5 text-xs font-bold text-white shadow-[0_4px_14px_rgba(59,130,246,0.3)] transition active:scale-95 disabled:opacity-60 ${className}`}
     >
       {loading ? <Spinner /> : null}
       {children}
@@ -106,7 +107,7 @@ function OutlineGreenButton({
       onClick={onClick}
       disabled={loading}
       aria-busy={loading || undefined}
-      className="inline-flex items-center justify-center gap-1.5 rounded-[10px] border border-[#22c55e] px-2.5 py-1.5 text-xs font-bold text-[#22c55e] transition hover:bg-[#22c55e]/10 active:scale-95 disabled:opacity-60"
+      className="inline-flex items-center justify-center gap-1.5 rounded-[10px] border border-dt-green px-2.5 py-1.5 text-xs font-bold text-dt-green transition hover:bg-dt-green/10 active:scale-95 disabled:opacity-60"
     >
       {loading ? <Spinner /> : null}
       {children}
@@ -137,8 +138,8 @@ function GhostButton({
       aria-busy={loading || undefined}
       className={`inline-flex items-center justify-center rounded-[10px] px-2 py-1.5 text-xs font-bold transition active:scale-95 disabled:opacity-60 ${
         danger
-          ? "text-[#ef4444] hover:bg-[#ef4444]/10"
-          : "text-[#e8eef7] hover:bg-[#151f33]"
+          ? "text-dt-red hover:bg-dt-red/10"
+          : "text-dt-txt hover:bg-dt-card"
       }`}
     >
       {loading ? <Spinner /> : null}
@@ -161,7 +162,7 @@ function Spinner() {
  * inline search box with icon trigger, three pill tabs (Friends / Requests /
  * Sent), section dividers with Online/Offline legends, player cards with
  * avatar + status dot + ID chip + position, and per-friend match invites.
- * Styled with raw Tailwind hex values (see palette above), page-by-page.
+ * Styled with the shared dt-* Tailwind colors (see palette above), page-by-page.
  */
 export function FriendsPage({
   myPlayerId,
@@ -245,7 +246,7 @@ export function FriendsPage({
   const visibleHits = (hits ?? []).filter((h) => !friendIds.includes(h.userId))
 
   return (
-    <div className="text-[#e8eef7]">
+    <div className="text-dt-txt">
       <div className="space-y-4">
         {/* Your Player ID — mockup's blue id-chip */}
         {myPlayerId && (
@@ -254,7 +255,7 @@ export function FriendsPage({
               type="button"
               onClick={copyId}
               title={t("players.copyId")}
-              className="inline-flex items-center gap-2 rounded-xl border border-[#3b82f6]/30 bg-[#3b82f6]/10 px-4 py-2 font-mono text-sm font-bold tracking-wide text-[#3b82f6] transition hover:bg-[#3b82f6]/15"
+              className="inline-flex items-center gap-2 rounded-xl border border-dt-blue/30 bg-dt-blue/10 px-4 py-2 font-mono text-sm font-bold tracking-wide text-dt-blue transition hover:bg-dt-blue/15"
             >
               {myPlayerId}
               {copied ? (
@@ -267,7 +268,7 @@ export function FriendsPage({
         )}
 
         {/* Search box (mockup: input + icon trigger inside one bordered pill) */}
-        <div className="flex items-center gap-2 rounded-[14px] border border-[#24324e] bg-[#151f33] px-3">
+        <div className="flex items-center gap-2 rounded-[14px] border border-dt-line bg-dt-card px-3">
           <input
             ref={searchRef}
             value={term}
@@ -277,19 +278,19 @@ export function FriendsPage({
             }}
             placeholder={t("players.searchPlaceholder")}
             maxLength={50}
-            className="h-11 flex-1 bg-transparent text-sm text-[#e8eef7] outline-none placeholder:text-[#93a4bf]"
+            className="h-11 flex-1 bg-transparent text-sm text-dt-txt outline-none placeholder:text-dt-dim"
           />
           <button
             type="button"
             onClick={search}
             disabled={term.trim().length < 2 || pending}
             aria-label={t("friends.search")}
-            className="text-[#22c55e] disabled:opacity-40"
+            className="text-dt-green disabled:opacity-40"
           >
             <SearchIcon className="size-5" aria-hidden />
           </button>
         </div>
-        <p className="text-xs text-[#93a4bf]">
+        <p className="text-xs text-dt-dim">
           {t("players.searchHint", { code: myPlayerId ?? "DT-XXXXXX" })}
         </p>
 
@@ -340,12 +341,12 @@ export function FriendsPage({
               onClick={() => setTab(key)}
               className={`rounded-xl border px-2 py-2.5 text-[12.5px] font-bold transition ${
                 tab === key
-                  ? "border-[#3b82f6] bg-[#3b82f6]/10 text-[#3b82f6]"
-                  : "border-[#24324e] bg-[#151f33] text-[#93a4bf] hover:bg-[#1b2740]"
+                  ? "border-dt-blue bg-dt-blue/10 text-dt-blue"
+                  : "border-dt-line bg-dt-card text-dt-dim hover:bg-dt-card2"
               }`}
             >
               {label}{" "}
-              <span className={alert && tab !== key ? "text-[#ef4444]" : undefined}>
+              <span className={alert && tab !== key ? "text-dt-red" : undefined}>
                 ({count})
               </span>
             </button>
@@ -377,7 +378,7 @@ export function FriendsPage({
                 dot="online"
               />
               {online.length === 0 ? (
-                <p className="px-1 pb-2 text-xs text-[#93a4bf]">
+                <p className="px-1 pb-2 text-xs text-dt-dim">
                   {t("friends.emptyOnline")}
                 </p>
               ) : (
@@ -399,7 +400,7 @@ export function FriendsPage({
                 dot="offline"
               />
               {offline.length === 0 ? (
-                <p className="px-1 text-xs text-[#93a4bf]">{t("friends.emptyOffline")}</p>
+                <p className="px-1 text-xs text-dt-dim">{t("friends.emptyOffline")}</p>
               ) : (
                 offline.map((f) => (
                   <PlayerRow key={f.friendshipId} row={f}>
@@ -515,7 +516,7 @@ function EmptyBlock({
     <div className="py-8 text-center">
       <div className="text-4xl opacity-70">{icon}</div>
       <h4 className="mt-2 text-base font-bold">{title}</h4>
-      {desc ? <p className="mt-1 text-sm text-[#93a4bf]">{desc}</p> : null}
+      {desc ? <p className="mt-1 text-sm text-dt-dim">{desc}</p> : null}
     </div>
   )
 }
@@ -530,16 +531,16 @@ function SectionDivider({
 }) {
   return (
     <div className="flex items-center gap-2.5 py-2">
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-[#24324e] bg-[#151f33] px-2.5 py-1 text-[10.5px] font-semibold text-[#93a4bf]">
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-dt-line bg-dt-card px-2.5 py-1 text-[10.5px] font-semibold text-dt-dim">
         <span
           aria-hidden
           className={`size-2 rounded-full ${
-            dot === "online" ? "bg-[#22c55e]" : "bg-[#64748b]"
+            dot === "online" ? "bg-dt-green" : "bg-dt-off"
           }`}
         />
         {legend}
       </span>
-      <span className="h-px flex-1 bg-[#24324e]" aria-hidden />
+      <span className="h-px flex-1 bg-dt-line" aria-hidden />
     </div>
   )
 }
@@ -577,24 +578,24 @@ function PlayerRow({
   const info = (
     <>
       <span className="flex min-w-0 items-center gap-1.5">
-        <span className="truncate text-sm font-bold text-[#e8eef7]">{row.name ?? ""}</span>
+        <span className="truncate text-sm font-bold text-dt-txt">{row.name ?? ""}</span>
         {row.username ? (
-          <span className="truncate text-xs font-semibold text-[#93a4bf]">
+          <span className="truncate text-xs font-semibold text-dt-dim">
             @{row.username}
           </span>
         ) : null}
       </span>
       {subtitle ? (
-        <span className="mt-0.5 block truncate text-xs text-[#93a4bf]">{subtitle}</span>
+        <span className="mt-0.5 block truncate text-xs text-dt-dim">{subtitle}</span>
       ) : (
         <span className="mt-0.5 flex items-center gap-2">
           {row.playerId ? (
-            <span className="rounded-md bg-[#3b82f6]/10 px-2 py-0.5 font-mono text-[11px] font-semibold text-[#3b82f6]">
+            <span className="rounded-md bg-dt-blue/10 px-2 py-0.5 font-mono text-[11px] font-semibold text-dt-blue">
               {row.playerId}
             </span>
           ) : null}
           {row.position ? (
-            <span className="text-[11px] font-bold text-[#93a4bf]">{row.position}</span>
+            <span className="text-[11px] font-bold text-dt-dim">{row.position}</span>
           ) : null}
         </span>
       )}
@@ -603,7 +604,7 @@ function PlayerRow({
 
   return (
     <li
-      className={`flex items-center gap-3 p-3 ${CARD} hover:border-[#3b82f6]`}
+      className={`flex items-center gap-3 p-3 ${CARD} hover:border-dt-blue`}
     >
       <span className="relative shrink-0">
         <PlayerAvatar
@@ -619,8 +620,8 @@ function PlayerRow({
           <span
             aria-hidden
             title={online ? t("friends.online") : t("friends.offline")}
-            className={`absolute -bottom-0.5 -right-0.5 size-3 rounded-full border-2 border-[#1b2740] ${
-              online ? "bg-[#22c55e]" : "bg-[#64748b]"
+            className={`absolute -bottom-0.5 -right-0.5 size-3 rounded-full border-2 border-dt-card2 ${
+              online ? "bg-dt-green" : "bg-dt-off"
             }`}
           />
         ) : null}
