@@ -31,10 +31,10 @@ export default async function HomePage() {
                 {t("home.badge")}
               </StatusBadge>
               <h1 className="max-w-3xl text-4xl font-bold leading-tight tracking-tight md:text-5xl">
-                {t("home.heroBookTurf")} <span className="text-primary">{t("home.heroFindOpponent")}</span>{" "}
+                {t("home.heroBookTurf")} <span className="text-dt-green">{t("home.heroFindOpponent")}</span>{" "}
                 {t("home.heroFillAndPlay")}
               </h1>
-              <p className="mt-4 max-w-xl text-base text-muted-foreground">{t("home.heroBody")}</p>
+              <p className="mt-4 max-w-xl text-base text-dt-dim">{t("home.heroBody")}</p>
               <div className="mt-6 flex flex-wrap gap-3">
                 <Button size="lg" render={<Link href="/turfs" />}>
                   {t("home.ctaBook")}

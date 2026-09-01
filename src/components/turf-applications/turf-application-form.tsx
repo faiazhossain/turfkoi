@@ -56,7 +56,7 @@ export function TurfApplicationForm() {
     return (
       <div className="space-y-3">
         <StatusBadge status="success">{t("ownATurf.successBadge")}</StatusBadge>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-dt-dim">
           {t("ownATurf.successBody", { phone: form.getValues("phone") })}
         </p>
       </div>
@@ -100,7 +100,7 @@ export function TurfApplicationForm() {
         )}
       </div>
       <div className="space-y-1.5">
-        <Label className="text-xs font-medium text-muted-foreground">
+        <Label className="text-xs font-medium text-dt-dim">
           {t("ownATurf.pinMap")}
         </Label>
         <LocationPicker
@@ -156,7 +156,7 @@ export function TurfApplicationForm() {
           placeholder={t("ownATurf.notesPlaceholder")}
           {...form.register("notes")}
         />
-        <p className="text-xs text-muted-foreground">{t("ownATurf.notesHelp")}</p>
+        <p className="text-xs text-dt-dim">{t("ownATurf.notesHelp")}</p>
         {form.formState.errors.notes && (
           <p className="text-sm text-destructive">{fieldError(form.formState.errors.notes.message, t)}</p>
         )}

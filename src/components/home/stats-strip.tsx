@@ -15,10 +15,10 @@ export async function StatsStrip() {
       {statsRow.map((s) => (
         <div key={s.label}>
           <dt className="sr-only">{s.label}</dt>
-          <dd className="text-2xl font-bold tabular-nums text-foreground sm:text-3xl">
+          <dd className="text-2xl font-bold tabular-nums text-dt-txt sm:text-3xl">
             {s.value.toLocaleString("en-US")}
           </dd>
-          <dd className="mt-0.5 text-xs text-muted-foreground sm:text-sm">
+          <dd className="mt-0.5 text-xs text-dt-dim sm:text-sm">
             {s.label}
           </dd>
         </div>

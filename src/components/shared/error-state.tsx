@@ -38,9 +38,9 @@ export function ErrorState({
         <Icon className="size-6" aria-hidden />
       </div>
       <div className="space-y-1">
-        <p className="font-heading text-base font-medium text-foreground">{title}</p>
+        <p className="font-heading text-base font-medium text-dt-txt">{title}</p>
         {description ? (
-          <p className="mx-auto max-w-sm text-sm text-muted-foreground">
+          <p className="mx-auto max-w-sm text-sm text-dt-dim">
             {description}
           </p>
         ) : null}

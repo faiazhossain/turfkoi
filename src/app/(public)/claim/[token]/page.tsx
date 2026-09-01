@@ -87,18 +87,18 @@ export default async function ClaimTurfPage({
         <CardContent className="space-y-4">
           <dl className="space-y-2 text-sm">
             <div className="flex justify-between gap-4">
-              <dt className="text-muted-foreground">{t("claim.format")}</dt>
+              <dt className="text-dt-dim">{t("claim.format")}</dt>
               <dd>{turfFormatLabel(turf.format)}</dd>
             </div>
             {place ? (
               <div className="flex justify-between gap-4">
-                <dt className="text-muted-foreground">{t("claim.location")}</dt>
+                <dt className="text-dt-dim">{t("claim.location")}</dt>
                 <dd className="text-right">{place}</dd>
               </div>
             ) : null}
             {turf.address ? (
               <div className="flex justify-between gap-4">
-                <dt className="text-muted-foreground">{t("claim.address")}</dt>
+                <dt className="text-dt-dim">{t("claim.address")}</dt>
                 <dd className="text-right">{turf.address}</dd>
               </div>
             ) : null}
@@ -109,7 +109,7 @@ export default async function ClaimTurfPage({
             <ClaimOtpFlow token={token} maskedPhone={maskedPhone} />
           ) : (
             <div className="space-y-3">
-              <p className="text-sm text-muted-foreground">{t("claim.signInNote")}</p>
+              <p className="text-sm text-dt-dim">{t("claim.signInNote")}</p>
               <div className="flex gap-2">
                 <Button size="lg" render={<Link href="/login" />}>
                   {t("nav.signIn")}

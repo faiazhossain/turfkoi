@@ -33,7 +33,7 @@ export function ClaimTurfButton({ token }: { token: string }) {
       <Button size="lg" loading={pending} onClick={onClaim}>
         {pending ? t("claim.claiming") : t("claim.claimButton")}
       </Button>
-      <p className="text-xs text-muted-foreground">{t("claim.claimNote")}</p>
+      <p className="text-xs text-dt-dim">{t("claim.claimNote")}</p>
     </div>
   )
 }

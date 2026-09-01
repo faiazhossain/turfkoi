@@ -18,7 +18,7 @@ export async function CtaBanner() {
   return (
     <section className="mx-auto max-w-6xl px-4 pb-20 md:pb-28">
       <Reveal>
-        <div className="relative overflow-hidden rounded-xl border border-border bg-linear-to-br from-primary/12 via-card to-secondary/12 px-6 py-14 text-center shadow-med md:py-20">
+        <div className="relative overflow-hidden rounded-xl border border-dt-line bg-linear-to-br from-dt-green/12 via-dt-card to-dt-blue/12 px-6 py-14 text-center shadow-med md:py-20">
           <div
             aria-hidden
             className="pointer-events-none absolute -top-24 left-1/2 size-[420px] -translate-x-1/2 rounded-full"
@@ -50,7 +50,7 @@ export async function CtaBanner() {
             <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
               {t("home.ctaBannerTitle")}
             </h2>
-            <p className="mx-auto mt-3 max-w-md text-muted-foreground">
+            <p className="mx-auto mt-3 max-w-md text-dt-dim">
               {t("home.ctaBannerBody")}
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">

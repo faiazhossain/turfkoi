@@ -44,14 +44,14 @@ export async function AudienceSection() {
       <div className="mt-12 grid gap-4 md:grid-cols-3">
         {audience.map((a, i) => (
           <Reveal key={a.titleKey} delay={i * 0.1} className="h-full">
-            <article className="flex h-full flex-col rounded-lg border border-border bg-card p-6 shadow-low">
-              <div className="mb-4 inline-flex size-11 items-center justify-center rounded-md bg-primary/15 text-primary">
+            <article className="flex h-full flex-col rounded-lg border border-dt-line bg-dt-card p-6 shadow-low">
+              <div className="mb-4 inline-flex size-11 items-center justify-center rounded-md bg-dt-green/15 text-dt-green">
                 <a.icon className="size-5" aria-hidden />
               </div>
               <h3 className="font-heading text-lg font-semibold">
                 {t(a.titleKey)}
               </h3>
-              <p className="mt-1.5 flex-1 text-sm leading-relaxed text-muted-foreground">
+              <p className="mt-1.5 flex-1 text-sm leading-relaxed text-dt-dim">
                 {t(a.descKey)}
               </p>
               <Button

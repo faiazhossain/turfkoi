@@ -10,14 +10,14 @@ const featureMeta = [
     icon: CalendarCheckIcon,
     titleKey: "home.featureBookTitle",
     descKey: "home.featureBookDesc",
-    accentClass: "bg-primary/15 text-primary",
+    accentClass: "bg-dt-green/15 text-dt-green",
   },
   {
     step: "2",
     icon: SwordsIcon,
     titleKey: "home.featureOpponentTitle",
     descKey: "home.featureOpponentDesc",
-    accentClass: "bg-secondary/15 text-secondary",
+    accentClass: "bg-dt-blue/15 text-dt-blue",
   },
   {
     step: "3",
@@ -37,27 +37,27 @@ export async function FeaturesSection() {
         <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
           {t("home.featuresTitle")}
         </h2>
-        <p className="mt-3 text-muted-foreground">{t("home.featuresSubtitle")}</p>
+        <p className="mt-3 text-dt-dim">{t("home.featuresSubtitle")}</p>
       </Reveal>
 
       <div className="mt-12 grid gap-4 sm:grid-cols-3">
         {featureMeta.map((f, i) => (
           <Reveal key={f.titleKey} delay={i * 0.1} className="h-full">
-            <article className="group h-full rounded-lg border border-border bg-card p-5 shadow-low transition-transform duration-300 ease-out hover:-translate-y-1 motion-safe:hover:shadow-med">
+            <article className="group h-full rounded-lg border border-dt-line bg-dt-card p-5 shadow-low transition-transform duration-300 ease-out hover:-translate-y-1 motion-safe:hover:shadow-med">
               <div className="mb-3 flex items-center justify-between">
                 <div
                   className={`inline-flex size-10 items-center justify-center rounded-md ${f.accentClass}`}
                 >
                   <f.icon className="size-5" aria-hidden />
                 </div>
-                <span className="font-heading text-3xl font-bold text-muted-foreground/25">
+                <span className="font-heading text-3xl font-bold text-dt-dim/25">
                   {f.step}
                 </span>
               </div>
               <h3 className="font-heading text-base font-semibold">
                 {t(f.titleKey)}
               </h3>
-              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+              <p className="mt-1 text-sm leading-relaxed text-dt-dim">
                 {t(f.descKey)}
               </p>
             </article>

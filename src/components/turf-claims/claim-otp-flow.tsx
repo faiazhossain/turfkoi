@@ -134,7 +134,7 @@ export function ClaimOtpFlow({
 
   return (
     <div className="space-y-3">
-      <p className="text-sm text-muted-foreground">
+      <p className="text-sm text-dt-dim">
         {t("claim.otpSentTo", { phone: maskedPhone })}
       </p>
       <form
@@ -192,7 +192,7 @@ export function ClaimOtpFlow({
                   {t("common.copy")}
                 </Button>
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-dt-dim">
                 {t("claim.shownOnce", { phone: maskedPhone })}
               </p>
               {modalError ? (

@@ -49,8 +49,8 @@ export function FilterBar({
             className={cn(
               "inline-flex h-9 shrink-0 items-center rounded-full border px-3 text-sm transition-colors",
               selected
-                ? "border-primary bg-primary text-primary-foreground"
-                : "border-border bg-muted text-muted-foreground hover:bg-accent hover:text-foreground"
+                ? "border-dt-green bg-dt-green text-dt-ink"
+                : "border-dt-line bg-dt-card2 text-dt-dim hover:bg-dt-card2 hover:text-dt-txt"
             )}
           >
             {item.label}
