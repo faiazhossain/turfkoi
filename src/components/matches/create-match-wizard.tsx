@@ -14,8 +14,11 @@ import {
   CalendarCheckIcon,
   CheckIcon,
   GoalIcon,
+  LinkIcon,
   LockIcon,
+  SquarePenIcon,
   UserCheckIcon,
+  UserPlusIcon,
   UsersIcon,
 } from "lucide-react"
 
@@ -637,53 +640,92 @@ export function CreateMatchWizard({
           </div>
 
           {haveChoice === "count" ? (
-            <div className="grid grid-cols-2 gap-2">
-              <OptionCard
-                selected={fullSquad}
-                onClick={() => setPlayerCount(squadSize)}
-                label={t("matches.wizard.fullSquad")}
-              />
-              <div
-                className={`flex items-center justify-center gap-2 rounded-xl border p-1.5 transition-colors ${
-                  playerCount !== null && !fullSquad
-                    ? "border-dt-green bg-dt-green/10 ring-2 ring-dt-green/25"
-                    : "border-dt-line bg-dt-card"
-                }`}
-              >
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  className="size-8"
-                  aria-label={t("matches.wizard.decrease")}
-                  disabled={playerCount === null || playerCount <= 1}
-                  onClick={() =>
-                    setPlayerCount((n) => Math.max(1, (n ?? squadSize) - 1))
-                  }
+            <>
+              <div className="grid grid-cols-2 gap-2">
+                <OptionCard
+                  selected={fullSquad}
+                  onClick={() => setPlayerCount(squadSize)}
+                  label={t("matches.wizard.fullSquad")}
+                />
+                <div
+                  className={`flex items-center justify-center gap-2 rounded-xl border p-1.5 transition-colors ${
+                    playerCount !== null && !fullSquad
+                      ? "border-dt-green bg-dt-green/10 ring-2 ring-dt-green/25"
+                      : "border-dt-line bg-dt-card"
+                  }`}
                 >
-                  −
-                </Button>
-                <span
-                  key={playerCount}
-                  className="min-w-8 animate-in text-center font-heading text-lg font-bold tabular-nums fade-in zoom-in-50 duration-150 motion-reduce:animate-none"
-                >
-                  {playerCount === null ? "—" : num(playerCount)}
-                </span>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  className="size-8"
-                  aria-label={t("matches.wizard.increase")}
-                  disabled={playerCount !== null && playerCount >= squadSize}
-                  onClick={() =>
-                    setPlayerCount((n) => Math.min(squadSize, (n ?? 0) + 1))
-                  }
-                >
-                  +
-                </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="size-8"
+                    aria-label={t("matches.wizard.decrease")}
+                    disabled={playerCount === null || playerCount <= 1}
+                    onClick={() =>
+                      setPlayerCount((n) => Math.max(1, (n ?? squadSize) - 1))
+                    }
+                  >
+                    −
+                  </Button>
+                  <span
+                    key={playerCount}
+                    className="min-w-8 animate-in text-center font-heading text-lg font-bold tabular-nums fade-in zoom-in-50 duration-150 motion-reduce:animate-none"
+                  >
+                    {playerCount === null ? "—" : num(playerCount)}
+                  </span>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="size-8"
+                    aria-label={t("matches.wizard.increase")}
+                    disabled={playerCount !== null && playerCount >= squadSize}
+                    onClick={() =>
+                      setPlayerCount((n) => Math.min(squadSize, (n ?? 0) + 1))
+                    }
+                  >
+                    +
+                  </Button>
+                </div>
               </div>
-            </div>
+
+              {/* The match link is per created match, so filling seats
+                  happens in the match room — make the three paths explicit. */}
+              <div className="rounded-lg border border-dt-line bg-dt-card2/50 p-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-dt-dim">
+                  {t("matches.wizard.fillSeatsTitle")}
+                </p>
+                <ul className="mt-2 space-y-2 text-sm leading-snug">
+                  <li className="flex gap-2">
+                    <UserPlusIcon
+                      className="mt-0.5 size-4 shrink-0 text-dt-green"
+                      aria-hidden
+                    />
+                    <span className="text-dt-dim">
+                      {t("matches.wizard.fillSeatsFriends")}
+                    </span>
+                  </li>
+                  <li className="flex gap-2">
+                    <LinkIcon
+                      className="mt-0.5 size-4 shrink-0 text-dt-green"
+                      aria-hidden
+                    />
+                    <span className="text-dt-dim">
+                      {t("matches.wizard.fillSeatsLink")}
+                    </span>
+                  </li>
+                  <li className="flex gap-2">
+                    <SquarePenIcon
+                      className="mt-0.5 size-4 shrink-0 text-dt-green"
+                      aria-hidden
+                    />
+                    <span className="text-dt-dim">
+                      {t("matches.wizard.fillSeatsManual")}
+                    </span>
+                  </li>
+                </ul>
+              </div>
+            </>
           ) : null}
 
           {haveChoice === "later" ? (

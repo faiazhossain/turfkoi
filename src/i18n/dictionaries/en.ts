@@ -866,6 +866,13 @@ export const en = {
         "Open the match now — invite players from the DeshiTurf community from the match room afterwards.",
       laterSeatsHint:
         "Just you for now — the remaining seats stay open for invites and join requests.",
+      fillSeatsTitle: "How your squad fills after you create the match",
+      fillSeatsFriends:
+        "DeshiTurf friends — send match invites from your friends list in the match room.",
+      fillSeatsLink:
+        "Friends without the app — share the match link; they join DeshiTurf and land in your match room.",
+      fillSeatsManual:
+        "Not joining the app? Add their details yourself — or keep the seats open with just the count.",
       squadFill: "Squad: {count}/{total} — invitations are confirmed when players accept.",
       stepProgress: "Step {done} of {total}",
       navFormat: "Format",

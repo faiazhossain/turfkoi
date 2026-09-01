@@ -884,6 +884,13 @@ export const bn: Dictionary = {
         "এখনই ম্যাচ খুলে ফেলুন — পরে ম্যাচ রুম থেকে DeshiTurf কমিউনিটির player-দের invite করতে পারবেন।",
       laterSeatsHint:
         "আপাতত শুধু আপনি — বাকি সিটগুলো invite আর join request-এর জন্য খালি থাকবে।",
+      fillSeatsTitle: "ম্যাচ তৈরির পর আপনার squad ভরবে যেভাবে",
+      fillSeatsFriends:
+        "DeshiTurf বন্ধুরা — ম্যাচ রুমের friends লিস্ট থেকে তাদের কাছে match invite পাঠান।",
+      fillSeatsLink:
+        "অ্যাপ নেই এমন বন্ধুরা — match link শেয়ার করুন; তারা DeshiTurf জয়েন করে সোজা আপনার ম্যাচ রুমে ঢুকবে।",
+      fillSeatsManual:
+        "অ্যাপে না ঢুকতে চাইলেও সমস্যা নেই — তাদের তথ্য আপনি নিজেই যোগ করতে পারেন, অথবা শুধু সংখ্যা দিয়ে সিট খালি রাখুন।",
       squadFill:
         "Squad: {count}/{total} — সবাই Accept করলেই আপনার Squad Ready হবে।",
       stepProgress: "ধাপ {done}/{total}",
