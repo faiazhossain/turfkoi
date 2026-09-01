@@ -857,8 +857,15 @@ export const en = {
       haveCountMessage:
         "You have {count} players. {need} more players to find.",
       fullSquadMessage: "Full squad — once created, you can go straight to finding an opponent.",
-      countHint:
-        "Just tell us how many players are ready. You don't need to add names or numbers right now — you can invite or add everyone from the match room later.",
+      lockedHint: "Complete the previous steps to unlock this one.",
+      havePlayersTitle: "I have players ready",
+      havePlayersDesc:
+        "Count who is in right now (yourself included) — add or invite the rest from the match room later.",
+      addLaterTitle: "Add players later",
+      addLaterDesc:
+        "Open the match now — invite players from the DeshiTurf community from the match room afterwards.",
+      laterSeatsHint:
+        "Just you for now — the remaining seats stay open for invites and join requests.",
       squadFill: "Squad: {count}/{total} — invitations are confirmed when players accept.",
       stepProgress: "Step {done} of {total}",
       navFormat: "Format",

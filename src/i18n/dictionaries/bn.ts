@@ -875,8 +875,15 @@ export const bn: Dictionary = {
         "আপনার {count} জন player আছে। আরও {need} জন player দরকার।",
       fullSquadMessage:
         "Full squad — ম্যাচ তৈরি করলেই সোজা opponent খোঁজা শুরু করতে পারবেন।",
-      countHint:
-        "এখানে শুধু কতজন player ready আছেন সেটাই বলুন। এখনই সবার নাম বা নাম্বার দেওয়ার দরকার নেই — পরে ম্যাচ রুম থেকে সবাইকে invite বা যোগ করতে পারবেন।",
+      lockedHint: "আগের ধাপ শেষ করলে এই ধাপ খুলবে।",
+      havePlayersTitle: "আমার player রেডি আছে",
+      havePlayersDesc:
+        "আপনিসহ এখন কতজন রেডি, সেই সংখ্যা দিন — বাকিদের পরে ম্যাচ রুম থেকে যোগ করতে পারবেন।",
+      addLaterTitle: "player পরে যোগ করব",
+      addLaterDesc:
+        "এখনই ম্যাচ খুলে ফেলুন — পরে ম্যাচ রুম থেকে DeshiTurf কমিউনিটির player-দের invite করতে পারবেন।",
+      laterSeatsHint:
+        "আপাতত শুধু আপনি — বাকি সিটগুলো invite আর join request-এর জন্য খালি থাকবে।",
       squadFill:
         "Squad: {count}/{total} — সবাই Accept করলেই আপনার Squad Ready হবে।",
       stepProgress: "ধাপ {done}/{total}",
