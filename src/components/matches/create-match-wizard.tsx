@@ -13,7 +13,6 @@ import { toast } from "sonner"
 import {
   CalendarCheckIcon,
   CheckIcon,
-  ChevronLeftIcon,
   GoalIcon,
   LockIcon,
   UserCheckIcon,
@@ -59,9 +58,10 @@ export interface WizardBooking {
  *      NO identities here: names/invites/guests all happen progressively
  *      from the match room.
  *
- * UX: the stepper shows where you are (completed steps are checkmarks you
- * can click back to), each step is a card, and the sticky bar carries
- * Back + Continue, turning into Create on the last step.
+ * UX: there is no Continue button — selections drive progression. Picking a
+ * booking, a format, or a squad size opens the next step immediately;
+ * completed steps collapse into editable summaries, the stepper lets you
+ * click back to anything you have passed, and the sticky bar holds Create.
  */
 
 /** One wizard step — numbered badge that turns into a check when done. */
@@ -213,6 +213,11 @@ export function CreateMatchWizard({
   const starters = startersOf(format)
   const maxSquad = FORMATS[format].maxSquad
   const subs = squadSize - starters
+  // Every valid squad size for the format, as selectable chips.
+  const squadChoices = Array.from(
+    { length: maxSquad - starters + 1 },
+    (_, i) => starters + i
+  )
   const num = (n: number) => (locale === "bn" ? toBnDigits(String(n)) : String(n))
   const slotDate = (iso: string) => formatSlotDate(iso, locale)
   const slotTime = (v: string) => v.slice(0, 5)
@@ -239,17 +244,25 @@ export function CreateMatchWizard({
   const fullSquad = playerCount !== null && playerCount >= squadSize
   const spotsNeeded = playerCount === null ? 0 : Math.max(0, squadSize - playerCount)
 
-  const stepValid = (i: number) =>
-    i === 0 ? bookingId !== null : i === 3 ? playerCount !== null : true
-
-  function goNext() {
-    if (!stepValid(current)) return
-    setFurthest((f) => Math.max(f, current + 1))
-    setCurrent((c) => c + 1)
+  /** Selections drive progression: picking a value opens the next step. */
+  function advance(to: number) {
+    setFurthest((f) => Math.max(f, to))
+    setCurrent(to)
   }
 
   function goTo(i: number) {
     if (i <= furthest) setCurrent(i)
+  }
+
+  function pickBooking(id: string) {
+    setBookingId(id)
+    advance(1)
+  }
+
+  function pickSquadSize(size: number) {
+    setSquadSize(size)
+    setPlayerCount((prev) => (prev === null ? null : Math.min(prev, size)))
+    advance(3)
   }
 
   const navSteps = [
@@ -451,7 +464,7 @@ export function CreateMatchWizard({
                   type="button"
                   role="radio"
                   aria-checked={bookingId === b.id}
-                  onClick={() => setBookingId(b.id)}
+                  onClick={() => pickBooking(b.id)}
                   className={`relative flex w-full items-center gap-3 rounded-xl border p-3 text-left transition-all duration-200 ${
                     bookingId === b.id
                       ? "border-dt-green bg-dt-green/10 ring-2 ring-dt-green/25"
@@ -531,7 +544,10 @@ export function CreateMatchWizard({
             <OptionCard
               key={f}
               selected={format === f}
-              onClick={() => pickFormat(f)}
+              onClick={() => {
+                pickFormat(f)
+                advance(2)
+              }}
               label={t(`matches.format.${f}`)}
               sub={t("matches.wizard.starters", { count: num(startersOf(f)) })}
             />
@@ -544,42 +560,28 @@ export function CreateMatchWizard({
         2,
         squadSummaryText,
         <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              aria-label={t("matches.wizard.decrease")}
-              disabled={squadSize <= starters}
-              onClick={() => {
-                const next = Math.max(starters, squadSize - 1)
-                setSquadSize(next)
-                setPlayerCount((prev) => (prev === null ? null : Math.min(prev, next)))
-              }}
-            >
-              −
-            </Button>
-            <div
-              key={squadSize}
-              className="flex-1 animate-in text-center fade-in zoom-in-50 duration-150 motion-reduce:animate-none"
-            >
-              <span className="font-heading text-3xl font-bold tabular-nums">
-                {num(squadSize)}
-              </span>
-              <span className="ml-1 text-sm text-dt-dim">
-                / {num(maxSquad)}
-              </span>
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              aria-label={t("matches.wizard.increase")}
-              disabled={squadSize >= maxSquad}
-              onClick={() => setSquadSize((n) => Math.min(maxSquad, n + 1))}
-            >
-              +
-            </Button>
+          {/* Squad size as selectable chips — picking one opens the next step */}
+          <div
+            className="flex flex-wrap justify-center gap-2"
+            role="radiogroup"
+            aria-label={t("matches.wizard.stepSquad")}
+          >
+            {squadChoices.map((size) => (
+              <button
+                key={size}
+                type="button"
+                role="radio"
+                aria-checked={squadSize === size}
+                onClick={() => pickSquadSize(size)}
+                className={`inline-flex min-w-11 items-center justify-center rounded-full border px-3.5 py-2 font-heading text-sm font-semibold tabular-nums transition-all duration-200 hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 ${
+                  squadSize === size
+                    ? "border-dt-green bg-dt-green/10 text-dt-green ring-2 ring-dt-green/25"
+                    : "border-dt-line bg-dt-card text-dt-txt hover:border-dt-green/40"
+                }`}
+              >
+                {num(size)}
+              </button>
+            ))}
           </div>
 
           {/* Squad dots — solid = starting XI, faded = substitutes */}
@@ -717,7 +719,7 @@ export function CreateMatchWizard({
         </div>
       )}
 
-      {/* Sticky action bar — Back + Continue, turning into Create on step 4 */}
+      {/* Sticky action bar — Create once every step's selection exists */}
       <div className="sticky bottom-0 -mx-4 mt-8 border-t border-dt-line bg-dt-bg/90 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-md">
         {current === 3 ? (
           <p className="mb-2 truncate text-sm text-dt-dim">
@@ -729,31 +731,14 @@ export function CreateMatchWizard({
               : t("matches.wizard.pickBookingFirst")}
           </p>
         ) : null}
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setCurrent((c) => Math.max(0, c - 1))}
-            disabled={current === 0 || pending}
-            aria-label={t("common.back")}
-          >
-            <ChevronLeftIcon aria-hidden />
-          </Button>
-          {current < navSteps.length - 1 ? (
-            <Button onClick={goNext} disabled={!stepValid(current)} className="flex-1">
-              {t("common.continue")}
-            </Button>
-          ) : (
-            <Button
-              onClick={create}
-              loading={pending}
-              disabled={bookingId === null || playerCount === null}
-              className="flex-1"
-            >
-              {t("matches.create")}
-            </Button>
-          )}
-        </div>
+        <Button
+          onClick={create}
+          loading={pending}
+          disabled={bookingId === null || playerCount === null}
+          className="w-full"
+        >
+          {t("matches.create")}
+        </Button>
       </div>
     </div>
   )
