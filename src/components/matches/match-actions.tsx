@@ -117,7 +117,7 @@ export function MatchActions(props: MatchActionsProps) {
           <Button onClick={startMatch} loading={pending} className="w-full sm:w-auto">
             {t("matches.startCta")}
           </Button>
-          <p className="text-xs text-muted-foreground">{t("matches.startHint")}</p>
+          <p className="text-xs text-dt-dim">{t("matches.startHint")}</p>
         </section>
       ) : null}
 
@@ -151,7 +151,7 @@ export function MatchActions(props: MatchActionsProps) {
                 className="w-20 text-center"
               />
             </div>
-            <span className="pb-2 text-muted-foreground">–</span>
+            <span className="pb-2 text-dt-dim">–</span>
             <div className="space-y-1">
               <Label className="text-xs">{props.awayLabel}</Label>
               <Input
@@ -174,7 +174,7 @@ export function MatchActions(props: MatchActionsProps) {
       {canConfirm ? (
         <section className="space-y-2">
           <h3 className="font-heading text-sm font-semibold">{t("matches.confirmResult")}</h3>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-dt-dim">
             {t("matches.score", { score: `${props.homeScore} – ${props.awayScore}` })}
           </p>
           <div className="flex gap-2">

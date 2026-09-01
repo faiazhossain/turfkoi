@@ -62,18 +62,18 @@ export function RequestManager({ side, requests }: RequestManagerProps) {
       <h3 className="font-heading text-sm font-semibold">
         {t("matches.joinRequests", { count: requests.length })}
       </h3>
-      <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border">
+      <ul className="divide-y divide-dt-line overflow-hidden rounded-lg border border-dt-line">
         {requests.map((r) => (
           <li
             key={`${r.matchId}-${r.userId}`}
-            className="flex items-center justify-between gap-2 bg-card p-3 text-sm"
+            className="flex items-center justify-between gap-2 bg-dt-card p-3 text-sm"
           >
             <div className="min-w-0">
               <p className="truncate font-medium">
                 {r.playerName ?? r.playerPhone}
               </p>
               {r.playerName ? (
-                <p className="truncate text-xs text-muted-foreground">
+                <p className="truncate text-xs text-dt-dim">
                   {r.playerPhone}
                 </p>
               ) : null}

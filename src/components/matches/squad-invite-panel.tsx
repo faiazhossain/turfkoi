@@ -68,7 +68,7 @@ export function SquadInvitePanel({
 
   return (
     <div className="space-y-3">
-      <p className="text-xs text-muted-foreground">
+      <p className="text-xs text-dt-dim">
         {t("matches.invite.overInviteHint")}
       </p>
       <div className="flex flex-wrap items-end gap-2">
@@ -96,9 +96,9 @@ export function SquadInvitePanel({
       {friends.length > 0 ? (
         <div className="space-y-2">
           <p className="text-sm font-medium">{t("matches.invite.friendsTitle")}</p>
-          <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border">
+          <ul className="divide-y divide-dt-line overflow-hidden rounded-lg border border-dt-line">
             {friends.map((f) => (
-              <li key={f.userId} className="flex items-center justify-between gap-2 bg-card p-2.5 text-sm">
+              <li key={f.userId} className="flex items-center justify-between gap-2 bg-dt-card p-2.5 text-sm">
                 <span className="min-w-0 truncate">{f.name ?? f.phone}</span>
                 <Button
                   size="xs"

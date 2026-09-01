@@ -69,11 +69,11 @@ export function GuestAddForm({
   }
 
   return (
-    <div className="space-y-3 rounded-lg border border-dashed border-border p-3">
+    <div className="space-y-3 rounded-lg border border-dashed border-dt-line p-3">
       <p className="text-sm font-medium">{t("matches.guest.addTitle")}</p>
       {recentGuests.length > 0 ? (
         <div className="space-y-1.5">
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-dt-dim">
             {t("matches.guest.recentTitle")}
           </p>
           <div className="flex flex-wrap gap-1.5">
@@ -83,7 +83,7 @@ export function GuestAddForm({
                 type="button"
                 onClick={() => prefill(pick)}
                 aria-label={t("matches.guest.recentAria") + ": " + pick.name}
-                className="rounded-full border border-border px-2.5 py-1 text-xs text-foreground/80 transition-colors hover:border-primary/50 hover:text-foreground"
+                className="rounded-full border border-dt-line px-2.5 py-1 text-xs text-dt-txt/80 transition-colors hover:border-dt-green/50 hover:text-dt-txt"
               >
                 {pick.jerseyNumber != null ? `#${pick.jerseyNumber} ` : ""}
                 {pick.name}

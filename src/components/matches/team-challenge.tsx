@@ -34,10 +34,10 @@ export type ChallengeableView = {
 
 const STATUS_TONE: Record<TeamChallenge["status"], string> = {
   pending: "border-warning/40 bg-warning/10 text-warning",
-  accepted: "border-primary/40 bg-primary/10 text-primary",
+  accepted: "border-dt-green/40 bg-dt-green/10 text-dt-green",
   rejected: "border-destructive/40 bg-destructive/10 text-destructive",
-  cancelled: "border-border bg-muted/50 text-muted-foreground",
-  expired: "border-border bg-muted/50 text-muted-foreground",
+  cancelled: "border-dt-line bg-dt-card2/50 text-dt-dim",
+  expired: "border-dt-line bg-dt-card2/50 text-dt-dim",
 }
 
 /**
@@ -61,7 +61,7 @@ export function TeamChallengePanel(view: ChallengeableView) {
           {t("matches.challenge.title")}
         </h2>
         {pending.length > 0 ? (
-          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium tabular-nums text-primary">
+          <span className="rounded-full bg-dt-green/10 px-2 py-0.5 text-xs font-medium tabular-nums text-dt-green">
             {num(pending.length)}
           </span>
         ) : null}
@@ -87,7 +87,7 @@ export function TeamChallengePanel(view: ChallengeableView) {
           {settled.map((c) => (
             <li
               key={c.teamId}
-              className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-card px-3 py-2 text-sm"
+              className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-dt-line bg-dt-card px-3 py-2 text-sm"
             >
               <span className="min-w-0 truncate font-medium">{c.teamName}</span>
               <span
@@ -135,7 +135,7 @@ function PendingChallengeRow({
           <p className="truncate font-heading text-sm font-semibold">
             {challenge.teamName}
           </p>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-dt-dim">
             {t("matches.challenge.from", {
               captain: challenge.sentByName ?? t("matches.player"),
             })}
@@ -187,9 +187,9 @@ function SendChallengeCard({
   }
 
   return (
-    <div className="space-y-2 rounded-2xl border border-border bg-card p-3">
+    <div className="space-y-2 rounded-2xl border border-dt-line bg-dt-card p-3">
       <p className="text-sm font-medium">{t("matches.challenge.sendTitle")}</p>
-      <p className="text-xs text-muted-foreground">{t("matches.challenge.sendDesc")}</p>
+      <p className="text-xs text-dt-dim">{t("matches.challenge.sendDesc")}</p>
       <div className="flex gap-2">
         <Select value={teamId} onValueChange={(v) => setTeamId(String(v))}>
           <SelectTrigger className="w-full flex-1" aria-label={t("matches.challenge.selectTeam")}>

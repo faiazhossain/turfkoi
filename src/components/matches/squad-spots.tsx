@@ -111,7 +111,7 @@ export function SquadSpots({
   }
 
   return (
-    <div className="space-y-2 rounded-2xl border border-border bg-card p-3">
+    <div className="space-y-2 rounded-2xl border border-dt-line bg-dt-card p-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         {label ? (
           <span className="font-heading text-sm font-semibold">{label}</span>
@@ -119,7 +119,7 @@ export function SquadSpots({
         <span
           className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
             open === 0
-              ? "bg-primary/10 text-primary"
+              ? "bg-dt-green/10 text-dt-green"
               : "bg-warning/15 text-warning"
           }`}
         >
@@ -132,11 +132,11 @@ export function SquadSpots({
       {/* Seat bar segments share the colors of the breakdown dots below. */}
       <div className="flex items-center gap-3">
         <div
-          className="flex h-2 flex-1 overflow-hidden rounded-full bg-muted"
+          className="flex h-2 flex-1 overflow-hidden rounded-full bg-dt-card2"
           aria-hidden
         >
           {total > 0 ? (
-            <div className="bg-primary" style={{ width: pct(total) }} />
+            <div className="bg-dt-green" style={{ width: pct(total) }} />
           ) : null}
           {placeholders > 0 ? (
             <div
@@ -145,7 +145,7 @@ export function SquadSpots({
             />
           ) : null}
         </div>
-        <span className="shrink-0 text-xs font-medium tabular-nums text-muted-foreground">
+        <span className="shrink-0 text-xs font-medium tabular-nums text-dt-dim">
           {num(filled)}/{num(squadSize)}
         </span>
       </div>
@@ -162,7 +162,7 @@ export function SquadSpots({
               className="match-slot-filled flex h-13 w-13 flex-col items-center justify-center rounded-xl border px-1 text-center"
               title={name}
             >
-              <span className="text-[10px] font-semibold tabular-nums text-muted-foreground">
+              <span className="text-[10px] font-semibold tabular-nums text-dt-dim">
                 {num(i + 1)}
               </span>
               <span className="w-full truncate text-[10px] leading-tight">
@@ -186,7 +186,7 @@ export function SquadSpots({
               <span className="text-sm font-bold text-warning">
                 +
               </span>
-              <span className="text-[10px] leading-tight text-muted-foreground">
+              <span className="text-[10px] leading-tight text-dt-dim">
                 {t("matches.squad.slotOpen")}
               </span>
             </div>
@@ -194,7 +194,7 @@ export function SquadSpots({
         </div>
       ) : null}
 
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-dt-dim">
         <span className="flex items-center gap-1.5 text-warning">
           <span
             className="size-2 rounded-full bg-warning"
@@ -229,7 +229,7 @@ export function SquadSpots({
           ) : null}
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="size-2 rounded-full bg-primary" aria-hidden />
+          <span className="size-2 rounded-full bg-dt-green" aria-hidden />
           {t("matches.squad.onField", {
             count: num(starting),
             total: num(starters),
@@ -237,7 +237,7 @@ export function SquadSpots({
         </span>
         {benchCapacity > 0 ? (
           <span className="flex items-center gap-1.5">
-            <span className="size-2 rounded-full bg-primary/60" aria-hidden />
+            <span className="size-2 rounded-full bg-dt-green/60" aria-hidden />
             {t("matches.squad.benchCount", {
               count: num(namedOnBench),
               total: num(benchCapacity),
@@ -247,7 +247,7 @@ export function SquadSpots({
         {pending > 0 ? (
           <span className="flex items-center gap-1.5">
             <span
-              className="size-2 rounded-full bg-muted-foreground/40"
+              className="size-2 rounded-full bg-dt-dim/40"
               aria-hidden
             />
             {t("matches.squad.pendingCount", { count: num(pending) })}
@@ -256,10 +256,10 @@ export function SquadSpots({
       </div>
 
       {editable ? (
-        <div className="flex items-center justify-between border-t border-border pt-2">
-          <span className="text-xs text-muted-foreground">
+        <div className="flex items-center justify-between border-t border-dt-line pt-2">
+          <span className="text-xs text-dt-dim">
             {t("matches.squad.squadSizeLabel")}{" "}
-            <span className="font-semibold text-foreground tabular-nums">
+            <span className="font-semibold text-dt-txt tabular-nums">
               {num(squadSize)}
             </span>
           </span>

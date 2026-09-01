@@ -50,7 +50,7 @@ export function MatchInviteLink({ shareToken }: { shareToken: string }) {
           value={url}
           onFocus={(e) => e.currentTarget.select()}
           aria-label={t("matches.inviteLink.label")}
-          className="match-score text-xs text-primary"
+          className="match-score text-xs text-dt-green"
         />
         <Button
           size="sm"

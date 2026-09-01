@@ -44,11 +44,11 @@ export function InvitationManager({
       <h3 className="font-heading text-sm font-semibold">
         {t("matches.invite.pendingCount", { count: invitations.length })}
       </h3>
-      <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border">
+      <ul className="divide-y divide-dt-line overflow-hidden rounded-lg border border-dt-line">
         {invitations.map((inv) => (
           <li
             key={inv.id}
-            className="flex items-center justify-between gap-2 bg-card p-2.5 text-sm"
+            className="flex items-center justify-between gap-2 bg-dt-card p-2.5 text-sm"
           >
             <span className="min-w-0 truncate">
               {inv.playerName ?? inv.playerPhone}

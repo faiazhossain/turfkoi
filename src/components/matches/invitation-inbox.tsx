@@ -45,15 +45,15 @@ export function InvitationInbox({ invitations }: { invitations: MyInvitation[] }
       <h3 className="font-heading text-sm font-semibold">
         {t("matches.invite.inboxTitle")}
       </h3>
-      <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border">
+      <ul className="divide-y divide-dt-line overflow-hidden rounded-lg border border-dt-line">
         {invitations.map((inv) => (
-          <li key={inv.id} className="space-y-2 bg-card p-3 text-sm">
+          <li key={inv.id} className="space-y-2 bg-dt-card p-3 text-sm">
             <p className="font-medium">
               {t("matches.invite.invitedBy", {
                 name: inv.invitedByName ?? "—",
               })}
             </p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-dt-dim">
               {inv.turfName} · <span className="font-mono">
                 {inv.date} · {inv.slotStart.slice(0, 5)}
               </span>

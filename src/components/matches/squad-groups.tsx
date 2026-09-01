@@ -120,29 +120,29 @@ export function SquadGroups({
 
   function rowEl(row: Row) {
     return (
-      <li key={row.key} className="flex items-center gap-3 bg-card p-2.5 text-sm">
+      <li key={row.key} className="flex items-center gap-3 bg-dt-card p-2.5 text-sm">
         <PlayerAvatar
           display={{ kind: "initials", text: initialsFromName(row.avatarName) }}
           size="md"
         />
         <span className="min-w-0 flex-1 truncate font-medium">{row.displayName}</span>
         {row.guest ? (
-          <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+          <span className="shrink-0 rounded-full bg-dt-card2 px-2 py-0.5 text-xs font-medium text-dt-dim">
             {t("matches.guest.badge")}
           </span>
         ) : null}
         {row.jerseyNumber != null ? (
-          <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium tabular-nums text-primary">
+          <span className="shrink-0 rounded-full bg-dt-green/10 px-2 py-0.5 text-xs font-medium tabular-nums text-dt-green">
             #{row.jerseyNumber}
           </span>
         ) : null}
         {row.position ? (
-          <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+          <span className="shrink-0 rounded-full bg-dt-card2 px-2 py-0.5 text-xs font-medium text-dt-dim">
             {positionLabelText(row.position)}
           </span>
         ) : null}
         {row.captain ? (
-          <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+          <span className="shrink-0 rounded-full bg-dt-green/10 px-2 py-0.5 text-xs font-medium text-dt-green">
             {t("matches.captainBadge")}
           </span>
         ) : null}
@@ -185,13 +185,13 @@ export function SquadGroups({
   function group(title: string, rows: Row[]) {
     if (rows.length === 0) {
       return (
-        <p className="rounded-lg border border-dashed border-border p-3 text-xs text-muted-foreground">
+        <p className="rounded-lg border border-dashed border-dt-line p-3 text-xs text-dt-dim">
           {t("matches.squad.emptyGroup", { group: title })}
         </p>
       )
     }
     return (
-      <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border">
+      <ul className="divide-y divide-dt-line overflow-hidden rounded-xl border border-dt-line">
         {rows.map(rowEl)}
       </ul>
     )
@@ -234,13 +234,13 @@ export function SquadGroups({
           <div key={s.side} className="space-y-2">
             <p className="text-sm font-semibold">{label}</p>
             <div className="space-y-1">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              <p className="text-xs font-medium uppercase tracking-wide text-dt-dim">
                 {t("matches.squad.starting")}
               </p>
               {group(t("matches.squad.starting"), all.filter((r) => r.squadRole === "starting"))}
             </div>
             <div className="space-y-1">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              <p className="text-xs font-medium uppercase tracking-wide text-dt-dim">
                 {t("matches.squad.substitutes")}
               </p>
               {group(t("matches.squad.substitutes"), all.filter((r) => r.squadRole === "substitute"))}

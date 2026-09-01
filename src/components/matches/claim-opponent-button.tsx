@@ -56,7 +56,7 @@ export function ClaimOpponentButton({
   }
 
   return (
-    <div className="flex items-center gap-1.5 rounded-xl border border-primary/40 bg-primary/5 p-1.5">
+    <div className="flex items-center gap-1.5 rounded-xl border border-dt-green/40 bg-dt-green/5 p-1.5">
       <Button
         type="button"
         variant="outline"

@@ -41,7 +41,7 @@ export function JoinBattle({
   if (outcomes.length === 0) return null
 
   return (
-    <div className="match-battle overflow-hidden rounded-2xl border border-border bg-card">
+    <div className="match-battle overflow-hidden rounded-2xl border border-dt-line bg-dt-card">
       <Table>
         <TableHeader>
           <TableRow>
@@ -63,10 +63,10 @@ export function JoinBattle({
                       aria-hidden
                       className={`flex size-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold ${
                         o.status === "accepted"
-                          ? "bg-primary/15 text-primary"
+                          ? "bg-dt-green/15 text-dt-green"
                           : o.status === "declined"
                             ? "bg-destructive/15 text-destructive"
-                            : "bg-muted text-muted-foreground"
+                            : "bg-dt-card2 text-dt-dim"
                       }`}
                     >
                       {initials(o)}
@@ -79,17 +79,17 @@ export function JoinBattle({
                     </span>
                   </span>
                 </TableCell>
-                <TableCell className="hidden tabular-nums text-muted-foreground sm:table-cell">
+                <TableCell className="hidden tabular-nums text-dt-dim sm:table-cell">
                   {time(o.createdAt)}
                 </TableCell>
                 <TableCell className="text-right">
                   <span
                     className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold ${
                       o.status === "accepted"
-                        ? "border-primary/40 bg-primary/10 text-primary"
+                        ? "border-dt-green/40 bg-dt-green/10 text-dt-green"
                         : o.status === "declined"
                           ? "border-destructive/40 bg-destructive/10 text-destructive"
-                          : "border-border bg-muted/50 text-muted-foreground"
+                          : "border-dt-line bg-dt-card2/50 text-dt-dim"
                     }`}
                   >
                     {o.status === "pending" ? (

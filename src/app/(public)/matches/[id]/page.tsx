@@ -256,10 +256,10 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
     <div className="match-hq mx-auto max-w-2xl space-y-6 px-4 py-12">
       <div className="match-hq-glow" aria-hidden />
       <nav className="match-eyebrow">
-        <Link href="/matches" className="hover:text-foreground">
+        <Link href="/matches" className="hover:text-dt-txt">
           {tr("nav.matches")}
         </Link>{" "}
-        / <span className="text-foreground">{tr("matches.breadcrumbMatch")}</span>
+        / <span className="text-dt-txt">{tr("matches.breadcrumbMatch")}</span>
       </nav>
 
       <header className="space-y-2">
@@ -275,18 +275,18 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
           </StatusBadge>
         </div>
         {matchStateContextLabelKey(m.state) ? (
-          <p className="text-sm font-medium text-muted-foreground">
+          <p className="text-sm font-medium text-dt-dim">
             {tr(matchStateContextLabelKey(m.state)!)}
           </p>
         ) : null}
-        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+        <div className="flex items-center gap-1 text-sm text-dt-dim">
           <MapPinIcon className="size-4" aria-hidden />
-          <Link href={`/turfs/${t.slug}`} className="hover:text-foreground">
+          <Link href={`/turfs/${t.slug}`} className="hover:text-dt-txt">
             {t.name}
           </Link>
           {t.area ? ` · ${t.area}` : ""}
         </div>
-        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+        <div className="flex items-center gap-1 text-sm text-dt-dim">
           <ClockIcon className="size-4" aria-hidden />
           <span className="font-mono">
             {b.date} · {b.slotStart.slice(0, 5)}
@@ -317,26 +317,26 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
 
       {/* Opponent wanted — the person-based claim */}
       {canClaim ? (
-        <section className="space-y-2 rounded-2xl border border-primary/40 bg-primary/5 p-4 shadow-[0_6px_30px_rgb(180_255_57/0.12)]">
+        <section className="space-y-2 rounded-2xl border border-dt-green/40 bg-dt-green/5 p-4 shadow-[0_6px_30px_rgb(180_255_57/0.12)]">
           <h2 className="font-heading text-sm font-semibold">
             {tr("matches.claim.title")}
           </h2>
-          <p className="text-sm text-muted-foreground">{tr("matches.claim.desc")}</p>
+          <p className="text-sm text-dt-dim">{tr("matches.claim.desc")}</p>
           <ClaimOpponentButton matchId={m.id} squadSize={squadSize} size="default" />
         </section>
       ) : homeCaptainWaitsForOpponent ? (
-        <p className="rounded-2xl border border-primary/40 bg-primary/5 p-3 text-sm text-muted-foreground">
+        <p className="rounded-2xl border border-dt-green/40 bg-dt-green/5 p-3 text-sm text-dt-dim">
           {tr("matches.claim.ownMatchNote")}
         </p>
       ) : null}
 
       {/* Score */}
       {m.state === "completed" || m.state === "ongoing" ? (
-        <div className="flex items-center justify-center gap-4 rounded-2xl border border-border bg-card p-4">
+        <div className="flex items-center justify-center gap-4 rounded-2xl border border-dt-line bg-dt-card p-4">
           <span className="match-score text-3xl font-bold tabular-nums">
             {m.homeScore ?? 0}
           </span>
-          <span className="text-muted-foreground">–</span>
+          <span className="text-dt-dim">–</span>
           <span className="match-score text-3xl font-bold tabular-nums">
             {m.awayScore ?? 0}
           </span>
@@ -376,7 +376,7 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
           />
         ))}
         {managesMatch && rosterOpen(m.state) ? (
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-dt-dim">
             {tr("matches.squad.spotsExplainer")}
           </p>
         ) : null}
@@ -395,7 +395,7 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
                   {tr("matches.squad.fillTitle")}
                 </h2>
                 {totalOpen > 0 ? (
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-dt-dim">
                     {tr("matches.squad.fillDesc", { count: totalOpen })}
                   </p>
                 ) : null}
@@ -417,7 +417,7 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
                     hasFilter={!!playerQ || !!playerPos}
                   />
                   {nearbyPlayers.length === 0 ? (
-                    <p className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
+                    <p className="rounded-lg border border-dashed border-dt-line p-4 text-sm text-dt-dim">
                       {playerQ || playerPos
                         ? tr("matches.playerSearchEmpty")
                         : tr("matches.nearbyEmpty")}
@@ -451,7 +451,7 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
                           }),
                         ]}
                       />
-                      <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border">
+                      <ul className="divide-y divide-dt-line overflow-hidden rounded-lg border border-dt-line">
                         {nearbyPlayers.map((p) => {
                           const identity = [
                             localizedIdentity(tr, p.position),
@@ -469,28 +469,28 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
                           return (
                             <li
                               key={p.userId}
-                              className="flex flex-col gap-3 bg-card p-3 text-sm sm:flex-row sm:items-start"
+                              className="flex flex-col gap-3 bg-dt-card p-3 text-sm sm:flex-row sm:items-start"
                             >
                               <PlayerAvatar display={display} size="md" />
                               <div className="min-w-0 flex-1">
                                 <p className="truncate font-heading font-medium">
                                   {p.name ?? tr("matches.player")}
                                 </p>
-                                <p className="text-xs text-muted-foreground">
+                                <p className="text-xs text-dt-dim">
                                   {identity || tr("matches.positionNotSet")}
                                 </p>
                                 {p.bio ? (
-                                  <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
+                                  <p className="mt-0.5 line-clamp-1 text-xs text-dt-dim">
                                     &ldquo;{p.bio}&rdquo;
                                   </p>
                                 ) : null}
                               </div>
                               <div className="flex items-center justify-between gap-2 sm:flex-col sm:items-end sm:justify-start sm:gap-0.5">
-                                <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                                <span className="flex items-center gap-1 text-xs text-dt-dim">
                                   <MapPinIcon className="size-3" aria-hidden />
                                   {p.area || tr("matches.nearby")}
                                 </span>
-                                <span className="text-xs tabular-nums text-muted-foreground">
+                                <span className="text-xs tabular-nums text-dt-dim">
                                   {p.distanceKm.toFixed(1)} km
                                 </span>
                                 <InvitePlayerButton

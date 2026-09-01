@@ -27,7 +27,7 @@ export function MatchmakingHelp() {
           <button
             type="button"
             aria-label={t("matches.help.triggerAria")}
-            className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground"
+            className="inline-flex items-center gap-1 rounded-full border border-dt-line bg-dt-card px-2.5 py-1 text-xs font-medium text-dt-dim transition-colors hover:bg-dt-card2/40 hover:text-dt-txt"
             {...props}
           >
             <InfoIcon className="size-3.5" aria-hidden />
@@ -49,7 +49,7 @@ export function MatchmakingHelp() {
             <li key={n} className="flex items-start gap-3">
               <span
                 aria-hidden
-                className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 font-heading text-xs font-bold text-primary"
+                className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-dt-green/10 font-heading text-xs font-bold text-dt-green"
               >
                 {n}
               </span>
@@ -57,7 +57,7 @@ export function MatchmakingHelp() {
                 <p className="text-sm font-semibold leading-snug">
                   {t(`matches.help.step${n}Title`)}
                 </p>
-                <p className="mt-0.5 text-sm leading-snug text-muted-foreground">
+                <p className="mt-0.5 text-sm leading-snug text-dt-dim">
                   {t(`matches.help.step${n}`)}
                 </p>
               </div>
