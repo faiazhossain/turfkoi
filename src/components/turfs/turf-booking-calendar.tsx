@@ -28,7 +28,7 @@ import { useI18n } from "@/i18n/client"
 import { formatSlotDate } from "@/lib/format-date"
 import { formatSlotTime, formatSlotTimeRange } from "@/lib/format-time"
 import { formatBdt } from "@/lib/pricing"
-import { toMinutes } from "@/lib/slot-expansion"
+import { isSlotBookable, toMinutes } from "@/lib/slot-expansion"
 import type { BookingDay, DayStatus, PublicSlot } from "@/features/turfs/booking-calendar"
 
 function isoToDate(iso: string): Date {
@@ -329,7 +329,10 @@ function SlotRow({
   ownerControls?: { saving: boolean; onToggle: () => void }
 }) {
   const { t, locale } = useI18n()
-  const bookable = slot.status === "available"
+  const available = slot.status === "available"
+  // Booking closes 20 minutes before kickoff — a still-"available" slot that
+  // starts too soon renders without a Book button (server rejects holds too).
+  const bookable = available && isSlotBookable(slot.date, slot.startTime)
   const unblockable = slot.status === "blocked" || slot.status === "maintenance"
 
   return (
@@ -353,7 +356,11 @@ function SlotRow({
               {slot.label}
             </span>
           ) : null}
-          {bookable ? null : (
+          {bookable ? null : available ? (
+            <span className="rounded bg-muted px-1.5 py-0.5">
+              {t("turfs.slotStartingSoon")}
+            </span>
+          ) : (
             <span
               className={
                 slot.status === "booked"
@@ -375,7 +382,7 @@ function SlotRow({
           {formatBdt(slot.price)}
         </span>
         {ownerControls ? (
-          bookable ? (
+          available ? (
             <Button
               size="sm"
               variant="outline"

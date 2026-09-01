@@ -21,6 +21,7 @@ import { getCurrentUser } from "@/lib/auth"
 import { rateLimit } from "@/lib/ratelimit"
 import { logger } from "@/lib/logger"
 import { computeFees } from "@/lib/pricing"
+import { isSlotBookable, slotStartEpoch } from "@/lib/slot-expansion"
 import { computeRefund } from "@/lib/cancellation"
 import { bkashProvider } from "@/lib/payment"
 import {
@@ -55,13 +56,6 @@ function slotEndTime(start: string, durationMinutes: number): string {
   const hh = String(Math.floor(wrapped / 60)).padStart(2, "0")
   const mm = String(wrapped % 60).padStart(2, "0")
   return `${hh}:${mm}`
-}
-
-/** Combine `YYYY-MM-DD` + `HH:MM` (local-ish) into epoch ms. */
-function slotDateToEpoch(date: string, time: string): number {
-  const [y, mo, d] = date.split("-").map(Number)
-  const [h, mi] = time.split(":").map(Number)
-  return Date.UTC(y!, mo! - 1, d!, h!, mi!)
 }
 
 /**
@@ -120,6 +114,10 @@ export async function holdSlotAction(
   const slot = row.slot
   if (slot.status !== "available") {
     return { ok: false, error: "turfs.errors.slotTaken" }
+  }
+  // Booking closes 20 minutes before kickoff (SLOT_BOOKING_CUTOFF_MINUTES).
+  if (!isSlotBookable(slot.date, slot.startTime)) {
+    return { ok: false, error: "turfs.errors.slotCutoff" }
   }
 
   const bookingId = randomUUID()
@@ -233,7 +231,7 @@ export async function initiatePaymentAction(
   }
 
   const slotPrice = Number(row.slotPrice)
-  const { turfAmount, platformFee, total } = computeFees(slotPrice)
+  const { platformFee, total } = computeFees(slotPrice)
 
   const txnIdempotencyKey = randomUUID()
   const callbackUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/api/payments/bkash/callback?bookingId=${bookingId}`
@@ -246,7 +244,9 @@ export async function initiatePaymentAction(
       bookingId,
       payerId: user.id,
       receiverId: row.turfOwnerId,
-      amount: String(turfAmount),
+      // `amount` is the gross charge (what bKash collects); owner payout and
+      // ERP revenue derive from amount − platformFee everywhere else.
+      amount: String(total),
       platformFee: String(platformFee),
       provider: "bkash",
       status: "pending",
@@ -347,7 +347,7 @@ export async function confirmPaymentAction(
       )
 
     // Schedule settle-at-kickoff. Best-effort — the admin sweep can reconcile.
-    const kickoffTs = slotDateToEpoch(b.date, b.slotStart.slice(0, 5))
+    const kickoffTs = slotStartEpoch(b.date, b.slotStart.slice(0, 5))
     await scheduleSettleAtKickoff(b.id, kickoffTs).catch(() => {})
 
     // Notify the booker and the turf owner (in-app; best-effort by design).
@@ -421,7 +421,7 @@ export async function cancelBookingAction(
   }
 
   // Compute hours-to-kickoff for the policy.
-  const kickoffTs = slotDateToEpoch(
+  const kickoffTs = slotStartEpoch(
     row.booking.date,
     row.booking.slotStart.slice(0, 5)
   )

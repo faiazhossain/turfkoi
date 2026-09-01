@@ -5,6 +5,7 @@ import {
   timestamp,
   boolean,
   primaryKey,
+  uniqueIndex,
 } from "drizzle-orm/pg-core"
 
 import { userStatus, userRole } from "./enums"
@@ -47,6 +48,14 @@ export const playerProfiles = pgTable("player_profiles", {
   userId: uuid("user_id")
     .primaryKey()
     .references(() => users.id, { onDelete: "cascade" }),
+  // Public permanent gaming-style identity (Player Network). Never derived
+  // from the internal uuid; safe to share; searchable (Player Network spec).
+  playerId: text("player_id"),
+  // Public handle used for secondary search. Unique, lowercase [a-z0-9_].
+  username: text("username"),
+  // Presence: refreshed (throttled) while the player browses signed-in pages.
+  // "Online" = seen within the last 5 minutes.
+  lastSeenAt: timestamp("last_seen_at", { withTimezone: true }),
   position: text("position"),
   skill: text("skill"),
   area: text("area"),
@@ -71,4 +80,7 @@ export const playerProfiles = pgTable("player_profiles", {
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .defaultNow()
     .notNull(),
-})
+}, (t) => [
+  uniqueIndex("player_profiles_player_id_idx").on(t.playerId),
+  uniqueIndex("player_profiles_username_idx").on(t.username),
+])

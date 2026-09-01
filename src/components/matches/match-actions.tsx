@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label"
 import {
   submitResultAction,
   confirmResultAction,
+  startMatchAction,
 } from "@/features/matches/actions"
 import { leaveMatchAction } from "@/features/player/actions"
 import type { Side } from "@/features/matches/authority"
@@ -50,6 +51,23 @@ export function MatchActions(props: MatchActionsProps) {
     props.matchState === "completed" &&
     props.resultStatus === "pending" &&
     props.canConfirmResult
+  // Kick-off: either side's captain starts whenever they're ready — pending
+  // invites never block (their players are simply not on the final roster).
+  const canStart =
+    props.mySide !== null &&
+    ["confirmed", "roster_building", "ready"].includes(props.matchState)
+
+  function startMatch() {
+    start(async () => {
+      const res = await startMatchAction(props.matchId)
+      if (!res.ok) {
+        toast.error(t(res.error ?? "errors.generic"))
+        return
+      }
+      toast.success(t("matches.startedToast"))
+      router.refresh()
+    })
+  }
 
   function leaveMatch() {
     start(async () => {
@@ -93,6 +111,16 @@ export function MatchActions(props: MatchActionsProps) {
 
   return (
     <div className="space-y-6">
+      {/* Kick-off — start with whoever is confirmed; pending never blocks. */}
+      {canStart ? (
+        <section className="space-y-2">
+          <Button onClick={startMatch} loading={pending} className="w-full sm:w-auto">
+            {t("matches.startCta")}
+          </Button>
+          <p className="text-xs text-muted-foreground">{t("matches.startHint")}</p>
+        </section>
+      ) : null}
+
       {/* Leave match — rostered players can opt out before the match starts. */}
       {props.canLeave ? (
         <section className="space-y-2">

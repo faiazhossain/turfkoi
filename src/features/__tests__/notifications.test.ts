@@ -74,6 +74,20 @@ const SAMPLE_PAYLOADS: {
     playerName: "Karim",
     turfName: "Dhanmondi Arena",
   },
+  "match.challenge_received": {
+    matchId: "m-1",
+    teamName: "Dhaka Strikers",
+    captainName: "Karim",
+    turfName: "Dhanmondi Arena",
+  },
+  "match.challenge_accepted": {
+    matchId: "m-1",
+    teamName: "Dhaka Strikers",
+  },
+  "match.challenge_declined": {
+    matchId: "m-1",
+    teamName: "Dhaka Strikers",
+  },
   "friend.request_received": { friendName: "Rahim" },
   "friend.request_accepted": { friendName: "Karim" },
 }

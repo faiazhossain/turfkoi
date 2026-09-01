@@ -1,4 +1,10 @@
-import { MINUTES_PER_DAY, iterateDates, toHHMM, toMinutes } from "@/lib/slot-expansion"
+import {
+  MINUTES_PER_DAY,
+  isSlotBookable,
+  iterateDates,
+  toHHMM,
+  toMinutes,
+} from "@/lib/slot-expansion"
 
 /**
  * Public booking calendar (turf detail page): pure helpers that turn a
@@ -56,7 +62,9 @@ export function slotEndTime(startTime: string, durationMinutes: number): string 
 export function classifyBookingDays(
   slots: PublicSlot[],
   closedDays: ClosedDayInput[],
-  range: { monthStart: string; monthEnd: string; today: string; horizonEnd: string }
+  range: { monthStart: string; monthEnd: string; today: string; horizonEnd: string },
+  /** Current time — available slots inside the 20-min cutoff don't count. */
+  now: Date = new Date()
 ): Record<string, BookingDay> {
   const byDate = new Map<string, PublicSlot[]>()
   for (const slot of slots) {
@@ -86,7 +94,9 @@ export function classifyBookingDays(
       days[date] = { status: "empty", slots: [], closedReason: null }
       continue
     }
-    const hasAvailable = slotsToday.some((s) => s.status === "available")
+    const hasAvailable = slotsToday.some(
+      (s) => s.status === "available" && isSlotBookable(s.date, s.startTime, now)
+    )
     days[date] = {
       status: hasAvailable ? "open" : "full",
       slots: slotsToday,

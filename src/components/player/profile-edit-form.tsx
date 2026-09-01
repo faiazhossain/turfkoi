@@ -24,6 +24,7 @@ import { POSITION_IDS, SKILL_IDS } from "@/features/player/positions"
  * normalizes and re-validates everything; this is the client mirror. */
 interface ProfileEditFormValues {
   name: string
+  username: string
   position: string
   secondaryPosition: string
   skill: string
@@ -36,6 +37,8 @@ interface ProfileEditFormValues {
 
 export interface ProfileEditData {
   name: string | null
+  playerId: string | null
+  username: string | null
   position: string | null
   secondaryPosition: string | null
   skill: string | null
@@ -76,6 +79,7 @@ export function ProfileEditForm({
     resolver: zodResolver(profileEditFormSchema) as unknown as Resolver<ProfileEditFormValues>,
     defaultValues: {
       name: profile.name ?? "",
+      username: profile.username ?? "",
       position: profile.position ?? "",
       secondaryPosition: profile.secondaryPosition ?? "",
       skill: profile.skill ?? "",
@@ -91,6 +95,11 @@ export function ProfileEditForm({
     setError(null)
     const result = await updateProfileAction({
       name: values.name.trim(),
+      // "" = untouched (keeps the stored handle); only changes are sent.
+      username:
+        values.username.trim().replace(/^@/, "") === (profile.username ?? "")
+          ? ""
+          : values.username.trim(),
       position: canonicalPosition(values.position),
       secondaryPosition:
         values.secondaryPosition === ""
@@ -145,6 +154,34 @@ export function ProfileEditForm({
               {t(form.formState.errors.name.message ?? "")}
             </p>
           )}
+        </div>
+
+        {profile.playerId && (
+          <div className="space-y-2">
+            <Label htmlFor="playerId">{t("players.playerIdLabel")}</Label>
+            <div className="flex items-center gap-2">
+              <Input id="playerId" value={profile.playerId} readOnly disabled className="font-mono" />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {t("players.playerIdPermanent")}
+            </p>
+          </div>
+        )}
+
+        <div className="space-y-2">
+          <Label htmlFor="username">{t("players.usernameLabel")}</Label>
+          <Input
+            id="username"
+            autoComplete="off"
+            placeholder="@rahim_10"
+            {...form.register("username")}
+          />
+          {form.formState.errors.username && (
+            <p className="text-sm text-destructive">
+              {t(form.formState.errors.username.message ?? "")}
+            </p>
+          )}
+          <p className="text-xs text-muted-foreground">{t("players.usernameHint")}</p>
         </div>
 
         <div className="space-y-2">

@@ -1,6 +1,7 @@
 import { z } from "zod"
 
 import { POSITION_IDS, SKILL_IDS } from "@/features/player/positions"
+import { RESERVED_USERNAMES, USERNAME_RE } from "@/features/player/username"
 
 import { isValidPhone } from "./phone"
 
@@ -55,6 +56,13 @@ export const onboardingFormSchema = z.object({
     .string()
     .min(2, "auth.errors.name_short")
     .max(60, "auth.errors.name_max"),
+  // Player Network handle: unique, lowercase [a-z0-9_] (Player Network spec).
+  // Leading @ is tolerated; reserved handles are rejected.
+  username: z
+    .string()
+    .transform((v) => v.trim().toLowerCase().replace(/^@/, ""))
+    .refine((v) => USERNAME_RE.test(v), "auth.errors.usernameInvalid")
+    .refine((v) => !RESERVED_USERNAMES.has(v), "auth.errors.usernameReserved"),
   // Canonical identity ids ("goalkeeper"…/"learning"…); "" (untouched
   // picker) is dropped so nothing stale is stored.
   position: z.preprocess(

@@ -1,11 +1,13 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { MapPinIcon, ClockIcon, UserPlusIcon, ShieldPlusIcon } from "lucide-react"
+import { MapPinIcon, ClockIcon, UserPlusIcon, ShieldPlusIcon, ShareIcon } from "lucide-react"
 
 import { getT } from "@/i18n/server"
 import { StatusBadge, EmptyState } from "@/components/shared"
+import { Button } from "@/components/ui/button"
 import { MapView } from "@/components/map"
 import { MatchActions } from "@/components/matches/match-actions"
+import { ButtonModal } from "@/components/matches/button-modal"
 import { SquadInvitePanel } from "@/components/matches/squad-invite-panel"
 import { PlayerSearch } from "@/components/matches/player-search"
 import { InvitePlayerButton } from "@/components/matches/invite-player-button"
@@ -15,6 +17,9 @@ import { ClaimOpponentButton } from "@/components/matches/claim-opponent-button"
 import { MatchmakingHelp } from "@/components/matches/matchmaking-help"
 import { InvitationManager } from "@/components/matches/invitation-manager"
 import { InvitationInbox } from "@/components/matches/invitation-inbox"
+import { MatchInviteLink } from "@/components/matches/match-invite-link"
+import { JoinBattle } from "@/components/matches/join-battle"
+import { TeamChallengePanel } from "@/components/matches/team-challenge"
 import { JoinRequestButton } from "@/components/player/join-request-button"
 import { RequestManager } from "@/components/player/request-manager"
 import { PlayerAvatar } from "@/components/player/player-avatar"
@@ -25,11 +30,14 @@ import {
   listMyPendingInvitations,
   listMatchGuests,
   listRecentGuestsAddedBy,
+  listInvitationOutcomes,
+  listTeamChallenges,
   resolveSideCaptain,
 } from "@/features/matches/queries"
 import type { RecentGuestPick } from "@/features/matches/guests"
 import { FORMATS, isMatchFormat, spotsLeft } from "@/features/matches/formats"
-import { canClaimOpponentSide, rosterOpen } from "@/features/matches/authority"
+import { canClaimOpponentSide, isCaptainRole, rosterOpen } from "@/features/matches/authority"
+import { listMyTeams } from "@/features/teams/queries"
 import { listFriends } from "@/features/friends/queries"
 import {
   listPendingPlayerRequestsByMatch,
@@ -131,6 +139,9 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
         : undefined),
     open: spotsLeft(squadSize, c.total, c.placeholders),
   }))
+  const openBySide = Object.fromEntries(
+    sideStats.map((s) => [s.side, s.open])
+  ) as Partial<Record<"home" | "away", number>>
 
   // Pending player requests, outbound invitations, guests, and the captain's
   // quick-add picks from previous matches.
@@ -181,6 +192,23 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
   const homeCaptainWaitsForOpponent =
     isHomeCaptain && m.state === "open" && m.awayCaptainId === null
 
+  // Visitor teams they could challenge with (captain-role only).
+  const myTeams =
+    user && !managesMatch
+      ? (await listMyTeams(user.id))
+          .filter((tm) => isCaptainRole(tm.role))
+          .map((tm) => ({ id: tm.id, name: tm.name }))
+      : []
+
+  // Team challenges (sent/past) and the join-battle log (managers only —
+  // phone invites are masked, but the log is still captain-side context).
+  const [challenges, outcomes] = await Promise.all([
+    listTeamChallenges(m.id),
+    managesMatch ? listInvitationOutcomes(m.id) : Promise.resolve([]),
+  ])
+  const showChallengePanel =
+    (canClaim && (myTeams.length > 0 || isHomeCaptain)) || challenges.length > 0
+
   // Captains: solo players marked available near this turf (SS20/SS32).
   let nearbyPlayers: Awaited<ReturnType<typeof listAvailablePlayersNearTurf>> = []
   if (managesMatch && sideStats.some((s) => s.open > 0)) {
@@ -225,8 +253,9 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
     !!user && !onRoster && totalOpen > 0 && rosterOpen(m.state)
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6 px-4 py-12">
-      <nav className="text-sm text-muted-foreground">
+    <div className="match-hq mx-auto max-w-2xl space-y-6 px-4 py-12">
+      <div className="match-hq-glow" aria-hidden />
+      <nav className="match-eyebrow">
         <Link href="/matches" className="hover:text-foreground">
           {tr("nav.matches")}
         </Link>{" "}
@@ -235,7 +264,9 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
 
       <header className="space-y-2">
         <div className="flex flex-wrap items-center gap-2">
-          <h1 className="font-heading text-2xl font-semibold">{title}</h1>
+          <h1 className="font-heading text-2xl font-semibold">
+            <span className="match-grad">{title}</span>
+          </h1>
           <StatusBadge status={STATE_TONE[m.state] ?? "neutral"} showIcon={false}>
             {tr(matchStateLabel(m.state))}
           </StatusBadge>
@@ -263,111 +294,7 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
         </div>
       </header>
 
-      {/* Opponent wanted — the person-based claim */}
-      {canClaim ? (
-        <section className="space-y-2 rounded-lg border border-primary/40 bg-primary/5 p-4">
-          <h2 className="font-heading text-sm font-semibold">
-            {tr("matches.claim.title")}
-          </h2>
-          <p className="text-sm text-muted-foreground">{tr("matches.claim.desc")}</p>
-          <ClaimOpponentButton matchId={m.id} squadSize={squadSize} size="default" />
-        </section>
-      ) : homeCaptainWaitsForOpponent ? (
-        <p className="rounded-lg border border-primary/40 bg-primary/5 p-3 text-sm text-muted-foreground">
-          {tr("matches.claim.ownMatchNote")}
-        </p>
-      ) : null}
-
-      {/* Score */}
-      {m.state === "completed" || m.state === "ongoing" ? (
-        <div className="flex items-center justify-center gap-4 rounded-lg border border-border bg-card p-4">
-          <span className="font-heading text-2xl font-bold tabular-nums">
-            {m.homeScore ?? 0}
-          </span>
-          <span className="text-muted-foreground">–</span>
-          <span className="font-heading text-2xl font-bold tabular-nums">
-            {m.awayScore ?? 0}
-          </span>
-          {m.resultStatus !== "confirmed" ? (
-            <StatusBadge status="warning" showIcon={false}>
-              {tr(`matches.result.${m.resultStatus}`)}
-            </StatusBadge>
-          ) : null}
-        </div>
-      ) : null}
-
-      {/* Squad fill per side — count-first summary */}
-      <div className="space-y-2">
-        {sideStats.map((s) => (
-          <SquadSpots
-            key={s.side}
-            matchId={m.id}
-            matchType={m.matchType}
-            squadSize={squadSize}
-            side={s.side}
-            starting={s.starting}
-            total={s.total}
-            pending={s.pending}
-            placeholders={s.placeholders}
-            label={s.label}
-            editable={isHomeCaptain && rosterOpen(m.state)}
-            canEditCount={mySide === s.side}
-            countEditable={rosterOpen(m.state)}
-          />
-        ))}
-      </div>
-
-      {/* What do I do next? — one obvious primary action per stage */}
-      {managesMatch && rosterOpen(m.state) ? (
-        (() => {
-          const mySideStats = sideStats.find((s) => s.side === mySide) ?? sideStats[0]
-          if (!mySideStats) return null
-          if (mySideStats.open > 0) {
-            return (
-              <div className="flex flex-wrap items-center gap-2">
-                <a
-                  href="#nearby"
-                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 sm:flex-none"
-                >
-                  <UserPlusIcon className="size-4" aria-hidden />
-                  {tr("matches.squad.findPlayersCta")}
-                </a>
-                <a
-                  href="#add-guest"
-                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-card px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-muted/40"
-                >
-                  <ShieldPlusIcon className="size-4" aria-hidden />
-                  {tr("matches.squad.addGuestCta")}
-                </a>
-              </div>
-            )
-          }
-          return null
-        })()
-      ) : null}
-
-      {/* Player matchmaking: join request + captain request management */}
-      {canRequestJoin ? (
-        <JoinRequestButton matchId={m.id} spots={totalOpen} />
-      ) : null}
-
-      {managesMatch && pendingRequests.length > 0 ? (
-        <RequestManager
-          side={mySide!}
-          requests={pendingRequests}
-        />
-      ) : null}
-
-      {/* Add players to your side — phone, friends, and guest add */}
-      {managesMatch && rosterOpen(m.state) ? (
-        <SquadInvitePanel
-          matchId={m.id}
-          friends={inviteFriends}
-          recentGuests={recentGuests}
-        />
-      ) : null}
-
-      {/* My pending squad invitations for this match */}
+      {/* My pending squad invitations — the invitee's primary action sits up top */}
       {myInvitations.length > 0 ? (
         <InvitationInbox
           invitations={myInvitations.map((inv) => {
@@ -388,8 +315,228 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
         />
       ) : null}
 
-      {/* Outbound pending invitations (managers can cancel) */}
-      {managesMatch && pendingInvitations.length > 0 ? (
+      {/* Opponent wanted — the person-based claim */}
+      {canClaim ? (
+        <section className="space-y-2 rounded-2xl border border-primary/40 bg-primary/5 p-4 shadow-[0_6px_30px_rgb(180_255_57/0.12)]">
+          <h2 className="font-heading text-sm font-semibold">
+            {tr("matches.claim.title")}
+          </h2>
+          <p className="text-sm text-muted-foreground">{tr("matches.claim.desc")}</p>
+          <ClaimOpponentButton matchId={m.id} squadSize={squadSize} size="default" />
+        </section>
+      ) : homeCaptainWaitsForOpponent ? (
+        <p className="rounded-2xl border border-primary/40 bg-primary/5 p-3 text-sm text-muted-foreground">
+          {tr("matches.claim.ownMatchNote")}
+        </p>
+      ) : null}
+
+      {/* Score */}
+      {m.state === "completed" || m.state === "ongoing" ? (
+        <div className="flex items-center justify-center gap-4 rounded-2xl border border-border bg-card p-4">
+          <span className="match-score text-3xl font-bold tabular-nums">
+            {m.homeScore ?? 0}
+          </span>
+          <span className="text-muted-foreground">–</span>
+          <span className="match-score text-3xl font-bold tabular-nums">
+            {m.awayScore ?? 0}
+          </span>
+          {m.resultStatus !== "confirmed" ? (
+            <StatusBadge status="warning" showIcon={false}>
+              {tr(`matches.result.${m.resultStatus}`)}
+            </StatusBadge>
+          ) : null}
+        </div>
+      ) : null}
+
+      {/* Squad fill per side — count-first summary with the roster grid */}
+      <div className="space-y-2">
+        {sideStats.map((s) => (
+          <SquadSpots
+            key={s.side}
+            matchId={m.id}
+            matchType={m.matchType}
+            squadSize={squadSize}
+            side={s.side}
+            starting={s.starting}
+            total={s.total}
+            pending={s.pending}
+            placeholders={s.placeholders}
+            label={s.label}
+            editable={isHomeCaptain && rosterOpen(m.state)}
+            canEditCount={mySide === s.side}
+            countEditable={rosterOpen(m.state)}
+            slotNames={[
+              ...roster
+                .filter((p) => p.side === s.side)
+                .map((p) => p.name ?? p.phone ?? tr("matches.player")),
+              ...guests
+                .filter((g) => g.side === s.side)
+                .map((g) => g.name),
+            ]}
+          />
+        ))}
+        {managesMatch && rosterOpen(m.state) ? (
+          <p className="text-xs text-muted-foreground">
+            {tr("matches.squad.spotsExplainer")}
+          </p>
+        ) : null}
+      </div>
+
+      {/* Fill your squad — info on the page, actions in modals: nearby solo
+          players, phone/friend/guest adds, and the shareable invite link */}
+      {managesMatch && rosterOpen(m.state) ? (
+        (() => {
+          const mySideStats = sideStats.find((s) => s.side === mySide) ?? sideStats[0]
+          if (!mySideStats || mySideStats.open <= 0) return null
+          return (
+            <section className="space-y-3">
+              <div className="space-y-1">
+                <h2 className="font-heading text-lg font-semibold">
+                  {tr("matches.squad.fillTitle")}
+                </h2>
+                {totalOpen > 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    {tr("matches.squad.fillDesc", { count: totalOpen })}
+                  </p>
+                ) : null}
+              </div>
+              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                {/* Nearby solo players — search, map, and per-player invites */}
+                <ButtonModal
+                  label={tr("matches.squad.findPlayersCta")}
+                  icon={<UserPlusIcon className="size-4" aria-hidden />}
+                  triggerClassName="match-btn-lime"
+                  title={tr("matches.nearbyTitle")}
+                  description={tr("matches.nearbyDesc")}
+                  defaultOpen={!!playerQ || !!playerPos}
+                >
+                  <PlayerSearch
+                    matchId={m.id}
+                    defaultQ={playerQ}
+                    defaultPosition={playerPos}
+                    hasFilter={!!playerQ || !!playerPos}
+                  />
+                  {nearbyPlayers.length === 0 ? (
+                    <p className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
+                      {playerQ || playerPos
+                        ? tr("matches.playerSearchEmpty")
+                        : tr("matches.nearbyEmpty")}
+                    </p>
+                  ) : (
+                    <>
+                      <MapView
+                        ariaLabel={tr("matches.nearbyMapAria")}
+                        className="h-72"
+                        markers={[
+                          ...(turfLatLng
+                            ? [
+                                {
+                                  id: "turf",
+                                  lat: turfLatLng.lat,
+                                  lng: turfLatLng.lng,
+                                  label: t.name,
+                                  kind: "turf" as const,
+                                },
+                              ]
+                            : []),
+                          ...nearbyPlayers.map((p) => {
+                            const pos = localizedIdentity(tr, p.position)
+                            return {
+                              id: p.userId,
+                              lat: p.lat,
+                              lng: p.lng,
+                              label: `${p.name ?? tr("matches.player")}${pos ? ` · ${pos}` : ""}`,
+                              kind: "player" as const,
+                            }
+                          }),
+                        ]}
+                      />
+                      <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border">
+                        {nearbyPlayers.map((p) => {
+                          const identity = [
+                            localizedIdentity(tr, p.position),
+                            localizedIdentity(tr, p.secondaryPosition),
+                            localizedIdentity(tr, p.skill),
+                          ]
+                            .filter(Boolean)
+                            .join(" · ")
+                          const display = resolveAvatarDisplay({
+                            avatarType: p.avatarType,
+                            avatarPublicId: p.avatarPublicId,
+                            avatarPresetId: p.avatarPresetId,
+                            name: p.name,
+                          })
+                          return (
+                            <li
+                              key={p.userId}
+                              className="flex flex-col gap-3 bg-card p-3 text-sm sm:flex-row sm:items-start"
+                            >
+                              <PlayerAvatar display={display} size="md" />
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate font-heading font-medium">
+                                  {p.name ?? tr("matches.player")}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  {identity || tr("matches.positionNotSet")}
+                                </p>
+                                {p.bio ? (
+                                  <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
+                                    &ldquo;{p.bio}&rdquo;
+                                  </p>
+                                ) : null}
+                              </div>
+                              <div className="flex items-center justify-between gap-2 sm:flex-col sm:items-end sm:justify-start sm:gap-0.5">
+                                <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                                  <MapPinIcon className="size-3" aria-hidden />
+                                  {p.area || tr("matches.nearby")}
+                                </span>
+                                <span className="text-xs tabular-nums text-muted-foreground">
+                                  {p.distanceKm.toFixed(1)} km
+                                </span>
+                                <InvitePlayerButton
+                                  matchId={m.id}
+                                  playerId={p.userId}
+                                  playerName={p.name ?? tr("matches.player")}
+                                />
+                              </div>
+                            </li>
+                          )
+                        })}
+                      </ul>
+                    </>
+                  )}
+                </ButtonModal>
+
+                {/* Phone / friend invites + guest adds */}
+                <ButtonModal
+                  label={tr("matches.squad.addPlayersCta")}
+                  icon={<ShieldPlusIcon className="size-4" aria-hidden />}
+                  variant="outline"
+                  triggerClassName="match-btn-outline"
+                  title={tr("matches.squad.addMembers")}
+                >
+                  <SquadInvitePanel
+                    matchId={m.id}
+                    friends={inviteFriends}
+                    recentGuests={recentGuests}
+                  />
+                </ButtonModal>
+              </div>
+            </section>
+          )
+        })()
+      ) : null}
+
+      {/* Join requests from players (captain seats them on their side) */}
+      {managesMatch && rosterOpen(m.state) && pendingRequests.length > 0 ? (
+        <RequestManager
+          side={mySide!}
+          requests={pendingRequests}
+        />
+      ) : null}
+
+      {/* Outbound invitations waiting for a reply */}
+      {managesMatch && rosterOpen(m.state) && pendingInvitations.length > 0 ? (
         <InvitationManager
           matchId={m.id}
           invitations={pendingInvitations.map((inv) => ({
@@ -397,6 +544,52 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
             playerName: inv.playerName,
             playerPhone: inv.inviteePhone,
           }))}
+        />
+      ) : null}
+
+      {/* Player matchmaking: join request for visitors while seats are open */}
+      {canRequestJoin ? (
+        <JoinRequestButton matchId={m.id} spots={totalOpen} />
+      ) : null}
+
+      {/* Invite link — the shareable /m/<token> handle with copy + shares */}
+      {user && (managesMatch || onRoster) ? (
+        <ButtonModal
+          label={tr("matches.squad.shareCta")}
+          icon={<ShareIcon className="size-4" aria-hidden />}
+          variant="outline"
+          triggerClassName="match-btn-outline"
+          title={tr("matches.inviteLink.label")}
+          description={tr("matches.inviteLink.hint")}
+        >
+          <MatchInviteLink shareToken={m.shareToken} />
+        </ButtonModal>
+      ) : null}
+
+      {/* Join battle log — invitation outcomes, first come first served */}
+      {managesMatch && outcomes.length > 0 ? (
+        <section className="space-y-2">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="font-heading text-lg font-semibold">
+              {tr("matches.battle.title")}
+            </h2>
+            <span className="match-score text-xs text-destructive">
+              {tr("matches.battle.live")}
+            </span>
+          </div>
+          <JoinBattle outcomes={outcomes} openBySide={openBySide} />
+        </section>
+      ) : null}
+
+      {/* Team challenges — send (visiting captains) / accept (home captain) */}
+      {showChallengePanel ? (
+        <TeamChallengePanel
+          matchId={m.id}
+          matchOpen={m.state === "open"}
+          canChallenge={canClaim && myTeams.length > 0}
+          isHomeCaptain={isHomeCaptain}
+          myTeams={myTeams}
+          challenges={challenges}
         />
       ) : null}
 
@@ -440,119 +633,6 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
         </section>
       ) : null}
 
-      {/* Captains: solo players available near this turf */}
-      {managesMatch && sideStats.some((s) => s.open > 0) ? (
-        <section id="nearby" className="scroll-mt-20 space-y-3">
-          <h2 className="font-heading text-lg font-semibold">
-            {tr("matches.nearbyTitle")}
-          </h2>
-          <p className="text-sm text-muted-foreground">{tr("matches.nearbyDesc")}</p>
-          {sideStats.every((s) => s.open === 0) ? (
-            <p className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
-              {tr("matches.rosterFullHint")}
-            </p>
-          ) : (
-            <PlayerSearch
-              matchId={m.id}
-              defaultQ={playerQ}
-              defaultPosition={playerPos}
-              hasFilter={!!playerQ || !!playerPos}
-            />
-          )}
-          {nearbyPlayers.length === 0 ? (
-            <p className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
-              {playerQ || playerPos
-                ? tr("matches.playerSearchEmpty")
-                : tr("matches.nearbyEmpty")}
-            </p>
-          ) : (
-            <>
-              <MapView
-                ariaLabel={tr("matches.nearbyMapAria")}
-                className="h-72"
-                markers={[
-                  ...(turfLatLng
-                    ? [
-                        {
-                          id: "turf",
-                          lat: turfLatLng.lat,
-                          lng: turfLatLng.lng,
-                          label: t.name,
-                          kind: "turf" as const,
-                        },
-                      ]
-                    : []),
-                  ...nearbyPlayers.map((p) => {
-                    const pos = localizedIdentity(tr, p.position)
-                    return {
-                      id: p.userId,
-                      lat: p.lat,
-                      lng: p.lng,
-                      label: `${p.name ?? tr("matches.player")}${pos ? ` · ${pos}` : ""}`,
-                      kind: "player" as const,
-                    }
-                  }),
-                ]}
-              />
-              <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border">
-                {nearbyPlayers.map((p) => {
-                  const identity = [
-                    localizedIdentity(tr, p.position),
-                    localizedIdentity(tr, p.secondaryPosition),
-                    localizedIdentity(tr, p.skill),
-                  ]
-                    .filter(Boolean)
-                    .join(" · ")
-                  const display = resolveAvatarDisplay({
-                    avatarType: p.avatarType,
-                    avatarPublicId: p.avatarPublicId,
-                    avatarPresetId: p.avatarPresetId,
-                    name: p.name,
-                  })
-                  return (
-                    <li
-                      key={p.userId}
-                      className="flex items-start gap-3 bg-card p-3 text-sm"
-                    >
-                      <PlayerAvatar display={display} size="md" />
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate font-heading font-medium">
-                          {p.name ?? tr("matches.player")}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {identity || tr("matches.positionNotSet")}
-                        </p>
-                        {p.bio ? (
-                          <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
-                            &ldquo;{p.bio}&rdquo;
-                          </p>
-                        ) : null}
-                      </div>
-                      <div className="flex shrink-0 flex-col items-end gap-0.5 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <MapPinIcon className="size-3" aria-hidden />
-                          {p.area || tr("matches.nearby")}
-                        </span>
-                        <span className="tabular-nums">
-                          {p.distanceKm.toFixed(1)} km
-                        </span>
-                      </div>
-                      {!sideStats.every((s) => s.open === 0) ? (
-                        <InvitePlayerButton
-                          matchId={m.id}
-                          playerId={p.userId}
-                          playerName={p.name ?? tr("matches.player")}
-                          disabled={sideStats.every((s) => s.open === 0)}
-                        />
-                      ) : null}
-                    </li>
-                  )
-                })}
-              </ul>
-            </>
-          )}
-        </section>
-      ) : null}
 
       {user ? (
         <MatchActions
@@ -580,6 +660,14 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
             m.state === "open"
               ? tr("matches.signInAccept")
               : tr("matches.signInView")
+          }
+          action={
+            <div className="flex justify-center gap-2">
+              <Button render={<Link href="/login" />}>{tr("nav.signIn")}</Button>
+              <Button variant="outline" render={<Link href="/register" />}>
+                {tr("auth.createAccount")}
+              </Button>
+            </div>
           }
         />
       )}

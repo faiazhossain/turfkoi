@@ -1,7 +1,7 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { and, eq, inArray, isNull, sql } from "drizzle-orm"
+import { and, eq, inArray, isNull, ne, or, sql } from "drizzle-orm"
 import type { z } from "zod"
 
 import { db } from "@/db"
@@ -10,14 +10,19 @@ import {
   matchPlayers,
   matchInvitations,
   matchGuests,
+  opponentRequests,
   bookings,
   turfs,
+  teams,
   users,
+  userBlocks,
 } from "@/db/schema"
 import { getCurrentUser } from "@/lib/auth"
+import { slotStartEpoch } from "@/lib/slot-expansion"
 import { isValidPhone, normalizePhone } from "@/features/auth/phone"
 import { createNotifications } from "@/features/notifications/create"
-import { rosterOpen } from "./authority"
+import { getTeamRole, listTeamMembers } from "@/features/teams/queries"
+import { isCaptainRole, rosterOpen } from "./authority"
 import {
   addGuestSchema,
   claimOpponentSideSchema,
@@ -38,6 +43,7 @@ import {
   getSquadCounts,
   resolveSideCaptain,
 } from "./queries"
+import { mintShareToken } from "./constants"
 import { lockMatchForSeatClaim, seatsFreeSql } from "./seat-claim"
 
 export type ActionResult =
@@ -117,7 +123,7 @@ export async function createMatchAction(
   }
 
   // Compute kickoff timestamp.
-  const kickoff = kickoffEpoch(booking.date, booking.slotStart.slice(0, 5))
+  const kickoff = slotStartEpoch(booking.date, booking.slotStart.slice(0, 5))
 
   // Atomic insert (neon-http has no db.transaction — db.batch runs all
   // statements in one server-side transaction). The id is generated here
@@ -133,6 +139,7 @@ export async function createMatchAction(
       squadSize,
       placeholderCount: placeholders,
       kickoffAt: new Date(kickoff),
+      shareToken: mintShareToken(),
     }),
     db.insert(matchPlayers).values({
       matchId,
@@ -463,6 +470,25 @@ export async function inviteMatchPlayersAction(
     phoneInvitees = phones.filter((p) => !known.some((k) => k.phone === p))
   }
   const userIds = [...new Set(requestedUserIds)]
+
+  // Player Network: no invitations between blocked pairs (either direction).
+  // Registered phone targets are already folded into userIds, so this covers
+  // both direct and phone-derived invites. Strict: the captain gets a clear
+  // error instead of a silent partial invite.
+  if (userIds.length > 0) {
+    const blockedRows = await db
+      .select({ blockerId: userBlocks.blockerId, blockedId: userBlocks.blockedId })
+      .from(userBlocks)
+      .where(
+        or(
+          and(eq(userBlocks.blockerId, user.id), inArray(userBlocks.blockedId, userIds)),
+          and(eq(userBlocks.blockedId, user.id), inArray(userBlocks.blockerId, userIds))
+        )
+      )
+    if (blockedRows.length > 0) {
+      return { ok: false, error: "matches.errors.inviteeBlocked" }
+    }
+  }
 
   // Drop anyone already on the roster or already invited (pending).
   let candidates = userIds
@@ -1047,9 +1073,339 @@ export async function confirmResultAction(matchId: string): Promise<ActionResult
   return { ok: true }
 }
 
-/** Helper: combine YYYY-MM-DD + HH:MM into epoch ms. */
-function kickoffEpoch(date: string, time: string): number {
-  const [y, mo, d] = date.split("-").map(Number)
-  const [h, mi] = time.split(":").map(Number)
-  return Date.UTC(y!, mo! - 1, d!, h!, mi!)
+/**
+ * Send a team challenge: one of the team's captain-role members challenges
+ * an open match as a unit. Eligibility mirrors the person-based claim (match
+ * open, no away captain yet, sender not on the roster) — but the challenge is
+ * a REQUEST, not a claim: the match stays open and other candidates (people
+ * or teams) keep competing until the home captain accepts one. A declined or
+ * cancelled challenge can be re-sent; a pending one cannot be duplicated.
+ */
+export async function challengeMatchAction(
+  matchId: string,
+  teamId: string
+): Promise<ActionResult> {
+  const user = await getCurrentUser()
+  if (!user) return unauthorized()
+
+  const [match] = await db
+    .select()
+    .from(matches)
+    .where(eq(matches.id, matchId))
+    .limit(1)
+  if (!match) return { ok: false, error: "matches.errors.matchNotFound" }
+  if (match.state !== "open" || match.awayCaptainId !== null) {
+    return { ok: false, error: "matches.errors.matchNotOpen" }
+  }
+  if (match.captainId === user.id) {
+    return { ok: false, error: "matches.errors.ownMatch" }
+  }
+
+  const role = await getTeamRole(teamId, user.id)
+  if (!isCaptainRole(role)) return forbidden()
+
+  const [rosterRow] = await db
+    .select({ userId: matchPlayers.userId })
+    .from(matchPlayers)
+    .where(and(eq(matchPlayers.matchId, matchId), eq(matchPlayers.userId, user.id)))
+    .limit(1)
+  if (rosterRow) {
+    return { ok: false, error: "matches.errors.alreadyOnRoster" }
+  }
+
+  // One live row per (match, team): re-sending flips a stale declined/
+  // cancelled row back to pending, a pending row is an error.
+  const [existing] = await db
+    .select({ status: opponentRequests.status })
+    .from(opponentRequests)
+    .where(
+      and(
+        eq(opponentRequests.matchId, matchId),
+        eq(opponentRequests.teamId, teamId)
+      )
+    )
+    .limit(1)
+  if (existing?.status === "pending") {
+    return { ok: false, error: "matches.errors.challengePending" }
+  }
+
+  await db
+    .insert(opponentRequests)
+    .values({
+      matchId,
+      teamId,
+      sentBy: user.id,
+      status: "pending",
+    })
+    .onConflictDoUpdate({
+      target: [opponentRequests.matchId, opponentRequests.teamId],
+      set: { sentBy: user.id, status: "pending", respondedAt: null },
+      setWhere: ne(opponentRequests.status, "pending"),
+    })
+
+  const [turfRow] = await db
+    .select({ name: turfs.name })
+    .from(bookings)
+    .innerJoin(turfs, eq(turfs.id, bookings.turfId))
+    .where(eq(bookings.id, match.bookingId))
+    .limit(1)
+  await createNotifications(
+    {
+      type: "match.challenge_received",
+      payload: {
+        matchId,
+        teamName: await teamName(teamId),
+        captainName: await userDisplayName(user.id),
+        turfName: turfRow?.name ?? "",
+      },
+      entityType: "match",
+      entityId: matchId,
+    },
+    [match.captainId]
+  )
+
+  revalidatePath(`/matches/${matchId}`)
+  return { ok: true }
+}
+
+/**
+ * Accept or reject a pending team challenge — home captain only. Accepting
+ * takes the away side through the SAME atomic conditional UPDATE as the
+ * person-based claim (first come, first served between a person claim, a
+ * person accept, and every pending challenge), then seats the team's members
+ * on the away side inside one guarded INSERT: it only lands while the claim
+ * actually succeeded AND the away side still has room, so a bigger squad of
+ * members than seats fills exactly what's free (captain-FCFS order). Every
+ * other pending challenge is auto-cancelled once a side is taken.
+ */
+export async function respondTeamChallengeAction(
+  matchId: string,
+  teamId: string,
+  accept: boolean
+): Promise<ActionResult> {
+  const user = await getCurrentUser()
+  if (!user) return unauthorized()
+
+  const [match] = await db
+    .select()
+    .from(matches)
+    .where(eq(matches.id, matchId))
+    .limit(1)
+  if (!match) return { ok: false, error: "matches.errors.matchNotFound" }
+  if ((await resolveSideCaptain(match, user.id)) !== "home") {
+    return forbidden()
+  }
+
+  const [challenge] = await db
+    .select()
+    .from(opponentRequests)
+    .where(
+      and(
+        eq(opponentRequests.matchId, matchId),
+        eq(opponentRequests.teamId, teamId)
+      )
+    )
+    .limit(1)
+  if (!challenge) return { ok: false, error: "matches.errors.challengeNotFound" }
+  if (challenge.status !== "pending") {
+    return { ok: false, error: "matches.errors.challengeNoLongerPending" }
+  }
+
+  const senderId =
+    challenge.sentBy ?? (await fallbackTeamCaptain(teamId)) ?? match.captainId
+
+  if (!accept) {
+    await db
+      .update(opponentRequests)
+      .set({ status: "rejected", respondedAt: new Date() })
+      .where(
+        and(
+          eq(opponentRequests.matchId, matchId),
+          eq(opponentRequests.teamId, teamId),
+          eq(opponentRequests.status, "pending")
+        )
+      )
+    await createNotifications(
+      {
+        type: "match.challenge_declined",
+        payload: { matchId, teamName: await teamName(teamId) },
+        entityType: "match",
+        entityId: matchId,
+      },
+      [senderId]
+    )
+    revalidatePath(`/matches/${matchId}`)
+    return { ok: true }
+  }
+
+  // Captain-FCFS order: the sending captain (or fallback) first, then the
+  // rest by join order.
+  const members = await listTeamMembers(teamId)
+  const ordered = [
+    ...members.filter((m) => m.userId === senderId),
+    ...members.filter((m) => m.userId !== senderId),
+  ].filter((m) => m.userId !== match.captainId) // never seat the home captain against themselves
+
+  const cap = match.squadSize ?? FORMATS.fives.maxSquad
+  const starters = isMatchFormat(match.matchType)
+    ? startersOf(match.matchType)
+    : FORMATS.fives.starters
+  const memberRows = ordered.slice(0, cap).map((m, i) => ({
+    userId: m.userId,
+    squadRole: i < starters ? "starting" : "substitute",
+  }))
+
+  await db.batch([
+    lockMatchForSeatClaim(matchId),
+    // The away-side claim — same single-row race guard as claimOpponentSide.
+    db.execute(sql`
+      UPDATE matches
+      SET away_captain_id = ${senderId}::uuid,
+          away_placeholder_count = 0,
+          state = 'confirmed',
+          updated_at = now()
+      WHERE id = ${matchId} AND state = 'open' AND away_captain_id IS NULL
+    `),
+    // Seat the squad only while the claim above actually landed AND the away
+    // side still has room. `ord` makes the per-row capacity check incremental
+    // within this one snapshot: each member needs `ord` seats taken or free.
+    db.execute(sql`
+      INSERT INTO match_players (match_id, user_id, side, role, squad_role)
+      SELECT ${matchId}, v.uid, 'away', 'member', v.srole
+      FROM (VALUES ${sql.join(
+        memberRows.map((r, i) =>
+          sql`(${r.userId}::uuid, ${r.squadRole}::squad_role, ${i + 1}::int)`
+        ),
+        sql`, `
+      )}) AS v(uid, srole, ord)
+      WHERE EXISTS (
+        SELECT 1 FROM matches
+        WHERE id = ${matchId}
+          AND away_captain_id = ${senderId}::uuid
+          AND state = 'confirmed'
+      ) AND v.ord + (
+        SELECT count(*) FROM match_players
+        WHERE match_id = ${matchId} AND side = 'away'
+      ) <= COALESCE((
+        SELECT squad_size FROM matches WHERE id = ${matchId}
+      ), ${FORMATS.fives.maxSquad})
+      ON CONFLICT DO NOTHING
+    `),
+    db.execute(sql`
+      UPDATE opponent_requests
+      SET status = 'accepted', responded_at = now()
+      WHERE match_id = ${matchId} AND team_id = ${teamId} AND status = 'pending'
+        AND EXISTS (
+          SELECT 1 FROM matches
+          WHERE id = ${matchId} AND away_captain_id = ${senderId}::uuid
+        )
+    `),
+    db.execute(sql`
+      UPDATE opponent_requests
+      SET status = 'cancelled', responded_at = now()
+      WHERE match_id = ${matchId} AND team_id <> ${teamId} AND status = 'pending'
+        AND EXISTS (
+          SELECT 1 FROM matches
+          WHERE id = ${matchId} AND away_captain_id = ${senderId}::uuid
+        )
+    `),
+  ])
+
+  const [accepted] = await db
+    .select({ status: opponentRequests.status })
+    .from(opponentRequests)
+    .where(
+      and(
+        eq(opponentRequests.matchId, matchId),
+        eq(opponentRequests.teamId, teamId)
+      )
+    )
+    .limit(1)
+  if (accepted?.status !== "accepted") {
+    // The away side went to someone else first — this challenge is now moot.
+    await db
+      .update(opponentRequests)
+      .set({ status: "cancelled", respondedAt: new Date() })
+      .where(
+        and(
+          eq(opponentRequests.matchId, matchId),
+          eq(opponentRequests.teamId, teamId),
+          eq(opponentRequests.status, "pending")
+        )
+      )
+    return { ok: false, error: "matches.errors.matchJustTaken" }
+  }
+
+  await createNotifications(
+    {
+      type: "match.challenge_accepted",
+      payload: { matchId, teamName: await teamName(teamId) },
+      entityType: "match",
+      entityId: matchId,
+    },
+    [senderId]
+  )
+  revalidatePath(`/matches/${matchId}`)
+  return { ok: true }
+}
+
+/**
+ * Start the match: either side's captain flips the confirmed fixture to
+ * ONGOING whenever they're ready. Pending invitations deliberately don't
+ * block start — whoever never responded is simply not on the final roster
+ * (their invite stays pending and can still claim an opened seat until the
+ * roster closes). The conditional UPDATE is the authority: the roster shown
+ * at kick-off is exactly the match_players/match_guests rows.
+ */
+export async function startMatchAction(matchId: string): Promise<ActionResult> {
+  const user = await getCurrentUser()
+  if (!user) return unauthorized()
+
+  const [match] = await db
+    .select()
+    .from(matches)
+    .where(eq(matches.id, matchId))
+    .limit(1)
+  if (!match) return { ok: false, error: "matches.errors.matchNotFound" }
+  if (!(await resolveSideCaptain(match, user.id))) return forbidden()
+
+  const started = await db
+    .update(matches)
+    .set({ state: "ongoing", updatedAt: new Date() })
+    .where(
+      and(
+        eq(matches.id, matchId),
+        inArray(matches.state, ["confirmed", "roster_building", "ready"])
+      )
+    )
+    .returning({ id: matches.id })
+  if (started.length === 0) {
+    return { ok: false, error: "matches.errors.matchNotStartable" }
+  }
+
+  revalidatePath(`/matches/${matchId}`)
+  return { ok: true }
+}
+
+/** Team name for notification payloads (empty string when the team vanished). */
+async function teamName(teamId: string): Promise<string> {
+  const [row] = await db
+    .select({ name: teams.name })
+    .from(teams)
+    .where(eq(teams.id, teamId))
+    .limit(1)
+  return row?.name ?? ""
+}
+
+/**
+ * Away-captain fallback for legacy challenge rows without a sender: the
+ * team's oldest captain-role member.
+ */
+async function fallbackTeamCaptain(teamId: string): Promise<string | null> {
+  const members = await listTeamMembers(teamId)
+  return (
+    members.find((m) => isCaptainRole(m.role))?.userId ??
+    members[0]?.userId ??
+    null
+  )
 }

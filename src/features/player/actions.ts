@@ -61,6 +61,30 @@ export async function toggleAvailabilityAction(): Promise<
   return { ok: true, available: newValue }
 }
 
+/**
+ * Player Network: identity search (DeshiTurf ID / @username / name) for the
+ * friends hub search box. Blocked pairs and deleted accounts are excluded
+ * query-side. Returns at most a handful of player cards.
+ */
+export async function searchPlayersAction(q: string) {
+  if (q.trim().length < 2) return []
+  const user = await getCurrentUser()
+  if (!user) return []
+  const { searchPlayersByIdentity } = await import("./queries")
+  return searchPlayersByIdentity(user.id, q.trim(), 8)
+}
+
+/**
+ * Player Network: matches the caller can invite to right now (side captain,
+ * roster open, open seat on their side) — powers the invite-to-match dialog.
+ */
+export async function listInvitableMatchesAction() {
+  const user = await getCurrentUser()
+  if (!user) return []
+  const { listInvitableMatchesFor } = await import("./queries")
+  return listInvitableMatchesFor(user.id, 10)
+}
+
 export async function updateProfileAction(
   input: z.infer<typeof updateProfileSchema>
 ): Promise<ActionResult> {
@@ -71,13 +95,28 @@ export async function updateProfileAction(
   const user = await getCurrentUser()
   if (!user) return unauthorized()
 
-  const { name, coords, avatarType, avatarPresetId, ...rest } = parsed.data
+  const { name, username, coords, avatarType, avatarPresetId, ...rest } = parsed.data
 
   if (name !== undefined) {
     await db
       .update(users)
       .set({ name, updatedAt: new Date() })
       .where(eq(users.id, user.id))
+  }
+
+  // Player Network handle: "" = untouched; a value means an explicit change.
+  if (username) {
+    try {
+      await db
+        .update(playerProfiles)
+        .set({ username, updatedAt: new Date() })
+        .where(eq(playerProfiles.userId, user.id))
+    } catch (err) {
+      if ((err as { code?: string }).code === "23505") {
+        return { ok: false, error: "auth.errors.usernameTaken" }
+      }
+      throw err
+    }
   }
 
   // Omitted keys leave stored values untouched (Drizzle's set() skips

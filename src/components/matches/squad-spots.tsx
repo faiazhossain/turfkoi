@@ -46,6 +46,7 @@ export function SquadSpots({
   editable = false,
   canEditCount = false,
   countEditable = false,
+  slotNames = [],
 }: {
   matchId: string
   matchType: string
@@ -64,6 +65,9 @@ export function SquadSpots({
   canEditCount?: boolean
   /** Pre-computed server-side: rosterOpen(state) — ANDed with canEditCount. */
   countEditable?: boolean
+  /** Display names of the named identities, in squad order — rendered as
+   * the roster-slot grid (filled tiles) with dashed open tiles after. */
+  slotNames?: string[]
 }) {
   const { t, locale } = useI18n()
   const router = useRouter()
@@ -107,7 +111,7 @@ export function SquadSpots({
   }
 
   return (
-    <div className="space-y-2 rounded-lg border border-border bg-card p-3">
+    <div className="space-y-2 rounded-2xl border border-border bg-card p-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         {label ? (
           <span className="font-heading text-sm font-semibold">{label}</span>
@@ -116,7 +120,7 @@ export function SquadSpots({
           className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
             open === 0
               ? "bg-primary/10 text-primary"
-              : "bg-amber-500/15 text-amber-700 dark:text-amber-400"
+              : "bg-warning/15 text-warning"
           }`}
         >
           {open === 0
@@ -136,7 +140,7 @@ export function SquadSpots({
           ) : null}
           {placeholders > 0 ? (
             <div
-              className="bg-amber-500 dark:bg-amber-400"
+              className="bg-warning"
               style={{ width: pct(placeholders) }}
             />
           ) : null}
@@ -146,26 +150,54 @@ export function SquadSpots({
         </span>
       </div>
 
+      {/* Roster-slot grid (matchmaking.html §roster-box): filled tiles in
+          squad order, dashed pulsing open tiles after. The first open tile
+          carries the open-count badge. Placeholders are unnamed claimed
+          seats — they render as open (recruitable) tiles. */}
+      {slotNames.length > 0 || open > 0 ? (
+        <div className="flex flex-wrap gap-2" aria-label={t("matches.squad.gridAria")}>
+          {slotNames.slice(0, squadSize).map((name, i) => (
+            <div
+              key={`${i}-${name}`}
+              className="match-slot-filled flex h-13 w-13 flex-col items-center justify-center rounded-xl border px-1 text-center"
+              title={name}
+            >
+              <span className="text-[10px] font-semibold tabular-nums text-muted-foreground">
+                {num(i + 1)}
+              </span>
+              <span className="w-full truncate text-[10px] leading-tight">
+                {name}
+              </span>
+            </div>
+          ))}
+          {Array.from({ length: open }, (_, i) => (
+            <div
+              key={`open-${i}`}
+              className="match-slot-open relative flex h-13 w-13 flex-col items-center justify-center rounded-xl border border-dashed"
+            >
+              {i === 0 && open > 1 ? (
+                <span
+                  className="absolute -right-1.5 -top-1.5 flex size-5 items-center justify-center rounded-full bg-warning text-[10px] font-bold tabular-nums text-warning-foreground"
+                  aria-hidden
+                >
+                  {num(open)}
+                </span>
+              ) : null}
+              <span className="text-sm font-bold text-warning">
+                +
+              </span>
+              <span className="text-[10px] leading-tight text-muted-foreground">
+                {t("matches.squad.slotOpen")}
+              </span>
+            </div>
+          ))}
+        </div>
+      ) : null}
+
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
-        <span className="flex items-center gap-1.5">
-          <span className="size-2 rounded-full bg-primary" aria-hidden />
-          {t("matches.squad.onField", {
-            count: num(starting),
-            total: num(starters),
-          })}
-        </span>
-        {benchCapacity > 0 ? (
-          <span className="flex items-center gap-1.5">
-            <span className="size-2 rounded-full bg-primary/60" aria-hidden />
-            {t("matches.squad.benchCount", {
-              count: num(namedOnBench),
-              total: num(benchCapacity),
-            })}
-          </span>
-        ) : null}
-        <span className="flex items-center gap-1.5 text-amber-700 dark:text-amber-400">
+        <span className="flex items-center gap-1.5 text-warning">
           <span
-            className="size-2 rounded-full bg-amber-500 dark:bg-amber-400"
+            className="size-2 rounded-full bg-warning"
             aria-hidden
           />
           {t("matches.squad.unnamed", { count: num(placeholders) })}
@@ -196,6 +228,22 @@ export function SquadSpots({
             </span>
           ) : null}
         </span>
+        <span className="flex items-center gap-1.5">
+          <span className="size-2 rounded-full bg-primary" aria-hidden />
+          {t("matches.squad.onField", {
+            count: num(starting),
+            total: num(starters),
+          })}
+        </span>
+        {benchCapacity > 0 ? (
+          <span className="flex items-center gap-1.5">
+            <span className="size-2 rounded-full bg-primary/60" aria-hidden />
+            {t("matches.squad.benchCount", {
+              count: num(namedOnBench),
+              total: num(benchCapacity),
+            })}
+          </span>
+        ) : null}
         {pending > 0 ? (
           <span className="flex items-center gap-1.5">
             <span

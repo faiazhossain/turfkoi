@@ -24,6 +24,10 @@ import {
   resolveClaimToken,
 } from "@/features/turf-claims/invites"
 import {
+  MATCH_LINK_COOKIE,
+  isMatchLinkPath,
+} from "@/features/matches/constants"
+import {
   createRegisteredUser,
   getUserByEmail,
   getUserByIdentifier,
@@ -54,12 +58,21 @@ async function clientIp(): Promise<string> {
 /** Post-login routing by strongest role: admins land on the admin console,
  * turf owners on their dashboard - the player dashboard is player work.
  * A pending turf-claim invite (cookie set by /claim/[token] when visited
- * signed-out) takes precedence over the role home. */
+ * signed-out) takes precedence over the role home; after that, a match
+ * invite link visited signed-out (cookie set by the proxy) routes straight
+ * back to the match. The consumed match cookie is cleared here — the claim
+ * cookie is cleared by the claim flow itself. */
 async function homeForUser(userId: string): Promise<string> {
-  const claimToken = (await cookies()).get(CLAIM_COOKIE)?.value
+  const jar = await cookies()
+  const claimToken = jar.get(CLAIM_COOKIE)?.value
   if (claimToken) {
     const resolved = await resolveClaimToken(claimToken)
     if (resolved.ok) return claimPath(claimToken)
+  }
+  const matchPath = jar.get(MATCH_LINK_COOKIE)?.value
+  if (isMatchLinkPath(matchPath)) {
+    jar.delete(MATCH_LINK_COOKIE)
+    return matchPath
   }
   const roles = await getUserRoles(userId)
   return roles.includes("admin")
@@ -250,27 +263,69 @@ export async function completeOnboardingAction(
   }
   const user = await getCurrentUser()
   if (!user) throw new Error("Unauthorized")
-  const { name, position, skill, area, coords } = parsed.data
+  const { name, username, position, skill, area, coords } = parsed.data
   await db.update(users).set({ name }).where(eq(users.id, user.id))
-  await db
-    .update(playerProfiles)
-    .set({
-      position: position ?? null,
-      skill: skill ?? null,
-      area: area ?? null,
-      // F7 privacy: round player coords to 3 decimals (~110m) at write time.
-      coords: coords ? roundCoords(coords) : null,
-      updatedAt: new Date(),
-    })
-    .where(eq(playerProfiles.userId, user.id))
+  try {
+    await db
+      .update(playerProfiles)
+      .set({
+        username,
+        position: position ?? null,
+        skill: skill ?? null,
+        area: area ?? null,
+        // F7 privacy: round player coords to 3 decimals (~110m) at write time.
+        coords: coords ? roundCoords(coords) : null,
+        updatedAt: new Date(),
+      })
+      .where(eq(playerProfiles.userId, user.id))
+  } catch (err) {
+    // Unique username race (neon-http has no transactions — the index is the
+    // authority on availability).
+    if ((err as { code?: string }).code === "23505") {
+      return { ok: false as const, error: "auth.errors.usernameTaken" }
+    }
+    throw err
+  }
   revalidatePath("/app")
   // A pending turf claim (owner registered straight from the invite link)
-  // continues after onboarding instead of the player home.
-  const claimToken = (await cookies()).get(CLAIM_COOKIE)?.value
+  // continues after onboarding instead of the player home; after that, a
+  // match invite link visited signed-out routes back to the match.
+  const jar = await cookies()
+  const claimToken = jar.get(CLAIM_COOKIE)?.value
   if (claimToken && (await resolveClaimToken(claimToken)).ok) {
     return { ok: true as const, home: claimPath(claimToken) }
   }
+  const matchPath = jar.get(MATCH_LINK_COOKIE)?.value
+  if (isMatchLinkPath(matchPath)) {
+    jar.delete(MATCH_LINK_COOKIE)
+    return { ok: true as const, home: matchPath }
+  }
   return { ok: true as const }
+}
+
+/**
+ * Player Network: live availability check for the onboarding username field.
+ * Format/reserved errors are surfaced first via the shared validators.
+ * Keeping your own current username counts as available.
+ */
+export async function checkUsernameAvailableAction(
+  raw: string
+): Promise<{ ok: boolean; error?: string }> {
+  const { validateUsername, normalizeUsername } = await import(
+    "@/features/player/username"
+  )
+  const check = validateUsername(raw)
+  if (!check.ok) return { ok: false, error: check.error }
+  const username = normalizeUsername(raw)
+  const [row] = await db
+    .select({ userId: playerProfiles.userId })
+    .from(playerProfiles)
+    .where(eq(playerProfiles.username, username))
+    .limit(1)
+  if (!row) return { ok: true }
+  const user = await getCurrentUser()
+  if (user && row.userId === user.id) return { ok: true }
+  return { ok: false, error: "auth.errors.usernameTaken" }
 }
 
 export async function signOutAction() {

@@ -9,6 +9,7 @@ import {
   matchPlayers,
   matchInvitations,
   matchGuests,
+  opponentRequests,
   bookings,
   turfs,
   teams,
@@ -16,6 +17,7 @@ import {
 } from "@/db/schema"
 import { getTeamRole } from "@/features/teams/queries"
 import { dedupeRecentGuests, type RecentGuestPick } from "./guests"
+import { maskPhone } from "./constants"
 import { isCaptainRole, type Side } from "./authority"
 
 export type MatchDetail = Awaited<ReturnType<typeof getMatch>>
@@ -39,6 +41,8 @@ export async function getMatch(id: string) {
   if (!row) return null
 
   // Legacy team sides — old matches render their team name as the side label.
+  // Team challenges (opponent_requests, accepted) surface the same way so the
+  // away side renders its team name regardless of era.
   const sides = await db
     .select({
       teamId: matchTeams.teamId,
@@ -49,6 +53,22 @@ export async function getMatch(id: string) {
     .from(matchTeams)
     .innerJoin(teams, eq(teams.id, matchTeams.teamId))
     .where(eq(matchTeams.matchId, id))
+  const challengeSides = await db
+    .select({
+      teamId: opponentRequests.teamId,
+      side: sql<"away">`'away'`,
+      teamName: teams.name,
+      teamSlug: teams.slug,
+    })
+    .from(opponentRequests)
+    .innerJoin(teams, eq(teams.id, opponentRequests.teamId))
+    .where(
+      and(
+        eq(opponentRequests.matchId, id),
+        eq(opponentRequests.status, "accepted")
+      )
+    )
+  sides.push(...challengeSides)
 
   const roster = await db
     .select({
@@ -93,7 +113,7 @@ export type SideCounts = {
  * columns).
  */
 export async function getSquadCounts(matchId: string): Promise<SideCounts[]> {
-  const [playerRows, guestRows, pendingRows, labelRows, matchRow] =
+  const [playerRows, guestRows, pendingRows, labelRows, challengeLabels, matchRow] =
     await Promise.all([
       db
         .select({
@@ -132,6 +152,16 @@ export async function getSquadCounts(matchId: string): Promise<SideCounts[]> {
         .innerJoin(teams, eq(teams.id, matchTeams.teamId))
         .where(eq(matchTeams.matchId, matchId)),
       db
+        .select({ side: sql<"away">`'away'`, teamName: teams.name })
+        .from(opponentRequests)
+        .innerJoin(teams, eq(teams.id, opponentRequests.teamId))
+        .where(
+          and(
+            eq(opponentRequests.matchId, matchId),
+            eq(opponentRequests.status, "accepted")
+          )
+        ),
+      db
         .select({
           placeholderCount: matches.placeholderCount,
           awayPlaceholderCount: matches.awayPlaceholderCount,
@@ -147,7 +177,9 @@ export async function getSquadCounts(matchId: string): Promise<SideCounts[]> {
     const existing = bySide.get(side) ?? {
       side,
       legacyTeamLabel:
-        labelRows.find((l) => l.side === side)?.teamName ?? null,
+        labelRows.find((l) => l.side === side)?.teamName ??
+        challengeLabels.find((l) => l.side === side)?.teamName ??
+        null,
       total: 0,
       starting: 0,
       substitute: 0,
@@ -230,6 +262,21 @@ export async function resolveSideCaptain(
     .select({ side: matchTeams.side, teamId: matchTeams.teamId })
     .from(matchTeams)
     .where(eq(matchTeams.matchId, match.id))
+  // A team challenge that was accepted makes the whole challenging team's
+  // captain-role members side captains of the away side.
+  if (match.awayCaptainId !== null) {
+    sides.push(
+      ...(await db
+        .select({ side: sql<"away">`'away'`, teamId: opponentRequests.teamId })
+        .from(opponentRequests)
+        .where(
+          and(
+            eq(opponentRequests.matchId, match.id),
+            eq(opponentRequests.status, "accepted")
+          )
+        ))
+    )
+  }
   for (const s of sides) {
     const role = await getTeamRole(s.teamId, userId)
     if (isCaptainRole(role)) return s.side
@@ -445,4 +492,105 @@ export async function listRecentGuestsAddedBy(
     .orderBy(desc(matchGuests.createdAt))
     .limit(60)
   return dedupeRecentGuests(rows, limit)
+}
+
+/**
+ * Resolve a share token (/m/<token>) to its match id. Tokens are public
+ * convenience handles, not secrets — the match page itself enforces what a
+ * visitor may see and do.
+ */
+export async function getMatchIdByShareToken(
+  token: string
+): Promise<string | null> {
+  if (!/^[0-9a-f]{8}$/.test(token)) return null
+  const [row] = await db
+    .select({ id: matches.id })
+    .from(matches)
+    .where(eq(matches.shareToken, token))
+    .limit(1)
+  return row?.id ?? null
+}
+
+export type TeamChallenge = {
+  teamId: string
+  teamSlug: string
+  teamName: string
+  status: "pending" | "accepted" | "rejected" | "cancelled" | "expired"
+  sentByName: string | null
+  memberCount: number
+  createdAt: Date
+}
+
+/**
+ * Team challenges for a match — newest first. `memberCount` advertises the
+ * squad strength the home captain is weighing before accept/reject.
+ */
+export async function listTeamChallenges(matchId: string): Promise<TeamChallenge[]> {
+  const sender = alias(users, "challenge_sender")
+  return db
+    .select({
+      teamId: opponentRequests.teamId,
+      teamSlug: teams.slug,
+      teamName: teams.name,
+      status: opponentRequests.status,
+      sentByName: sender.name,
+      memberCount: sql<number>`(
+        SELECT count(*)::int FROM team_members tm
+        WHERE tm.team_id = ${opponentRequests.teamId}
+      )`,
+      createdAt: opponentRequests.createdAt,
+    })
+    .from(opponentRequests)
+    .innerJoin(teams, eq(teams.id, opponentRequests.teamId))
+    .leftJoin(sender, eq(sender.id, opponentRequests.sentBy))
+    .where(eq(opponentRequests.matchId, matchId))
+    .orderBy(desc(opponentRequests.createdAt))
+}
+
+export type InvitationOutcome = {
+  id: string
+  side: Side
+  /** Registered invitee name; null for phone invites. */
+  playerName: string | null
+  /** Phone invites render masked digits only — never the raw number. */
+  inviteePhoneMasked: string | null
+  status: "pending" | "accepted" | "declined" | "cancelled" | "expired"
+  respondedAt: Date | null
+  createdAt: Date
+}
+
+/**
+ * Every invitation ever sent for a match with its outcome — the join battle
+ * log: accepted rows render Confirmed, declined Declined, and pending rows
+ * on a full side carry the "you were late" copy.
+ */
+export async function listInvitationOutcomes(
+  matchId: string,
+  limit = 20
+): Promise<InvitationOutcome[]> {
+  const rows = await db
+    .select({
+      id: matchInvitations.id,
+      side: matchInvitations.side,
+      inviteeUserId: matchInvitations.inviteeUserId,
+      inviteePhone: matchInvitations.inviteePhone,
+      playerName: users.name,
+      status: matchInvitations.status,
+      respondedAt: matchInvitations.respondedAt,
+      createdAt: matchInvitations.createdAt,
+    })
+    .from(matchInvitations)
+    .leftJoin(users, eq(users.id, matchInvitations.inviteeUserId))
+    .where(eq(matchInvitations.matchId, matchId))
+    .orderBy(asc(matchInvitations.createdAt))
+    .limit(limit)
+  return rows.map((r) => ({
+    id: r.id,
+    side: r.side,
+    playerName: r.playerName,
+    inviteePhoneMasked: r.inviteePhone ? maskPhone(r.inviteePhone) : null,
+    status: r.status,
+    respondedAt: r.respondedAt,
+    createdAt: r.createdAt,
+  }))
 }

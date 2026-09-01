@@ -1,6 +1,7 @@
 import { z } from "zod"
 
 import { isPresetAvatarId } from "./avatar-catalog"
+import { RESERVED_USERNAMES, USERNAME_RE } from "./username"
 import { POSITION_IDS, SKILL_IDS } from "./positions"
 
 /**
@@ -29,6 +30,16 @@ export const updateProfileSchema = z
       .min(2, "auth.errors.name_short")
       .max(60, "auth.errors.name_max")
       .optional(),
+    // Player Network handle: "" = untouched (form submits "" when unchanged).
+    username: z
+      .string()
+      .optional()
+      .transform((v) => (v === undefined ? undefined : v.trim().toLowerCase().replace(/^@/, "")))
+      .refine((v) => v === undefined || v === "" || USERNAME_RE.test(v), "auth.errors.usernameInvalid")
+      .refine(
+        (v) => v === undefined || v === "" || !RESERVED_USERNAMES.has(v),
+        "auth.errors.usernameReserved"
+      ),
     position: positionField,
     // Secondary position: "" (the "none" chip) means explicit clear.
     secondaryPosition: z.preprocess(

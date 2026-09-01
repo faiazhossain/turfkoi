@@ -46,6 +46,11 @@ async function ensureProfileAndRole(userId: string): Promise<void> {
     .insert(userRoles)
     .values({ userId, role: "player" })
     .onConflictDoNothing()
+  // Permanent public identity (DT-XXXXXX + @username) for the Player Network.
+  const { ensurePlayerIdentity } = await import("@/features/player/identity")
+  await ensurePlayerIdentity(userId).catch(() => {
+    /* non-fatal: backfill script can repair legacy rows */
+  })
 }
 
 /**

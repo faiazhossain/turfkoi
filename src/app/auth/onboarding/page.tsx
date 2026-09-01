@@ -19,7 +19,7 @@ import { PositionPicker, SkillPicker } from "@/components/player/choice-picker"
 import { StatusBadge } from "@/components/shared"
 import { LocationPicker } from "@/components/map"
 import { useI18n } from "@/i18n/client"
-import { completeOnboardingAction } from "@/features/auth/actions"
+import { completeOnboardingAction, checkUsernameAvailableAction } from "@/features/auth/actions"
 import {
   onboardingFormSchema,
   type OnboardingFormInput,
@@ -32,8 +32,20 @@ export default function OnboardingPage() {
   const [error, setError] = useState<string | null>(null)
   const form = useForm<OnboardingFormInput, unknown, OnboardingFormValues>({
     resolver: zodResolver(onboardingFormSchema),
-    defaultValues: { name: "", position: "", skill: "", area: "" },
+    defaultValues: { name: "", username: "", position: "", skill: "", area: "" },
   })
+
+  const usernameValue = form.watch("username") ?? ""
+
+  // Player Network: live availability check once the format is plausible.
+  async function checkUsernameAvailability() {
+    const value = usernameValue.trim()
+    if (!/^[a-zA-Z0-9_@]{3,21}$/.test(value)) return
+    const res = await checkUsernameAvailableAction(value)
+    if (!res.ok && res.error) {
+      form.setError("username", { message: res.error })
+    }
+  }
 
   async function onSubmit(values: OnboardingFormValues) {
     setError(null)
@@ -65,6 +77,27 @@ export default function OnboardingPage() {
                   {t(form.formState.errors.name.message ?? "")}
                 </p>
               )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="username">{t("players.usernameLabel")}</Label>
+              <Input
+                id="username"
+                autoComplete="off"
+                placeholder="@rahim_10"
+                {...form.register("username")}
+                onBlur={(e) => {
+                  form.register("username").onBlur(e)
+                  checkUsernameAvailability()
+                }}
+              />
+              {form.formState.errors.username && (
+                <p className="text-sm text-destructive">
+                  {t(form.formState.errors.username.message ?? "")}
+                </p>
+              )}
+              <p className="text-xs text-muted-foreground">
+                {t("players.onboardingUsernameHint")}
+              </p>
             </div>
             <div className="space-y-2">
               <Label>{t("auth.positionLabel")}</Label>

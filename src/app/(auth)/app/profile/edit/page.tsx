@@ -22,6 +22,8 @@ export default async function ProfileEditPage() {
   const profile = await getPlayerProfile(session.user.id)
   const data: ProfileEditData = {
     name: session.user.name ?? null,
+    playerId: profile?.playerId ?? null,
+    username: profile?.username ?? null,
     position: profile?.position ?? null,
     secondaryPosition: profile?.secondaryPosition ?? null,
     skill: profile?.skill ?? null,

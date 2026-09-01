@@ -90,6 +90,20 @@ export const notificationPayloadSchemas = {
     playerName: z.string(),
     turfName: z.string(),
   }),
+  "match.challenge_received": z.object({
+    matchId: z.string(),
+    teamName: z.string(),
+    captainName: z.string(),
+    turfName: z.string(),
+  }),
+  "match.challenge_accepted": z.object({
+    matchId: z.string(),
+    teamName: z.string(),
+  }),
+  "match.challenge_declined": z.object({
+    matchId: z.string(),
+    teamName: z.string(),
+  }),
   "friend.request_received": z.object({
     friendName: z.string(),
   }),

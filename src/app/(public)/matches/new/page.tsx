@@ -58,9 +58,10 @@ export default async function NewMatchPage({
           icon={CalendarPlusIcon}
           title={t("matches.noEligibleBookingsTitle")}
           description={t("matches.noEligibleBookingsDesc")}
-        >
-          <Button render={<Link href="/turfs" />}>{t("matches.bookTurfCta")}</Button>
-        </EmptyState>
+          action={
+            <Button render={<Link href="/turfs" />}>{t("matches.bookTurfCta")}</Button>
+          }
+        />
 
         {pendingPayment.length > 0 ? (
           <section className="space-y-2">

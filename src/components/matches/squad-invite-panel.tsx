@@ -23,8 +23,8 @@ interface SquadInvitePanelProps {
 
 /**
  * "Add players to your side" — phone invitations, friend invites, and the
- * guest add form for a side captain. Rendered above the match room so the
- * fill tools sit right before the roster they feed.
+ * guest add form for a side captain. Content-only: it renders inside the
+ * add-players modal (ButtonModal owns the trigger and dialog header).
  */
 export function SquadInvitePanel({
   matchId,
@@ -67,10 +67,7 @@ export function SquadInvitePanel({
   }
 
   return (
-    <section id="add-guest" className="scroll-mt-20 space-y-2">
-      <h2 className="font-heading text-lg font-semibold">
-        {t("matches.squad.addMembers")}
-      </h2>
+    <div className="space-y-3">
       <p className="text-xs text-muted-foreground">
         {t("matches.invite.overInviteHint")}
       </p>
@@ -117,6 +114,6 @@ export function SquadInvitePanel({
         </div>
       ) : null}
       <GuestAddForm matchId={matchId} recentGuests={recentGuests} />
-    </section>
+    </div>
   )
 }

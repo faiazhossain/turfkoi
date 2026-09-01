@@ -1,6 +1,12 @@
 import type { Metadata, Viewport } from "next"
 import type { ReactNode } from "react"
-import { Geist, Geist_Mono, Noto_Sans_Bengali } from "next/font/google"
+import {
+  Geist,
+  Geist_Mono,
+  Noto_Sans_Bengali,
+  Space_Grotesk,
+  Orbitron,
+} from "next/font/google"
 
 import "./globals.css"
 import { Providers } from "@/components/providers"
@@ -26,6 +32,19 @@ const geistMono = Geist_Mono({
 const bengali = Noto_Sans_Bengali({
   variable: "--font-bengali",
   subsets: ["bengali"],
+  display: "swap",
+})
+
+// Matchmaking HQ (.match-hq) display fonts — see globals.css.
+const spaceGrotesk = Space_Grotesk({
+  variable: "--font-space",
+  subsets: ["latin"],
+  display: "swap",
+})
+
+const orbitron = Orbitron({
+  variable: "--font-orbitron",
+  subsets: ["latin"],
   display: "swap",
 })
 
@@ -64,7 +83,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     <html
       lang={locale}
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} ${bengali.variable}`}
+      className={`${geistSans.variable} ${geistMono.variable} ${bengali.variable} ${spaceGrotesk.variable} ${orbitron.variable}`}
     >
       <body className="flex min-h-dvh flex-col bg-background text-foreground">
         <I18nProvider locale={locale}>

@@ -17,6 +17,12 @@ export const removeFriendSchema = z.object({
 })
 export type RemoveFriendValues = z.infer<typeof removeFriendSchema>
 
+export const blockUserSchema = z.object({
+  /** The user to block (or unblock). */
+  userId: z.string().uuid(),
+})
+export type BlockUserValues = z.infer<typeof blockUserSchema>
+
 /** Find users for the friend search (name/phone prefix). */
 export const friendSearchSchema = z.object({
   q: z.string().trim().min(2).max(50),

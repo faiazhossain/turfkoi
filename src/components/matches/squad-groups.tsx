@@ -191,7 +191,7 @@ export function SquadGroups({
       )
     }
     return (
-      <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border">
+      <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border">
         {rows.map(rowEl)}
       </ul>
     )

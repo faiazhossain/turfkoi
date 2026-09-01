@@ -357,6 +357,41 @@ export function todayInDhaka(now: Date = new Date()): string {
   }).format(now)
 }
 
+/** Bangladesh is permanently UTC+6 (no DST) — offset in ms. */
+const DHAKA_OFFSET_MS = 6 * 60 * 60 * 1000
+
+/**
+ * Epoch ms of a slot start: `YYYY-MM-DD` + `HH:mm(:ss)` wall time in
+ * Asia/Dhaka. The naive date/time columns store Dhaka local time, so the
+ * epoch is the UTC interpretation shifted back by the +6 offset. Single
+ * source of truth — kickoff scheduling, cancellation cutoffs, and the
+ * match-creation picker all compare against this.
+ */
+export function slotStartEpoch(date: string, time: string): number {
+  const [y, mo, d] = date.split("-").map(Number)
+  const [h, mi] = time.slice(0, 5).split(":").map(Number)
+  return Date.UTC(y!, mo! - 1, d!, h!, mi!) - DHAKA_OFFSET_MS
+}
+
+/**
+ * A slot can no longer be booked this close to its start (players need time
+ * to pay and travel). Exactly at the boundary booking is already closed:
+ * a 8:00pm slot is unbookable from 7:40pm onward.
+ */
+export const SLOT_BOOKING_CUTOFF_MINUTES = 20
+
+/** Whether `date`+`startTime` is still bookable as of `now`. */
+export function isSlotBookable(
+  date: string,
+  startTime: string,
+  now: Date = new Date()
+): boolean {
+  return (
+    slotStartEpoch(date, startTime) - now.getTime() >
+    SLOT_BOOKING_CUTOFF_MINUTES * 60 * 1000
+  )
+}
+
 /**
  * Owner-facing label of the section covering a slot's start time on a date
  * (e.g. "Evening"), for peak/off-peak display on the public page. Slots

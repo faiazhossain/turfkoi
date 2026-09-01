@@ -1,4 +1,4 @@
-import { pgTable, pgEnum, uuid, timestamp, uniqueIndex, index } from "drizzle-orm/pg-core"
+import { pgTable, uuid, timestamp, uniqueIndex, index } from "drizzle-orm/pg-core"
 
 import { users } from "./users"
 import { friendshipStatus } from "./enums"
@@ -28,5 +28,31 @@ export const friendships = pgTable(
   (t) => [
     uniqueIndex("friendships_pair_idx").on(t.requesterId, t.addresseeId),
     index("friendships_addressee_idx").on(t.addresseeId),
+  ]
+)
+
+/**
+ * Blocking: one row per direction (blocker → blocked). Interactions between
+ * two users are blocked if a row exists in EITHER direction. Blocking also
+ * deletes any friendship row between the pair (actions.ts), but rows are
+ * kept independent of friendships so unblocking restores normal rules.
+ */
+export const userBlocks = pgTable(
+  "user_blocks",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    blockerId: uuid("blocker_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    blockedId: uuid("blocked_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [
+    uniqueIndex("user_blocks_pair_idx").on(t.blockerId, t.blockedId),
+    index("user_blocks_blocked_idx").on(t.blockedId),
   ]
 )

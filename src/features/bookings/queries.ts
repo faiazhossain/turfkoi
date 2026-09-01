@@ -1,6 +1,7 @@
 import "server-only"
 import { and, desc, eq, gte, lte, inArray } from "drizzle-orm"
 
+import { slotStartEpoch } from "@/lib/slot-expansion"
 import { db } from "@/db"
 import {
   bookings,
@@ -86,7 +87,7 @@ export async function getActiveBookingForSlot(
  * confirmed, kick off in the future, and have no match yet (matches are 1:1
  * with bookings); `pendingPayment` rows still need payment before a match can
  * be created on them. Kickoff is computed here (not SQL) from the date-only
- * + time-only columns — the same UTC epoch math match creation uses.
+ * + time-only columns via the shared Dhaka-time epoch helper.
  */
 export async function listCreateMatchBookings(userId: string) {
   const rows = await db
@@ -112,16 +113,10 @@ export async function listCreateMatchBookings(userId: string) {
     .orderBy(desc(bookings.date), desc(bookings.createdAt))
     .limit(50)
 
-  const kickoffMs = (date: string, slotStart: string) => {
-    const [y, mo, d] = date.split("-").map(Number)
-    const [h, mi] = slotStart.slice(0, 5).split(":").map(Number)
-    return Date.UTC(y!, mo! - 1, d!, h!, mi!)
-  }
-
   const eligible: typeof rows = []
   const pendingPayment: typeof rows = []
   for (const row of rows) {
-    if (kickoffMs(row.date, row.slotStart) <= Date.now()) continue
+    if (slotStartEpoch(row.date, row.slotStart) <= Date.now()) continue
     if (row.status === "confirmed") {
       if (row.matchId === null) eligible.push(row)
     } else {

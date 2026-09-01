@@ -8,6 +8,8 @@ import {
   ilike,
   inArray,
   isNull,
+  ne,
+  notExists,
   or,
   sql,
 } from "drizzle-orm"
@@ -22,12 +24,15 @@ import {
   playerRequests,
   playerProfiles,
   users,
+  userBlocks,
 } from "@/db/schema"
-import { FORMATS } from "@/features/matches/formats"
+import { FORMATS, spotsLeft } from "@/features/matches/formats"
+import { ROSTER_OPEN_STATES, rosterOpen } from "@/features/matches/authority"
 import {
   mergeMatchHistory,
   type MergedHistoryRow,
 } from "@/features/player/history"
+import { isPlayerIdFormat, normalizeUsername } from "@/features/player/username"
 import type { GeoPoint } from "@/db/geo"
 
 export async function getPlayerProfile(userId: string) {
@@ -37,6 +42,173 @@ export async function getPlayerProfile(userId: string) {
     .where(eq(playerProfiles.userId, userId))
     .limit(1)
   return rows[0] ?? null
+}
+
+/** SQL that excludes users block-linked to `viewerId` in EITHER direction. */
+function notBlockedWith(viewerId: string) {
+  return notExists(
+    db
+      .select({ one: sql`1` })
+      .from(userBlocks)
+      .where(
+        or(
+          and(eq(userBlocks.blockerId, viewerId), eq(userBlocks.blockedId, users.id)),
+          and(eq(userBlocks.blockerId, users.id), eq(userBlocks.blockedId, viewerId))
+        )
+      )
+  )
+}
+
+export interface PlayerCardRow {
+  userId: string
+  name: string | null
+  playerId: string | null
+  username: string | null
+  position: string | null
+  secondaryPosition: string | null
+  skill: string | null
+  area: string | null
+  lastSeenAt: Date | null
+  avatarType: string | null
+  avatarPresetId: string | null
+  avatarPublicId: string | null
+}
+
+const playerCardColumns = {
+  userId: users.id,
+  name: users.name,
+  playerId: playerProfiles.playerId,
+  username: playerProfiles.username,
+  position: playerProfiles.position,
+  secondaryPosition: playerProfiles.secondaryPosition,
+  skill: playerProfiles.skill,
+  area: playerProfiles.area,
+  lastSeenAt: playerProfiles.lastSeenAt,
+  avatarType: playerProfiles.avatarType,
+  avatarPresetId: playerProfiles.avatarPresetId,
+  avatarPublicId: playerProfiles.avatarPublicId,
+}
+
+/** Public profile lookup by Player ID (DT-XXXXXX). Null when unknown. */
+export async function getPlayerByCode(code: string): Promise<PlayerCardRow | null> {
+  const normalized = code.trim().toUpperCase()
+  if (!isPlayerIdFormat(normalized)) return null
+  const rows = await db
+    .select(playerCardColumns)
+    .from(users)
+    .innerJoin(playerProfiles, eq(playerProfiles.userId, users.id))
+    .where(and(eq(playerProfiles.playerId, normalized), ne(users.status, "deleted")))
+    .limit(1)
+  return rows[0] ?? null
+}
+
+/**
+ * Player search (Player Network): a query is resolved in priority order —
+ * exact Player ID (DT-…), then exact/prefix @username, then name substring.
+ * Blocked pairs and deleted accounts never appear.
+ */
+export async function searchPlayersByIdentity(
+  viewerId: string,
+  rawQuery: string,
+  limit = 10
+): Promise<PlayerCardRow[]> {
+  const q = rawQuery.trim()
+  if (q.length < 2) return []
+  const baseWhere = [
+    ne(users.id, viewerId),
+    ne(users.status, "deleted"),
+    notBlockedWith(viewerId),
+  ]
+
+  const upper = q.toUpperCase()
+  if (isPlayerIdFormat(upper)) {
+    const rows = await db
+      .select(playerCardColumns)
+      .from(users)
+      .innerJoin(playerProfiles, eq(playerProfiles.userId, users.id))
+      .where(and(...baseWhere, eq(playerProfiles.playerId, upper)))
+      .limit(limit)
+    if (rows.length > 0) return rows
+  }
+
+  const username = normalizeUsername(q)
+  if (USERNAME_PREFIX_RE.test(username)) {
+    const rows = await db
+      .select(playerCardColumns)
+      .from(users)
+      .innerJoin(playerProfiles, eq(playerProfiles.userId, users.id))
+      .where(
+        and(
+          ...baseWhere,
+          or(
+            eq(playerProfiles.username, username),
+            ilike(playerProfiles.username, `${username}%`)
+          )
+        )
+      )
+      .orderBy(asc(playerProfiles.username))
+      .limit(limit)
+    if (rows.length > 0) return rows
+  }
+
+  return db
+    .select(playerCardColumns)
+    .from(users)
+    .innerJoin(playerProfiles, eq(playerProfiles.userId, users.id))
+    .where(and(...baseWhere, ilike(users.name, `%${q}%`)))
+    .orderBy(asc(users.name))
+    .limit(limit)
+}
+
+const USERNAME_PREFIX_RE = /^[a-z0-9_]{2,}$/
+
+/**
+ * Matches the viewer can invite this player to (Player Network profile →
+ * "Invite to Match"): viewer is the home or away side captain, the roster is
+ * still open, and the viewer's own side has at least one open seat.
+ */
+export async function listInvitableMatchesFor(viewerId: string, limit = 10) {
+  const rows = await db
+    .select({
+      id: matches.id,
+      state: matches.state,
+      captainId: matches.captainId,
+      matchType: matches.matchType,
+      squadSize: matches.squadSize,
+      kickoffAt: matches.kickoffAt,
+      date: bookings.date,
+      slotStart: bookings.slotStart,
+      turfName: turfs.name,
+      turfArea: turfs.area,
+    })
+    .from(matches)
+    .innerJoin(bookings, eq(bookings.id, matches.bookingId))
+    .innerJoin(turfs, eq(turfs.id, bookings.turfId))
+    .where(
+      and(
+        or(eq(matches.captainId, viewerId), eq(matches.awayCaptainId, viewerId)),
+        inArray(matches.state, ROSTER_OPEN_STATES)
+      )
+    )
+    .orderBy(asc(matches.kickoffAt))
+    .limit(limit)
+
+  const { getSquadCounts } = await import("@/features/matches/queries")
+  const invitable = []
+  for (const match of rows) {
+    if (!rosterOpen(match.state)) continue
+    const counts = await getSquadCounts(match.id)
+    // The creator sits home; the away-side claimant sits away.
+    const side = match.captainId === viewerId ? "home" : "away"
+    const sideCounts = counts.find((c) => c.side === side)
+    const cap =
+      match.squadSize ?? FORMATS[match.matchType as keyof typeof FORMATS]?.maxSquad ??
+      FORMATS.fives.maxSquad
+    if (spotsLeft(cap, sideCounts?.total ?? 0, sideCounts?.placeholders ?? 0) > 0) {
+      invitable.push(match)
+    }
+  }
+  return invitable
 }
 
 /**

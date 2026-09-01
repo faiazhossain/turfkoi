@@ -4,16 +4,17 @@ import { revalidatePath } from "next/cache"
 import { and, eq, or } from "drizzle-orm"
 
 import { db } from "@/db"
-import { friendships, users } from "@/db/schema"
+import { friendships, userBlocks, users } from "@/db/schema"
 import { getCurrentUser } from "@/lib/auth"
 import { createNotifications } from "@/features/notifications/create"
 import {
   sendFriendRequestSchema,
   respondFriendRequestSchema,
   removeFriendSchema,
+  blockUserSchema,
   friendSearchSchema,
 } from "./schemas"
-import { searchUsersForFriend } from "./queries"
+import { searchUsersForFriend, isBlockedEitherDirection } from "./queries"
 
 /** Search registered users for the friend picker (server action wrapper). */
 export async function searchUsersForFriendAction(q: string) {
@@ -49,6 +50,9 @@ export async function sendFriendRequestAction(
     .where(eq(users.id, targetId))
     .limit(1)
   if (!target) return { ok: false, error: "friends.errors.userNotFound" }
+  if (await isBlockedEitherDirection(user.id, targetId)) {
+    return { ok: false, error: "friends.errors.blocked" }
+  }
 
   const existing = await db
     .select()
@@ -71,6 +75,7 @@ export async function sendFriendRequestAction(
           .set({ status: "accepted", respondedAt: new Date() })
           .where(eq(friendships.id, prior.id))
         revalidatePath("/app")
+        revalidatePath("/friends")
         return { ok: true }
       }
       return { ok: false, error: "friends.errors.requestPending" }
@@ -103,6 +108,7 @@ export async function sendFriendRequestAction(
   )
 
   revalidatePath("/app")
+  revalidatePath("/friends")
   return { ok: true }
 }
 
@@ -150,6 +156,7 @@ export async function respondToFriendRequestAction(
   }
 
   revalidatePath("/app")
+  revalidatePath("/friends")
   return { ok: true }
 }
 
@@ -174,5 +181,60 @@ export async function removeFriendAction(
 
   await db.delete(friendships).where(eq(friendships.id, row.id))
   revalidatePath("/app")
+  revalidatePath("/friends")
+  return { ok: true }
+}
+
+/**
+ * Block a player (Player Network): kills any friendship/request between the
+ * pair (either direction, any status) and prevents future friend requests +
+ * match invites in both directions. Silent — the blocked player is not told.
+ * neon-http has no transactions, so the statements are ordered idempotently.
+ */
+export async function blockUserAction(input: { userId: string }): Promise<ActionResult> {
+  const parsed = blockUserSchema.safeParse(input)
+  if (!parsed.success) return { ok: false, error: "errors.invalid" }
+  const user = await getCurrentUser()
+  if (!user) return { ok: false, error: "errors.notSignedIn" }
+  const targetId = parsed.data.userId
+  if (targetId === user.id) return { ok: false, error: "friends.errors.selfRequest" }
+
+  const [target] = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.id, targetId))
+    .limit(1)
+  if (!target) return { ok: false, error: "friends.errors.userNotFound" }
+
+  await db.insert(userBlocks).values({ blockerId: user.id, blockedId: targetId }).onConflictDoNothing()
+  await db
+    .delete(friendships)
+    .where(
+      or(
+        and(eq(friendships.requesterId, user.id), eq(friendships.addresseeId, targetId)),
+        and(eq(friendships.requesterId, targetId), eq(friendships.addresseeId, user.id))
+      )
+    )
+
+  revalidatePath("/app")
+  revalidatePath("/friends")
+  revalidatePath("/players")
+  return { ok: true }
+}
+
+/** Remove an existing block the user placed. The other side's block (if any) stays. */
+export async function unblockUserAction(input: { userId: string }): Promise<ActionResult> {
+  const parsed = blockUserSchema.safeParse(input)
+  if (!parsed.success) return { ok: false, error: "errors.invalid" }
+  const user = await getCurrentUser()
+  if (!user) return { ok: false, error: "errors.notSignedIn" }
+
+  await db
+    .delete(userBlocks)
+    .where(and(eq(userBlocks.blockerId, user.id), eq(userBlocks.blockedId, parsed.data.userId)))
+
+  revalidatePath("/app")
+  revalidatePath("/friends")
+  revalidatePath("/players")
   return { ok: true }
 }

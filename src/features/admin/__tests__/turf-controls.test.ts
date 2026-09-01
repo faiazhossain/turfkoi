@@ -115,7 +115,13 @@ const TURF_ID = "00000000-0000-4000-8000-000000000001"
 
 function slotRow(overrides: Record<string, unknown> = {}) {
   return {
-    slot: { id: "s1", durationMinutes: 60, status: "available" },
+    slot: {
+      id: "s1",
+      durationMinutes: 60,
+      status: "available",
+      date: "2099-01-01",
+      startTime: "18:00:00",
+    },
     isVerified: true,
     isActive: true,
     ...overrides,
@@ -243,6 +249,18 @@ describe("holdSlotAction turf-status gate", () => {
     selectQueue = [[]]
     const res = await holdSlotAction(HOLD_INPUT)
     expect(res).toEqual({ ok: false, error: "turfs.errors.slotGone" })
+  })
+
+  it("rejects a slot inside the 20-minute booking cutoff", async () => {
+    currentUser = PLAYER
+    // Dhaka wall time = UTC+6 fixed — shift the epoch and read ISO fields.
+    const soon = new Date(Date.now() + 10 * 60 * 1000 + 6 * 60 * 60 * 1000)
+    const date = soon.toISOString().slice(0, 10)
+    const startTime = soon.toISOString().slice(11, 19)
+    selectQueue = [[slotRow({ slot: { id: "s1", durationMinutes: 60, status: "available", date, startTime } })]]
+    const res = await holdSlotAction(HOLD_INPUT)
+    expect(res).toEqual({ ok: false, error: "turfs.errors.slotCutoff" })
+    expect(updateCalls.length).toBe(0)
   })
 
   it("proceeds when the turf is verified and active", async () => {

@@ -139,6 +139,23 @@ export interface NotificationPayloads {
     playerName: string
     turfName: string
   }
+  /** The home captain: a team challenged their open match. */
+  "match.challenge_received": {
+    matchId: string
+    teamName: string
+    captainName: string
+    turfName: string
+  }
+  /** The challenge sender: the home captain accepted their team challenge. */
+  "match.challenge_accepted": {
+    matchId: string
+    teamName: string
+  }
+  /** The challenge sender: the home captain declined their team challenge. */
+  "match.challenge_declined": {
+    matchId: string
+    teamName: string
+  }
   /** The addressee: someone sent them a friend request. */
   "friend.request_received": {
     friendName: string
@@ -395,6 +412,45 @@ export const NOTIFICATION_TYPES: Registry = {
         : null,
     href: (p) => `/matches/${p.matchId}`,
   },
+  "match.challenge_received": {
+    priority: "transactional",
+    audience: "player",
+    icon: SwordsIcon,
+    title: (p) => ({
+      key: "notifications.matchChallengeReceivedTitle",
+      params: { team: p.teamName, captain: p.captainName },
+    }),
+    body: (p): LocalizedText | null =>
+      p.turfName
+        ? {
+            key: "notifications.matchChallengeReceivedBody",
+            params: { team: p.teamName, turf: p.turfName },
+          }
+        : null,
+    href: (p) => `/matches/${p.matchId}`,
+  },
+  "match.challenge_accepted": {
+    priority: "transactional",
+    audience: "player",
+    icon: UserCheckIcon,
+    title: (p) => ({
+      key: "notifications.matchChallengeAcceptedTitle",
+      params: { team: p.teamName },
+    }),
+    body: () => ({ key: "notifications.matchChallengeAcceptedBody" }),
+    href: (p) => `/matches/${p.matchId}`,
+  },
+  "match.challenge_declined": {
+    priority: "info",
+    audience: "player",
+    icon: UserXIcon,
+    title: (p) => ({
+      key: "notifications.matchChallengeDeclinedTitle",
+      params: { team: p.teamName },
+    }),
+    body: () => ({ key: "notifications.matchChallengeDeclinedBody" }),
+    href: (p) => `/matches/${p.matchId}`,
+  },
   "friend.request_received": {
     priority: "info",
     audience: "player",
@@ -404,7 +460,7 @@ export const NOTIFICATION_TYPES: Registry = {
       params: { friend: p.friendName },
     }),
     body: () => ({ key: "notifications.friendRequestReceivedBody" }),
-    href: () => "/app",
+    href: () => "/friends",
   },
   "friend.request_accepted": {
     priority: "info",
@@ -415,7 +471,7 @@ export const NOTIFICATION_TYPES: Registry = {
       params: { friend: p.friendName },
     }),
     body: () => ({ key: "notifications.friendRequestAcceptedBody" }),
-    href: () => "/app",
+    href: () => "/friends",
   },
 }
 

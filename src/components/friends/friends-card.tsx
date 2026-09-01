@@ -87,7 +87,15 @@ export function FriendsCard({
 
   return (
     <section className="rounded-lg border border-border bg-card p-4">
-      <h2 className="font-heading text-lg font-semibold">{t("friends.title")}</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="font-heading text-lg font-semibold">{t("friends.title")}</h2>
+        <a
+          href="/friends"
+          className="text-sm font-medium text-primary hover:underline"
+        >
+          {t("friends.viewAll")}
+        </a>
+      </div>
 
       {/* Received requests */}
       {requests.length > 0 ? (

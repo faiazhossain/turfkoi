@@ -1,4 +1,4 @@
-import { pgTable, uuid, timestamp, integer, text, index, primaryKey } from "drizzle-orm/pg-core"
+import { pgTable, uuid, timestamp, integer, text, index, uniqueIndex, primaryKey } from "drizzle-orm/pg-core"
 
 import {
   matchState,
@@ -61,6 +61,10 @@ export const matches = pgTable(
     }),
     submittedAt: timestamp("submitted_at", { withTimezone: true }),
     kickoffAt: timestamp("kickoff_at", { withTimezone: true }),
+    // Short public token for the shareable invite link (/m/<token>) shown in
+    // the match room — identifies the match without exposing the uuid in
+    // shared chats. Not a secret: it only gates discovery convenience.
+    shareToken: text("share_token").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
@@ -71,6 +75,7 @@ export const matches = pgTable(
   (t) => [
     index("matches_captain_idx").on(t.captainId),
     index("matches_away_captain_idx").on(t.awayCaptainId),
+    uniqueIndex("matches_share_token_idx").on(t.shareToken),
   ]
 )
 
@@ -139,8 +144,13 @@ export const playerRequests = pgTable(
 )
 
 /**
- * Legacy team challenges (matches created before teams left the match flow).
- * Read-only: the person-based opponent side is matches.away_captain_id.
+ * Team challenges: a nearby team (sent by one of its captain-role members)
+ * challenges an open match as a unit. While the challenge is pending the
+ * match stays open — the home captain accepts ONE challenge (or a person
+ * claims the side first; both land through the same atomic away-side claim),
+ * and every other pending challenge is auto-cancelled on acceptance.
+ * Rows from the legacy team-sides era are indistinguishable in shape and
+ * render through the same UI.
  */
 export const opponentRequests = pgTable(
   "opponent_requests",
@@ -151,12 +161,23 @@ export const opponentRequests = pgTable(
     teamId: uuid("team_id")
       .notNull()
       .references(() => teams.id, { onDelete: "cascade" }),
+    // The team member who sent the challenge — becomes the away captain on
+    // acceptance. Null only for legacy rows.
+    sentBy: uuid("sent_by").references(() => users.id, {
+      onDelete: "set null",
+    }),
     status: requestStatus("status").notNull().default("pending"),
+    respondedAt: timestamp("responded_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
   },
-  (t) => [primaryKey({ columns: [t.matchId, t.teamId] })]
+  (t) => [
+    primaryKey({ columns: [t.matchId, t.teamId] }),
+    // One live challenge per team per match — a rejected team may re-challenge
+    // by flipping the row back to pending (upsert path in the action).
+    index("opponent_requests_match_status_idx").on(t.matchId, t.status),
+  ]
 )
 
 /**
