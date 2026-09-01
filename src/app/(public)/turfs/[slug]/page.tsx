@@ -149,11 +149,11 @@ export default async function TurfDetailPage({ params, searchParams }: PageProps
 
   return (
     <div className="mx-auto max-w-4xl space-y-8 px-4 py-12">
-      <nav className="text-sm text-muted-foreground">
-        <Link href="/turfs" className="hover:text-foreground">
+      <nav className="text-sm text-dt-dim">
+        <Link href="/turfs" className="hover:text-dt-txt">
           {t("nav.turfs")}
         </Link>{" "}
-        / <span className="text-foreground">{turf.name}</span>
+        / <span className="text-dt-txt">{turf.name}</span>
       </nav>
 
       {/* Hero photo / gallery */}
@@ -161,7 +161,7 @@ export default async function TurfDetailPage({ params, searchParams }: PageProps
         {photos.length > 0 ? (
           <TurfPhotoStrip name={turf.name} photos={photos} />
         ) : (
-          <div className="flex w-fit items-center gap-2 rounded-full border border-dashed border-border px-4 py-1.5 text-xs text-muted-foreground">
+          <div className="flex w-fit items-center gap-2 rounded-full border border-dashed border-dt-line px-4 py-1.5 text-xs text-dt-dim">
             <ImageOffIcon className="size-3.5" aria-hidden />
             {t("turfs.noPhotosYet")}
           </div>
@@ -180,12 +180,12 @@ export default async function TurfDetailPage({ params, searchParams }: PageProps
             <StatusBadge status="warning">{t("turfs.inactive")}</StatusBadge>
           )}
         </div>
-        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+        <div className="flex items-center gap-1 text-sm text-dt-dim">
           <MapPinIcon className="size-4" aria-hidden />
           {[turf.area, turf.city].filter(Boolean).join(", ") || t("turfs.locationTbd")}
         </div>
         {turf.description ? (
-          <p className="max-w-2xl text-sm text-foreground/90">
+          <p className="max-w-2xl text-sm text-dt-txt/90">
             {turf.description}
           </p>
         ) : null}
@@ -195,7 +195,7 @@ export default async function TurfDetailPage({ params, searchParams }: PageProps
         <div className="space-y-2">
           <h2 className="font-heading text-sm font-semibold">{t("turfs.facilities")}</h2>
           {facilityList.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-dt-dim">
               {t("turfs.noFacilities")}
             </p>
           ) : (
@@ -206,14 +206,14 @@ export default async function TurfDetailPage({ params, searchParams }: PageProps
             </ul>
           )}
           {facilities.grassType ? (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-dt-dim">
               {t("turfs.surface", { type: facilities.grassType })}
             </p>
           ) : null}
         </div>
         <div className="space-y-2">
           <h2 className="font-heading text-sm font-semibold">{t("turfs.cancellation")}</h2>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-dt-dim">
             {t(CANCELLATION_KEYS[turf.cancellationPolicy] ?? turf.cancellationPolicy)}
           </p>
         </div>

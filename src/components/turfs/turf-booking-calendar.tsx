@@ -163,7 +163,7 @@ export function TurfBookingCalendar({
     <div className="space-y-3">
       {startTimes.length > 0 ? (
         <div className="flex flex-wrap items-center gap-2">
-          <label htmlFor="slot-time-filter" className="text-xs font-medium text-muted-foreground">
+          <label htmlFor="slot-time-filter" className="text-xs font-medium text-dt-dim">
             {t("turfs.timeFilterLabel")}
           </label>
           <Select
@@ -192,7 +192,7 @@ export function TurfBookingCalendar({
         </div>
       ) : null}
 
-      <div className="rounded-xl bg-card p-3 ring-1 ring-foreground/10 sm:p-4">
+      <div className="rounded-xl bg-dt-card p-3 ring-1 ring-dt-txt/10 sm:p-4">
         <Calendar
           locale={locale === "bn" ? bnLocale : undefined}
           showOutsideDays={false}
@@ -216,31 +216,31 @@ export function TurfBookingCalendar({
             disabled: [...datesWhere("past"), ...datesWhere("outside")],
           }}
           modifiersClassNames={{
-            open: "bg-success/15 text-success ring-1 ring-success/40 hover:bg-success/25",
-            full: "bg-destructive/15 text-destructive hover:bg-destructive/25",
-            closed: "text-muted-foreground line-through hover:bg-muted/50",
+            open: "bg-dt-green/15 text-dt-green ring-1 ring-dt-green/40 hover:bg-dt-green/25",
+            full: "bg-dt-red/15 text-dt-red hover:bg-dt-red/25",
+            closed: "text-dt-dim line-through hover:bg-dt-card2/50",
           }}
           className="mx-auto w-full max-w-xl bg-transparent text-sm sm:text-base"
         />
       </div>
 
-      <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
+      <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-dt-dim">
         <span className="flex items-center gap-1.5">
-          <span className="size-2.5 rounded-full bg-success/70 ring-1 ring-success/40" aria-hidden />
+          <span className="size-2.5 rounded-full bg-dt-green/70 ring-1 ring-dt-green/40" aria-hidden />
           {t("turfs.legendAvailable")}
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="size-2.5 rounded-full bg-destructive/70 ring-1 ring-destructive/40" aria-hidden />
+          <span className="size-2.5 rounded-full bg-dt-red/70 ring-1 ring-dt-red/40" aria-hidden />
           {t("turfs.legendFull")}
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-3 border-t border-dashed border-muted-foreground" aria-hidden />
+          <span className="w-3 border-t border-dashed border-dt-dim" aria-hidden />
           {t("turfs.legendClosed")}
         </span>
       </div>
 
       {!hasBookable ? (
-        <p className="flex items-center gap-2 text-sm text-muted-foreground">
+        <p className="flex items-center gap-2 text-sm text-dt-dim">
           <CalendarCheckIcon className="size-4" aria-hidden />
           {t("turfs.monthUnavailable")}
         </p>
@@ -273,11 +273,11 @@ export function TurfBookingCalendar({
 
           <div className="min-h-0 flex-1 overflow-y-auto">
             {openSlots.length === 0 ? (
-              <p className="py-6 text-center text-sm text-muted-foreground">
+              <p className="py-6 text-center text-sm text-dt-dim">
                 {t("turfs.dayNoSlots")}
               </p>
             ) : (
-              <ul className="divide-y divide-border">
+              <ul className="divide-y divide-dt-line">
                 {openSlots.map((slot) => (
                   <SlotRow
                     key={slot.startTime}
@@ -339,33 +339,33 @@ function SlotRow({
     <li
       className={
         matchesFilter
-          ? "flex items-center justify-between gap-3 rounded-lg bg-primary/10 px-2 py-3 ring-1 ring-primary/40"
+          ? "flex items-center justify-between gap-3 rounded-lg bg-dt-green/10 px-2 py-3 ring-1 ring-dt-green/40"
           : "flex items-center justify-between gap-3 px-2 py-3"
       }
     >
       <div className="min-w-0 space-y-1">
-        <p className="text-sm font-medium text-foreground">
+        <p className="text-sm font-medium text-dt-txt">
           {formatSlotTimeRange(slot.startTime, slot.endTime, locale)}
-          <span className="ml-2 text-xs text-muted-foreground">
+          <span className="ml-2 text-xs text-dt-dim">
             {slot.durationMinutes}m
           </span>
         </p>
-        <p className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+        <p className="flex flex-wrap items-center gap-1.5 text-xs text-dt-dim">
           {slot.label ? (
-            <span className="rounded border border-border bg-muted px-1.5 py-0.5">
+            <span className="rounded border border-dt-line bg-dt-card2 px-1.5 py-0.5">
               {slot.label}
             </span>
           ) : null}
           {bookable ? null : available ? (
-            <span className="rounded bg-muted px-1.5 py-0.5">
+            <span className="rounded bg-dt-card2 px-1.5 py-0.5">
               {t("turfs.slotStartingSoon")}
             </span>
           ) : (
             <span
               className={
                 slot.status === "booked"
-                  ? "rounded bg-destructive/15 px-1.5 py-0.5 text-destructive"
-                  : "rounded bg-muted px-1.5 py-0.5"
+                  ? "rounded bg-dt-red/15 px-1.5 py-0.5 text-dt-red"
+                  : "rounded bg-dt-card2 px-1.5 py-0.5"
               }
             >
               {slot.status === "booked"
@@ -378,7 +378,7 @@ function SlotRow({
         </p>
       </div>
       <div className="flex shrink-0 items-center gap-3">
-        <span className="text-sm tabular-nums text-foreground">
+        <span className="text-sm tabular-nums text-dt-txt">
           {formatBdt(slot.price)}
         </span>
         {ownerControls ? (
@@ -395,7 +395,7 @@ function SlotRow({
             <Button
               size="sm"
               variant="outline"
-              className="border-success bg-success/10 text-success hover:bg-success/20 hover:text-success"
+              className="border-dt-green bg-dt-green/10 text-dt-green hover:bg-dt-green/20 hover:text-dt-green"
               loading={ownerControls.saving}
               onClick={ownerControls.onToggle}
             >

@@ -24,7 +24,7 @@ export function TurfPhotoStrip({
 
   return (
     <div className="space-y-2">
-      <div className="aspect-video w-full overflow-hidden rounded-xl bg-muted">
+      <div className="aspect-video w-full overflow-hidden rounded-xl bg-dt-card2">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={clientImageUrl(active.publicId, "hero")}
@@ -44,8 +44,8 @@ export function TurfPhotoStrip({
               className={
                 "size-16 shrink-0 overflow-hidden rounded-md border-2 transition-colors " +
                 (photo.id === active.id
-                  ? "border-primary"
-                  : "border-transparent hover:border-border")
+                  ? "border-dt-green"
+                  : "border-transparent hover:border-dt-line")
               }
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}

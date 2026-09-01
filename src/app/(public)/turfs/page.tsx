@@ -56,7 +56,7 @@ export default async function TurfsPage({ searchParams }: PageProps) {
         <h1 className="font-heading text-3xl font-semibold tracking-tight">
           {t("turfs.title")}
         </h1>
-        <p className="text-sm text-muted-foreground">{t("turfs.subtitle")}</p>
+        <p className="text-sm text-dt-dim">{t("turfs.subtitle")}</p>
       </header>
 
       <AreaSearch

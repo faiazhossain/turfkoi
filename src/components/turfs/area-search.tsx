@@ -139,7 +139,7 @@ export function AreaSearch({
     <form className="flex flex-wrap items-center gap-2" onSubmit={onSubmit}>
       <div className="relative min-w-48 flex-1" ref={rootRef}>
         <SearchIcon
-          className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+          className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-dt-dim"
           aria-hidden
         />
         <Input
@@ -170,7 +170,7 @@ export function AreaSearch({
             id={LISTBOX_ID}
             role="listbox"
             aria-label={t("turfs.areasAria")}
-            className="absolute z-20 mt-1 w-full overflow-hidden rounded-lg border border-border bg-card shadow-lg"
+            className="absolute z-20 mt-1 w-full overflow-hidden rounded-lg border border-dt-line bg-dt-card shadow-lg"
           >
             {suggestions.map((option, i) => (
               <li key={option.area}>
@@ -181,18 +181,18 @@ export function AreaSearch({
                   aria-selected={i === activeIndex}
                   onClick={() => selectIndex(i)}
                   className={cn(
-                    "flex w-full items-start gap-2 px-3 py-2 text-left text-sm hover:bg-muted",
-                    i === activeIndex && "bg-muted"
+                    "flex w-full items-start gap-2 px-3 py-2 text-left text-sm hover:bg-dt-card2",
+                    i === activeIndex && "bg-dt-card2"
                   )}
                 >
                   <MapPinIcon
-                    className="mt-0.5 size-3.5 shrink-0 text-muted-foreground"
+                    className="mt-0.5 size-3.5 shrink-0 text-dt-dim"
                     aria-hidden
                   />
                   <span>
                     <span className="font-medium">{option.area}</span>
                     {option.city && option.city !== option.area ? (
-                      <span className="block text-xs text-muted-foreground">
+                      <span className="block text-xs text-dt-dim">
                         {option.city}
                       </span>
                     ) : null}

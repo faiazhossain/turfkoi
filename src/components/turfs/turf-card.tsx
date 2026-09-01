@@ -31,7 +31,7 @@ export async function TurfCard({
   return (
     <Link href={`/turfs/${slug}`} className="group block">
       <Card size="sm" className="overflow-hidden">
-        <div className="aspect-video w-full overflow-hidden bg-muted">
+        <div className="aspect-video w-full overflow-hidden bg-dt-card2">
           {photo ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -41,7 +41,7 @@ export async function TurfCard({
               loading="lazy"
             />
           ) : (
-            <div className="flex size-full items-center justify-center text-xs text-muted-foreground">
+            <div className="flex size-full items-center justify-center text-xs text-dt-dim">
               {t("turfs.noPhoto")}
             </div>
           )}
@@ -55,7 +55,7 @@ export async function TurfCard({
               {turfFormatShort(format)}
             </StatusBadge>
           </div>
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+          <div className="flex items-center gap-1 text-xs text-dt-dim">
             <MapPinIcon className="size-3 shrink-0" aria-hidden />
             <span className="truncate">
               {[area, city].filter(Boolean).join(", ") || t("turfs.locationTbd")}
