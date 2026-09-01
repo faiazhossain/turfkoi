@@ -729,6 +729,11 @@ export const bn: Dictionary = {
       emptyGroup: "{group}-এ এখনো কেউ নেই।",
       seatsFull: "স্কোয়াড পূর্ণ ✓",
       seatsNeed: "আরও {need} জন দরকার",
+      saidLine: "আপনি {said} জন বলেছিলেন — এখন পর্যন্ত {joined} জন জয়েন করেছে।",
+      toJoinLine:
+        "এখনো আসতে বাকি {remaining} জন — friends লিস্ট থেকে invite করুন, তাদের তথ্য নিজে যোগ করুন, অথবা সিটগুলো এভাবেই রাখুন।",
+      communityLine:
+        "{open} জনের সিট DeshiTurf কমিউনিটির জন্য খোলা — player রা নিজে নিজে join করতে পারবে, অথবা আপনি invite পাঠাতে পারবেন।",
       onField: "মাঠে {count}/{total}",
       benchCount: "বেঞ্চে {count}/{total}",
       unnamed: "তুমি বলেছিলে {count} জন আসবে",

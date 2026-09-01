@@ -129,6 +129,27 @@ export function SquadSpots({
         </span>
       </div>
 
+      {/* Count-first narrative — the declared number in plain words: who
+          already joined, who is still to join (invite / add details / keep
+          the seats), and what is open to the DeshiTurf community. */}
+      {filled > 0 ? (
+        <div className="space-y-1.5 rounded-xl bg-dt-card2/50 p-2.5">
+          <p className="text-sm font-medium text-dt-txt">
+            {t("matches.squad.saidLine", { said: num(filled), joined: num(total) })}
+          </p>
+          {placeholders > 0 ? (
+            <p className="text-xs leading-snug text-dt-dim">
+              {t("matches.squad.toJoinLine", { remaining: num(placeholders) })}
+            </p>
+          ) : null}
+          {open > 0 ? (
+            <p className="text-xs leading-snug text-dt-dim">
+              {t("matches.squad.communityLine", { open: num(open) })}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+
       {/* Seat bar segments share the colors of the breakdown dots below. */}
       <div className="flex items-center gap-3">
         <div
