@@ -2,11 +2,15 @@ import { describe, it, expect } from "vitest"
 import { readFileSync } from "node:fs"
 
 /**
- * WCAG 2.1 contrast floors for the design tokens in globals.css. Tokens are
- * parsed from the stylesheet (not duplicated here) so a palette change that
- * quietly drops below a floor fails CI instead of shipping. Surfaces without
- * a token (alpha tints over card/background) are composited the way browsers
- * blend them, matching what renders on screen.
+ * WCAG 2.1 contrast floors, parsed from globals.css (not duplicated here) so
+ * a palette change that quietly drops below a floor fails CI instead of
+ * shipping. Two layers are guarded:
+ *
+ *  - the raw dt-* page palette (docs/TAILWIND_MIGRATION.md) — every surface,
+ *    text, accent, control, and delineation color the app renders with;
+ *  - the slim semantic status layer (success/info/warning/destructive) that
+ *    survived the token removal, composited over dt surfaces the way
+ *    StatusBadge and danger-zone tints actually render.
  */
 
 function luminance(r: number, g: number, b: number) {
@@ -42,25 +46,21 @@ function tint(color: string, alpha: number, base: string) {
   return `#${part(mix(fr, br))}${part(mix(fg, bg))}${part(mix(fb, bb))}`
 }
 
-function designTokens() {
+function cssVars() {
   const css = readFileSync(new URL("../globals.css", import.meta.url), "utf8")
   const rootBlock = css.match(/:root,\s*\.dark\s*\{([\s\S]*?)\}/)?.[1] ?? ""
-  const tokens: Record<string, string> = {}
+  const vars: Record<string, string> = {}
   for (const [, name, value] of rootBlock.matchAll(
     /--([a-z-]+):\s*(#[0-9A-Fa-f]{6})/g
   )) {
-    tokens[name] = value
+    vars[name] = value
   }
-  return tokens
+  return vars
 }
 
-const t = designTokens()
+const status = cssVars()
 
-/**
- * Raw page palette (docs/TAILWIND_MIGRATION.md): flat dt-* colors registered
- * in the globals.css @theme block. Parsed from the stylesheet like the token
- * layer so mockup-driven palette changes stay floor-guarded.
- */
+/** Raw page palette (docs/TAILWIND_MIGRATION.md), from the @theme block. */
 function dtPalette() {
   const css = readFileSync(new URL("../globals.css", import.meta.url), "utf8")
   const palette: Record<string, string> = {}
@@ -100,93 +100,6 @@ describe("dt palette completeness", () => {
 /** dt surfaces a text-bearing component can rest on. */
 const DT_SURFACES = ["bg", "bg2", "card", "card2"] as const
 
-/** Body-text floors: anything a user reads needs 4.5:1. */
-describe("token text contrast (WCAG AA, 4.5:1)", () => {
-  it("keeps muted-foreground readable on every surface it appears on", () => {
-    for (const surface of ["background", "card", "muted", "accent"]) {
-      expect(contrast(t["muted-foreground"], t[surface])).toBeGreaterThanOrEqual(4.5)
-    }
-  })
-
-  it("keeps muted text readable inside the red danger-zone card", () => {
-    const dangerCard = tint(t["destructive"], 0.1, t["background"])
-    expect(contrast(t["muted-foreground"], dangerCard)).toBeGreaterThanOrEqual(4.5)
-  })
-
-  it("keeps each status color readable on its own badge tint over a card", () => {
-    for (const color of [
-      "success",
-      "info",
-      "warning",
-      "destructive",
-      "primary",
-    ]) {
-      const badgeBg = tint(t[color], 0.15, t["card"])
-      expect(contrast(t[color], badgeBg)).toBeGreaterThanOrEqual(4.5)
-    }
-  })
-
-  it("keeps destructive copy readable on the danger-zone card and badge tints", () => {
-    const dangerCard = tint(t["destructive"], 0.1, t["background"])
-    expect(contrast(t["destructive"], dangerCard)).toBeGreaterThanOrEqual(4.5)
-    // Badge dark variant rests on a /15 tint (bg-destructive/15 over card).
-    const badgeBg = tint(t["destructive"], 0.15, t["card"])
-    expect(contrast(t["destructive"], badgeBg)).toBeGreaterThanOrEqual(4.5)
-  })
-
-  it("keeps button and badge foregrounds readable on their solid fills", () => {
-    const pairs = [
-      ["primary-foreground", "primary"],
-      ["secondary-foreground", "secondary"],
-      ["destructive-foreground", "destructive"],
-      ["success-foreground", "success"],
-      ["info-foreground", "info"],
-      ["warning-foreground", "warning"],
-    ] as const
-    for (const [fg, bg] of pairs) {
-      expect(contrast(t[fg], t[bg])).toBeGreaterThanOrEqual(4.5)
-    }
-  })
-})
-
-/**
- * Control-boundary floors (WCAG 1.4.11, 3:1). Transparent inputs carry no
- * fill, so their border is the only thing marking them as fields — the
- * original "I didn't realize I had to type there" bug this suite guards.
- */
-describe("token control contrast (WCAG 1.4.11, 3:1)", () => {
-  it("keeps input borders visible on every surface inputs rest on", () => {
-    const dangerCard = tint(t["destructive"], 0.1, t["background"])
-    for (const surface of [t["background"], t["card"], t["muted"], dangerCard]) {
-      expect(contrast(t["input"], surface)).toBeGreaterThanOrEqual(3)
-    }
-  })
-
-  it("keeps the focus ring visible against the page background", () => {
-    expect(contrast(t["ring"], t["background"])).toBeGreaterThanOrEqual(3)
-  })
-})
-
-/**
- * Section delineation floor. Cards sit a hair above the page background, so
- * the border carries the separation; 1.5:1 is the project's soft target for
- * a visible-but-quiet outline (below the 1.27:1 the palette shipped with,
- * sections blurred into each other).
- */
-describe("token delineation floor (1.5:1)", () => {
-  it("keeps card borders distinguishable from their surroundings", () => {
-    expect(contrast(t["border"], t["card"])).toBeGreaterThanOrEqual(1.5)
-    expect(contrast(t["border"], t["background"])).toBeGreaterThanOrEqual(1.5)
-    expect(contrast(t["sidebar-border"], t["sidebar"])).toBeGreaterThanOrEqual(1.5)
-  })
-})
-
-/**
- * Floors for the raw dt-* palette (docs/TAILWIND_MIGRATION.md). The mockup
- * hexes set the look; these floors are why dt-line/dt-input sit a step above
- * friends.html's raw values (its #24324e line is 1.29:1 vs dt-card2).
- * Removed together with the token assertions in the final migration phase.
- */
 describe("dt palette text contrast (WCAG AA, 4.5:1)", () => {
   it("keeps dt-txt and dt-dim readable on every dt surface", () => {
     for (const surface of DT_SURFACES) {
@@ -222,6 +135,40 @@ describe("dt palette delineation floor (1.5:1)", () => {
   it("keeps dt-line borders distinguishable from their surroundings", () => {
     for (const surface of DT_SURFACES) {
       expect(contrast(dt["line"], dt[surface])).toBeGreaterThanOrEqual(1.5)
+    }
+  })
+})
+
+/**
+ * The surviving semantic status layer (success/info/warning/destructive),
+ * composited over dt surfaces the way StatusBadge tints and danger-zone
+ * cards actually render.
+ */
+describe("status token contrast", () => {
+  it("keeps each status color readable on its own badge tint over dt-card", () => {
+    for (const color of ["success", "info", "warning", "destructive"] as const) {
+      const badgeBg = tint(status[color], 0.15, dt["card"])
+      expect(contrast(status[color], badgeBg)).toBeGreaterThanOrEqual(4.5)
+    }
+  })
+
+  it("keeps destructive copy readable on the danger-zone card and badge tints", () => {
+    const dangerCard = tint(status["destructive"], 0.1, dt["bg"])
+    expect(contrast(status["destructive"], dangerCard)).toBeGreaterThanOrEqual(4.5)
+    // Badge dark variant rests on a /15 tint over dt-card.
+    const badgeBg = tint(status["destructive"], 0.15, dt["card"])
+    expect(contrast(status["destructive"], badgeBg)).toBeGreaterThanOrEqual(4.5)
+  })
+
+  it("keeps status foregrounds readable on their solid fills", () => {
+    const pairs = [
+      ["destructive-foreground", "destructive"],
+      ["success-foreground", "success"],
+      ["info-foreground", "info"],
+      ["warning-foreground", "warning"],
+    ] as const
+    for (const [fg, bg] of pairs) {
+      expect(contrast(status[fg], status[bg])).toBeGreaterThanOrEqual(4.5)
     }
   })
 })

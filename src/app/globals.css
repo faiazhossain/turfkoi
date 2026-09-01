@@ -11,21 +11,12 @@
  */
 
 @theme inline {
-  /* shadcn color tokens */
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
+  /*
+   * Semantic status tokens (the only surviving token colors after the dt-*
+   * migration, docs/TAILWIND_MIGRATION.md): success, info, warning,
+   * destructive and their readable foregrounds. Everything structural
+   * (surface/text/border/primary) is expressed with the dt-* palette below.
+   */
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-success: var(--success);
@@ -34,22 +25,6 @@
   --color-info-foreground: var(--info-foreground);
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
 
   /* Fonts: Geist (latin) + Bengali fallback (Hind Siliguri) via next/font */
   --font-sans: var(--font-geist-sans), var(--font-bengali), ui-sans-serif, system-ui, sans-serif;
@@ -106,25 +81,14 @@
 }
 
 /*
- * MVP is dark-only (audit I2). :root mirrors .dark so the app never renders
- * unstyled if the .dark class is absent. P1 will introduce a true light theme.
+ * Semantic status layer + shared radius. Dark-only (audit I2); the old
+ * structural token colors (background/card/border/primary/...) were removed
+ * in phase 12 of the dt-* migration — surfaces come from the @theme dt
+ * palette above. Status contrast floors are still guarded by
+ * src/app/__tests__/contrast.test.ts.
  */
 :root,
 .dark {
-  --background: #080B10;
-  --foreground: #FFFFFF;
-  --card: #11161D;
-  --card-foreground: #FFFFFF;
-  --popover: #11161D;
-  --popover-foreground: #FFFFFF;
-  --primary: #8CE000;          /* deshi green — bright end of the brand-logo gradient */
-  --primary-foreground: #04140B;
-  --secondary: #7453FA;        /* purple accent */
-  --secondary-foreground: #FFFFFF;
-  --muted: #161D27;
-  --muted-foreground: #98A4B8;
-  --accent: #1A2230;
-  --accent-foreground: #FFFFFF;
   --destructive: #FF4D4F;
   --destructive-foreground: #2A0606;
   --success: #22C55E;
@@ -133,34 +97,12 @@
   --info-foreground: #061A2E;
   --warning: #FFC53D;
   --warning-foreground: #2A1F00;
-  /*
-   * Contrast floors (guarded by src/app/__tests__/contrast.test.ts):
-   *   border  >= 1.5:1 vs card/background (soft delineation target)
-   *   input   >= 3:1   vs card/background/muted (WCAG 1.4.11 — the border is
-   *                    the only edge transparent inputs have)
-   */
-  --border: #2D3C4F;
-  --input: #5A6C86;
-  --ring: #8CE000;
-  --chart-1: #8CE000;
-  --chart-2: #7453FA;
-  --chart-3: #FFC53D;
-  --chart-4: #60A5FA;
-  --chart-5: #FF4D4F;
   --radius: 0.75rem;
-  --sidebar: #0B1016;
-  --sidebar-foreground: #FFFFFF;
-  --sidebar-primary: #8CE000;
-  --sidebar-primary-foreground: #04140B;
-  --sidebar-accent: #1A2230;
-  --sidebar-accent-foreground: #FFFFFF;
-  --sidebar-border: #2D3C4F;
-  --sidebar-ring: #8CE000;
 }
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-dt-line outline-dt-green/50;
   }
   body {
     @apply bg-dt-bg text-dt-txt;
@@ -212,7 +154,7 @@ html[lang="bn"] body {
   height: 100%;
 }
 .hero-animation svg#soccer2 {
-  color: var(--secondary);
+  color: #7453FA; /* brand purple accent (former --secondary token) */
 }
 .hero-animation svg#basket {
   color: var(--warning);
@@ -311,24 +253,24 @@ html[lang="bn"] body {
  * compound to keep winning the cascade.
  */
 .maplibregl-popup .maplibregl-popup-content {
-  background: var(--card);
-  color: var(--card-foreground);
-  border: 1px solid var(--border);
+  background: #151f33; /* dt-card */
+  color: #e8eef7; /* dt-txt */
+  border: 1px solid #354770; /* dt-line */
   border-radius: 0.5rem;
   padding: 0.5rem 0.75rem;
   box-shadow: 0 8px 24px rgb(0 0 0 / 0.45);
 }
 .maplibregl-popup.maplibregl-popup-anchor-bottom .maplibregl-popup-tip {
-  border-top-color: var(--card);
+  border-top-color: #151f33;
 }
 .maplibregl-popup.maplibregl-popup-anchor-top .maplibregl-popup-tip {
-  border-bottom-color: var(--card);
+  border-bottom-color: #151f33;
 }
 .maplibregl-popup.maplibregl-popup-anchor-left .maplibregl-popup-tip {
-  border-right-color: var(--card);
+  border-right-color: #151f33;
 }
 .maplibregl-popup.maplibregl-popup-anchor-right .maplibregl-popup-tip {
-  border-left-color: var(--card);
+  border-left-color: #151f33;
 }
 
 /*
@@ -354,26 +296,13 @@ html[lang="bn"] body {
 
 /*
  * Matchmaking HQ (.match-hq) — neon visual language from matchmaking.html,
- * scoped to the match room page only. Overriding the RAW variables (not the
- * @theme inline mapped names) makes every token-based utility inside the
- * wrapper (bg-card, border-border, text-muted-foreground, Button,
- * StatusBadge, ...) adopt the mockup palette via normal CSS inheritance.
- * The --color-dt-* overrides do the same for the dt-* utilities (they
- * compile to var(--color-dt-*) references), so primitives and restyled
- * pages inside the room recolor to the neon palette — gradients included.
+ * scoped to the match room page only. The --color-dt-* overrides recolor
+ * every dt-* utility inside the wrapper (they compile to var(--color-dt-*)
+ * references), so primitives, room components, and gradients all shift to
+ * the neon palette; the status-token overrides keep semantic status classes
+ * (success/info/warning/destructive) on the room's neon values.
  */
 .match-hq {
-  --background: #080d18;
-  --card: #111a2e;
-  --card-foreground: #eef3ff;
-  --popover: #111a2e;
-  --popover-foreground: #eef3ff;
-  --primary: #b4ff39;
-  --primary-foreground: #0a1206;
-  --muted: #0d1424;
-  --muted-foreground: #93a0bd;
-  --accent: #182238;
-  --accent-foreground: #eef3ff;
   --success: #00e07a;
   --success-foreground: #03180d;
   --info: #00e5ff;
@@ -382,9 +311,6 @@ html[lang="bn"] body {
   --warning-foreground: #201200;
   --destructive: #ff3b3b;
   --destructive-foreground: #1c0303;
-  --border: rgb(255 255 255 / 0.07);
-  --input: rgb(255 255 255 / 0.14);
-  --ring: #b4ff39;
   --radius: 1.25rem;
 
   /* dt-* palette, room edition (matchmaking.html values). */

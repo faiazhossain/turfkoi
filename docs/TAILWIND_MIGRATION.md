@@ -1,6 +1,7 @@
 # Tailwind Migration Plan — from global theme tokens to direct Tailwind control
 
-**Status:** in progress — Phase 0 done, Phase 1 done
+**Status:** complete — all phases shipped (phases 1-12, with the match-room
+and status-token resolutions described in their phase sections)
 **Owner decision (2026-09-01):** style pages with explicit Tailwind classes instead of the
 CSS-variable token layer (`--card`, `--primary`, … mapped to `bg-card`/`text-primary`), so
 page-level styling is hand-controlled. Proven page-by-page on `/friends` (commits `106692a`,
@@ -109,15 +110,11 @@ Small surface, high traffic — good first end-to-end validation of the palette.
 `/players/[code]` (+ `profile-actions.tsx`, `invite-to-match-dialog.tsx`, `qr-share.tsx`),
 `/notifications` + `notification-bell.tsx` popover.
 
-### Phase 6 — Matchmaking ✅ (done, with a carve-out)
-`/matches`, `/matches/new`, and `create-match-wizard.tsx` are on `dt-*`. The match room
-(`matches/[id]`) and the room-only components keep **token classes on purpose**: the room
-keeps its own matchmaking.html neon identity via the `.match-hq` variable override
-(`globals.css`), which recolors token utilities — `dt-*` classes would ignore that override
-and leak friends-green into the neon room. Shared room/list components
-(`claim-opponent-button.tsx`, `matchmaking-help.tsx`) stay on tokens for the same reason.
-Phase 12's grep gate must whitelist the room scope or migrate the room to explicit
-match-* hex classes; decide there.
+### Phase 6 — Matchmaking ✅ (done)
+`/matches`, `/matches/new`, and `create-match-wizard.tsx` on `dt-*`. The match room kept
+token classes only until Phase 10 gave `.match-hq` its `--color-dt-*` override set; since
+Phase 12 the room is fully `dt-*` and the neon palette lives entirely in the scoped
+variable overrides (gradients included).
 `/matches`, `/matches/new`, `/m/[token]`, and the match room `src/components/matches/*`
 (`squad-spots`, `squad-groups`, `squad-invite-panel`, `join-battle`, `team-challenge`,
 `match-invite-link`, `button-modal`, `player-search`, `match-actions`). Follow
@@ -147,7 +144,18 @@ primitives currently *are* the fallback theme.
 reports, premium) and `/admin/**`. Highest component count, lowest design risk (internal
 surfaces). Consider 2–3 commits by module.
 
-### Phase 12 — Token removal + cleanup
+### Phase 12 — Token removal + cleanup ✅ (done)
+- The structural token layer is deleted from `globals.css` (`:root` colors, `@theme`
+  mappings for background/card/popover/primary/secondary/muted/accent/border/input/ring/
+  chart/sidebar). What deliberately survives:
+  - the **status tokens** (`success`/`info`/`warning`/`destructive` + foregrounds) — a
+    slim semantic layer used by StatusBadge tones, Button destructive, form errors, and
+    banners; floors still asserted in `contrast.test.ts`;
+  - `--radius` (Sonner + the radius scale) and the font/radius/shadow/type-scale tokens.
+- `.match-hq` keeps only the status-token overrides, the radius bump, and its full
+  `--color-dt-*` neon set; the base rule is `border-dt-line outline-dt-green/50`;
+  `.maplibregl-popup` and the hero animation use literal hexes.
+- Grep gate passes: the mapped token classes return 0 hits in `src/`.
 - Delete the semantic token layer from `globals.css` (`:root, .dark` block, `@theme`
   mappings) except what Tailwind itself needs; keep font/radius/shadow tokens if desired.
 - Remove retired token assertions from `contrast.test.ts` (palette tests from Phase 1 stay).
@@ -181,3 +189,5 @@ surfaces). Consider 2–3 commits by module.
 | destructive | `text-dt-red` / `bg-dt-red/10 border-dt-red/30` |
 | online / offline dot | `bg-dt-green` / `bg-dt-off` |
 | input border | `border-dt-input` (plain dividers stay `border-dt-line`) |
+| focus ring / outline | `ring-dt-green/50`, `focus-visible:border-dt-green`, `outline-dt-green/50` |
+| status colors | keep the semantic tokens (`text-destructive`, `bg-success/15`, ...) — the one intentional remainder of the token layer |

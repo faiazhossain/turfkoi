@@ -148,7 +148,7 @@ function PresetGrid({
                 aria-hidden
                 className={cn(
                   "block aspect-square overflow-hidden rounded-xl border transition-all",
-                  "peer-focus-visible:ring-[3px] peer-focus-visible:ring-ring/50 peer-focus-visible:outline-1 peer-focus-visible:outline-ring",
+                  "peer-focus-visible:ring-[3px] peer-focus-visible:ring-dt-green/50 peer-focus-visible:outline-1 peer-focus-visible:outline-dt-green",
                   selected
                     ? "border-dt-green shadow-[0_0_0_4px] shadow-dt-green/20"
                     : "border-dt-line hover:border-dt-green/40"
