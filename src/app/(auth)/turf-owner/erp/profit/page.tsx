@@ -14,12 +14,12 @@ async function ViewToggle({ month, view }: { month: string; view: string }) {
   const t = await getT()
   const base = `/turf-owner/erp/profit?month=${month}&view=`
   return (
-    <div className="flex overflow-hidden rounded-lg border border-border text-sm">
+    <div className="flex overflow-hidden rounded-lg border border-dt-line text-sm">
       <Link
         href={`${base}pnl`}
         className={cn(
           "px-3 py-1.5 transition-colors",
-          view === "pnl" ? "bg-muted text-foreground" : "text-muted-foreground hover:bg-muted/50"
+          view === "pnl" ? "bg-dt-card2 text-dt-txt" : "text-dt-dim hover:bg-dt-card2/50"
         )}
       >
         {t("erp.profit.title")}
@@ -29,8 +29,8 @@ async function ViewToggle({ month, view }: { month: string; view: string }) {
         className={cn(
           "px-3 py-1.5 transition-colors",
           view === "cashflow"
-            ? "bg-muted text-foreground"
-            : "text-muted-foreground hover:bg-muted/50"
+            ? "bg-dt-card2 text-dt-txt"
+            : "text-dt-dim hover:bg-dt-card2/50"
         )}
       >
         {t("erp.cashflow.title")}
@@ -91,9 +91,9 @@ export default async function ErpProfitPage({
             value={formatBdt(Math.round(totalIn - totalOut))}
           />
         </section>
-        <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
+        <ul className="divide-y divide-dt-line overflow-hidden rounded-xl border border-dt-line bg-dt-card">
           {flow.length === 0 ? (
-            <li className="px-4 py-3 text-sm text-muted-foreground">
+            <li className="px-4 py-3 text-sm text-dt-dim">
               {t("erp.analytics.noData")}
             </li>
           ) : (
@@ -101,7 +101,7 @@ export default async function ErpProfitPage({
               <li key={d.date} className="flex items-center justify-between px-4 py-2.5 text-sm">
                 <span>{d.date}</span>
                 <span className="flex gap-4 tabular-nums">
-                  <span className="text-primary">+{formatBdt(Math.round(d.moneyIn))}</span>
+                  <span className="text-dt-green">+{formatBdt(Math.round(d.moneyIn))}</span>
                   <span className="text-destructive">−{formatBdt(Math.round(d.moneyOut))}</span>
                   <span className="w-24 text-right font-semibold">{formatBdt(Math.round(d.net))}</span>
                 </span>
@@ -138,18 +138,18 @@ export default async function ErpProfitPage({
         />
       ) : (
         <>
-          <section className="rounded-xl border border-border bg-card p-6">
-            <p className="text-sm uppercase tracking-wide text-muted-foreground">
+          <section className="rounded-xl border border-dt-line bg-dt-card p-6">
+            <p className="text-sm uppercase tracking-wide text-dt-dim">
               {t("erp.profit.monthProfit")}
             </p>
             <p
               className={`mt-1 font-heading text-4xl font-semibold tabular-nums ${
-                profit >= 0 ? "text-primary" : "text-destructive"
+                profit >= 0 ? "text-dt-green" : "text-destructive"
               }`}
             >
               {fmt(profit)}
             </p>
-            <p className="mt-2 text-xs text-muted-foreground">
+            <p className="mt-2 text-xs text-dt-dim">
               {t("erp.profit.ownerShareHint")}
             </p>
           </section>
@@ -158,12 +158,12 @@ export default async function ErpProfitPage({
             <h2 className="mb-2 font-heading text-base font-semibold">
               {t("erp.profit.breakdown")}
             </h2>
-            <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
+            <ul className="divide-y divide-dt-line overflow-hidden rounded-xl border border-dt-line bg-dt-card">
               {lines.map((l) => (
                 <li key={l.key}>
                   <Link
                     href={l.href}
-                    className="flex items-center justify-between px-4 py-3 text-sm transition-colors hover:bg-muted/40"
+                    className="flex items-center justify-between px-4 py-3 text-sm transition-colors hover:bg-dt-card2/40"
                   >
                     <span>{t(`erp.profit.${l.key}`)}</span>
                     <span
@@ -175,9 +175,9 @@ export default async function ErpProfitPage({
                   </Link>
                 </li>
               ))}
-              <li className="flex items-center justify-between bg-muted/40 px-4 py-3 font-semibold">
+              <li className="flex items-center justify-between bg-dt-card2/40 px-4 py-3 font-semibold">
                 <span>{t("erp.profit.lineNet")}</span>
-                <span className={`tabular-nums ${profit >= 0 ? "text-primary" : "text-destructive"}`}>
+                <span className={`tabular-nums ${profit >= 0 ? "text-dt-green" : "text-destructive"}`}>
                   {fmt(profit)}
                 </span>
               </li>
@@ -193,7 +193,7 @@ export default async function ErpProfitPage({
                 {expenses.byCategory.map((c) => (
                   <li
                     key={c.categoryId}
-                    className="flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3 text-sm"
+                    className="flex items-center justify-between rounded-lg border border-dt-line bg-dt-card px-4 py-3 text-sm"
                   >
                     <span>{c.slug ? t(`erp.categories.${c.slug}`) : c.name}</span>
                     <span className="font-semibold tabular-nums">{fmt(c.total)}</span>
@@ -205,17 +205,17 @@ export default async function ErpProfitPage({
         </>
       )}
 
-      <section className="rounded-xl border border-dashed border-border bg-card/50 p-5">
+      <section className="rounded-xl border border-dashed border-dt-line bg-dt-card/50 p-5">
         <div className="flex items-start gap-3">
-          <LockIcon className="mt-0.5 size-5 text-muted-foreground" aria-hidden />
+          <LockIcon className="mt-0.5 size-5 text-dt-dim" aria-hidden />
           <div>
             <p className="font-heading text-sm font-semibold">
               {t("erp.profit.premiumRangeTitle")}
-              <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-[10px] uppercase text-muted-foreground">
+              <span className="ml-2 rounded bg-dt-card2 px-1.5 py-0.5 text-[10px] uppercase text-dt-dim">
                 {t("erp.premium.badge")}
               </span>
             </p>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="mt-1 text-sm text-dt-dim">
               {t("erp.profit.premiumRangeDesc")}
             </p>
           </div>

@@ -75,7 +75,7 @@ export function AddExpenseSheet({
         >
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-muted-foreground">
+              <Label className="text-xs font-medium text-dt-dim">
                 {t("erp.expenses.form.amount")}
               </Label>
               <Input
@@ -92,7 +92,7 @@ export function AddExpenseSheet({
               ) : null}
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-muted-foreground">
+              <Label className="text-xs font-medium text-dt-dim">
                 {t("erp.expenses.form.date")}
               </Label>
               <Input type="date" {...form.register("date")} />
@@ -100,7 +100,7 @@ export function AddExpenseSheet({
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-xs font-medium text-muted-foreground">
+            <Label className="text-xs font-medium text-dt-dim">
               {t("erp.expenses.form.category")}
             </Label>
             <Select
@@ -123,21 +123,21 @@ export function AddExpenseSheet({
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-xs font-medium text-muted-foreground">
+            <Label className="text-xs font-medium text-dt-dim">
               {t("erp.expenses.form.vendor")}
             </Label>
             <Input placeholder={t("erp.expenses.form.vendorPh")} {...form.register("vendor")} />
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-xs font-medium text-muted-foreground">
+            <Label className="text-xs font-medium text-dt-dim">
               {t("erp.expenses.form.note")}
             </Label>
             <Input {...form.register("note")} />
           </div>
 
           {canRepeat ? (
-            <label className="flex items-start gap-2.5 rounded-lg border border-border p-3">
+            <label className="flex items-start gap-2.5 rounded-lg border border-dt-line p-3">
               <Checkbox
                 checked={form.watch("repeatMonthly")}
                 onCheckedChange={(v) => form.setValue("repeatMonthly", v === true)}
@@ -147,7 +147,7 @@ export function AddExpenseSheet({
                 <span className="block text-sm font-medium">
                   {t("erp.expenses.form.repeatMonthly")}
                 </span>
-                <span className="block text-xs text-muted-foreground">
+                <span className="block text-xs text-dt-dim">
                   {t("erp.expenses.form.repeatMonthlyHint")}
                 </span>
               </span>

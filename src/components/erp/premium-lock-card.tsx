@@ -6,7 +6,7 @@ import { getT } from "@/i18n/server"
 export async function PremiumBadge() {
   const t = await getT()
   return (
-    <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+    <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-dt-green/10 px-2 py-0.5 text-[11px] font-medium text-dt-green">
       <SparklesIcon className="size-3" aria-hidden />
       {t("erp.premium.badge")}
     </span>
@@ -26,17 +26,17 @@ export async function PremiumLockCard({
 }) {
   const t = await getT()
   return (
-    <section className="rounded-xl border border-dashed border-border bg-card/50 p-5">
+    <section className="rounded-xl border border-dashed border-dt-line bg-dt-card/50 p-5">
       <div className="flex items-start gap-3">
-        <LockIcon className="mt-0.5 size-5 text-muted-foreground" aria-hidden />
+        <LockIcon className="mt-0.5 size-5 text-dt-dim" aria-hidden />
         <div>
           <p className="font-heading text-sm font-semibold">
             {t(titleKey)}
-            <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-[10px] uppercase text-muted-foreground">
+            <span className="ml-2 rounded bg-dt-card2 px-1.5 py-0.5 text-[10px] uppercase text-dt-dim">
               {t("erp.premium.badge")}
             </span>
           </p>
-          <p className="mt-1 text-sm text-muted-foreground">{t(descKey)}</p>
+          <p className="mt-1 text-sm text-dt-dim">{t(descKey)}</p>
         </div>
       </div>
     </section>

@@ -79,7 +79,7 @@ export default async function ErpAnalyticsPage({
 
   function Bar({ value, max, tone }: { value: number; max: number; tone: string }) {
     return (
-      <span className="h-2 w-full overflow-hidden rounded bg-muted">
+      <span className="h-2 w-full overflow-hidden rounded bg-dt-card2">
         <span
           className={`block h-full rounded ${tone}`}
           style={{ width: `${Math.round((value / max) * 100)}%` }}
@@ -102,8 +102,8 @@ export default async function ErpAnalyticsPage({
         <ul className="space-y-2">
           {revTrend.map((r) => (
             <li key={r.month} className="flex items-center gap-3 text-sm">
-              <span className="w-16 shrink-0 text-muted-foreground">{r.month}</span>
-              <Bar value={r.revenue} max={maxRev} tone="bg-primary" />
+              <span className="w-16 shrink-0 text-dt-dim">{r.month}</span>
+              <Bar value={r.revenue} max={maxRev} tone="bg-dt-green" />
               <span className="w-24 shrink-0 text-right tabular-nums">
                 {formatBdt(Math.round(r.revenue))}
               </span>
@@ -119,7 +119,7 @@ export default async function ErpAnalyticsPage({
         <ul className="space-y-2">
           {expTrend.map((r) => (
             <li key={r.month} className="flex items-center gap-3 text-sm">
-              <span className="w-16 shrink-0 text-muted-foreground">{r.month}</span>
+              <span className="w-16 shrink-0 text-dt-dim">{r.month}</span>
               <Bar value={r.total} max={maxExp} tone="bg-destructive/70" />
               <span className="w-24 shrink-0 text-right tabular-nums">
                 {formatBdt(Math.round(r.total))}
@@ -129,17 +129,17 @@ export default async function ErpAnalyticsPage({
         </ul>
       </section>
 
-      <section className="rounded-xl border border-dashed border-border bg-card/50 p-5">
+      <section className="rounded-xl border border-dashed border-dt-line bg-dt-card/50 p-5">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="font-heading text-base font-semibold">
             {t("erp.analytics.forecastTitle")}
           </h2>
-          <span className="rounded bg-muted px-2 py-0.5 text-[10px] uppercase text-muted-foreground">
+          <span className="rounded bg-dt-card2 px-2 py-0.5 text-[10px] uppercase text-dt-dim">
             {t("erp.analytics.forecastBadge")}
           </span>
         </div>
         {!forecast.sufficient ? (
-          <p className="mt-2 text-sm text-muted-foreground">
+          <p className="mt-2 text-sm text-dt-dim">
             {t("erp.analytics.forecastNoData")}
           </p>
         ) : (
@@ -151,43 +151,43 @@ export default async function ErpAnalyticsPage({
                 ["erp.analytics.forecastProfit", forecast.profit],
               ] as const
             ).map(([key, f]) => (
-              <div key={key} className="rounded-lg border border-border bg-card px-3 py-3">
-                <p className="text-xs text-muted-foreground">{t(key)}</p>
+              <div key={key} className="rounded-lg border border-dt-line bg-dt-card px-3 py-3">
+                <p className="text-xs text-dt-dim">{t(key)}</p>
                 <p className="mt-1 font-heading text-lg font-semibold tabular-nums">
                   {f ? formatBdt(f.value) : "—"}
                 </p>
-                <p className="text-[10px] text-muted-foreground">
+                <p className="text-[10px] text-dt-dim">
                   {f ? f.nextMonth : ""}
                 </p>
               </div>
             ))}
           </div>
         )}
-        <p className="mt-2 text-xs text-muted-foreground">{t("erp.analytics.forecastHint")}</p>
+        <p className="mt-2 text-xs text-dt-dim">{t("erp.analytics.forecastHint")}</p>
       </section>
 
       <section className="grid gap-4 sm:grid-cols-2">
-        <div className="rounded-xl border border-border bg-card p-4">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">
+        <div className="rounded-xl border border-dt-line bg-dt-card p-4">
+          <p className="text-xs uppercase tracking-wide text-dt-dim">
             {t("erp.analytics.bestDay")}
           </p>
           <p className="mt-1 font-heading text-lg font-semibold">
             {bestDay ? t(`erp.weekdays.${bestDay.dow}`) : "—"}
           </p>
           {bestDay ? (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-dt-dim">
               {formatBdt(Math.round(bestDay.revenue))}
             </p>
           ) : null}
         </div>
-        <div className="rounded-xl border border-border bg-card p-4">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">
+        <div className="rounded-xl border border-dt-line bg-dt-card p-4">
+          <p className="text-xs uppercase tracking-wide text-dt-dim">
             {t("erp.analytics.staffCost")}
           </p>
           <p className="mt-1 font-heading text-lg font-semibold tabular-nums">
             {formatBdt(Math.round(staffCost))}
           </p>
-          <p className="text-sm text-muted-foreground">{t("erp.analytics.staffCostHint")}</p>
+          <p className="text-sm text-dt-dim">{t("erp.analytics.staffCostHint")}</p>
         </div>
       </section>
 
@@ -204,8 +204,8 @@ export default async function ErpAnalyticsPage({
         ) : (
           <ul className="grid gap-2 sm:grid-cols-3">
             {topHours.map((h, i) => (
-              <li key={h.hour} className="rounded-lg border border-border bg-card px-4 py-3">
-                <p className="text-xs text-muted-foreground">#{i + 1}</p>
+              <li key={h.hour} className="rounded-lg border border-dt-line bg-dt-card px-4 py-3">
+                <p className="text-xs text-dt-dim">#{i + 1}</p>
                 <p className="font-heading text-lg font-semibold tabular-nums">
                   {String(h.hour).padStart(2, "0")}:00
                 </p>
@@ -220,21 +220,21 @@ export default async function ErpAnalyticsPage({
         <h2 className="mb-2 font-heading text-base font-semibold">
           {t("erp.analytics.turfPerformance")}
         </h2>
-        <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
+        <ul className="divide-y divide-dt-line overflow-hidden rounded-xl border border-dt-line bg-dt-card">
           {turfs.map((tf) => (
             <li key={tf.turfId} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm">
               <span className="font-medium">{tf.turfName}</span>
               <span className="flex gap-4 tabular-nums">
                 <span>
-                  <span className="text-muted-foreground">{t("erp.profit.lineBooking")}: </span>
+                  <span className="text-dt-dim">{t("erp.profit.lineBooking")}: </span>
                   {formatBdt(Math.round(tf.revenue))}
                 </span>
                 <span>
-                  <span className="text-muted-foreground">{t("erp.profit.lineExpenses")}: </span>
+                  <span className="text-dt-dim">{t("erp.profit.lineExpenses")}: </span>
                   {formatBdt(Math.round(tf.expenses))}
                 </span>
-                <span className={tf.profit >= 0 ? "text-primary" : "text-destructive"}>
-                  <span className="text-muted-foreground">{t("erp.profit.lineNet")}: </span>
+                <span className={tf.profit >= 0 ? "text-dt-green" : "text-destructive"}>
+                  <span className="text-dt-dim">{t("erp.profit.lineNet")}: </span>
                   {formatBdt(Math.round(tf.profit))}
                 </span>
               </span>
@@ -248,28 +248,28 @@ export default async function ErpAnalyticsPage({
           {t("erp.analytics.customers")}
         </h2>
         <div className="mb-3 grid grid-cols-3 gap-3 text-center">
-          <div className="rounded-lg border border-border bg-card px-3 py-3">
+          <div className="rounded-lg border border-dt-line bg-dt-card px-3 py-3">
             <p className="font-heading text-lg font-semibold">{customers.totalCustomers}</p>
-            <p className="text-xs text-muted-foreground">{t("erp.analytics.totalCustomers")}</p>
+            <p className="text-xs text-dt-dim">{t("erp.analytics.totalCustomers")}</p>
           </div>
-          <div className="rounded-lg border border-border bg-card px-3 py-3">
+          <div className="rounded-lg border border-dt-line bg-dt-card px-3 py-3">
             <p className="font-heading text-lg font-semibold">{repeatPct}%</p>
-            <p className="text-xs text-muted-foreground">{t("erp.analytics.repeatCustomers")}</p>
+            <p className="text-xs text-dt-dim">{t("erp.analytics.repeatCustomers")}</p>
           </div>
-          <div className="rounded-lg border border-border bg-card px-3 py-3">
+          <div className="rounded-lg border border-dt-line bg-dt-card px-3 py-3">
             <p className="font-heading text-lg font-semibold">
               {customers.avgBookingsPerCustomer}
             </p>
-            <p className="text-xs text-muted-foreground">{t("erp.analytics.avgBookings")}</p>
+            <p className="text-xs text-dt-dim">{t("erp.analytics.avgBookings")}</p>
           </div>
         </div>
         {customers.top.length > 0 ? (
-          <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
+          <ul className="divide-y divide-dt-line overflow-hidden rounded-xl border border-dt-line bg-dt-card">
             {customers.top.map((c) => (
               <li key={c.bookerId} className="flex items-center justify-between px-4 py-2.5 text-sm">
                 <span>{c.name}</span>
                 <span className="flex gap-4">
-                  <span className="text-muted-foreground">
+                  <span className="text-dt-dim">
                     {t("erp.analytics.bookingsCount", { count: c.bookings })}
                   </span>
                   <span className="tabular-nums">{formatBdt(Math.round(c.revenue))}</span>

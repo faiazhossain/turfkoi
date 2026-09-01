@@ -62,8 +62,8 @@ export default async function ErpIncomePage({
         <h2 className="mb-2 font-heading text-base font-semibold">
           {t("erp.income.daily")}
         </h2>
-        <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
-          <li className="flex items-center justify-between px-4 py-2.5 text-xs font-medium uppercase text-muted-foreground">
+        <ul className="divide-y divide-dt-line overflow-hidden rounded-xl border border-dt-line bg-dt-card">
+          <li className="flex items-center justify-between px-4 py-2.5 text-xs font-medium uppercase text-dt-dim">
             <span>{t("erp.income.form.date")}</span>
             <span>{t("erp.income.bookingRevenue")}</span>
           </li>
@@ -84,14 +84,14 @@ export default async function ErpIncomePage({
             description={t("erp.income.emptyBody")}
           />
         ) : (
-          <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
+          <ul className="divide-y divide-dt-line overflow-hidden rounded-xl border border-dt-line bg-dt-card">
             {otherIncomeList.map((r) => (
               <li key={r.id} className="flex items-center justify-between gap-3 px-4 py-3">
                 <div>
                   <p className="text-sm font-medium">
                     {t(`erp.income.sources.${r.source}`)}
                   </p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-dt-dim">
                     {formatSlotDate(r.date, locale)}
                     {r.note ? ` · ${r.note}` : ""}
                   </p>
@@ -127,7 +127,7 @@ async function DayRows({
   const days = await getBookingRevenueByDay(ownerId, from, to)
   if (days.length === 0) {
     return (
-      <li className="px-4 py-3 text-sm text-muted-foreground">
+      <li className="px-4 py-3 text-sm text-dt-dim">
         {t("erp.overview.noAlerts")}
       </li>
     )

@@ -38,7 +38,7 @@ export default async function ErpMaintenancePage() {
           action={
             <Link
               href="/turf-owner/turfs/new"
-              className="inline-flex h-9 items-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground"
+              className="inline-flex h-9 items-center rounded-lg bg-dt-green px-4 text-sm font-medium text-dt-ink"
             >
               {t("turfOwner.addTurf")}
             </Link>
@@ -51,7 +51,7 @@ export default async function ErpMaintenancePage() {
   return (
     <div className="mt-4 space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-muted-foreground">{t("erp.maintenance.subtitle")}</p>
+        <p className="text-sm text-dt-dim">{t("erp.maintenance.subtitle")}</p>
         <AddMaintenanceSheet
           turfs={myTurfs.map((turf) => ({ id: turf.id, name: turf.name }))}
           today={todayInDhaka()}
@@ -69,14 +69,14 @@ export default async function ErpMaintenancePage() {
           {records.map((r) => (
             <li
               key={r.id}
-              className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3"
+              className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dt-line bg-dt-card px-4 py-3"
             >
               <div className="min-w-0">
                 <p className="text-sm font-medium">
                   {t(`erp.maintenance.categories.${r.category}`)}
-                  <span className="ml-2 text-xs text-muted-foreground">{r.turfName}</span>
+                  <span className="ml-2 text-xs text-dt-dim">{r.turfName}</span>
                 </p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-dt-dim">
                   {formatSlotDate(r.date, locale)}
                   {r.vendor ? ` · ${r.vendor}` : ""}
                   {r.description ? ` · ${r.description}` : ""}

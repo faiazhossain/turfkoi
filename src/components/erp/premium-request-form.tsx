@@ -87,7 +87,7 @@ export function PremiumRequestForm({
     >
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
-          <Label className="text-xs font-medium text-muted-foreground">
+          <Label className="text-xs font-medium text-dt-dim">
             {t("erp.premium.plan")}
           </Label>
           <Select value={months} onValueChange={(v) => setMonths(v ?? String(plans[0]?.months))}>
@@ -117,7 +117,7 @@ export function PremiumRequestForm({
           </Select>
         </div>
         <div className="space-y-1.5">
-          <Label className="text-xs font-medium text-muted-foreground">
+          <Label className="text-xs font-medium text-dt-dim">
             {t("erp.premium.method")}
           </Label>
           <Select value={method} onValueChange={(v) => setMethod((v ?? "bkash") as (typeof METHODS)[number])}>
@@ -135,19 +135,19 @@ export function PremiumRequestForm({
         </div>
       </div>
 
-      <div className="rounded-lg border border-border bg-muted/40 p-3 text-sm">
-        <p className="text-muted-foreground">{t("erp.premium.sendTo")}</p>
+      <div className="rounded-lg border border-dt-line bg-dt-card2/40 p-3 text-sm">
+        <p className="text-dt-dim">{t("erp.premium.sendTo")}</p>
         <p className="mt-1 font-mono text-base font-semibold">
           {mfsAccounts[method]}
         </p>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-dt-dim">
           {t("erp.premium.accountType")}
         </p>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
-          <Label className="text-xs font-medium text-muted-foreground">
+          <Label className="text-xs font-medium text-dt-dim">
             {t("erp.premium.senderNumber")}
           </Label>
           <Input
@@ -158,7 +158,7 @@ export function PremiumRequestForm({
           />
         </div>
         <div className="space-y-1.5">
-          <Label className="text-xs font-medium text-muted-foreground">
+          <Label className="text-xs font-medium text-dt-dim">
             {t("erp.premium.transactionId")}
           </Label>
           <Input
@@ -169,7 +169,7 @@ export function PremiumRequestForm({
       </div>
 
       <div className="space-y-1.5">
-        <Label className="text-xs font-medium text-muted-foreground">
+        <Label className="text-xs font-medium text-dt-dim">
           {t("erp.premium.receipt")}
         </Label>
         <Input
@@ -179,13 +179,13 @@ export function PremiumRequestForm({
           onChange={(e) => setReceiptName(e.target.files?.[0]?.name ?? null)}
         />
         {receiptName ? (
-          <p className="text-xs text-muted-foreground">{receiptName}</p>
+          <p className="text-xs text-dt-dim">{receiptName}</p>
         ) : null}
-        <p className="text-xs text-muted-foreground">{t("erp.premium.receiptHint")}</p>
+        <p className="text-xs text-dt-dim">{t("erp.premium.receiptHint")}</p>
       </div>
 
       <div className="space-y-1.5">
-        <Label className="text-xs font-medium text-muted-foreground">
+        <Label className="text-xs font-medium text-dt-dim">
           {t("erp.premium.note")}
         </Label>
         <Input value={ownerNote} onChange={(e) => setOwnerNote(e.target.value)} />

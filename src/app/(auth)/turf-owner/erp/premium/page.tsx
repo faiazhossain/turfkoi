@@ -40,12 +40,12 @@ export default async function ErpPremiumPage() {
 
   return (
     <div className="mt-4 max-w-2xl space-y-6">
-      <section className="rounded-xl border border-border bg-card p-5">
+      <section className="rounded-xl border border-dt-line bg-dt-card p-5">
         <h2 className="font-heading text-base font-semibold">
           {t("erp.premium.title")}
         </h2>
         <p className="mt-1 text-sm">{statusLine}</p>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-1 text-sm text-dt-dim">
           {t("erp.premium.valueLine")}
         </p>
       </section>
@@ -53,7 +53,7 @@ export default async function ErpPremiumPage() {
       {plan.tier === "trial" ? (
         <section
           role="note"
-          className="rounded-xl border border-primary/30 bg-primary/5 p-5 text-sm"
+          className="rounded-xl border border-dt-green/30 bg-dt-green/5 p-5 text-sm"
         >
           {t("erp.premium.trialPurchaseNote")}
         </section>
@@ -67,11 +67,11 @@ export default async function ErpPremiumPage() {
       ) : null}
 
       {pending ? null : (
-        <section className="rounded-xl border border-border bg-card p-5">
+        <section className="rounded-xl border border-dt-line bg-dt-card p-5">
           <h3 className="mb-3 font-heading text-sm font-semibold">
             {t("erp.premium.howTo")}
           </h3>
-          <ol className="mb-5 list-inside list-decimal space-y-1 text-sm text-muted-foreground">
+          <ol className="mb-5 list-inside list-decimal space-y-1 text-sm text-dt-dim">
             <li>{t("erp.premium.step1")}</li>
             <li>{t("erp.premium.step2")}</li>
             <li>{t("erp.premium.step3")}</li>
@@ -94,7 +94,7 @@ export default async function ErpPremiumPage() {
         {history.length === 0 ? (
           <EmptyState title={t("erp.premium.historyEmpty")} />
         ) : (
-          <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
+          <ul className="divide-y divide-dt-line overflow-hidden rounded-xl border border-dt-line bg-dt-card">
             {history.map((r) => (
               <li key={r.id} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
                 <div>
@@ -102,7 +102,7 @@ export default async function ErpPremiumPage() {
                     {t(`erp.premium.methods.${r.method}`)} ·{" "}
                     {t("erp.premium.months", { months: r.months })}
                   </p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-dt-dim">
                     {r.createdAt.toISOString().slice(0, 10)} · {r.transactionId}
                   </p>
                 </div>
@@ -126,7 +126,7 @@ export default async function ErpPremiumPage() {
         )}
       </section>
 
-      <p className="text-xs text-muted-foreground">
+      <p className="text-xs text-dt-dim">
         {t("erp.premium.trialNote", {
           days: daysUntil(profile.trialEndsAt.toISOString().slice(0, 10), todayInDhaka()),
         })}

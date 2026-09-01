@@ -62,25 +62,25 @@ export default async function ErpBillsPage() {
     <div className="mt-4 space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-sm text-muted-foreground">{t("erp.bills.subtitle")}</p>
-          <p className="text-xs text-muted-foreground">{t("erp.bills.ruleLimit")}</p>
+          <p className="text-sm text-dt-dim">{t("erp.bills.subtitle")}</p>
+          <p className="text-xs text-dt-dim">{t("erp.bills.ruleLimit")}</p>
         </div>
         <AddBillSheet categories={categoryOptions} today={today} />
       </div>
 
       {rentContract ? (
-        <section className="rounded-xl border border-primary/40 bg-primary/5 p-5">
+        <section className="rounded-xl border border-dt-green/40 bg-dt-green/5 p-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h2 className="font-heading text-base font-semibold">{t("erp.rent.title")}</h2>
               <p className="mt-1 text-sm tabular-nums">
                 <span className="font-semibold">{formatBdt(Number(rentContract.monthlyAmount))}</span>
-                <span className="text-muted-foreground">
+                <span className="text-dt-dim">
                   {" "}
                   · {t("erp.bills.frequencies.monthly").toLowerCase()}
                 </span>
               </p>
-              <p className="mt-1 text-xs text-muted-foreground">
+              <p className="mt-1 text-xs text-dt-dim">
                 {rentContract.landlordName ?? ""}
                 {rentContract.agreementStart
                   ? ` · ${formatSlotDate(rentContract.agreementStart, locale)}`
@@ -90,7 +90,7 @@ export default async function ErpBillsPage() {
                   : ""}
               </p>
               {Number(rentContract.securityDeposit) > 0 ? (
-                <p className="mt-0.5 text-xs text-muted-foreground">
+                <p className="mt-0.5 text-xs text-dt-dim">
                   {t("erp.rent.deposit")}:{" "}
                   {formatBdt(Number(rentContract.securityDeposit))}
                 </p>
@@ -110,11 +110,11 @@ export default async function ErpBillsPage() {
           </div>
         </section>
       ) : (
-        <section className="rounded-xl border border-dashed border-border bg-card/50 p-5">
+        <section className="rounded-xl border border-dashed border-dt-line bg-dt-card/50 p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="font-heading text-base font-semibold">{t("erp.rent.title")}</h2>
-              <p className="mt-1 text-sm text-muted-foreground">{t("erp.rent.emptyBody")}</p>
+              <p className="mt-1 text-sm text-dt-dim">{t("erp.rent.emptyBody")}</p>
             </div>
             <RentContractSheet existing={null} />
           </div>
@@ -138,11 +138,11 @@ export default async function ErpBillsPage() {
                 {upcoming.map((r) => (
                   <li
                     key={r.id}
-                    className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3"
+                    className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dt-line bg-dt-card px-4 py-3"
                   >
                     <div>
                       <p className="text-sm font-medium">{r.name}</p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-dt-dim">
                         {formatSlotDate(r.nextDueDate, locale)} ·{" "}
                         {t(`erp.bills.frequencies.${r.frequency}`)}
                       </p>
@@ -164,12 +164,12 @@ export default async function ErpBillsPage() {
             <h2 className="mb-2 font-heading text-base font-semibold">
               {t("erp.bills.allRules")}
             </h2>
-            <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
+            <ul className="divide-y divide-dt-line overflow-hidden rounded-xl border border-dt-line bg-dt-card">
               {active.map((r) => (
                 <li key={r.id} className="flex items-center justify-between gap-3 px-4 py-3">
                   <div>
                     <p className="text-sm font-medium">{r.name}</p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-dt-dim">
                       {r.categorySlug ? t(`erp.categories.${r.categorySlug}`) : r.categoryName}{" "}
                       · {t(`erp.bills.frequencies.${r.frequency}`)}
                     </p>
@@ -186,7 +186,7 @@ export default async function ErpBillsPage() {
                   className="flex items-center justify-between gap-3 px-4 py-3 opacity-60"
                 >
                   <p className="text-sm">{r.name}</p>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-xs text-dt-dim">
                     {t("erp.bills.deactivate")}
                   </span>
                 </li>

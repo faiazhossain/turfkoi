@@ -66,7 +66,7 @@ export function AddBillSheet({
           className="space-y-4"
         >
           <div className="space-y-1.5">
-            <Label className="text-xs font-medium text-muted-foreground">
+            <Label className="text-xs font-medium text-dt-dim">
               {t("erp.bills.form.name")}
             </Label>
             <Input placeholder={t("erp.bills.form.namePh")} {...form.register("name")} />
@@ -74,7 +74,7 @@ export function AddBillSheet({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-muted-foreground">
+              <Label className="text-xs font-medium text-dt-dim">
                 {t("erp.bills.form.amount")}
               </Label>
               <Input
@@ -91,7 +91,7 @@ export function AddBillSheet({
               ) : null}
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-muted-foreground">
+              <Label className="text-xs font-medium text-dt-dim">
                 {t("erp.bills.form.frequency")}
               </Label>
               <Select
@@ -120,7 +120,7 @@ export function AddBillSheet({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-muted-foreground">
+              <Label className="text-xs font-medium text-dt-dim">
                 {t("erp.bills.form.category")}
               </Label>
               <Select
@@ -142,7 +142,7 @@ export function AddBillSheet({
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-muted-foreground">
+              <Label className="text-xs font-medium text-dt-dim">
                 {t("erp.bills.form.nextDueDate")}
               </Label>
               <Input type="date" {...form.register("nextDueDate")} />

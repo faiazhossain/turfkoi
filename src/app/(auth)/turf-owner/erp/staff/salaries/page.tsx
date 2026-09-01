@@ -38,7 +38,7 @@ export default async function ErpSalariesPage({
     <div className="mt-4 space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <MonthNav month={month} basePath="/turf-owner/erp/staff/salaries" />
-        <p className="text-sm text-muted-foreground">{t("erp.salaries.subtitle")}</p>
+        <p className="text-sm text-dt-dim">{t("erp.salaries.subtitle")}</p>
       </div>
 
       {rows.length === 0 ? (
@@ -49,7 +49,7 @@ export default async function ErpSalariesPage({
           action={
             <Link
               href="/turf-owner/erp/staff"
-              className="inline-flex h-9 items-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground"
+              className="inline-flex h-9 items-center rounded-lg bg-dt-green px-4 text-sm font-medium text-dt-ink"
             >
               {t("erp.staff.addStaff")}
             </Link>
@@ -62,16 +62,16 @@ export default async function ErpSalariesPage({
             return (
               <li
                 key={r.staffId}
-                className="rounded-xl border border-border bg-card p-4"
+                className="rounded-xl border border-dt-line bg-dt-card p-4"
               >
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <p className="font-heading text-sm font-semibold">{r.staffName}</p>
                     <p className="mt-1 text-sm tabular-nums">
-                      <span className="text-muted-foreground">{t("erp.salaries.payable")}:</span>{" "}
+                      <span className="text-dt-dim">{t("erp.salaries.payable")}:</span>{" "}
                       <span className="font-semibold">{formatBdt(r.payable)}</span>
                       {r.paidAmount > 0 ? (
-                        <span className="text-muted-foreground">
+                        <span className="text-dt-dim">
                           {" "}
                           · {t("erp.salaries.paid")}: {formatBdt(r.paidAmount)}
                         </span>

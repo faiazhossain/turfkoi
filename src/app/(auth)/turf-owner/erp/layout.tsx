@@ -42,22 +42,22 @@ export default async function ErpLayout({
         <div>
           <Link
             href="/turf-owner"
-            className="mb-2 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            className="mb-2 inline-flex items-center gap-1.5 text-sm text-dt-dim transition-colors hover:text-dt-txt"
           >
             <ArrowLeftIcon className="size-4" aria-hidden />
             {t("erp.backToDashboard")}
           </Link>
           <h1 className="font-heading text-2xl font-semibold">{t("erp.title")}</h1>
-          <p className="text-sm text-muted-foreground">{t("erp.subtitle")}</p>
+          <p className="text-sm text-dt-dim">{t("erp.subtitle")}</p>
         </div>
         {plan.isPremiumFeaturesUnlocked ? (
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-dt-line bg-dt-card2 px-3 py-1 text-xs font-medium text-dt-dim">
             {plan.tier === "premium"
               ? t("erp.plan.premium")
               : t("erp.plan.premiumTrial", { days: plan.trialDaysLeft })}
           </span>
         ) : (
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-dt-line bg-dt-card2 px-3 py-1 text-xs font-medium text-dt-dim">
             {t("erp.plan.free")}
           </span>
         )}
@@ -65,7 +65,7 @@ export default async function ErpLayout({
       {plan.tier === "trial" && plan.trialDaysLeft <= 7 ? (
         <div
           role="status"
-          className="mb-4 rounded-lg border border-warning/40 bg-warning/10 px-4 py-3 text-sm text-foreground"
+          className="mb-4 rounded-lg border border-warning/40 bg-warning/10 px-4 py-3 text-sm text-dt-txt"
         >
           {t("erp.plan.trialEnding", { days: plan.trialDaysLeft })}
         </div>

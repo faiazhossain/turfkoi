@@ -103,7 +103,7 @@ export function SalaryAdjustSheet({
           <div className="grid grid-cols-2 gap-3">
             {fields.map(([name, key]) => (
               <div key={name} className="space-y-1.5">
-                <Label className="text-xs font-medium text-muted-foreground">
+                <Label className="text-xs font-medium text-dt-dim">
                   {t(key)}
                 </Label>
                 <Input
@@ -180,7 +180,7 @@ export function SalaryPaySheet({
           })}
           className="space-y-4"
         >
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-dt-dim">
             {t("erp.salaries.payForm.amountRemaining", {
               amount: Math.max(0, remaining).toLocaleString(),
             })}
@@ -188,7 +188,7 @@ export function SalaryPaySheet({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-muted-foreground">
+              <Label className="text-xs font-medium text-dt-dim">
                 {t("erp.salaries.payForm.amount")}
               </Label>
               <Input
@@ -205,7 +205,7 @@ export function SalaryPaySheet({
               ) : null}
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-muted-foreground">
+              <Label className="text-xs font-medium text-dt-dim">
                 {t("erp.salaries.payForm.method")}
               </Label>
               <Select
@@ -235,13 +235,13 @@ export function SalaryPaySheet({
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-xs font-medium text-muted-foreground">
+            <Label className="text-xs font-medium text-dt-dim">
               {t("erp.salaries.payForm.reference")}
             </Label>
             <Input {...form.register("reference")} />
           </div>
 
-          <label className="flex items-start gap-2.5 rounded-lg border border-border p-3">
+          <label className="flex items-start gap-2.5 rounded-lg border border-dt-line p-3">
             <Checkbox
               checked={form.watch("isAdvance")}
               onCheckedChange={(v) => form.setValue("isAdvance", v === true)}
@@ -251,7 +251,7 @@ export function SalaryPaySheet({
               <span className="block text-sm font-medium">
                 {t("erp.salaries.payForm.isAdvance")}
               </span>
-              <span className="block text-xs text-muted-foreground">
+              <span className="block text-xs text-dt-dim">
                 {t("erp.salaries.payForm.isAdvanceHint")}
               </span>
             </span>

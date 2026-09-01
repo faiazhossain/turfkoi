@@ -109,11 +109,11 @@ export function ErpSidebarNav() {
       {GROUPS.map((group, gi) => (
         <div key={group.labelKey ?? `g${gi}`}>
           {group.labelKey ? (
-            <p className="pb-1 pt-5 pl-3 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/60">
+            <p className="pb-1 pt-5 pl-3 text-[11px] font-medium uppercase tracking-wider text-dt-dim/60">
               {t(group.labelKey)}
             </p>
           ) : (
-            gi > 0 && <div className="mt-5 border-t border-border/60" />
+            gi > 0 && <div className="mt-5 border-t border-dt-line/60" />
           )}
           <ul className="space-y-0.5">
             {group.items.map((item) => {
@@ -127,14 +127,14 @@ export function ErpSidebarNav() {
                     className={cn(
                       "relative flex h-9 items-center gap-2.5 rounded-lg px-3 text-sm transition-colors",
                       active
-                        ? "bg-primary/10 font-medium text-primary"
-                        : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                        ? "bg-dt-green/10 font-medium text-dt-green"
+                        : "text-dt-dim hover:bg-dt-card2/60 hover:text-dt-txt"
                     )}
                   >
                     {active ? (
                       <span
                         aria-hidden
-                        className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full bg-primary"
+                        className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full bg-dt-green"
                       />
                     ) : null}
                     <Icon className="size-4 shrink-0" aria-hidden />
@@ -165,7 +165,7 @@ export function ErpMobileNav() {
 
   return (
     <nav aria-label={t("erp.navAria")} className="lg:hidden">
-      <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
+      <label className="mb-1.5 block text-xs font-medium text-dt-dim">
         {t("erp.nav.sectionPicker")}
       </label>
       <Select
@@ -176,7 +176,7 @@ export function ErpMobileNav() {
       >
         <SelectTrigger className="h-11 w-full">
           <span className="flex items-center gap-2.5 text-sm font-medium">
-            <CurrentIcon className="size-4 text-primary" aria-hidden />
+            <CurrentIcon className="size-4 text-dt-green" aria-hidden />
             {t(current.labelKey)}
           </span>
         </SelectTrigger>
@@ -194,7 +194,7 @@ export function ErpMobileNav() {
                       <Icon
                         className={cn(
                           "size-4",
-                          item.href === activeHref ? "text-primary" : "text-muted-foreground"
+                          item.href === activeHref ? "text-dt-green" : "text-dt-dim"
                         )}
                         aria-hidden
                       />

@@ -44,7 +44,7 @@ export default async function ErpExpensesPage({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <MonthNav month={month} basePath="/turf-owner/erp/expenses" />
         <div className="flex items-center gap-3">
-          <span className="text-sm text-muted-foreground">
+          <span className="text-sm text-dt-dim">
             {t("erp.expenses.monthTotal", {
               amount: Math.round(summary.total).toLocaleString(),
             })}
@@ -60,7 +60,7 @@ export default async function ErpExpensesPage({
           description={t("erp.expenses.emptyBody")}
         />
       ) : (
-        <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
+        <ul className="divide-y divide-dt-line overflow-hidden rounded-xl border border-dt-line bg-dt-card">
           {expenses.map((e) => (
             <li key={e.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
               <div className="min-w-0">
@@ -68,11 +68,11 @@ export default async function ErpExpensesPage({
                   {e.categorySlug
                     ? t(`erp.categories.${e.categorySlug}`)
                     : e.categoryName}
-                  <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-[10px] uppercase text-muted-foreground">
+                  <span className="ml-2 rounded bg-dt-card2 px-1.5 py-0.5 text-[10px] uppercase text-dt-dim">
                     {t(`erp.expenses.source${e.source.charAt(0).toUpperCase()}${e.source.slice(1)}`)}
                   </span>
                 </p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-dt-dim">
                   {formatSlotDate(e.date, locale)}
                   {e.vendor ? ` · ${e.vendor}` : ""}
                   {e.note ? ` · ${e.note}` : ""}
@@ -98,7 +98,7 @@ export default async function ErpExpensesPage({
             {summary.byCategory.map((c) => (
               <li
                 key={c.categoryId}
-                className="flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3 text-sm"
+                className="flex items-center justify-between rounded-lg border border-dt-line bg-dt-card px-4 py-3 text-sm"
               >
                 <span>{c.slug ? t(`erp.categories.${c.slug}`) : c.name}</span>
                 <span className="font-semibold tabular-nums">{formatBdt(c.total)}</span>

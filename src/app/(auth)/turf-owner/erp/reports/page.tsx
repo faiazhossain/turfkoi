@@ -52,7 +52,7 @@ export default async function ErpReportsPage({
         <div className="flex flex-wrap gap-2">
           <a
             href={`/turf-owner/erp/export?type=expenses&month=${month}`}
-            className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border px-3 text-sm text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+            className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-dt-line px-3 text-sm text-dt-dim transition-colors hover:bg-dt-card2/50 hover:text-dt-txt"
           >
             <DownloadIcon className="size-4" aria-hidden />
             CSV
@@ -62,12 +62,12 @@ export default async function ErpReportsPage({
       </div>
 
       {/* Printable monthly business summary */}
-      <article className="space-y-6 rounded-xl border border-border bg-card p-6 print:border-0 print:bg-white print:p-0 print:text-black">
+      <article className="space-y-6 rounded-xl border border-dt-line bg-dt-card p-6 print:border-0 print:bg-white print:p-0 print:text-black">
         <header>
           <h2 className="font-heading text-lg font-semibold">
             {t("erp.reports.title", { month })}
           </h2>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-dt-dim">
             {t("erp.reports.period", { from, to })} · DeshiTurf
           </p>
         </header>
@@ -86,7 +86,7 @@ export default async function ErpReportsPage({
                   [t("erp.profit.lineExpenses"), -expenses.total],
                 ] as [string, number][]
               ).map(([label, value]) => (
-                <tr key={label} className="border-b border-border/60">
+                <tr key={label} className="border-b border-dt-line/60">
                   <td className="py-1.5">{label}</td>
                   <td className="py-1.5 text-right tabular-nums">{fmt(value)}</td>
                 </tr>
@@ -95,7 +95,7 @@ export default async function ErpReportsPage({
                 <td className="py-1.5">{t("erp.profit.lineNet")}</td>
                 <td
                   className={`py-1.5 text-right tabular-nums print:text-black ${
-                    profit >= 0 ? "text-primary" : "text-destructive"
+                    profit >= 0 ? "text-dt-green" : "text-destructive"
                   }`}
                 >
                   {fmt(profit)}
@@ -103,7 +103,7 @@ export default async function ErpReportsPage({
               </tr>
             </tbody>
           </table>
-          <p className="mt-1 text-xs text-muted-foreground">
+          <p className="mt-1 text-xs text-dt-dim">
             {t("erp.profit.ownerShareHint")}
           </p>
         </section>
@@ -116,7 +116,7 @@ export default async function ErpReportsPage({
             <table className="w-full text-sm">
               <tbody>
                 {expenses.byCategory.map((c) => (
-                  <tr key={c.categoryId} className="border-b border-border/60">
+                  <tr key={c.categoryId} className="border-b border-dt-line/60">
                     <td className="py-1.5">
                       {c.slug ? t(`erp.categories.${c.slug}`) : c.name}
                     </td>
@@ -134,16 +134,16 @@ export default async function ErpReportsPage({
 
         <section className="grid grid-cols-2 gap-4 text-sm sm:grid-cols-3">
           <div>
-            <p className="text-xs text-muted-foreground">{t("erp.analytics.staffCost")}</p>
+            <p className="text-xs text-dt-dim">{t("erp.analytics.staffCost")}</p>
             <p className="font-semibold tabular-nums">{fmt(staffCost)}</p>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground">{t("erp.income.bookingCount", { count: booking.bookingCount })}</p>
+            <p className="text-xs text-dt-dim">{t("erp.income.bookingCount", { count: booking.bookingCount })}</p>
             <p className="font-semibold tabular-nums">{booking.bookingCount}</p>
           </div>
           {budget.hasBudget ? (
             <div>
-              <p className="text-xs text-muted-foreground">{t("erp.goals.form.profitTarget")}</p>
+              <p className="text-xs text-dt-dim">{t("erp.goals.form.profitTarget")}</p>
               <p className="font-semibold tabular-nums">
                 {budget.profit.pct !== null ? `${budget.profit.pct}%` : "—"}
               </p>

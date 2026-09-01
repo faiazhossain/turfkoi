@@ -80,7 +80,7 @@ export function AssistantBox() {
               setQuestion(s.question)
               void ask(s.question)
             }}
-            className="rounded-full border border-border px-3 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground disabled:opacity-50"
+            className="rounded-full border border-dt-line px-3 py-1 text-xs text-dt-dim transition-colors hover:bg-dt-card2/50 hover:text-dt-txt disabled:opacity-50"
           >
             {t(s.labelKey)}
           </button>
@@ -89,9 +89,9 @@ export function AssistantBox() {
 
       {error ? <StatusBadge status="danger">{t(error)}</StatusBadge> : null}
       {answer ? (
-        <div className="rounded-xl border border-border bg-card p-4" role="status">
+        <div className="rounded-xl border border-dt-line bg-dt-card p-4" role="status">
           <p className="text-sm">{answer.text}</p>
-          <p className="mt-1.5 text-xs text-muted-foreground">
+          <p className="mt-1.5 text-xs text-dt-dim">
             {t("erp.assistant.dataPeriod", { period: answer.period })}
           </p>
         </div>

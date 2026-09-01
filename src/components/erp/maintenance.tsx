@@ -74,7 +74,7 @@ export function AddMaintenanceSheet({
         >
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-muted-foreground">
+              <Label className="text-xs font-medium text-dt-dim">
                 {t("erp.maintenance.form.turf")}
               </Label>
               <Select
@@ -97,7 +97,7 @@ export function AddMaintenanceSheet({
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-muted-foreground">
+              <Label className="text-xs font-medium text-dt-dim">
                 {t("erp.maintenance.form.date")}
               </Label>
               <Input type="date" {...form.register("date")} />
@@ -105,7 +105,7 @@ export function AddMaintenanceSheet({
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-xs font-medium text-muted-foreground">
+            <Label className="text-xs font-medium text-dt-dim">
               {t("erp.maintenance.form.category")}
             </Label>
             <Select
@@ -134,7 +134,7 @@ export function AddMaintenanceSheet({
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-xs font-medium text-muted-foreground">
+            <Label className="text-xs font-medium text-dt-dim">
               {t("erp.maintenance.form.description")}
             </Label>
             <Input placeholder={t("erp.maintenance.form.descriptionPh")} {...form.register("description")} />
@@ -142,7 +142,7 @@ export function AddMaintenanceSheet({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-muted-foreground">
+              <Label className="text-xs font-medium text-dt-dim">
                 {t("erp.maintenance.form.cost")}
               </Label>
               <Input
@@ -152,12 +152,12 @@ export function AddMaintenanceSheet({
                 step="any"
                 {...form.register("cost", { valueAsNumber: true })}
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-dt-dim">
                 {t("erp.maintenance.form.costHint")}
               </p>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-muted-foreground">
+              <Label className="text-xs font-medium text-dt-dim">
                 {t("erp.maintenance.form.status")}
               </Label>
               <Select
@@ -187,14 +187,14 @@ export function AddMaintenanceSheet({
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-xs font-medium text-muted-foreground">
+            <Label className="text-xs font-medium text-dt-dim">
               {t("erp.maintenance.form.vendor")}
             </Label>
             <Input {...form.register("vendor")} />
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-xs font-medium text-muted-foreground">
+            <Label className="text-xs font-medium text-dt-dim">
               {t("erp.maintenance.form.slotBlockedNote")}
             </Label>
             <Input {...form.register("slotBlockedNote")} />

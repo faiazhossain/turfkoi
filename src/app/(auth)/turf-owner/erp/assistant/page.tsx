@@ -28,7 +28,7 @@ export default async function ErpAssistantPage() {
       <div className="flex items-center gap-2">
         <PremiumBadge />
       </div>
-      <p className="text-sm text-muted-foreground">{t("erp.assistant.subtitle")}</p>
+      <p className="text-sm text-dt-dim">{t("erp.assistant.subtitle")}</p>
       <AssistantBox />
     </div>
   )

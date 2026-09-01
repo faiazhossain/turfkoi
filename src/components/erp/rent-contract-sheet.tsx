@@ -72,7 +72,7 @@ export function RentContractSheet({
         >
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-muted-foreground">
+              <Label className="text-xs font-medium text-dt-dim">
                 {t("erp.rent.monthlyAmount")}
               </Label>
               <Input
@@ -84,7 +84,7 @@ export function RentContractSheet({
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-muted-foreground">
+              <Label className="text-xs font-medium text-dt-dim">
                 {t("erp.rent.securityDeposit")}
               </Label>
               <Input
@@ -98,14 +98,14 @@ export function RentContractSheet({
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-xs font-medium text-muted-foreground">
+            <Label className="text-xs font-medium text-dt-dim">
               {t("erp.rent.landlord")}
             </Label>
             <Input {...form.register("landlordName")} />
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-xs font-medium text-muted-foreground">
+            <Label className="text-xs font-medium text-dt-dim">
               {t("erp.rent.landlordPhone")}
             </Label>
             <Input type="tel" inputMode="tel" {...form.register("landlordPhone")} />
@@ -113,13 +113,13 @@ export function RentContractSheet({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-muted-foreground">
+              <Label className="text-xs font-medium text-dt-dim">
                 {t("erp.rent.agreementStart")}
               </Label>
               <Input type="date" {...form.register("agreementStart")} />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-muted-foreground">
+              <Label className="text-xs font-medium text-dt-dim">
                 {t("erp.rent.agreementEnd")}
               </Label>
               <Input type="date" {...form.register("agreementEnd")} />
@@ -127,14 +127,14 @@ export function RentContractSheet({
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-xs font-medium text-muted-foreground">
+            <Label className="text-xs font-medium text-dt-dim">
               {t("erp.rent.note")}
             </Label>
             <Input {...form.register("note")} />
           </div>
 
           {!existing ? (
-            <label className="flex items-start gap-2.5 rounded-lg border border-border p-3">
+            <label className="flex items-start gap-2.5 rounded-lg border border-dt-line p-3">
               <Checkbox
                 checked={form.watch("createMonthlyRule")}
                 onCheckedChange={(v) => form.setValue("createMonthlyRule", v === true)}

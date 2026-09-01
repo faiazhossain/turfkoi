@@ -34,23 +34,23 @@ export default async function ErpStaffDetailPage({
     <div className="mt-4 space-y-6">
       <Link
         href="/turf-owner/erp/staff"
-        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+        className="inline-flex items-center gap-1.5 text-sm text-dt-dim hover:text-dt-txt"
       >
         <ArrowLeftIcon className="size-4" aria-hidden />
         {t("erp.staff.title")}
       </Link>
 
-      <header className="rounded-xl border border-border bg-card p-5">
+      <header className="rounded-xl border border-dt-line bg-dt-card p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h2 className="font-heading text-lg font-semibold">{staff.name}</h2>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-dt-dim">
               {t(`erp.staff.positions.${staff.position}`)}
               {staff.positionOther ? ` · ${staff.positionOther}` : ""}
               {staff.phone ? ` · ${staff.phone}` : ""}
             </p>
             <p className="mt-1 text-sm">
-              <span className="text-muted-foreground">
+              <span className="text-dt-dim">
                 {t(`erp.staff.salaryTypes.${staff.salaryType}`)}
               </span>{" "}
               <span className="font-semibold tabular-nums">
@@ -74,13 +74,13 @@ export default async function ErpStaffDetailPage({
             description={t("erp.salaries.emptyBody")}
           />
         ) : (
-          <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
+          <ul className="divide-y divide-dt-line overflow-hidden rounded-xl border border-dt-line bg-dt-card">
             {history.map((h) => (
               <li key={h.id} className="flex items-center justify-between px-4 py-3 text-sm">
                 <div>
                   <p className="font-medium">{h.periodMonth.slice(0, 7)}</p>
                   {h.method ? (
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-dt-dim">
                       {t(`erp.salaries.methods.${h.method}`)}
                     </p>
                   ) : null}

@@ -71,13 +71,13 @@ export function AddStaffSheet() {
         >
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-muted-foreground">
+              <Label className="text-xs font-medium text-dt-dim">
                 {t("erp.staff.form.name")}
               </Label>
               <Input placeholder={t("erp.staff.form.namePh")} {...form.register("name")} />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-muted-foreground">
+              <Label className="text-xs font-medium text-dt-dim">
                 {t("erp.staff.form.phone")}
               </Label>
               <Input type="tel" inputMode="tel" {...form.register("phone")} />
@@ -85,7 +85,7 @@ export function AddStaffSheet() {
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-xs font-medium text-muted-foreground">
+            <Label className="text-xs font-medium text-dt-dim">
               {t("erp.staff.form.position")}
             </Label>
             <Select
@@ -114,7 +114,7 @@ export function AddStaffSheet() {
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-muted-foreground">
+              <Label className="text-xs font-medium text-dt-dim">
                 {t("erp.staff.form.salaryType")}
               </Label>
               <Select
@@ -142,7 +142,7 @@ export function AddStaffSheet() {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-muted-foreground">
+              <Label className="text-xs font-medium text-dt-dim">
                 {t("erp.staff.form.baseSalary")}
               </Label>
               <Input
@@ -152,7 +152,7 @@ export function AddStaffSheet() {
                 step="any"
                 {...form.register("baseSalary", { valueAsNumber: true })}
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-dt-dim">
                 {t("erp.staff.form.baseSalaryHint")}
               </p>
             </div>

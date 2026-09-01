@@ -60,7 +60,7 @@ export function AddIncomeSheet({ today }: { today: string }) {
         >
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-muted-foreground">
+              <Label className="text-xs font-medium text-dt-dim">
                 {t("erp.income.form.amount")}
               </Label>
               <Input
@@ -77,7 +77,7 @@ export function AddIncomeSheet({ today }: { today: string }) {
               ) : null}
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-muted-foreground">
+              <Label className="text-xs font-medium text-dt-dim">
                 {t("erp.income.form.date")}
               </Label>
               <Input type="date" {...form.register("date")} />
@@ -85,7 +85,7 @@ export function AddIncomeSheet({ today }: { today: string }) {
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-xs font-medium text-muted-foreground">
+            <Label className="text-xs font-medium text-dt-dim">
               {t("erp.income.form.source")}
             </Label>
             <Select
@@ -114,7 +114,7 @@ export function AddIncomeSheet({ today }: { today: string }) {
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-xs font-medium text-muted-foreground">
+            <Label className="text-xs font-medium text-dt-dim">
               {t("erp.income.form.note")}
             </Label>
             <Input placeholder={t("erp.income.form.notePh")} {...form.register("note")} />

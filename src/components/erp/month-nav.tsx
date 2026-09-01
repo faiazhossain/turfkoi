@@ -25,7 +25,7 @@ export async function MonthNav({ month, basePath }: { month: string; basePath: s
       <Link
         href={`${basePath}?month=${prev}`}
         aria-label={t("erp.common.prevMonth")}
-        className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+        className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-dt-line text-dt-dim transition-colors hover:bg-dt-card2/50 hover:text-dt-txt"
       >
         <ChevronLeftIcon className="size-4" aria-hidden />
       </Link>
@@ -36,8 +36,8 @@ export async function MonthNav({ month, basePath }: { month: string; basePath: s
         href={`${basePath}?month=${next}`}
         aria-label={t("erp.common.nextMonth")}
         aria-disabled={month === current}
-        className={`inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border transition-colors hover:bg-muted/50 hover:text-foreground ${
-          month === current ? "pointer-events-none opacity-40" : "text-muted-foreground"
+        className={`inline-flex h-9 w-9 items-center justify-center rounded-lg border border-dt-line transition-colors hover:bg-dt-card2/50 hover:text-dt-txt ${
+          month === current ? "pointer-events-none opacity-40" : "text-dt-dim"
         }`}
       >
         <ChevronRightIcon className="size-4" aria-hidden />

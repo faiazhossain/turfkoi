@@ -64,7 +64,7 @@ export function BudgetSheet({
             ] as const
           ).map(([name, key]) => (
             <div key={name} className="space-y-1.5">
-              <Label className="text-xs font-medium text-muted-foreground">
+              <Label className="text-xs font-medium text-dt-dim">
                 {t(key)}
               </Label>
               <Input

@@ -21,10 +21,10 @@ export default async function ErpStaffPage() {
     <div className="mt-4 space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-dt-dim">
             {t("erp.staff.count", { count: active.length })}
           </p>
-          <p className="text-xs text-muted-foreground">{t("erp.staff.limitHint")}</p>
+          <p className="text-xs text-dt-dim">{t("erp.staff.limitHint")}</p>
         </div>
         <AddStaffSheet />
       </div>
@@ -38,18 +38,18 @@ export default async function ErpStaffPage() {
       ) : (
         <ul className="grid gap-3 sm:grid-cols-2">
           {staff.map((s) => (
-            <li key={s.id} className="rounded-xl border border-border bg-card p-4">
+            <li key={s.id} className="rounded-xl border border-dt-line bg-dt-card p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="font-heading text-sm font-semibold">{s.name}</p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-dt-dim">
                     {t(
                       `erp.staff.positions.${s.position === "other" && s.positionOther ? "other" : s.position}`
                     )}
                     {s.position === "other" && s.positionOther ? ` · ${s.positionOther}` : ""}
                   </p>
                   {s.phone ? (
-                    <p className="mt-0.5 font-mono text-xs text-muted-foreground">{s.phone}</p>
+                    <p className="mt-0.5 font-mono text-xs text-dt-dim">{s.phone}</p>
                   ) : null}
                 </div>
                 <StatusBadge
@@ -60,7 +60,7 @@ export default async function ErpStaffPage() {
               </div>
               <div className="mt-3 flex items-center justify-between">
                 <p className="text-sm">
-                  <span className="text-muted-foreground">
+                  <span className="text-dt-dim">
                     {t(`erp.staff.salaryTypes.${s.salaryType}`)}
                   </span>{" "}
                   <span className="font-semibold tabular-nums">

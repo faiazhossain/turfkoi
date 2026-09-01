@@ -37,13 +37,13 @@ function Row({
         <span className="tabular-nums">
           {fmt(actual)} / {target > 0 ? fmt(target) : "—"}
           {pct !== null ? (
-            <span className={`ml-2 ${good ? "text-primary" : "text-warning"}`}>{pct}%</span>
+            <span className={`ml-2 ${good ? "text-dt-green" : "text-warning"}`}>{pct}%</span>
           ) : null}
         </span>
       </div>
-      <div className="h-2.5 w-full overflow-hidden rounded bg-muted">
+      <div className="h-2.5 w-full overflow-hidden rounded bg-dt-card2">
         <div
-          className={`h-full rounded ${pct === null ? "bg-muted-foreground/30" : good ? "bg-primary" : "bg-warning"}`}
+          className={`h-full rounded ${pct === null ? "bg-dt-dim/30" : good ? "bg-dt-green" : "bg-warning"}`}
           style={{ width: `${pct ?? 0}%` }}
         />
       </div>
@@ -105,7 +105,7 @@ export default async function ErpGoalsPage({
         />
       ) : (
         <>
-          <section className="space-y-4 rounded-xl border border-border bg-card p-5">
+          <section className="space-y-4 rounded-xl border border-dt-line bg-dt-card p-5">
             <Row
               label={t("erp.goals.form.revenueTarget")}
               actual={progress.revenue.actual}
@@ -130,7 +130,7 @@ export default async function ErpGoalsPage({
             />
           </section>
 
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-dt-dim">
             {t("erp.goals.pace", { pace: Math.round(progress.pace * 100) })}
           </p>
           {progress.profit.requiredDaily !== null && progress.profit.requiredDaily > 0 ? (
@@ -140,7 +140,7 @@ export default async function ErpGoalsPage({
               })}
             </p>
           ) : progress.profit.target > 0 && progress.profit.pct === 100 ? (
-            <p className="text-sm text-primary">{t("erp.goals.targetMet")}</p>
+            <p className="text-sm text-dt-green">{t("erp.goals.targetMet")}</p>
           ) : null}
         </>
       )}

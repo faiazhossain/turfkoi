@@ -85,7 +85,7 @@ export default async function ErpOverviewPage() {
   return (
     <div className="space-y-8">
       {needsExpenses || needsStaff ? (
-        <section className="rounded-xl border border-border bg-card p-5">
+        <section className="rounded-xl border border-dt-line bg-dt-card p-5">
           <h2 className="font-heading text-base font-semibold">
             {t("erp.overview.onboardingTitle")}
           </h2>
@@ -93,7 +93,7 @@ export default async function ErpOverviewPage() {
             <li className="flex items-start justify-between gap-3">
               <div>
                 <p className="font-medium">{t("erp.overview.onboardingExpenses")}</p>
-                <p className="text-muted-foreground">{t("erp.overview.onboardingExpensesDesc")}</p>
+                <p className="text-dt-dim">{t("erp.overview.onboardingExpensesDesc")}</p>
               </div>
               {needsExpenses ? (
                 <AddExpenseSheet categories={categoryOptions} today={today} canRepeat={activeRules < 3} />
@@ -102,7 +102,7 @@ export default async function ErpOverviewPage() {
             <li className="flex items-start justify-between gap-3">
               <div>
                 <p className="font-medium">{t("erp.overview.onboardingStaff")}</p>
-                <p className="text-muted-foreground">{t("erp.overview.onboardingStaffDesc")}</p>
+                <p className="text-dt-dim">{t("erp.overview.onboardingStaffDesc")}</p>
               </div>
               {needsStaff ? <AddStaffSheet /> : null}
             </li>
@@ -121,7 +121,7 @@ export default async function ErpOverviewPage() {
         <KpiTile
           label={t("erp.overview.monthProfit")}
           value={fmt(overview.month.profit)}
-          className={overview.month.profit >= 0 ? "text-primary" : "text-destructive"}
+          className={overview.month.profit >= 0 ? "text-dt-green" : "text-destructive"}
         />
       </section>
 
@@ -130,13 +130,13 @@ export default async function ErpOverviewPage() {
           {t("erp.overview.alertsTitle")}
         </h2>
         {alerts.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{t("erp.overview.noAlerts")}</p>
+          <p className="text-sm text-dt-dim">{t("erp.overview.noAlerts")}</p>
         ) : (
           <ul className="space-y-2">
             {alerts.slice(0, 3).map((a, i) => (
               <li
                 key={i}
-                className="flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-3 text-sm"
+                className="flex items-center gap-2 rounded-lg border border-dt-line bg-dt-card px-4 py-3 text-sm"
               >
                 {a.icon === "bill" ? (
                   <ReceiptTextIcon className="size-4 text-warning" aria-hidden />
@@ -156,7 +156,7 @@ export default async function ErpOverviewPage() {
             <h2 className="font-heading text-base font-semibold">
               {t("erp.overview.upcomingBills")}
             </h2>
-            <Link href="/turf-owner/erp/bills" className="text-sm text-primary hover:underline">
+            <Link href="/turf-owner/erp/bills" className="text-sm text-dt-green hover:underline">
               {t("erp.nav.bills")} →
             </Link>
           </div>
@@ -164,11 +164,11 @@ export default async function ErpOverviewPage() {
             {overview.upcomingBills.map((b) => (
               <li
                 key={b.id}
-                className="flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3 text-sm"
+                className="flex items-center justify-between rounded-lg border border-dt-line bg-dt-card px-4 py-3 text-sm"
               >
                 <span>
                   <span className="block font-medium">{b.name}</span>
-                  <span className="block text-xs text-muted-foreground">
+                  <span className="block text-xs text-dt-dim">
                     {formatSlotDate(b.nextDueDate, locale)}
                   </span>
                 </span>
@@ -180,7 +180,7 @@ export default async function ErpOverviewPage() {
       ) : null}
 
       {overview.bestWeekday !== null ? (
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-dt-dim">
           {t("erp.overview.insightBestDay", {
             day: t(`erp.weekdays.${overview.bestWeekday}`),
           })}
@@ -197,7 +197,7 @@ export default async function ErpOverviewPage() {
           <AddStaffSheet />
           <Link
             href="/turf-owner/erp/staff/salaries"
-            className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+            className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-dt-line px-3 text-sm font-medium text-dt-dim transition-colors hover:bg-dt-card2/50 hover:text-dt-txt"
           >
             <BanknoteIcon className="size-4" aria-hidden />
             {t("erp.overview.qaSalary")}
@@ -205,14 +205,14 @@ export default async function ErpOverviewPage() {
           <AddBillSheet categories={billCategoryOptions} today={today} />
           <Link
             href="/turf-owner/erp/profit"
-            className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+            className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-dt-line px-3 text-sm font-medium text-dt-dim transition-colors hover:bg-dt-card2/50 hover:text-dt-txt"
           >
             <WalletIcon className="size-4" aria-hidden />
             {t("erp.nav.profit")}
           </Link>
           <Link
             href="/turf-owner/erp/staff/salaries"
-            className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+            className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-dt-line px-3 text-sm font-medium text-dt-dim transition-colors hover:bg-dt-card2/50 hover:text-dt-txt"
           >
             <BanknoteIcon className="size-4" aria-hidden />
             {t("erp.overview.pendingSalariesValue", {
