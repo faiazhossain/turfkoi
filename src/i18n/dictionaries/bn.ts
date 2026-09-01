@@ -729,14 +729,15 @@ export const bn: Dictionary = {
       emptyGroup: "{group}-এ এখনো কেউ নেই।",
       seatsFull: "স্কোয়াড পূর্ণ ✓",
       seatsNeed: "আরও {need} জন দরকার",
-      saidLine: "আপনি {said} জন বলেছিলেন — এখন পর্যন্ত {joined} জন জয়েন করেছে।",
+      saidLine:
+        "স্কোয়াড সাইজ {squadSize} জন — আপনি বলেছিলেন {said} জন আসবে, এখন পর্যন্ত {joined} জন জয়েন করেছে।",
       toJoinLine:
         "এখনো আসতে বাকি {remaining} জন — friends লিস্ট থেকে invite করুন, তাদের তথ্য নিজে যোগ করুন, অথবা সিটগুলো এভাবেই রাখুন।",
       communityLine:
-        "{open} জনের সিট DeshiTurf কমিউনিটির জন্য খোলা — player রা নিজে নিজে join করতে পারবে, অথবা আপনি invite পাঠাতে পারবেন।",
+        "আরও {open} জন দরকার — DeshiTurf-এ দেখুন কারা খেলতে available; তারা নিজে নিজে join করতে পারবে, অথবা আপনি invite পাঠাতে পারবেন।",
       onField: "মাঠে {count}/{total}",
       benchCount: "বেঞ্চে {count}/{total}",
-      unnamed: "তুমি বলেছিলে {count} জন আসবে",
+      unnamed: "{count} জন এখনো আসতে বাকি",
       pendingCount: "invite বাকি {count}",
       squadSizeLabel: "স্কোয়াড সাইজ:",
       countUpdated: "Player সংখ্যা আপডেট হয়েছে।",

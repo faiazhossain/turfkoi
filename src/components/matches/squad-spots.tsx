@@ -140,7 +140,11 @@ export function SquadSpots({
       {filled > 0 ? (
         <div className="space-y-1.5 rounded-xl bg-dt-card2/50 p-2.5">
           <p className="text-sm font-medium text-dt-txt">
-            {t("matches.squad.saidLine", { said: num(filled), joined: num(total) })}
+            {t("matches.squad.saidLine", {
+              squadSize: num(squadSize),
+              said: num(filled),
+              joined: num(total),
+            })}
           </p>
           {placeholders > 0 ? (
             <p className="text-xs leading-snug text-dt-dim">

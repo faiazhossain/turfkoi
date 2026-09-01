@@ -713,14 +713,15 @@ export const en = {
       emptyGroup: "No one in {group} yet.",
       seatsFull: "Squad full ✓",
       seatsNeed: "{need} more needed",
-      saidLine: "You said {said} players — {joined} joined so far.",
+      saidLine:
+        "Squad size {squadSize} — you said {said} will come, {joined} joined so far.",
       toJoinLine:
         "For the {remaining} still to join — invite them from your friends list, add their details, or keep the seats as they are.",
       communityLine:
-        "{open} seats open for the DeshiTurf community — players can ask to join, or you can invite them.",
+        "{open} more players needed — see who is available to play on DeshiTurf: they can ask to join, or you can invite them.",
       onField: "On field {count}/{total}",
       benchCount: "Bench {count}/{total}",
-      unnamed: "{count} you said are coming",
+      unnamed: "{count} still to join",
       pendingCount: "{count} invites pending",
       squadSizeLabel: "Squad size:",
       countUpdated: "Player count updated.",
