@@ -42,7 +42,7 @@ export function TeamLogoField({
     <div className="space-y-2">
       <label className="block text-sm font-medium">{t("team.logoLabel")}</label>
       <div className="flex items-center gap-3">
-        <div className="flex size-16 items-center justify-center overflow-hidden rounded-lg bg-muted">
+        <div className="flex size-16 items-center justify-center overflow-hidden rounded-lg bg-dt-card2">
           {logoPublicId ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -51,14 +51,14 @@ export function TeamLogoField({
               className="size-full object-cover"
             />
           ) : (
-            <ImageIcon className="size-5 text-muted-foreground" aria-hidden />
+            <ImageIcon className="size-5 text-dt-dim" aria-hidden />
           )}
         </div>
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={uploading}
-          className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border px-3 text-sm hover:bg-muted/50 disabled:opacity-50"
+          className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-dt-line px-3 text-sm hover:bg-dt-card2/50 disabled:opacity-50"
         >
           {uploading ? (
             <Loader size={14} className="size-3.5" aria-hidden />

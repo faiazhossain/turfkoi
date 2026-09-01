@@ -126,7 +126,7 @@ export function MemberManager({
       {canManage ? (
         <section className="space-y-2">
           <h3 className="font-heading text-sm font-semibold">{t("team.addMemberTitle")}</h3>
-          <p className="text-sm text-muted-foreground">{t("team.addMemberDesc")}</p>
+          <p className="text-sm text-dt-dim">{t("team.addMemberDesc")}</p>
           <div className="flex items-end gap-2">
             <div className="flex-1 space-y-1.5">
               <Label htmlFor="phone" className="sr-only">
@@ -150,21 +150,21 @@ export function MemberManager({
         <h3 className="font-heading text-sm font-semibold">
           {t("team.membersCount", { count: members.length })}
         </h3>
-        <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border">
+        <ul className="divide-y divide-dt-line overflow-hidden rounded-lg border border-dt-line">
           {members.map((m) => (
             <li
               key={m.userId}
-              className="flex flex-wrap items-center justify-between gap-2 bg-card p-3 text-sm"
+              className="flex flex-wrap items-center justify-between gap-2 bg-dt-card p-3 text-sm"
             >
               <div className="min-w-0">
                 <p className="truncate font-medium">
                   {m.name ?? m.phone}
                   {m.userId === currentUserId ? (
-                    <span className="ml-1 text-xs text-muted-foreground">{t("team.you")}</span>
+                    <span className="ml-1 text-xs text-dt-dim">{t("team.you")}</span>
                   ) : null}
                 </p>
                 {m.name ? (
-                  <p className="truncate text-xs text-muted-foreground">
+                  <p className="truncate text-xs text-dt-dim">
                     {m.phone}
                   </p>
                 ) : null}
@@ -210,10 +210,10 @@ export function MemberManager({
       {isOwner ? (
         <section className="space-y-2">
           <h3 className="font-heading text-sm font-semibold">
-            <CrownIcon className="mr-1 inline size-4 text-primary" aria-hidden />
+            <CrownIcon className="mr-1 inline size-4 text-dt-green" aria-hidden />
             {t("team.transferTitle")}
           </h3>
-          <p className="text-sm text-muted-foreground">{t("team.transferDesc")}</p>
+          <p className="text-sm text-dt-dim">{t("team.transferDesc")}</p>
           {transferTarget ? (
             <div className="flex items-center gap-2">
               <Button
@@ -261,11 +261,11 @@ export function MemberManager({
           <h3 className="font-heading text-sm font-semibold">
             {t("team.pendingInvites", { count: invitations.length })}
           </h3>
-          <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border border-dashed">
+          <ul className="divide-y divide-dt-line overflow-hidden rounded-lg border border-dt-line border-dashed">
             {invitations.map((inv) => (
               <li
                 key={inv.id}
-                className="flex items-center justify-between gap-2 bg-card p-3 text-sm"
+                className="flex items-center justify-between gap-2 bg-dt-card p-3 text-sm"
               >
                 <span className="font-mono text-xs">{inv.phone}</span>
                 <StatusBadge status="warning" showIcon={false}>
@@ -274,7 +274,7 @@ export function MemberManager({
               </li>
             ))}
           </ul>
-          <p className="text-xs text-muted-foreground">{t("team.pendingNote")}</p>
+          <p className="text-xs text-dt-dim">{t("team.pendingNote")}</p>
         </section>
       ) : null}
     </div>

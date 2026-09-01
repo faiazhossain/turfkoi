@@ -34,7 +34,7 @@ export default async function TeamDashboardPage() {
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="font-heading text-2xl font-semibold">{t("team.title")}</h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-dt-dim">
             {myTeams.length === 1
               ? t("team.countOne")
               : t("team.countMany", { count: myTeams.length })}
@@ -63,11 +63,11 @@ export default async function TeamDashboardPage() {
             <li key={tm.id}>
               <Link
                 href={`/team/${tm.slug}`}
-                className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card p-4 hover:bg-muted/40"
+                className="flex items-center justify-between gap-3 rounded-lg border border-dt-line bg-dt-card p-4 hover:bg-dt-card2/40"
               >
                 <div className="min-w-0">
                   <p className="truncate font-heading font-semibold">{tm.name}</p>
-                  <p className="text-xs text-muted-foreground">/team/{tm.slug}</p>
+                  <p className="text-xs text-dt-dim">/team/{tm.slug}</p>
                 </div>
                 <StatusBadge status={ROLE_TONE[tm.role]} showIcon={false}>
                   {t(teamMemberRoleLabel(tm.role))}

@@ -63,11 +63,11 @@ export default async function TeamDetailPage({ params }: PageProps) {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-12">
-      <nav className="text-sm text-muted-foreground">
-        <Link href="/team" className="hover:text-foreground">
+      <nav className="text-sm text-dt-dim">
+        <Link href="/team" className="hover:text-dt-txt">
           {t("team.title")}
         </Link>{" "}
-        / <span className="text-foreground">{team.name}</span>
+        / <span className="text-dt-txt">{team.name}</span>
       </nav>
 
       <header className="flex flex-wrap items-center justify-between gap-3">
@@ -82,7 +82,7 @@ export default async function TeamDetailPage({ params }: PageProps) {
           ) : null}
           <div>
             <h1 className="font-heading text-2xl font-semibold">{team.name}</h1>
-            <p className="text-xs text-muted-foreground">/team/{team.slug}</p>
+            <p className="text-xs text-dt-dim">/team/{team.slug}</p>
           </div>
         </div>
         {isOwner ? (

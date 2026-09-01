@@ -80,7 +80,7 @@ export function TeamForm({ mode, teamId, initial }: TeamFormProps) {
           }}
         />
         {form.formState.errors.name ? (
-          <p className="text-xs text-destructive">
+          <p className="text-xs text-dt-red">
             {fieldError(form.formState.errors.name.message, t)}
           </p>
         ) : null}
@@ -89,11 +89,11 @@ export function TeamForm({ mode, teamId, initial }: TeamFormProps) {
         <Label htmlFor="slug">{t("team.form.slugLabel")}</Label>
         <Input id="slug" {...form.register("slug")} />
         {form.formState.errors.slug ? (
-          <p className="text-xs text-destructive">
+          <p className="text-xs text-dt-red">
             {fieldError(form.formState.errors.slug.message, t)}
           </p>
         ) : null}
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-dt-dim">
           {t("team.form.urlHint", {
             slug: form.watch("slug") || t("team.form.slugPlaceholder"),
           })}

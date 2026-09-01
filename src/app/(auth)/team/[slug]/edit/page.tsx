@@ -42,15 +42,15 @@ export default async function EditTeamPage({ params }: PageProps) {
 
   return (
     <div className="mx-auto max-w-lg space-y-6 px-4 py-12">
-      <nav className="text-sm text-muted-foreground">
-        <Link href="/team" className="hover:text-foreground">
+      <nav className="text-sm text-dt-dim">
+        <Link href="/team" className="hover:text-dt-txt">
           {t("team.title")}
         </Link>{" "}
         /{" "}
-        <Link href={`/team/${team.slug}`} className="hover:text-foreground">
+        <Link href={`/team/${team.slug}`} className="hover:text-dt-txt">
           {team.name}
         </Link>{" "}
-        / <span className="text-foreground">{t("common.edit")}</span>
+        / <span className="text-dt-txt">{t("common.edit")}</span>
       </nav>
       <header>
         <h1 className="font-heading text-2xl font-semibold">{t("team.editTitle")}</h1>
