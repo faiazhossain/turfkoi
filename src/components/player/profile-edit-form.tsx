@@ -128,7 +128,7 @@ export function ProfileEditForm({
       className="space-y-8"
       noValidate
     >
-      <section className="rounded-lg border border-border bg-card p-4">
+      <section className="rounded-lg border border-dt-line bg-dt-card p-4">
         <AvatarPicker
           userId={userId}
           avatarType={form.watch("avatarType") ?? profile.avatarType}
@@ -150,7 +150,7 @@ export function ProfileEditForm({
           <Label htmlFor="name">{t("profile.edit.nameLabel")}</Label>
           <Input id="name" autoComplete="name" {...form.register("name")} />
           {form.formState.errors.name && (
-            <p className="text-sm text-destructive">
+            <p className="text-sm text-dt-red">
               {t(form.formState.errors.name.message ?? "")}
             </p>
           )}
@@ -162,7 +162,7 @@ export function ProfileEditForm({
             <div className="flex items-center gap-2">
               <Input id="playerId" value={profile.playerId} readOnly disabled className="font-mono" />
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-dt-dim">
               {t("players.playerIdPermanent")}
             </p>
           </div>
@@ -177,11 +177,11 @@ export function ProfileEditForm({
             {...form.register("username")}
           />
           {form.formState.errors.username && (
-            <p className="text-sm text-destructive">
+            <p className="text-sm text-dt-red">
               {t(form.formState.errors.username.message ?? "")}
             </p>
           )}
-          <p className="text-xs text-muted-foreground">{t("players.usernameHint")}</p>
+          <p className="text-xs text-dt-dim">{t("players.usernameHint")}</p>
         </div>
 
         <div className="space-y-2">
@@ -197,7 +197,7 @@ export function ProfileEditForm({
 
         <div className="space-y-2">
           <Label>{t("profile.secondaryPositionLabel")}</Label>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-dt-dim">
             {t("profile.edit.secondaryHint")}
           </p>
           <PositionPicker
@@ -228,14 +228,14 @@ export function ProfileEditForm({
             placeholder={t("profile.edit.bioPlaceholder")}
             {...form.register("bio")}
           />
-          <p className="text-right text-xs tabular-nums text-muted-foreground">
+          <p className="text-right text-xs tabular-nums text-dt-dim">
             {t("profile.edit.bioCounter", { count: bioValue.length })}
           </p>
         </div>
 
         <div className="space-y-2">
           <Label>{t("profile.edit.locationLabel")}</Label>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-dt-dim">
             {t("profile.edit.locationHelp")}
           </p>
           <LocationPicker

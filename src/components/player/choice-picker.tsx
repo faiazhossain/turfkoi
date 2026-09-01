@@ -61,8 +61,8 @@ export function ChoicePicker({
                   "inline-flex items-center rounded-full border px-3.5 py-2 text-sm transition-colors",
                   "peer-focus-visible:ring-[3px] peer-focus-visible:ring-ring/50 peer-focus-visible:outline-1 peer-focus-visible:outline-ring",
                   checked
-                    ? "border-primary bg-primary/10 font-medium text-primary"
-                    : "border-border text-foreground/80 hover:border-primary/50 hover:text-foreground"
+                    ? "border-dt-green bg-dt-green/10 font-medium text-dt-green"
+                    : "border-dt-line text-dt-txt/80 hover:border-dt-green/50 hover:text-dt-txt"
                 )}
               >
                 {opt.label}

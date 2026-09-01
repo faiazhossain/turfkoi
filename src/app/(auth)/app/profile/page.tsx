@@ -91,15 +91,15 @@ export default async function ProfilePage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-12">
-      <nav className="text-sm text-muted-foreground">
-        <Link href="/app" className="inline-flex items-center gap-1 hover:text-foreground">
+      <nav className="text-sm text-dt-dim">
+        <Link href="/app" className="inline-flex items-center gap-1 hover:text-dt-txt">
           <ArrowLeftIcon className="size-3.5" aria-hidden />
           {t("profile.backToDashboard")}
         </Link>
       </nav>
 
       {/* Identity card */}
-      <section className="rounded-lg border border-border bg-card p-5">
+      <section className="rounded-lg border border-dt-line bg-dt-card p-5">
         <div className="flex items-start gap-4">
           <PlayerAvatar display={display} size="xl" alt={avatarAlt} />
           <div className="min-w-0 flex-1">
@@ -116,9 +116,9 @@ export default async function ProfilePage() {
                   : t("profile.availabilityOff")}
               </StatusBadge>
             </div>
-            <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+            <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-dt-dim">
               {primaryRaw ? (
-                <span className="font-medium text-foreground/90">
+                <span className="font-medium text-dt-txt/90">
                   {primaryKey ? t(primaryKey) : primaryRaw}
                 </span>
               ) : null}
@@ -133,7 +133,7 @@ export default async function ProfilePage() {
               ) : null}
             </div>
             {profile?.area ? (
-              <div className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
+              <div className="mt-1 flex items-center gap-1 text-sm text-dt-dim">
                 <MapPinIcon className="size-3.5" aria-hidden />
                 {profile.area}
               </div>
@@ -158,11 +158,11 @@ export default async function ProfilePage() {
           {t("profile.aboutTitle")}
         </h2>
         {profile?.bio ? (
-          <p className="rounded-lg border border-border bg-card p-4 text-sm whitespace-pre-line">
+          <p className="rounded-lg border border-dt-line bg-dt-card p-4 text-sm whitespace-pre-line">
             {profile.bio}
           </p>
         ) : (
-          <p className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
+          <p className="rounded-lg border border-dashed border-dt-line p-4 text-sm text-dt-dim">
             {t("profile.aboutEmpty")}
           </p>
         )}
@@ -173,7 +173,7 @@ export default async function ProfilePage() {
         <h2 className="font-heading text-lg font-semibold">
           {t("profile.playingInfoTitle")}
         </h2>
-        <dl className="divide-y divide-border rounded-lg border border-border bg-card">
+        <dl className="divide-y divide-dt-line rounded-lg border border-dt-line bg-dt-card">
           <InfoRow label={t("profile.positionLabel")}>
             {primaryRaw ? (primaryKey ? t(primaryKey) : primaryRaw) : t("profile.notSet")}
           </InfoRow>
@@ -191,24 +191,24 @@ export default async function ProfilePage() {
             {profile?.area ?? t("profile.notSet")}
           </InfoRow>
         </dl>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-dt-dim">
           {t("profile.locationPrivacy")}
         </p>
       </section>
 
       {/* Completion */}
-      <section className="space-y-2 rounded-lg border border-border bg-card p-4">
+      <section className="space-y-2 rounded-lg border border-dt-line bg-dt-card p-4">
         <div className="flex items-center justify-between gap-2">
           <h2 className="font-heading text-sm font-semibold">
             {t("profile.completionTitle")}
           </h2>
-          <span className="text-sm tabular-nums text-muted-foreground">
+          <span className="text-sm tabular-nums text-dt-dim">
             {t("profile.completionLabel", { percent })}
           </span>
         </div>
         <Progress value={percent} aria-label={t("profile.completionTitle")} />
         {suggestions.length > 0 ? (
-          <ul className="space-y-1 pt-1 text-sm text-muted-foreground">
+          <ul className="space-y-1 pt-1 text-sm text-dt-dim">
             {suggestions.map((s) => (
               <li key={s}>· {s}</li>
             ))}
@@ -228,7 +228,7 @@ function InfoRow({
 }) {
   return (
     <div className="flex items-center justify-between gap-3 p-3 text-sm">
-      <dt className="text-muted-foreground">{label}</dt>
+      <dt className="text-dt-dim">{label}</dt>
       <dd className="text-right font-medium">{children}</dd>
     </div>
   )

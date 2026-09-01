@@ -26,7 +26,7 @@ export default async function SettingsPage() {
         <h1 className="font-heading text-2xl font-semibold">
           {t("settings.title")}
         </h1>
-        <p className="text-sm text-muted-foreground">{t("settings.desc")}</p>
+        <p className="text-sm text-dt-dim">{t("settings.desc")}</p>
       </header>
 
       <section className="space-y-3">
@@ -36,7 +36,7 @@ export default async function SettingsPage() {
           </h2>
           <Link
             href="/app/profile/edit"
-            className="text-sm text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+            className="text-sm text-dt-dim underline-offset-2 hover:text-dt-txt hover:underline"
           >
             {t("profile.editCta")}
           </Link>
@@ -54,9 +54,9 @@ export default async function SettingsPage() {
         <h2 className="font-heading text-lg font-semibold">
           {t("settings.dangerZone")}
         </h2>
-        <div className="rounded-lg border border-border bg-card p-4">
+        <div className="rounded-lg border border-dt-line bg-dt-card p-4">
           <p className="font-medium">{t("settings.deleteTitle")}</p>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 text-sm text-dt-dim">
             {t("settings.deleteDesc")}
           </p>
           <div className="mt-4">

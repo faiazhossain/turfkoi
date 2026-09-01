@@ -79,7 +79,7 @@ export function AvatarField({
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={uploading}
-          className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border px-3 text-sm hover:bg-muted/50 disabled:opacity-50"
+          className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-dt-line px-3 text-sm hover:bg-dt-card2/50 disabled:opacity-50"
         >
           {uploading ? (
             <Loader size={14} className="size-3.5" aria-hidden />

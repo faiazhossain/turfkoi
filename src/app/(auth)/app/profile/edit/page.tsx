@@ -37,10 +37,10 @@ export default async function ProfileEditPage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-12">
-      <nav className="text-sm text-muted-foreground">
+      <nav className="text-sm text-dt-dim">
         <Link
           href="/app/profile"
-          className="inline-flex items-center gap-1 hover:text-foreground"
+          className="inline-flex items-center gap-1 hover:text-dt-txt"
         >
           <ArrowLeftIcon className="size-3.5" aria-hidden />
           {t("profile.edit.backToProfile")}
@@ -50,7 +50,7 @@ export default async function ProfileEditPage() {
         <h1 className="font-heading text-2xl font-semibold">
           {t("profile.edit.title")}
         </h1>
-        <p className="text-sm text-muted-foreground">{t("profile.edit.desc")}</p>
+        <p className="text-sm text-dt-dim">{t("profile.edit.desc")}</p>
       </header>
       <ProfileEditForm userId={session.user.id} profile={data} />
     </div>

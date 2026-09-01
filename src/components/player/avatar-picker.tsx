@@ -54,7 +54,7 @@ export function AvatarPicker({
         <h3 className="font-heading text-lg font-semibold">
           {t("profile.avatar.pickerHeading")}
         </h3>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-dt-dim">
           {t("profile.avatar.pickerDesc")}
         </p>
       </div>
@@ -108,7 +108,7 @@ export function AvatarPicker({
             userName={userName}
             onUploaded={onPhotoAdopted}
           />
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-dt-dim">
             {t("profile.avatar.photoHint")}
           </p>
         </TabsContent>
@@ -150,8 +150,8 @@ function PresetGrid({
                   "block aspect-square overflow-hidden rounded-xl border transition-all",
                   "peer-focus-visible:ring-[3px] peer-focus-visible:ring-ring/50 peer-focus-visible:outline-1 peer-focus-visible:outline-ring",
                   selected
-                    ? "border-primary shadow-[0_0_0_4px] shadow-primary/20"
-                    : "border-border hover:border-primary/40"
+                    ? "border-dt-green shadow-[0_0_0_4px] shadow-dt-green/20"
+                    : "border-dt-line hover:border-dt-green/40"
                 )}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -164,7 +164,7 @@ function PresetGrid({
                 />
               </span>
               {selected ? (
-                <span className="absolute right-1 bottom-1 grid size-5 place-items-center rounded-full bg-primary text-primary-foreground shadow-med">
+                <span className="absolute right-1 bottom-1 grid size-5 place-items-center rounded-full bg-dt-green text-dt-ink shadow-med">
                   <CheckIcon className="size-3" aria-hidden />
                 </span>
               ) : null}

@@ -82,14 +82,14 @@ export default async function PlayerDashboardPage() {
           <h1 className="font-heading text-2xl font-semibold">
             {session.user.name ?? t("player.dashboardTitle")}
           </h1>
-          <p className="text-sm text-muted-foreground">{session.user.phone}</p>
+          <p className="text-sm text-dt-dim">{session.user.phone}</p>
         </div>
       </div>
 
       {/* Role switcher — only for users with more than the player hat */}
       {extraRoles.length > 0 && (
-        <section className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-card p-4">
-          <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        <section className="flex flex-wrap items-center gap-3 rounded-lg border border-dt-line bg-dt-card p-4">
+          <span className="text-xs font-medium uppercase tracking-wide text-dt-dim">
             {t("player.switchHats")}
           </span>
           {user!.roles.includes("turf_owner") && (
@@ -124,18 +124,18 @@ export default async function PlayerDashboardPage() {
       />
 
       {/* Invite friends (A3 referral — minimal MVP scaffold) */}
-      <section className="rounded-lg border border-border bg-card p-4">
+      <section className="rounded-lg border border-dt-line bg-dt-card p-4">
         <div className="flex items-center gap-2">
-          <GiftIcon className="size-5 text-primary" aria-hidden />
+          <GiftIcon className="size-5 text-dt-green" aria-hidden />
           <h2 className="font-heading text-lg font-semibold">
             {t("player.inviteTitle")}
           </h2>
         </div>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-1 text-sm text-dt-dim">
           {t("player.inviteDesc")}
         </p>
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          <code className="rounded-md border border-border bg-muted px-2 py-1 text-sm">
+          <code className="rounded-md border border-dt-line bg-dt-card2 px-2 py-1 text-sm">
             {inviteUrl}
           </code>
           <Button
@@ -155,7 +155,7 @@ export default async function PlayerDashboardPage() {
           </Button>
           <Link
             href="/app/settings"
-            className="text-xs text-muted-foreground hover:underline"
+            className="text-xs text-dt-dim hover:underline"
           >
             {t("player.accountSettings")}
           </Link>
@@ -175,33 +175,33 @@ export default async function PlayerDashboardPage() {
             action={
               <Link
                 href="/turfs"
-                className="text-sm font-medium text-primary hover:underline"
+                className="text-sm font-medium text-dt-green hover:underline"
               >
                 {t("player.findTurf")}
               </Link>
             }
           />
         ) : (
-          <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border">
+          <ul className="divide-y divide-dt-line overflow-hidden rounded-lg border border-dt-line">
             {bookings.map((b) => {
               const tone = STATUS_TONE[b.status] ?? "neutral"
               return (
                 <li key={b.id}>
                   <Link
                     href={`/bookings/${b.id}`}
-                    className="flex items-center justify-between gap-2 bg-card p-3 text-sm hover:bg-muted/40"
+                    className="flex items-center justify-between gap-2 bg-dt-card p-3 text-sm hover:bg-dt-card2/40"
                   >
                     <div className="min-w-0">
                       <p className="truncate font-heading font-medium">
                         {b.turfName}
                       </p>
-                      <p className="font-mono text-xs text-muted-foreground">
+                      <p className="font-mono text-xs text-dt-dim">
                         {b.date} · {b.slotStart.slice(0, 5)}–{b.slotEnd.slice(0, 5)}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
                       {b.totalAmount ? (
-                        <span className="tabular-nums text-muted-foreground">
+                        <span className="tabular-nums text-dt-dim">
                           ৳{Number(b.totalAmount).toLocaleString()}
                         </span>
                       ) : null}
@@ -220,7 +220,7 @@ export default async function PlayerDashboardPage() {
       {/* Nearby matches needing players */}
       <section className="space-y-3">
         <div className="flex flex-wrap items-center gap-2">
-          <ZapIcon className="size-5 text-primary" aria-hidden />
+          <ZapIcon className="size-5 text-dt-green" aria-hidden />
           <h2 className="font-heading text-lg font-semibold">
             {t("player.playTonightTitle")}
           </h2>
@@ -234,11 +234,11 @@ export default async function PlayerDashboardPage() {
             {t("matches.dashboardCreateCta")}
           </Button>
         </div>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-dt-dim">
           {t("player.playTonightDesc")}
         </p>
         {nearbyMatches.length === 0 ? (
-          <p className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
+          <p className="rounded-lg border border-dashed border-dt-line p-4 text-sm text-dt-dim">
             {t("player.noNearbyMatches")}
           </p>
         ) : (
@@ -246,7 +246,7 @@ export default async function PlayerDashboardPage() {
             {nearbyMatches.map((m) => (
               <li
                 key={m.id}
-                className="rounded-lg border border-border bg-card p-3"
+                className="rounded-lg border border-dt-line bg-dt-card p-3"
               >
                 <div className="flex items-center justify-between gap-2">
                   <div className="min-w-0">
@@ -258,12 +258,12 @@ export default async function PlayerDashboardPage() {
                         captain: m.captainName ?? t("matches.player"),
                       })}
                     </Link>
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-1 text-xs text-dt-dim">
                       <MapPinIcon className="size-3" aria-hidden />
                       {m.turfName}
                       {m.distanceKm != null ? ` · ${m.distanceKm.toFixed(1)} km` : ""}
                     </div>
-                    <p className="font-mono text-xs text-muted-foreground">
+                    <p className="font-mono text-xs text-dt-dim">
                       {m.date} · {m.slotStart.slice(0, 5)}
                     </p>
                   </div>
@@ -289,15 +289,15 @@ export default async function PlayerDashboardPage() {
           {t("player.historyTitle")}
         </h2>
         {history.length === 0 ? (
-          <p className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
+          <p className="rounded-lg border border-dashed border-dt-line p-4 text-sm text-dt-dim">
             {t("player.noHistory")}
           </p>
         ) : (
-          <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border">
+          <ul className="divide-y divide-dt-line overflow-hidden rounded-lg border border-dt-line">
             {history.map((h) => (
               <li
                 key={h.id}
-                className="flex items-center justify-between gap-2 bg-card p-3 text-sm"
+                className="flex items-center justify-between gap-2 bg-dt-card p-3 text-sm"
               >
                 <div className="min-w-0">
                   <Link
@@ -306,7 +306,7 @@ export default async function PlayerDashboardPage() {
                   >
                     {h.turfName}
                   </Link>
-                  <p className="font-mono text-xs text-muted-foreground">
+                  <p className="font-mono text-xs text-dt-dim">
                     {h.date} · {h.slotStart.slice(0, 5)}
                   </p>
                 </div>
@@ -323,7 +323,7 @@ export default async function PlayerDashboardPage() {
                     {t(matchStateLabel(h.state))}
                   </StatusBadge>
                   {h.asGuest ? (
-                    <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                    <span className="shrink-0 rounded-full bg-dt-card2 px-2 py-0.5 text-xs font-medium text-dt-dim">
                       {t("player.historyGuestBadge")}
                     </span>
                   ) : null}

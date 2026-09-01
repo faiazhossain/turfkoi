@@ -41,10 +41,10 @@ export function PlayerAvatar({
   return (
     <div
       className={cn(
-        "relative flex shrink-0 items-center justify-center overflow-hidden rounded-full ring-1 ring-border",
+        "relative flex shrink-0 items-center justify-center overflow-hidden rounded-full ring-1 ring-dt-line",
         display.kind === "initials" && display.text
-          ? "bg-primary/10"
-          : "bg-muted",
+          ? "bg-dt-green/10"
+          : "bg-dt-card2",
         SIZE_CLASSES[size],
         className
       )}
@@ -56,7 +56,7 @@ export function PlayerAvatar({
         display.text ? (
           <span
             className={cn(
-              "select-none font-heading font-semibold text-primary",
+              "select-none font-heading font-semibold text-dt-green",
               INITIALS_TEXT_CLASSES[size]
             )}
             aria-hidden
@@ -65,7 +65,7 @@ export function PlayerAvatar({
           </span>
         ) : (
           <UserRoundIcon
-            className="size-1/2 text-muted-foreground"
+            className="size-1/2 text-dt-dim"
             aria-hidden
           />
         )

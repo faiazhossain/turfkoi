@@ -33,9 +33,8 @@ export default async function FriendsHubPage() {
   ])
 
   return (
-    // friends.html styling, but the backdrop stays on the project's
-    // --background (#080B10) instead of the mockup's #0b1220.
-    <div className="min-h-dvh bg-background text-dt-txt">
+    // friends.html styling on the app-wide dt backdrop (phase 2 chrome).
+    <div className="min-h-dvh bg-dt-bg text-dt-txt">
       <div className="mx-auto max-w-lg space-y-4 px-4 py-8">
         <header>
           <h1 className="font-heading text-2xl font-bold">{t("friends.title")}</h1>

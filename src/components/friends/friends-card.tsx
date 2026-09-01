@@ -86,12 +86,12 @@ export function FriendsCard({
   const visibleHits = (hits ?? []).filter((h) => !friendIds.includes(h.id))
 
   return (
-    <section className="rounded-lg border border-border bg-card p-4">
+    <section className="rounded-lg border border-dt-line bg-dt-card p-4">
       <div className="flex items-center justify-between">
         <h2 className="font-heading text-lg font-semibold">{t("friends.title")}</h2>
         <a
           href="/app/friends"
-          className="text-sm font-medium text-primary hover:underline"
+          className="text-sm font-medium text-dt-green hover:underline"
         >
           {t("friends.viewAll")}
         </a>
@@ -101,9 +101,9 @@ export function FriendsCard({
       {requests.length > 0 ? (
         <div className="mt-3 space-y-2">
           <p className="text-sm font-medium">{t("friends.requestsTitle")}</p>
-          <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border">
+          <ul className="divide-y divide-dt-line overflow-hidden rounded-lg border border-dt-line">
             {requests.map((r) => (
-              <li key={r.friendshipId} className="flex items-center gap-3 bg-card p-2.5 text-sm">
+              <li key={r.friendshipId} className="flex items-center gap-3 bg-dt-card p-2.5 text-sm">
                 <PlayerAvatar
                   display={resolveAvatarDisplay({
                     avatarType: r.avatarType,
@@ -156,17 +156,17 @@ export function FriendsCard({
           ))}
         </ul>
       ) : hits !== null && visibleHits.length === 0 ? (
-        <p className="mt-2 text-xs text-muted-foreground">{t("friends.searchEmpty")}</p>
+        <p className="mt-2 text-xs text-dt-dim">{t("friends.searchEmpty")}</p>
       ) : null}
 
       {/* Friends list */}
       <div className="mt-4">
         {friends.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{t("friends.empty")}</p>
+          <p className="text-sm text-dt-dim">{t("friends.empty")}</p>
         ) : (
-          <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border">
+          <ul className="divide-y divide-dt-line overflow-hidden rounded-lg border border-dt-line">
             {friends.map((f) => (
-              <li key={f.friendshipId} className="flex items-center gap-3 bg-card p-2.5 text-sm">
+              <li key={f.friendshipId} className="flex items-center gap-3 bg-dt-card p-2.5 text-sm">
                 <PlayerAvatar
                   display={resolveAvatarDisplay({
                     avatarType: f.avatarType,
