@@ -756,6 +756,15 @@ export function CreateMatchWizard({
                       need: num(spotsNeeded),
                     })}
               </p>
+              {!fullSquad ? (
+                <p className="flex items-start gap-2 rounded-lg border border-dt-line bg-dt-card2/50 p-2.5 text-xs leading-snug text-dt-dim">
+                  <UsersIcon
+                    className="mt-0.5 size-3.5 shrink-0 text-dt-green"
+                    aria-hidden
+                  />
+                  <span>{t("matches.wizard.soloPoolHint")}</span>
+                </p>
+              ) : null}
             </div>
           ) : null}
         </div>

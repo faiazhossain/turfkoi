@@ -873,6 +873,8 @@ export const en = {
         "Friends without the app — share the match link; they join DeshiTurf and land in your match room.",
       fillSeatsManual:
         "Not joining the app? Add their details yourself — or keep the seats open with just the count.",
+      soloPoolHint:
+        "Open seats are visible to solo players on DeshiTurf looking for a team — they send join requests, you accept.",
       squadFill: "Squad: {count}/{total} — invitations are confirmed when players accept.",
       stepProgress: "Step {done} of {total}",
       navFormat: "Format",

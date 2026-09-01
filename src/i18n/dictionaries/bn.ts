@@ -891,6 +891,8 @@ export const bn: Dictionary = {
         "অ্যাপ নেই এমন বন্ধুরা — match link শেয়ার করুন; তারা DeshiTurf জয়েন করে সোজা আপনার ম্যাচ রুমে ঢুকবে।",
       fillSeatsManual:
         "অ্যাপে না ঢুকতে চাইলেও সমস্যা নেই — তাদের তথ্য আপনি নিজেই যোগ করতে পারেন, অথবা শুধু সংখ্যা দিয়ে সিট খালি রাখুন।",
+      soloPoolHint:
+        "খালি সিটগুলো DeshiTurf-এ টিম খোঁজা solo player-রা দেখতে পাবে — তারা join request পাঠাবে, আপনি accept করবেন।",
       squadFill:
         "Squad: {count}/{total} — সবাই Accept করলেই আপনার Squad Ready হবে।",
       stepProgress: "ধাপ {done}/{total}",
