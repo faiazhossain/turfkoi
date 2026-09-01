@@ -1038,6 +1038,8 @@ export const bn: Dictionary = {
     tabSent: "পাঠানো",
     online: "Online",
     offline: "Offline",
+    emptyOnline: "এখন কোনো friend online নেই।",
+    emptyOffline: "কোনো friend offline নেই।",
     invite: "Invite",
     cancelRequest: "Cancel",
     friendsCount: "Friends ({count})",

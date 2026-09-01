@@ -1019,6 +1019,8 @@ export const en = {
     tabSent: "Sent",
     online: "Online",
     offline: "Offline",
+    emptyOnline: "No friends online right now.",
+    emptyOffline: "No friends offline.",
     invite: "Invite",
     cancelRequest: "Cancel",
     friendsCount: "Friends ({count})",

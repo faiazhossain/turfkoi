@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, useTransition } from "react"
-import Link from "next/link"
+import { useRef, useState, useTransition } from "react"
+import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { CheckIcon, CopyIcon, SearchIcon, UsersIcon } from "lucide-react"
+import { CheckIcon, CopyIcon, SearchIcon, XIcon } from "lucide-react"
 
 import { useI18n } from "@/i18n/client"
 
@@ -25,10 +25,10 @@ import type { PlayerCardRow } from "@/features/player/queries"
 type Tab = "friends" | "requests" | "sent"
 
 /**
- * Player Network hub (/friends): identity search (DeshiTurf ID / @username /
- * name), friends grouped Online/Offline with match invites, incoming and
- * sent requests. Mirrors the approved friends-hub mockup: pills tabs, player
- * cards, quick actions.
+ * Player Network hub (/friends), mirroring the approved friends.html mockup:
+ * inline search box with icon trigger, three pill tabs (Friends / Requests /
+ * Sent), section dividers with Online/Offline legends, player cards with
+ * avatar + status dot + ID chip + position, and per-friend match invites.
  */
 export function FriendsPage({
   myPlayerId,
@@ -45,6 +45,7 @@ export function FriendsPage({
   friendIds: string[]
 }) {
   const { t } = useI18n()
+  const router = useRouter()
   const [tab, setTab] = useState<Tab>("friends")
   const [pending, start] = useTransition()
   const [term, setTerm] = useState("")
@@ -53,6 +54,7 @@ export function FriendsPage({
   const [inviteTarget, setInviteTarget] = useState<{ userId: string; name: string } | null>(
     null
   )
+  const searchRef = useRef<HTMLInputElement>(null)
 
   const online = friends.filter((f) => isPresenceOnline(f.lastSeenAt))
   const offline = friends.filter((f) => !isPresenceOnline(f.lastSeenAt))
@@ -87,17 +89,6 @@ export function FriendsPage({
     })
   }
 
-  function remove(friendshipId: string) {
-    start(async () => {
-      const res = await removeFriendAction({ friendshipId })
-      if (!res.ok) {
-        toast.error(t(res.error ?? "errors.generic"))
-        return
-      }
-      toast.success(t("friends.removedToast"))
-    })
-  }
-
   function cancelSent(friendshipId: string) {
     start(async () => {
       // removeFriendAction retracts a pending request from the sender side.
@@ -117,161 +108,229 @@ export function FriendsPage({
     setTimeout(() => setCopied(false), 1600)
   }
 
+  const searched = hits !== null
   const visibleHits = (hits ?? []).filter((h) => !friendIds.includes(h.userId))
 
   return (
     <div className="space-y-4">
-      {/* Your Player ID — the shareable handle */}
+      {/* Your Player ID — the shareable handle (id-chip from the mockup) */}
       {myPlayerId && (
-        <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card p-3">
-          <div className="min-w-0">
-            <p className="text-xs text-muted-foreground">{t("players.playerIdLabel")}</p>
-            <p className="font-mono text-sm font-semibold tracking-wide">{myPlayerId}</p>
-          </div>
-          <Button size="sm" variant="outline" onClick={copyId}>
-            {copied ? <CheckIcon data-icon="inline-start" /> : <CopyIcon data-icon="inline-start" />}
-            {copied ? t("players.copied") : t("players.copyId")}
-          </Button>
+        <div className="flex justify-center">
+          <button
+            type="button"
+            onClick={copyId}
+            className="inline-flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/10 px-4 py-2 font-mono text-sm font-bold tracking-wide text-primary transition-colors hover:bg-primary/15"
+            title={t("players.copyId")}
+          >
+            {myPlayerId}
+            {copied ? (
+              <CheckIcon className="size-4" aria-hidden />
+            ) : (
+              <CopyIcon className="size-4" aria-hidden />
+            )}
+          </button>
         </div>
       )}
 
-      {/* Player search (primary: DeshiTurf ID, then @username / name) */}
-      <div className="flex flex-wrap items-end gap-2">
+      {/* Search box (mockup: input + icon trigger inside one bordered pill) */}
+      <div className="flex items-center gap-2 rounded-xl border border-border bg-card px-3">
         <Input
+          ref={searchRef}
           value={term}
           onChange={(e) => setTerm(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter") search()
           }}
           placeholder={t("players.searchPlaceholder")}
-          className="min-w-48 flex-1"
+          className="h-11 flex-1 border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
           maxLength={50}
         />
-        <Button size="sm" variant="outline" onClick={search} loading={pending} disabled={term.trim().length < 2}>
-          <SearchIcon data-icon="inline-start" />
-          {t("friends.search")}
-        </Button>
+        <button
+          type="button"
+          onClick={search}
+          disabled={term.trim().length < 2 || pending}
+          aria-label={t("friends.search")}
+          className="text-primary disabled:opacity-40"
+        >
+          <SearchIcon className="size-5" aria-hidden />
+        </button>
       </div>
-      {term.trim().length >= 2 && hits !== null ? (
+      <p className="text-xs text-muted-foreground">
+        {t("players.searchHint", { code: myPlayerId ?? "DT-XXXXXX" })}
+      </p>
+
+      {/* Search results (same player-card row as the friends list) */}
+      {searched ? (
         visibleHits.length > 0 ? (
           <ul className="space-y-2">
             {visibleHits.map((h) => (
-              <li
+              <PlayerRow
                 key={h.userId}
-                className="flex items-center gap-3 rounded-lg border border-border bg-card p-2.5 text-sm"
+                row={{
+                  userId: h.userId,
+                  name: h.name,
+                  playerId: h.playerId,
+                  username: h.username,
+                  position: h.position,
+                  lastSeenAt: h.lastSeenAt,
+                  avatarType: h.avatarType,
+                  avatarPresetId: h.avatarPresetId,
+                  avatarPublicId: h.avatarPublicId,
+                }}
+                onClick={() => h.playerId && router.push(`/players/${h.playerId}`)}
               >
-                <PlayerAvatar
-                  display={resolveAvatarDisplay({
-                    avatarType: h.avatarType,
-                    avatarPublicId: h.avatarPublicId,
-                    avatarPresetId: h.avatarPresetId,
-                    name: h.name,
-                  })}
-                  size="sm"
-                />
-                <Link href={`/players/${h.playerId}`} className="min-w-0 flex-1">
-                  <span className="block truncate font-medium">{h.name}</span>
-                  <span className="block truncate text-xs text-muted-foreground">
-                    {h.username ? `@${h.username}` : ""}
-                    {h.playerId ? ` · ${h.playerId}` : ""}
-                  </span>
-                </Link>
-                <Button size="xs" variant="outline" onClick={() => request(h.userId)} loading={pending}>
+                <Button size="xs" onClick={() => request(h.userId)} loading={pending}>
                   {t("friends.addFriend")}
                 </Button>
-              </li>
+              </PlayerRow>
             ))}
           </ul>
         ) : (
-          <p className="text-xs text-muted-foreground">{t("players.searchEmptyTitle")}</p>
+          // Mockup empty state: icon / title / hint
+          <div className="py-8 text-center">
+            <div className="text-4xl opacity-70">🔍</div>
+            <h4 className="mt-2 font-heading text-base font-semibold">
+              {t("players.searchEmptyTitle")}
+            </h4>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {t("players.searchEmptyDesc")}
+            </p>
+          </div>
         )
-      ) : hits !== null && term.trim().length >= 2 ? (
-        <p className="text-xs text-muted-foreground">{t("players.searchEmptyDesc")}</p>
       ) : null}
 
-      {/* Pills tabs */}
+      {/* Pills tabs (mockup: three equal pills, active = tinted) */}
       <div className="grid grid-cols-3 gap-2" role="tablist">
         {(
           [
-            ["friends", t("friends.tabFriends"), friends.length],
-            ["requests", t("friends.tabRequests"), requests.length],
-            ["sent", t("friends.tabSent"), sent.length],
+            ["friends", t("friends.tabFriends"), friends.length, false],
+            ["requests", t("friends.tabRequests"), requests.length, requests.length > 0],
+            ["sent", t("friends.tabSent"), sent.length, false],
           ] as const
-        ).map(([key, label, count]) => (
+        ).map(([key, label, count, alert]) => (
           <button
             key={key}
             role="tab"
             aria-selected={tab === key}
             onClick={() => setTab(key)}
-            className={`rounded-lg border px-2 py-2 text-sm font-semibold transition-colors ${
+            className={`rounded-xl border px-2 py-2.5 text-sm font-bold transition-colors ${
               tab === key
                 ? "border-primary bg-primary/10 text-primary"
                 : "border-border bg-card text-muted-foreground hover:bg-accent"
             }`}
           >
-            {label} ({count})
+            {label}{" "}
+            <span className={alert && tab !== key ? "text-destructive" : undefined}>
+              ({count})
+            </span>
           </button>
         ))}
       </div>
 
       {tab === "friends" ? (
         friends.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-border p-8 text-center">
-            <UsersIcon className="mx-auto size-8 text-muted-foreground" aria-hidden />
-            <p className="mt-2 font-heading text-base font-medium">{t("friends.emptyTitle")}</p>
+          // Mockup empty state with CTA back to search
+          <div className="py-8 text-center">
+            <div className="text-4xl opacity-70">⚽</div>
+            <h4 className="mt-2 font-heading text-base font-semibold">
+              {t("friends.emptyTitle")}
+            </h4>
             <p className="mt-1 text-sm text-muted-foreground">{t("friends.emptyDesc")}</p>
+            <Button
+              size="sm"
+              className="mt-3"
+              onClick={() => {
+                setTab("friends")
+                searchRef.current?.focus()
+              }}
+            >
+              {t("friends.findPlayers")}
+            </Button>
           </div>
         ) : (
-          <div className="space-y-4">
-            <FriendGroup
-              label={`${t("friends.online")} · ${online.length}`}
-              rows={online}
-              onInvite={(f) => setInviteTarget({ userId: f.userId, name: f.name ?? "" })}
-              onRemove={remove}
-              pending={pending}
-            />
-            <FriendGroup
-              label={`${t("friends.offline")} · ${offline.length}`}
-              rows={offline}
-              onInvite={(f) => setInviteTarget({ userId: f.userId, name: f.name ?? "" })}
-              onRemove={remove}
-              pending={pending}
-            />
+          <div className="space-y-1">
+            <SectionDivider legend={`${t("friends.online")} · ${online.length}`} dot="online" />
+            {online.length === 0 ? (
+              <p className="px-1 pb-2 text-xs text-muted-foreground">
+                {t("friends.emptyOnline")}
+              </p>
+            ) : (
+              online.map((f) => (
+                <PlayerRow key={f.friendshipId} row={f}>
+                  <Button
+                    size="xs"
+                    onClick={() => setInviteTarget({ userId: f.userId, name: f.name ?? "" })}
+                    loading={pending}
+                  >
+                    {t("friends.invite")}
+                  </Button>
+                </PlayerRow>
+              ))
+            )}
+            <SectionDivider legend={`${t("friends.offline")} · ${offline.length}`} dot="offline" />
+            {offline.length === 0 ? (
+              <p className="px-1 text-xs text-muted-foreground">
+                {t("friends.emptyOffline")}
+              </p>
+            ) : (
+              offline.map((f) => (
+                <PlayerRow key={f.friendshipId} row={f}>
+                  <Button
+                    size="xs"
+                    onClick={() => setInviteTarget({ userId: f.userId, name: f.name ?? "" })}
+                    loading={pending}
+                  >
+                    {t("friends.invite")}
+                  </Button>
+                </PlayerRow>
+              ))
+            )}
           </div>
         )
       ) : null}
 
       {tab === "requests" ? (
         requests.length === 0 ? (
-          <p className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-            {t("friends.emptyRequests")}
-          </p>
+          <div className="py-8 text-center">
+            <div className="text-4xl opacity-70">📭</div>
+            <h4 className="mt-2 font-heading text-base font-semibold">
+              {t("friends.emptyRequests")}
+            </h4>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {t("friends.emptyRequestsDesc")}
+            </p>
+          </div>
         ) : (
           <ul className="space-y-2">
             {requests.map((r) => (
-              <li key={r.friendshipId} className="flex items-center gap-3 rounded-lg border border-border bg-card p-2.5 text-sm">
-                <PlayerAvatar
-                  display={resolveAvatarDisplay({
-                    avatarType: r.avatarType,
-                    avatarPublicId: r.avatarPublicId,
-                    avatarPresetId: r.avatarPresetId,
-                    name: r.name,
-                  })}
-                  size="sm"
-                />
-                <span className="min-w-0 flex-1 truncate">
-                  {r.name ?? r.phone}
-                  <span className="block text-xs text-muted-foreground">
-                    {t("friends.incomingRequest")}
-                  </span>
-                </span>
+              <PlayerRow
+                key={r.friendshipId}
+                row={{
+                  userId: r.userId,
+                  name: r.name,
+                  playerId: null,
+                  username: null,
+                  position: null,
+                  lastSeenAt: null,
+                  avatarType: r.avatarType,
+                  avatarPresetId: r.avatarPresetId,
+                  avatarPublicId: r.avatarPublicId,
+                }}
+                subtitle={t("friends.incomingRequest")}
+              >
                 <Button size="xs" onClick={() => respond(r.friendshipId, true)} loading={pending}>
                   {t("friends.accept")}
                 </Button>
-                <Button size="xs" variant="ghost" onClick={() => respond(r.friendshipId, false)} loading={pending}>
-                  {t("friends.decline")}
+                <Button
+                  size="xs"
+                  variant="ghost"
+                  aria-label={t("friends.decline")}
+                  onClick={() => respond(r.friendshipId, false)}
+                  loading={pending}
+                >
+                  <XIcon className="size-3.5" aria-hidden />
                 </Button>
-              </li>
+              </PlayerRow>
             ))}
           </ul>
         )
@@ -279,27 +338,39 @@ export function FriendsPage({
 
       {tab === "sent" ? (
         sent.length === 0 ? (
-          <p className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-            {t("friends.emptySent")}
-          </p>
+          <div className="py-8 text-center">
+            <div className="text-4xl opacity-70">📤</div>
+            <h4 className="mt-2 font-heading text-base font-semibold">
+              {t("friends.emptySent")}
+            </h4>
+            <p className="mt-1 text-sm text-muted-foreground">{t("friends.emptySentDesc")}</p>
+          </div>
         ) : (
           <ul className="space-y-2">
             {sent.map((r) => (
-              <li key={r.friendshipId} className="flex items-center gap-3 rounded-lg border border-border bg-card p-2.5 text-sm">
-                <PlayerAvatar
-                  display={resolveAvatarDisplay({
-                    avatarType: r.avatarType,
-                    avatarPublicId: r.avatarPublicId,
-                    avatarPresetId: r.avatarPresetId,
-                    name: r.name,
-                  })}
-                  size="sm"
-                />
-                <span className="min-w-0 flex-1 truncate">{r.name ?? r.phone}</span>
-                <Button size="xs" variant="ghost" onClick={() => cancelSent(r.friendshipId)} loading={pending}>
+              <PlayerRow
+                key={r.friendshipId}
+                row={{
+                  userId: r.userId,
+                  name: r.name,
+                  playerId: null,
+                  username: null,
+                  position: null,
+                  lastSeenAt: null,
+                  avatarType: r.avatarType,
+                  avatarPresetId: r.avatarPresetId,
+                  avatarPublicId: r.avatarPublicId,
+                }}
+              >
+                <Button
+                  size="xs"
+                  variant="outline"
+                  onClick={() => cancelSent(r.friendshipId)}
+                  loading={pending}
+                >
                   {t("friends.cancelRequest")}
                 </Button>
-              </li>
+              </PlayerRow>
             ))}
           </ul>
         )
@@ -314,62 +385,119 @@ export function FriendsPage({
   )
 }
 
-function FriendGroup({
-  label,
-  rows,
-  onInvite,
-  onRemove,
-  pending,
+/** Mockup's section divider: legend chip + rule line. */
+function SectionDivider({
+  legend,
+  dot,
 }: {
-  label: string
-  rows: FriendRow[]
-  onInvite: (f: FriendRow) => void
-  onRemove: (friendshipId: string) => void
-  pending: boolean
+  legend: string
+  dot: "online" | "offline"
+}) {
+  return (
+    <div className="flex items-center gap-2.5 py-2">
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-1 text-xs font-semibold text-muted-foreground">
+        <span
+          aria-hidden
+          className={`size-2 rounded-full ${
+            dot === "online" ? "bg-green-500" : "bg-muted-foreground/40"
+          }`}
+        />
+        {legend}
+      </span>
+      <span className="h-px flex-1 bg-border" aria-hidden />
+    </div>
+  )
+}
+
+interface RowLike {
+  userId: string
+  name: string | null
+  playerId: string | null
+  username: string | null
+  position: string | null
+  lastSeenAt: Date | null
+  avatarType: string | null
+  avatarPresetId: string | null
+  avatarPublicId: string | null
+}
+
+/**
+ * Mockup player card: avatar with presence dot, name + @username, DeshiTurf
+ * ID chip (blue mono), position — actions on the right.
+ */
+function PlayerRow({
+  row,
+  subtitle,
+  onClick,
+  children,
+}: {
+  row: RowLike
+  /** Secondary line replacing ID/position (request rows). */
+  subtitle?: string
+  onClick?: () => void
+  children?: React.ReactNode
 }) {
   const { t } = useI18n()
-  if (rows.length === 0) return null
-  return (
-    <section>
-      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-        {label}
-      </p>
-      <ul className="space-y-2">
-        {rows.map((f) => (
-          <li key={f.friendshipId} className="flex items-center gap-3 rounded-lg border border-border bg-card p-2.5 text-sm">
-            <span className="relative">
-              <PlayerAvatar
-                display={resolveAvatarDisplay({
-                  avatarType: f.avatarType,
-                  avatarPublicId: f.avatarPublicId,
-                  avatarPresetId: f.avatarPresetId,
-                  name: f.name,
-                })}
-                size="sm"
-              />
-              <span
-                aria-hidden
-                className={`absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full border-2 border-card ${
-                  isPresenceOnline(f.lastSeenAt) ? "bg-green-500" : "bg-muted-foreground/40"
-                }`}
-              />
+  const online = isPresenceOnline(row.lastSeenAt)
+  const info = (
+    <>
+      <span className="flex min-w-0 items-center gap-1.5">
+        <span className="truncate text-sm font-bold">{row.name ?? ""}</span>
+        {row.username ? (
+          <span className="truncate text-xs font-semibold text-muted-foreground">
+            @{row.username}
+          </span>
+        ) : null}
+      </span>
+      {subtitle ? (
+        <span className="mt-0.5 block truncate text-xs text-muted-foreground">{subtitle}</span>
+      ) : (
+        <span className="mt-0.5 flex items-center gap-2">
+          {row.playerId ? (
+            <span className="rounded-md bg-primary/10 px-2 py-0.5 font-mono text-[11px] font-semibold text-primary">
+              {row.playerId}
             </span>
-            <Link href={`/players/${f.playerId}`} className="min-w-0 flex-1">
-              <span className="block truncate font-medium">{f.name ?? f.phone}</span>
-              <span className="block truncate text-xs text-muted-foreground">
-                {f.position ? `${f.position} · ` : ""}
-                {f.playerId ?? ""}
-              </span>
-            </Link>
-            <Button size="xs" variant="outline" onClick={() => onInvite(f)} loading={pending}>
-              {t("friends.invite")}
-            </Button>
-            <Button size="xs" variant="ghost" onClick={() => onRemove(f.friendshipId)} loading={pending}>
-              {t("friends.remove")}
-            </Button>
-          </li>
-        ))}
-      </ul>
-    </section>
+          ) : null}
+          {row.position ? (
+            <span className="text-[11px] font-bold text-muted-foreground">
+              {row.position}
+            </span>
+          ) : null}
+        </span>
+      )}
+    </>
+  )
+
+  return (
+    <li className="flex items-center gap-3 rounded-xl border border-border bg-card p-3 transition-colors hover:border-primary/50">
+      <span className="relative shrink-0">
+        <PlayerAvatar
+          display={resolveAvatarDisplay({
+            avatarType: row.avatarType,
+            avatarPublicId: row.avatarPublicId,
+            avatarPresetId: row.avatarPresetId,
+            name: row.name,
+          })}
+          size="md"
+        />
+        {row.lastSeenAt !== null ? (
+          <span
+            aria-hidden
+            title={online ? t("friends.online") : t("friends.offline")}
+            className={`absolute -bottom-0.5 -right-0.5 size-3 rounded-full border-2 border-card ${
+              online ? "bg-green-500" : "bg-muted-foreground/40"
+            }`}
+          />
+        ) : null}
+      </span>
+      {onClick ? (
+        <button type="button" onClick={onClick} className="min-w-0 flex-1 text-left">
+          {info}
+        </button>
+      ) : (
+        <div className="min-w-0 flex-1">{info}</div>
+      )}
+      <div className="flex shrink-0 items-center gap-1.5">{children}</div>
+    </li>
   )
 }
