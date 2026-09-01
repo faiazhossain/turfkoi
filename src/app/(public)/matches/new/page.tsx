@@ -49,7 +49,7 @@ export default async function NewMatchPage({
             <h1 className="font-heading text-2xl font-semibold">
               {t("matches.createTitle")}
             </h1>
-            <p className="text-sm text-muted-foreground">{t("matches.newSubtitle")}</p>
+            <p className="text-sm text-dt-dim">{t("matches.newSubtitle")}</p>
           </div>
           <MatchmakingHelp />
         </header>
@@ -65,18 +65,18 @@ export default async function NewMatchPage({
 
         {pendingPayment.length > 0 ? (
           <section className="space-y-2">
-            <h2 className="font-heading text-sm font-semibold text-muted-foreground">
+            <h2 className="font-heading text-sm font-semibold text-dt-dim">
               {t("matches.pendingPaymentTitle")}
             </h2>
             <ul className="space-y-2">
               {pendingPayment.map((b) => (
                 <li
                   key={b.id}
-                  className="flex items-center justify-between gap-3 rounded-xl border border-dashed border-border p-3"
+                  className="flex items-center justify-between gap-3 rounded-xl border border-dashed border-dt-line p-3"
                 >
                   <span className="min-w-0">
                     <span className="block truncate text-sm font-medium">{b.turfName}</span>
-                    <span className="block font-mono text-xs text-muted-foreground">
+                    <span className="block font-mono text-xs text-dt-dim">
                       {b.date} · {b.slotStart.slice(0, 5)}
                     </span>
                   </span>
@@ -121,7 +121,7 @@ export default async function NewMatchPage({
           <h1 className="font-heading text-2xl font-semibold">
             {t("matches.createTitle")}
           </h1>
-          <p className="text-sm text-muted-foreground">{t("matches.newSubtitle")}</p>
+          <p className="text-sm text-dt-dim">{t("matches.newSubtitle")}</p>
         </div>
         <MatchmakingHelp />
       </header>

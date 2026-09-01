@@ -28,7 +28,7 @@ export default async function MatchesPage() {
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="font-heading text-2xl font-semibold">{t("matches.title")}</h1>
-          <p className="text-sm text-muted-foreground">{t("matches.subtitle")}</p>
+          <p className="text-sm text-dt-dim">{t("matches.subtitle")}</p>
         </div>
         {user ? (
           <Button render={<Link href="/matches/new" />}>
@@ -52,15 +52,15 @@ export default async function MatchesPage() {
       ) : (
         <section className="space-y-3">
           <div className="flex items-center gap-2">
-            <SwordsIcon className="size-4 text-primary" aria-hidden />
+            <SwordsIcon className="size-4 text-dt-green" aria-hidden />
             <h2 className="font-heading text-lg font-semibold">
               {t("matches.challengesTitle")}
             </h2>
-            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary tabular-nums">
+            <span className="rounded-full bg-dt-green/10 px-2 py-0.5 text-xs font-medium text-dt-green tabular-nums">
               {matches.length}
             </span>
           </div>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-dt-dim">
             {t("matches.challengesDesc")}
           </p>
           <ul className="space-y-3">
@@ -76,7 +76,7 @@ export default async function MatchesPage() {
               return (
                 <li
                   key={m.id}
-                  className="rounded-lg border border-border bg-card p-4"
+                  className="rounded-lg border border-dt-line bg-dt-card p-4"
                 >
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">
@@ -86,11 +86,11 @@ export default async function MatchesPage() {
                             captain: m.captainName ?? t("matches.player"),
                           })}
                       </p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-dt-dim">
                         {m.turfName}
                         {m.turfArea ? ` · ${m.turfArea}` : ""}
                       </p>
-                      <p className="mt-1 font-mono text-xs text-muted-foreground">
+                      <p className="mt-1 font-mono text-xs text-dt-dim">
                         {m.date} · {m.slotStart.slice(0, 5)}
                       </p>
                       <div className="mt-2 flex flex-wrap items-center gap-1.5">
@@ -116,7 +116,7 @@ export default async function MatchesPage() {
                       <StatusBadge status="primary" showIcon={false}>
                         {t(matchTypeLabelKey(m.matchType))}
                       </StatusBadge>
-                      <span className="text-xs text-muted-foreground tabular-nums">
+                      <span className="text-xs text-dt-dim tabular-nums">
                         {t("matches.squad.hubFill", {
                           count: m.homeFilled,
                           total: cap,
@@ -127,7 +127,7 @@ export default async function MatchesPage() {
                       ) : null}
                       <Link
                         href={`/matches/${m.id}`}
-                        className="text-xs text-muted-foreground underline-offset-2 hover:underline"
+                        className="text-xs text-dt-dim underline-offset-2 hover:underline"
                       >
                         {t("common.viewDetails")}
                       </Link>

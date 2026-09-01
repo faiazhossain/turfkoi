@@ -74,8 +74,8 @@ function StepCard({
   return (
     <section
       aria-current={active ? "step" : undefined}
-      className={`animate-in fade-in slide-in-from-bottom-2 motion-reduce:animate-none rounded-xl border bg-card p-4 transition-colors duration-300 sm:p-5 ${
-        active ? "border-primary/40 shadow-sm" : "border-border"
+      className={`animate-in fade-in slide-in-from-bottom-2 motion-reduce:animate-none rounded-xl border bg-dt-card p-4 transition-colors duration-300 sm:p-5 ${
+        active ? "border-dt-green/40 shadow-sm" : "border-dt-line"
       }`}
     >
       <div className="flex items-start gap-3">
@@ -83,10 +83,10 @@ function StepCard({
           aria-hidden
           className={`flex size-7 shrink-0 items-center justify-center rounded-full font-heading text-xs font-bold transition-all duration-300 ${
             done
-              ? "bg-primary text-primary-foreground"
+              ? "bg-dt-green text-dt-ink"
               : active
-                ? "bg-primary/10 text-primary ring-4 ring-primary/10"
-                : "bg-muted text-muted-foreground"
+                ? "bg-dt-green/10 text-dt-green ring-4 ring-dt-green/10"
+                : "bg-dt-card2 text-dt-dim"
           }`}
         >
           {done ? (
@@ -103,7 +103,7 @@ function StepCard({
             {header}
           </div>
           {help ? (
-            <p className="mt-0.5 text-sm leading-snug text-muted-foreground">
+            <p className="mt-0.5 text-sm leading-snug text-dt-dim">
               {help}
             </p>
           ) : null}
@@ -135,19 +135,19 @@ function OptionCard({
       aria-pressed={selected}
       className={`relative rounded-xl border p-3 text-center transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm motion-reduce:hover:translate-y-0 ${
         selected
-          ? "border-primary bg-primary/10 ring-2 ring-primary/25"
-          : "border-border bg-card hover:border-primary/40"
+          ? "border-dt-green bg-dt-green/10 ring-2 ring-dt-green/25"
+          : "border-dt-line bg-dt-card hover:border-dt-green/40"
       } ${className}`}
     >
       {selected ? (
         <CheckIcon
           aria-hidden
-          className="absolute right-2 top-2 size-4 text-primary animate-in zoom-in-50 duration-200 motion-reduce:animate-none"
+          className="absolute right-2 top-2 size-4 text-dt-green animate-in zoom-in-50 duration-200 motion-reduce:animate-none"
         />
       ) : null}
       <span className="block font-heading font-semibold leading-tight">{label}</span>
       {sub ? (
-        <span className="mt-1 block text-xs leading-snug text-muted-foreground">
+        <span className="mt-1 block text-xs leading-snug text-dt-dim">
           {sub}
         </span>
       ) : null}
@@ -245,7 +245,7 @@ export function CreateMatchWizard({
     <div className="space-y-5">
       {/* Stepper — where am I, how much is left */}
       <nav aria-label={t("matches.wizard.stepProgress", { done: doneCount, total: steps.length })}>
-        <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        <p className="mb-2 text-xs font-medium uppercase tracking-wide text-dt-dim">
           {t("matches.wizard.stepProgress", {
             done: num(doneCount),
             total: num(steps.length),
@@ -263,10 +263,10 @@ export function CreateMatchWizard({
                   aria-hidden
                   className={`flex size-8 items-center justify-center rounded-full transition-all duration-300 ${
                     s.done
-                      ? "bg-primary text-primary-foreground"
+                      ? "bg-dt-green text-dt-ink"
                       : i === activeIdx
-                        ? "bg-primary/10 text-primary ring-4 ring-primary/15"
-                        : "bg-muted text-muted-foreground"
+                        ? "bg-dt-green/10 text-dt-green ring-4 ring-dt-green/15"
+                        : "bg-dt-card2 text-dt-dim"
                   }`}
                 >
                   {s.done ? (
@@ -281,8 +281,8 @@ export function CreateMatchWizard({
                 <span
                   className={`text-center text-[11px] font-medium leading-tight ${
                     s.done || i === activeIdx
-                      ? "text-foreground"
-                      : "text-muted-foreground"
+                      ? "text-dt-txt"
+                      : "text-dt-dim"
                   }`}
                 >
                   {s.label}
@@ -292,7 +292,7 @@ export function CreateMatchWizard({
                 <span
                   aria-hidden
                   className={`mt-4 h-0.5 min-w-3 flex-1 rounded-full transition-colors duration-500 ${
-                    steps[i].done && steps[i + 1].done ? "bg-primary" : "bg-border"
+                    steps[i].done && steps[i + 1].done ? "bg-dt-green" : "bg-dt-line"
                   }`}
                 />
               ) : null}
@@ -320,32 +320,32 @@ export function CreateMatchWizard({
                 onClick={() => setBookingId(b.id)}
                 className={`relative flex w-full items-center gap-3 rounded-xl border p-3 text-left transition-all duration-200 ${
                   bookingId === b.id
-                    ? "border-primary bg-primary/10 ring-2 ring-primary/25"
-                    : "border-border bg-card hover:border-primary/40"
+                    ? "border-dt-green bg-dt-green/10 ring-2 ring-dt-green/25"
+                    : "border-dt-line bg-dt-card hover:border-dt-green/40"
                 }`}
               >
                 {bookingId === b.id ? (
                   <CheckIcon
                     aria-hidden
-                    className="size-4 shrink-0 text-primary animate-in zoom-in-50 duration-200 motion-reduce:animate-none"
+                    className="size-4 shrink-0 text-dt-green animate-in zoom-in-50 duration-200 motion-reduce:animate-none"
                   />
                 ) : (
                   <span
                     aria-hidden
-                    className="size-4 shrink-0 rounded-full border border-muted-foreground/40"
+                    className="size-4 shrink-0 rounded-full border border-dt-dim/40"
                   />
                 )}
                 <span className="min-w-0 flex-1">
                   <span className="block truncate font-heading font-semibold leading-tight">
                     {b.turfName}
                     {b.turfArea ? (
-                      <span className="font-normal text-muted-foreground">
+                      <span className="font-normal text-dt-dim">
                         {" "}
                         · {b.turfArea}
                       </span>
                     ) : null}
                   </span>
-                  <span className="mt-0.5 block font-mono text-xs text-muted-foreground">
+                  <span className="mt-0.5 block font-mono text-xs text-dt-dim">
                     {slotDate(b.date)} · {slotTime(b.slotStart)}–{slotTime(b.slotEnd)}
                   </span>
                 </span>
@@ -359,11 +359,11 @@ export function CreateMatchWizard({
             {pendingPayment.map((b) => (
               <div
                 key={b.id}
-                className="flex items-center justify-between gap-3 rounded-xl border border-dashed border-border p-3"
+                className="flex items-center justify-between gap-3 rounded-xl border border-dashed border-dt-line p-3"
               >
                 <span className="min-w-0">
                   <span className="block truncate text-sm font-medium">{b.turfName}</span>
-                  <span className="block font-mono text-xs text-muted-foreground">
+                  <span className="block font-mono text-xs text-dt-dim">
                     {slotDate(b.date)} · {slotTime(b.slotStart)}
                   </span>
                 </span>
@@ -381,7 +381,7 @@ export function CreateMatchWizard({
         ) : null}
 
         {bookings.length === 0 ? (
-          <p className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
+          <p className="rounded-lg border border-dashed border-dt-line p-4 text-sm text-dt-dim">
             {t("matches.noEligibleBookingsShort")}
           </p>
         ) : null}
@@ -439,7 +439,7 @@ export function CreateMatchWizard({
               <span className="font-heading text-3xl font-bold tabular-nums">
                 {num(squadSize)}
               </span>
-              <span className="ml-1 text-sm text-muted-foreground">
+              <span className="ml-1 text-sm text-dt-dim">
                 / {num(maxSquad)}
               </span>
             </div>
@@ -462,13 +462,13 @@ export function CreateMatchWizard({
                 key={i}
                 className={`size-2.5 rounded-full transition-colors duration-200 ${
                   i < starters
-                    ? "bg-primary"
-                    : "bg-primary/15 ring-1 ring-inset ring-primary/50"
+                    ? "bg-dt-green"
+                    : "bg-dt-green/15 ring-1 ring-inset ring-dt-green/50"
                 }`}
               />
             ))}
           </div>
-          <p className="text-center text-sm text-muted-foreground">
+          <p className="text-center text-sm text-dt-dim">
             {t("matches.wizard.squadSummary", {
               starters: num(starters),
               subs: num(subs),
@@ -496,8 +496,8 @@ export function CreateMatchWizard({
             <div
               className={`flex items-center justify-center gap-2 rounded-xl border p-1.5 transition-colors ${
                 playerCount !== null && !fullSquad
-                  ? "border-primary bg-primary/10 ring-2 ring-primary/25"
-                  : "border-border bg-card"
+                  ? "border-dt-green bg-dt-green/10 ring-2 ring-dt-green/25"
+                  : "border-dt-line bg-dt-card"
               }`}
             >
               <Button
@@ -537,7 +537,7 @@ export function CreateMatchWizard({
 
           {/* Visual fill: X/Y bar — the single clearest "what's missing" cue */}
           {playerCount !== null ? (
-            <div className="animate-in space-y-2 rounded-lg border border-border bg-background p-3 fade-in slide-in-from-top-1 duration-300 motion-reduce:animate-none">
+            <div className="animate-in space-y-2 rounded-lg border border-dt-line bg-dt-bg p-3 fade-in slide-in-from-top-1 duration-300 motion-reduce:animate-none">
               <div className="flex items-center justify-between text-sm">
                 <span className="font-medium">{t("matches.wizard.yourSquad")}</span>
                 <span className="font-semibold tabular-nums">
@@ -547,7 +547,7 @@ export function CreateMatchWizard({
               <Progress value={(playerCount / squadSize) * 100} />
               <p
                 className={`text-sm leading-snug ${
-                  fullSquad ? "font-medium text-primary" : "text-muted-foreground"
+                  fullSquad ? "font-medium text-dt-green" : "text-dt-dim"
                 }`}
               >
                 {fullSquad
@@ -563,8 +563,8 @@ export function CreateMatchWizard({
       </StepCard>
 
       {/* Sticky action bar — summary + create always within reach */}
-      <div className="sticky bottom-0 -mx-4 mt-8 border-t border-border bg-background/90 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-md">
-        <p className="mb-2 truncate text-sm text-muted-foreground">
+      <div className="sticky bottom-0 -mx-4 mt-8 border-t border-dt-line bg-dt-bg/90 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-md">
+        <p className="mb-2 truncate text-sm text-dt-dim">
           {selectedBooking
             ? t("matches.wizard.squadFill", {
                 count: num(playerCount ?? squadSize),

@@ -109,7 +109,15 @@ Small surface, high traffic — good first end-to-end validation of the palette.
 `/players/[code]` (+ `profile-actions.tsx`, `invite-to-match-dialog.tsx`, `qr-share.tsx`),
 `/notifications` + `notification-bell.tsx` popover.
 
-### Phase 6 — Matchmaking
+### Phase 6 — Matchmaking ✅ (done, with a carve-out)
+`/matches`, `/matches/new`, and `create-match-wizard.tsx` are on `dt-*`. The match room
+(`matches/[id]`) and the room-only components keep **token classes on purpose**: the room
+keeps its own matchmaking.html neon identity via the `.match-hq` variable override
+(`globals.css`), which recolors token utilities — `dt-*` classes would ignore that override
+and leak friends-green into the neon room. Shared room/list components
+(`claim-opponent-button.tsx`, `matchmaking-help.tsx`) stay on tokens for the same reason.
+Phase 12's grep gate must whitelist the room scope or migrate the room to explicit
+match-* hex classes; decide there.
 `/matches`, `/matches/new`, `/m/[token]`, and the match room `src/components/matches/*`
 (`squad-spots`, `squad-groups`, `squad-invite-panel`, `join-battle`, `team-challenge`,
 `match-invite-link`, `button-modal`, `player-search`, `match-actions`). Follow
