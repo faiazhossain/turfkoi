@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" role="img" aria-label="Battle">
+  <defs>
+    <linearGradient id="steel" x1="3" y1="3" x2="21" y2="21" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#F4F7FB"/>
+      <stop offset="0.5" stop-color="#C3CCD8"/>
+      <stop offset="1" stop-color="#8E99A8"/>
+    </linearGradient>
+  </defs>
+  <!-- Black outline pass: keeps the blades readable on any map tile. -->
+  <g stroke="#0B0F14" stroke-width="4.8" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M14.5 17.5 3 6 3 3 6 3 17.5 14.5"/>
+    <path d="M13 19 19 13"/>
+    <path d="M16 16 20 20"/>
+    <path d="M19 21 21 19"/>
+    <path d="M14.5 6.5 18 3 21 3 21 6 17.5 10"/>
+    <path d="M5 14 9 18"/>
+    <path d="M7 17 4 20"/>
+    <path d="M3 19 5 21"/>
+  </g>
+  <!-- Steel pass: polished blade faces, dark steel guards and hilts. -->
+  <g stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M14.5 17.5 3 6 3 3 6 3 17.5 14.5" stroke="url(#steel)" stroke-width="2.6"/>
+    <path d="M14.5 6.5 18 3 21 3 21 6 17.5 10" stroke="url(#steel)" stroke-width="2.6"/>
+    <g stroke="#5B6673" stroke-width="2.2">
+      <path d="M13 19 19 13"/>
+      <path d="M16 16 20 20"/>
+      <path d="M19 21 21 19"/>
+      <path d="M5 14 9 18"/>
+      <path d="M7 17 4 20"/>
+      <path d="M3 19 5 21"/>
+    </g>
+  </g>
+</svg>

@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest"
 
 import {
   canClaimOpponentSide,
+  canLogMatchEvents,
+  canAssignRecorder,
   isCaptainRole,
   rosterOpen,
   hasFreeSpot,
@@ -130,5 +132,45 @@ describe("canClaimOpponentSide", () => {
 
   it("refuses players already on the roster", () => {
     expect(canClaimOpponentSide({ ...base, onRoster: true })).toBe(false)
+  })
+})
+
+describe("canLogMatchEvents", () => {
+  const userId = "aaaaaaaa-1111-4111-8111-111111111111"
+  const recorderId = "bbbbbbbb-2222-4222-8222-222222222222"
+
+  it("allows a side captain (side already resolved by the caller)", () => {
+    expect(
+      canLogMatchEvents({ side: "home", recorderId: null, userId })
+    ).toBe(true)
+    expect(
+      canLogMatchEvents({ side: "away", recorderId: null, userId })
+    ).toBe(true)
+  })
+
+  it("allows the assigned recorder", () => {
+    expect(
+      canLogMatchEvents({ side: null, recorderId, userId: recorderId })
+    ).toBe(true)
+  })
+
+  it("refuses everyone else", () => {
+    expect(
+      canLogMatchEvents({ side: null, recorderId, userId })
+    ).toBe(false)
+    expect(canLogMatchEvents({ side: null, recorderId: null, userId })).toBe(
+      false
+    )
+    expect(
+      canLogMatchEvents({ side: null, recorderId: null, userId: recorderId })
+    ).toBe(false)
+  })
+})
+
+describe("canAssignRecorder", () => {
+  it("allows either side's captain only", () => {
+    expect(canAssignRecorder({ side: "home" })).toBe(true)
+    expect(canAssignRecorder({ side: "away" })).toBe(true)
+    expect(canAssignRecorder({ side: null })).toBe(false)
   })
 })

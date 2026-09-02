@@ -57,6 +57,9 @@ Routes: `/app` (dashboard), `/app/settings`, `/matches`, `/matches/[id]`,
   payment status, cancellation, receipt.
 - **Match history + "I played"** — past matches with score; confirm
   attendance after kickoff.
+- **Match logs + live event log** — `/matches/logs` lists live and finished
+  matches (who played whom, scores); during a match a captain or assigned
+  recorder logs goals/saves/tackles/notes for the room's live stats.
 - **Invite friends (referral, A3)** — each player gets a stable code at
   `/invite/<code>`; landing page stamps a 30-day cookie and bounces to
   `/login`. The cookie attributes the signup to the referrer. **Rewards are

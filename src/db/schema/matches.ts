@@ -6,6 +6,7 @@ import {
   resultStatus,
   matchPlayerRole,
   matchSide,
+  matchEventType,
   requestStatus,
   squadRole,
   invitationStatus,
@@ -34,6 +35,12 @@ export const matches = pgTable(
     // Null while the match is open (opponent wanted).
     awayCaptainId: uuid("away_captain_id").references(() => users.id, {
       onDelete: "restrict",
+    }),
+    // Assigned live-event logger (a captain may delegate logging to any
+    // registered roster player). Cleared when the user is hard-anonymized —
+    // authority then collapses back to the captains.
+    recorderId: uuid("recorder_id").references(() => users.id, {
+      onDelete: "set null",
     }),
     state: matchState("state").notNull().default("draft"),
     matchType: matchType("match_type").notNull().default("fives"),
@@ -266,4 +273,47 @@ export const matchGuests = pgTable(
     index("match_guests_match_idx").on(t.matchId),
     index("match_guests_phone_idx").on(t.phone),
   ]
+)
+
+/**
+ * Live event log ("who scored / who saved / who tackled" + commentary),
+ * written by a captain or the assigned recorder while the match is ongoing.
+ * Names are snapshotted at write time — users.name is nulled by account
+ * anonymization, and the historical log must survive that. The side is
+ * derived server-side from the resolved roster row, never trusted from the
+ * client; player-less notes leave it null.
+ */
+export const matchEvents = pgTable(
+  "match_events",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    matchId: uuid("match_id")
+      .notNull()
+      .references(() => matches.id, { onDelete: "cascade" }),
+    // Side of the event's player; null for player-less notes.
+    side: matchSide("side"),
+    eventType: matchEventType("event_type").notNull(),
+    // Snapshot at write time: floor((now - kickoffAt) / 60000), clamped >= 0
+    // (captains may start early). Never recomputed — the log must not drift
+    // after the fact. Null when the match has no kickoffAt.
+    minute: integer("minute"),
+    // Exactly one of player_user_id / player_guest_id for stat events; both
+    // null for pure commentary.
+    playerUserId: uuid("player_user_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    playerGuestId: uuid("player_guest_id")
+      .references(() => matchGuests.id, { onDelete: "cascade" }),
+    // Display-name snapshot at write time (user name or masked phone /
+    // guest name) so the timeline outlives anonymization and roster edits.
+    playerName: text("player_name"),
+    note: text("note"),
+    createdBy: uuid("created_by").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [index("match_events_match_idx").on(t.matchId, t.createdAt)]
 )

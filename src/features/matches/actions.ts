@@ -10,6 +10,7 @@ import {
   matchPlayers,
   matchInvitations,
   matchGuests,
+  matchEvents,
   opponentRequests,
   bookings,
   turfs,
@@ -36,13 +37,22 @@ import { getWalletBalance } from "@/features/wallet/queries"
 import { isValidPhone, normalizePhone } from "@/features/auth/phone"
 import { createNotifications } from "@/features/notifications/create"
 import { getTeamRole, listTeamMembers } from "@/features/teams/queries"
-import { isCaptainRole, rosterOpen } from "./authority"
+import {
+  canAssignRecorder,
+  canLogMatchEvents,
+  isCaptainRole,
+  rosterOpen,
+} from "./authority"
 import {
   addGuestSchema,
+  assignRecorderSchema,
   claimOpponentSideSchema,
   createMatchSchema,
+  deleteMatchEventSchema,
+  logMatchEventSchema,
   submitResultSchema,
 } from "./schemas"
+import { matchMinute, parsePlayerRef } from "./events"
 import {
   FORMATS,
   isMatchFormat,
@@ -57,7 +67,7 @@ import {
   getSquadCounts,
   resolveSideCaptain,
 } from "./queries"
-import { mintShareToken } from "./constants"
+import { maskPhone, mintShareToken } from "./constants"
 import { lockMatchForSeatClaim, seatsFreeSql } from "./seat-claim"
 
 export type ActionResult =
@@ -1599,6 +1609,215 @@ export async function cancelMatchAction(matchId: string): Promise<ActionResult> 
   }
 
   revalidatePath("/matches")
+  revalidatePath(`/matches/${matchId}`)
+  return { ok: true }
+}
+
+/**
+ * Live event log (goal / save / tackle / note). Either side's captain, or
+ * the captain-assigned recorder, may write while the match is ongoing. The
+ * event's side and display name are derived from the resolved roster row —
+ * never taken from the client.
+ */
+export async function logMatchEventAction(
+  input: z.infer<typeof logMatchEventSchema>
+): Promise<ActionResult & { id?: string }> {
+  const parsed = logMatchEventSchema.safeParse(input)
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: parsed.error.issues[0]?.message ?? "errors.invalid",
+    }
+  }
+  const user = await getCurrentUser()
+  if (!user) return unauthorized()
+
+  const { matchId, eventType, playerRef, note } = parsed.data
+  const [match] = await db
+    .select()
+    .from(matches)
+    .where(eq(matches.id, matchId))
+    .limit(1)
+  if (!match) return { ok: false, error: "matches.errors.matchNotFound" }
+  if (match.state !== "ongoing") {
+    return { ok: false, error: "matches.errors.matchNotLive" }
+  }
+
+  const side = await resolveSideCaptain(match, user.id)
+  if (
+    !canLogMatchEvents({ side, recorderId: match.recorderId, userId: user.id })
+  ) {
+    return forbidden()
+  }
+
+  // Resolve the roster identity within THIS match; stat events require one.
+  let playerUserId: string | null = null
+  let playerGuestId: string | null = null
+  let playerName: string | null = null
+  let eventSide: "home" | "away" | null = null
+  if (eventType !== "note") {
+    if (!playerRef) {
+      return { ok: false, error: "matches.errors.playerNotInMatch" }
+    }
+    const ref = parsePlayerRef(playerRef)
+    if (!ref) return { ok: false, error: "matches.errors.playerNotInMatch" }
+
+    if (ref.kind === "player") {
+      const [row] = await db
+        .select({
+          userId: matchPlayers.userId,
+          name: users.name,
+          phone: users.phone,
+          side: matchPlayers.side,
+        })
+        .from(matchPlayers)
+        .innerJoin(users, eq(users.id, matchPlayers.userId))
+        .where(
+          and(eq(matchPlayers.matchId, matchId), eq(matchPlayers.userId, ref.id))
+        )
+        .limit(1)
+      if (!row) return { ok: false, error: "matches.errors.playerNotInMatch" }
+      playerUserId = row.userId
+      eventSide = row.side
+      playerName = row.name ?? (row.phone ? maskPhone(row.phone) : null)
+    } else {
+      const [row] = await db
+        .select({
+          id: matchGuests.id,
+          name: matchGuests.name,
+          side: matchGuests.side,
+        })
+        .from(matchGuests)
+        .where(and(eq(matchGuests.id, ref.id), eq(matchGuests.matchId, matchId)))
+        .limit(1)
+      if (!row) return { ok: false, error: "matches.errors.playerNotInMatch" }
+      playerGuestId = row.id
+      eventSide = row.side
+      playerName = row.name
+    }
+  }
+
+  const [inserted] = await db
+    .insert(matchEvents)
+    .values({
+      matchId,
+      side: eventSide,
+      eventType,
+      minute: matchMinute(match.kickoffAt),
+      playerUserId,
+      playerGuestId,
+      playerName,
+      note: note ?? null,
+      createdBy: user.id,
+    })
+    .returning({ id: matchEvents.id })
+
+  revalidatePath(`/matches/${matchId}`)
+  revalidatePath("/matches/logs")
+  return { ok: true, id: inserted?.id }
+}
+
+/**
+ * Remove a logged event — a shared correction surface for the loggers, kept
+ * open after completion so a wrong entry can be fixed before the result is
+ * confirmed.
+ */
+export async function deleteMatchEventAction(
+  input: z.infer<typeof deleteMatchEventSchema>
+): Promise<ActionResult> {
+  const parsed = deleteMatchEventSchema.safeParse(input)
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: parsed.error.issues[0]?.message ?? "errors.invalid",
+    }
+  }
+  const user = await getCurrentUser()
+  if (!user) return unauthorized()
+
+  const { matchId, eventId } = parsed.data
+  const [match] = await db
+    .select()
+    .from(matches)
+    .where(eq(matches.id, matchId))
+    .limit(1)
+  if (!match) return { ok: false, error: "matches.errors.matchNotFound" }
+  if (!["ongoing", "completed"].includes(match.state)) {
+    return { ok: false, error: "matches.errors.matchNotLive" }
+  }
+
+  const side = await resolveSideCaptain(match, user.id)
+  if (
+    !canLogMatchEvents({ side, recorderId: match.recorderId, userId: user.id })
+  ) {
+    return forbidden()
+  }
+
+  const [event] = await db
+    .select({ id: matchEvents.id })
+    .from(matchEvents)
+    .where(and(eq(matchEvents.id, eventId), eq(matchEvents.matchId, matchId)))
+    .limit(1)
+  if (!event) return { ok: false, error: "matches.errors.eventNotFound" }
+
+  await db.delete(matchEvents).where(eq(matchEvents.id, eventId))
+
+  revalidatePath(`/matches/${matchId}`)
+  revalidatePath("/matches/logs")
+  return { ok: true }
+}
+
+/**
+ * Assign (or clear) the live-event logger. Captains only; the delegate must
+ * be a registered roster player of this match. Allowed while the roster is
+ * open or the match is ongoing, so a delegate can be named before kickoff.
+ */
+export async function assignRecorderAction(
+  input: z.infer<typeof assignRecorderSchema>
+): Promise<ActionResult> {
+  const parsed = assignRecorderSchema.safeParse(input)
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: parsed.error.issues[0]?.message ?? "errors.invalid",
+    }
+  }
+  const user = await getCurrentUser()
+  if (!user) return unauthorized()
+
+  const { matchId, recorderId } = parsed.data
+  const [match] = await db
+    .select()
+    .from(matches)
+    .where(eq(matches.id, matchId))
+    .limit(1)
+  if (!match) return { ok: false, error: "matches.errors.matchNotFound" }
+
+  const side = await resolveSideCaptain(match, user.id)
+  if (!canAssignRecorder({ side })) return forbidden()
+  if (!rosterOpen(match.state) && match.state !== "ongoing") {
+    return { ok: false, error: "matches.errors.rosterNotOpen" }
+  }
+
+  if (recorderId !== null) {
+    const [row] = await db
+      .select({ userId: matchPlayers.userId })
+      .from(matchPlayers)
+      .where(
+        and(
+          eq(matchPlayers.matchId, matchId),
+          eq(matchPlayers.userId, recorderId)
+        )
+      )
+      .limit(1)
+    if (!row) return { ok: false, error: "matches.errors.recorderNotInMatch" }
+  }
+
+  await db
+    .update(matches)
+    .set({ recorderId, updatedAt: new Date() })
+    .where(eq(matches.id, matchId))
+
   revalidatePath(`/matches/${matchId}`)
   return { ok: true }
 }

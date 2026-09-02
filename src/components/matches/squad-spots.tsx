@@ -48,6 +48,7 @@ export function SquadSpots({
   countEditable = false,
   slotNames = [],
   fillHref,
+  showNarrative = false,
 }: {
   matchId: string
   matchType: string
@@ -73,6 +74,9 @@ export function SquadSpots({
    * visitor → join request), open tiles link there instead of being
    * inert decorations that only look clickable. */
   fillHref?: string
+  /** Owners-only narrative: the "who joined / still to join / invite from
+   * friends" lines are recruitment detail — visitors see just the seats. */
+  showNarrative?: boolean
 }) {
   const { t, locale } = useI18n()
   const router = useRouter()
@@ -136,8 +140,10 @@ export function SquadSpots({
 
       {/* Count-first narrative — the declared number in plain words: who
           already joined, who is still to join (invite / add details / keep
-          the seats), and what is open to the DeshiTurf community. */}
-      {filled > 0 ? (
+          the seats), and what is open to the DeshiTurf community. Owners
+          only — it names recruitment actions a visitor has no business
+          seeing. */}
+      {showNarrative && filled > 0 ? (
         <div className="space-y-1.5 rounded-xl bg-dt-card2/50 p-2.5">
           <p className="text-sm font-medium text-dt-txt">
             {t("matches.squad.saidLine", {

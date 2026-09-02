@@ -76,6 +76,19 @@ export const SQUAD_ROLE_LABEL: Record<SquadRoleValue, string> = {
   substitute: "matches.squad.substitutes",
 }
 
+/** Match room event log — what was logged (goal / save / tackle / note). */
+export type MatchEventTypeValue = "goal" | "save" | "tackle" | "note"
+export const MATCH_EVENT_TYPE_LABEL: Record<MatchEventTypeValue, string> = {
+  goal: "matches.events.type.goal",
+  save: "matches.events.type.save",
+  tackle: "matches.events.type.tackle",
+  note: "matches.events.type.note",
+}
+
+export function matchEventTypeLabelKey(type: string): string {
+  return MATCH_EVENT_TYPE_LABEL[type as MatchEventTypeValue] ?? `matches.events.type.${type}`
+}
+
 export const SLOT_STATUS_LABEL: Record<SlotStatusValue, string> = {
   available: "turfOwner.slots.status.available",
   held: "turfOwner.slots.status.held",

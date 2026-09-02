@@ -274,6 +274,66 @@ html[lang="bn"] body {
 }
 
 /*
+ * Battle markers (matches map) — while a match is live the pin's swords
+ * clash and a red shockwave pulses around the turf, so a glance at the map
+ * tells you a match is being played there right now. Reduced motion keeps a
+ * static red ring as the live signal.
+ */
+.battle-marker {
+  position: relative;
+}
+.battle-marker.battle-live img {
+  animation: battle-clash 0.8s ease-in-out infinite;
+  transform-origin: 50% 78%;
+}
+.battle-marker.battle-live::before,
+.battle-marker.battle-live::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  border: 2px solid var(--color-dt-red);
+  animation: battle-ring 1.6s ease-out infinite;
+  pointer-events: none;
+}
+.battle-marker.battle-live::after {
+  animation-delay: 0.8s;
+}
+@keyframes battle-clash {
+  0%,
+  100% {
+    transform: rotate(-10deg);
+  }
+  50% {
+    transform: rotate(10deg) translateX(1px);
+  }
+}
+@keyframes battle-ring {
+  0% {
+    opacity: 0.85;
+    transform: scale(0.45);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.9);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .battle-marker.battle-live img {
+    animation: none;
+  }
+  .battle-marker.battle-live::before,
+  .battle-marker.battle-live::after {
+    animation: none;
+    opacity: 0.6;
+    transform: none;
+  }
+  .battle-marker.battle-live::after {
+    display: none;
+  }
+}
+
+/*
  * Landing live ticker — LED-board marquee. The track renders its items
  * twice; translating -50% loops seamlessly. Reduced motion: stop scrolling.
  */

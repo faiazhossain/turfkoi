@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest"
 
 import {
   addGuestSchema,
+  assignRecorderSchema,
   claimOpponentSideSchema,
   createMatchSchema,
+  logMatchEventSchema,
 } from "../schemas"
 
 const BOOKING_ID = "0f0e8d7c-6b5a-4938-8271-6a5b4c3d2e1f"
@@ -223,6 +225,80 @@ describe("addGuestSchema", () => {
     expect(addGuestSchema.safeParse({ matchId: MATCH_ID, name: "  " }).success).toBe(false)
     expect(
       addGuestSchema.safeParse({ matchId: MATCH_ID, name: "a".repeat(61) }).success
+    ).toBe(false)
+  })
+})
+
+describe("logMatchEventSchema", () => {
+  const base = {
+    matchId: MATCH_ID,
+    eventType: "goal" as const,
+    playerRef: `p-${PLAYER_ID}`,
+  }
+
+  it("accepts a stat event with a roster ref and no note", () => {
+    expect(logMatchEventSchema.safeParse(base).success).toBe(true)
+  })
+
+  it("accepts a player-less note and an empty note field", () => {
+    expect(
+      logMatchEventSchema.safeParse({
+        matchId: MATCH_ID,
+        eventType: "note",
+        note: "  ভালো খেলা  ",
+      }).success
+    ).toBe(true)
+    expect(
+      logMatchEventSchema.safeParse({
+        matchId: MATCH_ID,
+        eventType: "save",
+        playerRef: `g-${PLAYER_ID}`,
+        note: "",
+      }).success
+    ).toBe(true)
+  })
+
+  it("rejects malformed player refs with the dictionary key", () => {
+    const result = logMatchEventSchema.safeParse({
+      ...base,
+      playerRef: `x-${PLAYER_ID}`,
+    })
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.error.issues[0]?.message).toBe(
+        "matches.errors.playerNotInMatch"
+      )
+    }
+  })
+
+  it("bounds the note (240 chars) with the dictionary key", () => {
+    const result = logMatchEventSchema.safeParse({
+      ...base,
+      note: "a".repeat(241),
+    })
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.error.issues[0]?.message).toBe("matches.errors.noteTooLong")
+    }
+  })
+})
+
+describe("assignRecorderSchema", () => {
+  it("accepts a recorder id and an explicit null (clear)", () => {
+    expect(
+      assignRecorderSchema.safeParse({ matchId: MATCH_ID, recorderId: PLAYER_ID })
+        .success
+    ).toBe(true)
+    expect(
+      assignRecorderSchema.safeParse({ matchId: MATCH_ID, recorderId: null })
+        .success
+    ).toBe(true)
+  })
+
+  it("rejects a non-uuid recorder", () => {
+    expect(
+      assignRecorderSchema.safeParse({ matchId: MATCH_ID, recorderId: "abc" })
+        .success
     ).toBe(false)
   })
 })

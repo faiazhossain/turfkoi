@@ -3,12 +3,14 @@ import { and, asc, desc, eq, inArray, ne, sql } from "drizzle-orm"
 import { alias } from "drizzle-orm/pg-core"
 
 import { db } from "@/db"
+import type { GeoPoint } from "@/db/geo"
 import {
   matches,
   matchTeams,
   matchPlayers,
   matchInvitations,
   matchGuests,
+  matchEvents,
   opponentRequests,
   bookings,
   turfs,
@@ -19,6 +21,7 @@ import { getTeamRole } from "@/features/teams/queries"
 import { dedupeRecentGuests, type RecentGuestPick } from "./guests"
 import { maskPhone } from "./constants"
 import { isCaptainRole, type Side } from "./authority"
+import type { MatchEventType } from "./events"
 
 export type MatchDetail = Awaited<ReturnType<typeof getMatch>>
 
@@ -284,6 +287,8 @@ export async function resolveSideCaptain(
   return null
 }
 
+export type OpenMatchSort = "time" | "near"
+
 export type OpenMatchCard = {
   id: string
   matchType: string
@@ -298,6 +303,10 @@ export type OpenMatchCard = {
   turfArea: string | null
   turfCity: string | null
   turfSlug: string
+  /** Pin position for the matches map (ST_Y/ST_X of the geography column). */
+  turfLat: number
+  turfLng: number
+  distanceKm: number | null
   date: string
   slotStart: string
   homeFilled: number
@@ -307,8 +316,21 @@ export type OpenMatchCard = {
 /**
  * Open matches for discovery — every open match wants an opponent side
  * claim, and its fill counts advertise how many players are still needed.
+ *
+ * With coords, each card carries its turf distance. Near sort orders by that
+ * distance in SQL so the limit cuts the nearest 30, not the soonest 30
+ * re-sorted client-side; distance is still selected in time sort so chips
+ * survive a flip back to soonest while the location stays in the URL.
  */
-export async function listOpenMatches(limit = 30): Promise<OpenMatchCard[]> {
+export async function listOpenMatches(
+  limit = 30,
+  opts: { sort?: OpenMatchSort; coords?: GeoPoint | null } = {}
+): Promise<OpenMatchCard[]> {
+  const near = opts.sort === "near" && !!opts.coords
+  const distanceExpr = opts.coords
+    ? sql<number>`ST_Distance(${turfs.coords}, ST_MakePoint(${opts.coords.lng}, ${opts.coords.lat})::geography) / 1000.0`
+    : sql<number>`NULL::float8`
+
   const captain = alias(users, "captain")
   const awayCaptain = alias(users, "away_captain")
   const rows = await db
@@ -327,6 +349,9 @@ export async function listOpenMatches(limit = 30): Promise<OpenMatchCard[]> {
       turfArea: turfs.area,
       turfCity: turfs.city,
       turfSlug: turfs.slug,
+      distanceKm: distanceExpr,
+      turfLat: sql<number>`ST_Y(${turfs.coords}::geometry)`,
+      turfLng: sql<number>`ST_X(${turfs.coords}::geometry)`,
       date: bookings.date,
       slotStart: bookings.slotStart,
     })
@@ -335,8 +360,20 @@ export async function listOpenMatches(limit = 30): Promise<OpenMatchCard[]> {
     .innerJoin(turfs, eq(turfs.id, bookings.turfId))
     .innerJoin(captain, eq(captain.id, matches.captainId))
     .leftJoin(awayCaptain, eq(awayCaptain.id, matches.awayCaptainId))
-    .where(eq(matches.state, "open"))
-    .orderBy(asc(matches.kickoffAt))
+    .where(
+      and(
+        eq(matches.state, "open"),
+        // Kickoff passed = no longer discoverable (the nightly sweep only
+        // expires these later for fee credit). NULL-escape: a match without
+        // kickoff can never expire, so it must not vanish from discovery.
+        sql`(${matches.kickoffAt} > now() OR ${matches.kickoffAt} IS NULL)`
+      )
+    )
+    .orderBy(
+      ...(near
+        ? [asc(distanceExpr), asc(matches.kickoffAt)]
+        : [asc(matches.kickoffAt)])
+    )
     .limit(limit)
 
   if (rows.length === 0) return []
@@ -385,10 +422,147 @@ export async function listOpenMatches(limit = 30): Promise<OpenMatchCard[]> {
       turfArea: r.turfArea,
       turfCity: r.turfCity,
       turfSlug: r.turfSlug,
+      distanceKm: r.distanceKm == null ? null : Number(r.distanceKm),
+      turfLat: Number(r.turfLat),
+      turfLng: Number(r.turfLng),
       date: r.date,
       slotStart: r.slotStart,
       homeFilled: filledFor("home"),
       awayFilled: filledFor("away"),
+    }
+  })
+}
+
+export type MatchEventView = {
+  id: string
+  side: "home" | "away" | null
+  eventType: MatchEventType
+  minute: number | null
+  /** Write-time snapshot, falling back to the live joins. */
+  playerName: string | null
+  note: string | null
+  createdAt: Date
+}
+
+/** Live event log for the match room — chronological, display-name resolved. */
+export async function listMatchEvents(matchId: string): Promise<MatchEventView[]> {
+  const rows = await db
+    .select({
+      id: matchEvents.id,
+      side: matchEvents.side,
+      eventType: matchEvents.eventType,
+      minute: matchEvents.minute,
+      snapshotName: matchEvents.playerName,
+      userName: users.name,
+      guestName: matchGuests.name,
+      note: matchEvents.note,
+      createdAt: matchEvents.createdAt,
+    })
+    .from(matchEvents)
+    .leftJoin(users, eq(users.id, matchEvents.playerUserId))
+    .leftJoin(matchGuests, eq(matchGuests.id, matchEvents.playerGuestId))
+    .where(eq(matchEvents.matchId, matchId))
+    .orderBy(asc(matchEvents.createdAt))
+
+  return rows.map((r) => ({
+    id: r.id,
+    side: r.side,
+    eventType: r.eventType,
+    minute: r.minute,
+    playerName: r.snapshotName ?? r.userName ?? r.guestName ?? null,
+    note: r.note,
+    createdAt: r.createdAt,
+  }))
+}
+
+export type MatchLogRow = {
+  id: string
+  state: string
+  matchType: string
+  homeScore: number | null
+  awayScore: number | null
+  resultStatus: string
+  kickoffAt: Date | null
+  date: string
+  slotStart: string
+  turfName: string
+  turfSlug: string
+  /** Team name for legacy sides, else the captain's name. */
+  homeSideName: string | null
+  awaySideName: string | null
+}
+
+/**
+ * Matches worth logging: everything live right now, then the most recent
+ * finished results — the discovery list's counterpart for matches that have
+ * actually started. Public data, no permission gate.
+ */
+export async function listMatchLogs(limit = 30): Promise<MatchLogRow[]> {
+  const awayCaptain = alias(users, "away_captain")
+  const rows = await db
+    .select({
+      id: matches.id,
+      state: matches.state,
+      matchType: matches.matchType,
+      homeScore: matches.homeScore,
+      awayScore: matches.awayScore,
+      resultStatus: matches.resultStatus,
+      kickoffAt: matches.kickoffAt,
+      date: bookings.date,
+      slotStart: bookings.slotStart,
+      turfName: turfs.name,
+      turfSlug: turfs.slug,
+      captainName: users.name,
+      awayCaptainName: awayCaptain.name,
+    })
+    .from(matches)
+    .innerJoin(bookings, eq(bookings.id, matches.bookingId))
+    .innerJoin(turfs, eq(turfs.id, bookings.turfId))
+    .leftJoin(users, eq(users.id, matches.captainId))
+    .leftJoin(awayCaptain, eq(awayCaptain.id, matches.awayCaptainId))
+    .where(inArray(matches.state, ["ongoing", "completed"]))
+    // Live matches first, then newest results.
+    .orderBy(
+      sql`case when ${matches.state} = 'ongoing' then 0 else 1 end`,
+      desc(matches.kickoffAt)
+    )
+    .limit(limit)
+
+  if (rows.length === 0) return []
+
+  const sides = await db
+    .select({
+      matchId: matchTeams.matchId,
+      teamName: teams.name,
+      side: matchTeams.side,
+    })
+    .from(matchTeams)
+    .innerJoin(teams, eq(teams.id, matchTeams.teamId))
+    .where(
+      inArray(
+        matchTeams.matchId,
+        rows.map((r) => r.id)
+      )
+    )
+
+  return rows.map((r) => {
+    const home = sides.find((s) => s.matchId === r.id && s.side === "home")
+    const away = sides.find((s) => s.matchId === r.id && s.side === "away")
+    return {
+      id: r.id,
+      state: r.state,
+      matchType: r.matchType,
+      homeScore: r.homeScore,
+      awayScore: r.awayScore,
+      resultStatus: r.resultStatus,
+      kickoffAt: r.kickoffAt,
+      date: r.date,
+      slotStart: r.slotStart,
+      turfName: r.turfName,
+      turfSlug: r.turfSlug,
+      // Person-based matches have no team sides — the captains' names stand in.
+      homeSideName: home?.teamName ?? r.captainName ?? null,
+      awaySideName: away?.teamName ?? r.awayCaptainName ?? null,
     }
   })
 }

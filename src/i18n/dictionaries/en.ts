@@ -717,6 +717,56 @@ export const en = {
     challengesTitle: "Open matches",
     challengesDesc:
       "Matches waiting for an opponent — claim the opponent side to confirm instantly.",
+    sortAria: "Sort matches",
+    sortSoonest: "Soonest first",
+    sortNearest: "Nearest",
+    clearLocation: "Clear location",
+    locationDenied:
+      "Couldn't get your location. Allow location access, or tap the map below.",
+    pickLocationHint:
+      "Pick your location on the map to sort matches by distance.",
+    mapAria: "Match locations",
+    tabOpen: "Open matches",
+    tabLogs: "Match logs",
+    navAria: "Match sections",
+    logs: {
+      title: "Match logs",
+      subtitle:
+        "Who played against whom, and how everyone played — every live and finished match.",
+      emptyTitle: "No matches logged yet",
+      emptyDesc: "Once a match starts or finishes, it shows up here.",
+      liveBadge: "Live",
+      vs: "vs",
+      noScore: "Score not submitted",
+      goals: "Goals",
+      saves: "Saves",
+      tackles: "Tackles",
+      openMatchCta: "View match room",
+    },
+    events: {
+      title: "Match log",
+      statsTitle: "Live stats",
+      empty: "No events logged yet.",
+      type: {
+        goal: "Goal",
+        save: "Save",
+        tackle: "Tackle",
+        note: "Note",
+      },
+      pickPlayer: "Player",
+      notePlaceholder: "Add a note (optional)",
+      logButton: "Log event",
+      logged: "Event logged",
+      deleted: "Event removed",
+      minuteAria: "Minute {minute}",
+      recorder: {
+        label: "Match logger",
+        none: "No one assigned",
+        you: "You are logging this match",
+        assigned: "{name} is logging this match",
+        noPlayers: "No registered players on the roster yet.",
+      },
+    },
     breadcrumbMatch: "Match",
     hubCreateCta: "Create match",
     newSubtitle:
@@ -953,6 +1003,14 @@ export const en = {
     feeBannerHome: "Matchmaking costs ৳{amount} per team, taken from your wallet. If the match falls through, it's credited back.",
     feeBannerClaim: "Claiming the opponent side costs ৳{amount} — taken from your wallet, credited back if the match falls through.",
     feeBannerChallenge: "Sending a challenge costs ৳{amount} per team — taken from your wallet, credited back if the match falls through.",
+    costShare: {
+      title: "Cost share",
+      desc: "The slot price is split between the two sides — settle the rest within your own group. The matchmaking fee goes to DeshiTurf.",
+      slotPrice: "Slot price",
+      yourShare: "Your side's share (half)",
+      matchFee: "Matchmaking fee",
+      totalPayable: "You pay",
+    },
     hub: {
       opponentWanted: "Opponent wanted",
       playersWanted: "Players wanted",
@@ -1040,6 +1098,13 @@ export const en = {
       challengeNoLongerPending: "That challenge was already answered.",
       matchNotStartable: "The match can't start from its current state.",
       matchNotCancellable: "This match can no longer be cancelled.",
+      matchNotLive:
+        "Events can only be logged while the match is ongoing.",
+      playerNotInMatch: "That player is not in this match.",
+      noteTooLong: "Note is too long (max 240 characters).",
+      eventNotFound: "That event no longer exists.",
+      recorderNotInMatch:
+        "The logger must be a registered player of this match.",
     },
     stateContext: {
       open: "Opponent wanted — players can join meanwhile",

@@ -128,6 +128,15 @@ export const matchPlayerRole = pgEnum("match_player_role", ["member", "guest"])
 
 export const matchSide = pgEnum("match_side", ["home", "away"])
 
+// Match room event log: what happened, logged live by a captain or the
+// captain-assigned recorder. "note" is free commentary (may have no player).
+export const matchEventType = pgEnum("match_event_type", [
+  "goal",
+  "save",
+  "tackle",
+  "note",
+])
+
 export const requestStatus = pgEnum("request_status", [
   "pending",
   "accepted",

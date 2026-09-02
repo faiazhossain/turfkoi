@@ -11,6 +11,7 @@ import { positionLabelKey } from "@/i18n/labels"
 import { Button } from "@/components/ui/button"
 import { PlayerAvatar } from "@/components/player/player-avatar"
 import { initialsFromName } from "@/features/player/avatar"
+import { maskPhone } from "@/features/matches/constants"
 import type { Side } from "@/features/matches/authority"
 import {
   removePlayerAction,
@@ -205,7 +206,7 @@ export function SquadGroups({
           .filter((p) => p.side === s.side)
           .map((p) => ({
             key: `p-${p.userId}`,
-            displayName: p.name ?? p.phone,
+            displayName: p.name ?? maskPhone(p.phone),
             avatarName: p.name,
             squadRole: p.squadRole,
             canManage: manages(p.side),

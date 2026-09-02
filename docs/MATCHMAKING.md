@@ -115,21 +115,24 @@ All four paths claim seats **first-accept-wins** through the same atomic batch (
 - Neither captain can be removed by others or leave their own match.
 - Results: **either** side's captain submits (solo matches included); the **other** captain confirms.
 - Lifecycle: `open` → (opponent side claimed) → `confirmed` → `ongoing` → `completed` (result submitted, other captain confirms). A solo match can still be played without an opponent.
+- **Live event log:** while `ongoing`, a side captain — or the captain-assigned **recorder** (`matches.recorder_id`, any registered roster player) — logs goals/saves/tackles/notes. `canLogMatchEvents` / `canAssignRecorder` (`authority.ts`) compose over `resolveSideCaptain`. Events snapshot the player's display name and elapsed minute at write time; the official score is never derived from events. Deletions stay open through `completed` (correction before result confirmation). Discovery (`listOpenMatches`) hides past-kickoff matches; `/matches/logs` lists `ongoing` first, then completed (latest kickoff first).
 
 ## 7. File map
 
 | Area | Files |
 |---|---|
 | Capacity math | `src/features/matches/formats.ts` (`spotsLeft`, `maxPendingInvitations`, `placeholdersUpperBound`) |
-| Pure authority | `src/features/matches/authority.ts` (`sideOfCaptain`, `canClaimOpponentSide`, `rosterOpen`) |
+| Pure authority | `src/features/matches/authority.ts` (`sideOfCaptain`, `canClaimOpponentSide`, `canLogMatchEvents`, `rosterOpen`) |
+| Event log (pure) | `src/features/matches/events.ts` (`parsePlayerRef`, `matchMinute`, `aggregateMatchEvents`) |
 | Atomic seat claims | `src/features/matches/seat-claim.ts` (`lockMatchForSeatClaim`, `seatsFreeSql`) |
 | Guest quick-add / history merge (pure) | `src/features/matches/guests.ts` (`dedupeRecentGuests`), `src/features/player/history.ts` (`mergeMatchHistory`) |
 | Queries (counts, discovery, side authority) | `src/features/matches/queries.ts` (`getSquadCounts`, `listOpenMatches`, `listRecentGuestsAddedBy`, `resolveSideCaptain`), `src/features/player/queries.ts` (`listMatchesNeedingPlayers`, `listPlayerMatchHistory`) |
 | Server actions | `src/features/matches/actions.ts` (`createMatchAction`, `claimOpponentSideAction`, invites/guests/placeholders/results), `src/features/player/actions.ts` (join requests) |
-| Schema | `src/db/schema/matches.ts`, migrations `drizzle/0024_person_based_sides.sql`, `drizzle/0025_guest_identity.sql` |
+| Schema | `src/db/schema/matches.ts`, migrations `drizzle/0024_person_based_sides.sql`, `drizzle/0025_guest_identity.sql`, `drizzle/0026_match_event_log.sql` |
 | Creation flow | `src/app/(public)/matches/new/page.tsx`, `src/components/matches/create-match-wizard.tsx` |
 | Hub | `src/app/(public)/matches/page.tsx`, `src/components/matches/claim-opponent-button.tsx` |
 | Match room | `src/app/(public)/matches/[id]/page.tsx`, `squad-spots.tsx`, `squad-groups.tsx`, `match-actions.tsx` |
+| Match logs + live log | `src/app/(public)/matches/logs/page.tsx`, `match-event-log.tsx`, `match-event-logger.tsx`, `match-live-refresh.tsx`, `matches-sub-nav.tsx` |
 | Help | `src/components/matches/matchmaking-help.tsx` |
 | i18n | `src/i18n/dictionaries/{en,bn}.ts` (`matches.wizard`, `matches.claim`, `matches.hub`, `matches.squad`, `matches.help`, `matches.stateContext`), `src/i18n/labels.ts` |
 

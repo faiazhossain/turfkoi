@@ -55,6 +55,26 @@ export function rosterOpen(state: string): boolean {
   return (ROSTER_OPEN_STATES as readonly string[]).includes(state)
 }
 
+/**
+ * Whether the user may write to the live event log: a side captain, or the
+ * captain-assigned recorder. The caller resolves `side` via
+ * resolveSideCaptain (covers legacy team matches); recorderId is the
+ * match's assigned logger (null = none).
+ */
+export function canLogMatchEvents(input: {
+  side: Side | null
+  recorderId: string | null
+  userId: string
+}): boolean {
+  if (input.side !== null) return true
+  return input.recorderId !== null && input.recorderId === input.userId
+}
+
+/** Only side captains may (re)assign the recorder. */
+export function canAssignRecorder(input: { side: Side | null }): boolean {
+  return input.side !== null
+}
+
 export function hasFreeSpot(count: number, max: number): boolean {
   return count < max
 }

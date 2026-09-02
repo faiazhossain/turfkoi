@@ -88,5 +88,43 @@ export const addGuestSchema = z.object({
 })
 export type AddGuestValues = z.infer<typeof addGuestSchema>
 
+/** "p-<uuid>" (match_players) or "g-<uuid>" (match_guests) — see events.ts. */
+const PLAYER_REF_REGEX =
+  /^(p|g)-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
+
+export const logMatchEventSchema = z.object({
+  matchId: z.string().uuid(),
+  eventType: z.enum(["goal", "save", "tackle", "note"]),
+  // Stat events require a roster identity; only "note" may be player-less.
+  playerRef: emptyToUndefined(
+    z
+      .string()
+      .regex(PLAYER_REF_REGEX, "matches.errors.playerNotInMatch")
+      .optional()
+  ),
+  note: emptyToUndefined(
+    z
+      .string()
+      .trim()
+      .min(1, "errors.invalid")
+      .max(240, "matches.errors.noteTooLong")
+      .optional()
+  ),
+})
+export type LogMatchEventValues = z.infer<typeof logMatchEventSchema>
+
+export const assignRecorderSchema = z.object({
+  matchId: z.string().uuid(),
+  // null clears the assignment (logging returns to the captains).
+  recorderId: z.string().uuid().nullable(),
+})
+export type AssignRecorderValues = z.infer<typeof assignRecorderSchema>
+
+export const deleteMatchEventSchema = z.object({
+  matchId: z.string().uuid(),
+  eventId: z.string().uuid(),
+})
+export type DeleteMatchEventValues = z.infer<typeof deleteMatchEventSchema>
+
 export { FORMATS, MATCH_FORMATS }
 export type { MatchFormat } from "./formats"

@@ -2,12 +2,12 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { MapPinIcon, ClockIcon, UserPlusIcon, ShieldPlusIcon, ShareIcon } from "lucide-react"
 
-import { getT } from "@/i18n/server"
+import { getLocale, getT } from "@/i18n/server"
 import { StatusBadge, EmptyState } from "@/components/shared"
 import { Button } from "@/components/ui/button"
 import { MapView } from "@/components/map"
 import { getWalletBalance } from "@/features/wallet/queries"
-import { MATCH_FEE_BDT, formatBdt } from "@/lib/pricing"
+import { costShare, MATCH_FEE_BDT } from "@/lib/pricing"
 import { MatchActions } from "@/components/matches/match-actions"
 import { ButtonModal } from "@/components/matches/button-modal"
 import { SquadInvitePanel } from "@/components/matches/squad-invite-panel"
@@ -25,6 +25,13 @@ import { TeamChallengePanel } from "@/components/matches/team-challenge"
 import { JoinRequestButton } from "@/components/player/join-request-button"
 import { RequestManager } from "@/components/player/request-manager"
 import { PlayerAvatar } from "@/components/player/player-avatar"
+import { MatchEventLog } from "@/components/matches/match-event-log"
+import { MatchCostShare } from "@/components/matches/match-cost-share"
+import {
+  MatchEventLogger,
+  type LoggerPlayer,
+} from "@/components/matches/match-event-logger"
+import { MatchLiveRefresh } from "@/components/matches/match-live-refresh"
 import {
   getMatch,
   getSquadCounts,
@@ -34,11 +41,19 @@ import {
   listRecentGuestsAddedBy,
   listInvitationOutcomes,
   listTeamChallenges,
+  listMatchEvents,
   resolveSideCaptain,
 } from "@/features/matches/queries"
 import type { RecentGuestPick } from "@/features/matches/guests"
+import { aggregateMatchEvents } from "@/features/matches/events"
+import {
+  canClaimOpponentSide,
+  canLogMatchEvents,
+  isCaptainRole,
+  rosterOpen,
+} from "@/features/matches/authority"
+import { maskPhone } from "@/features/matches/constants"
 import { FORMATS, isMatchFormat, spotsLeft } from "@/features/matches/formats"
-import { canClaimOpponentSide, isCaptainRole, rosterOpen } from "@/features/matches/authority"
 import { listMyTeams } from "@/features/teams/queries"
 import { listFriends } from "@/features/friends/queries"
 import {
@@ -145,20 +160,20 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
     sideStats.map((s) => [s.side, s.open])
   ) as Partial<Record<"home" | "away", number>>
 
-  // Pending player requests, outbound invitations, guests, and the captain's
-  // quick-add picks from previous matches.
+  // Guests feed the teams grid, so they load for EVERY viewer (anonymous
+  // included); phone is stripped from the SquadGroups payload for
+  // non-managers below. Recent picks stay manager-scoped.
+  const guests = await listMatchGuests(m.id)
   let pendingRequests: {
     matchId: string; userId: string
     playerName: string | null; playerPhone: string
   }[] = []
   let pendingInvitations: Awaited<ReturnType<typeof listPendingInvitationsByMatch>> = []
-  let guests: Awaited<ReturnType<typeof listMatchGuests>> = []
   let recentGuests: RecentGuestPick[] = []
   if (user && managesMatch && rosterOpen(m.state)) {
-    const [allReqs, invites, guestRows, recent] = await Promise.all([
+    const [allReqs, invites, recent] = await Promise.all([
       listPendingPlayerRequestsByMatch(m.id),
       listPendingInvitationsByMatch(m.id),
-      listMatchGuests(m.id),
       listRecentGuestsAddedBy(user.id, m.id),
     ])
     pendingRequests = allReqs.map((r) => ({
@@ -168,10 +183,7 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
       playerPhone: r.playerPhone,
     }))
     pendingInvitations = invites
-    guests = guestRows
     recentGuests = recent
-  } else if (user) {
-    guests = await listMatchGuests(m.id)
   }
   const myInvitations = user
     ? (await listMyPendingInvitations(user.id)).filter((inv) => inv.matchId === m.id)
@@ -212,8 +224,11 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
     listTeamChallenges(m.id),
     managesMatch ? listInvitationOutcomes(m.id) : Promise.resolve([]),
   ])
+  // Team challenges are an ACTOR tool: an eligible visiting team captain
+  // sends, the home captain accepts. Stakeless spectators must not see (or
+  // learn about) the challenge thread.
   const showChallengePanel =
-    (canClaim && (myTeams.length > 0 || isHomeCaptain)) || challenges.length > 0
+    (canClaim && myTeams.length > 0) || (isHomeCaptain && challenges.length > 0)
 
   // Captains: solo players marked available near this turf (SS20/SS32).
   let nearbyPlayers: Awaited<ReturnType<typeof listAvailablePlayersNearTurf>> = []
@@ -237,6 +252,26 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
     user.id !== m.submittedBy &&
     managesMatch
 
+  // Live event log — loaded (and 20s-refreshed) only once the match is
+  // under way; the timeline stays visible after completion.
+  const showLog = m.state === "ongoing" || m.state === "completed"
+  const [events, locale] = await Promise.all([
+    showLog ? listMatchEvents(m.id) : Promise.resolve([]),
+    getLocale(),
+  ])
+  const eventStats = aggregateMatchEvents(events)
+  const canLog = user
+    ? canLogMatchEvents({ side: mySide, recorderId: m.recorderId, userId: user.id })
+    : false
+  const playerOptions: LoggerPlayer[] = [
+    ...roster.map((p) => ({
+      ref: `p-${p.userId}`,
+      name: p.name ?? (p.phone ? maskPhone(p.phone) : tr("matches.player")),
+      side: p.side,
+    })),
+    ...guests.map((g) => ({ ref: `g-${g.id}`, name: g.name, side: g.side })),
+  ]
+
   // Title: legacy team names when present, else the two captains' names.
   const captainName =
     roster.find((r) => r.userId === m.captainId)?.name ?? tr("matches.player")
@@ -257,6 +292,10 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
   const totalOpen = sideStats.reduce((acc, s) => acc + s.open, 0)
   const canRequestJoin =
     !!user && !onRoster && totalOpen > 0 && rosterOpen(m.state)
+
+  // Cost share: half the slot + the matchmaking fee — what a joining side
+  // owes. Informational (settlement between the sides happens off-platform).
+  const share = costShare(b.totalAmount)
 
   return (
     <div className="match-hq mx-auto max-w-2xl space-y-6 px-4 py-12">
@@ -299,6 +338,10 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
           </span>
         </div>
       </header>
+
+      {/* What a joining side owes — visible to every viewer (the split is
+          the contract for anyone considering this match). */}
+      {share ? <MatchCostShare share={share} /> : null}
 
       {/* My pending squad invitations — the invitee's primary action sits up top */}
       {myInvitations.length > 0 ? (
@@ -362,6 +405,27 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
         </div>
       ) : null}
 
+      {/* Live event log — timeline + tallies once the match is under way */}
+      {showLog ? (
+        <MatchEventLog
+          matchId={m.id}
+          events={events}
+          stats={eventStats}
+          canLog={canLog}
+          locale={locale}
+        />
+      ) : null}
+      {showLog && canLog && m.state === "ongoing" ? (
+        <MatchEventLogger
+          matchId={m.id}
+          players={playerOptions}
+          canAssign={managesMatch}
+          recorderId={m.recorderId}
+          viewerId={user!.id}
+        />
+      ) : null}
+      {m.state === "ongoing" ? <MatchLiveRefresh /> : null}
+
       {/* Squad fill per side — count-first summary with the roster grid */}
       <div className="space-y-2">
         {sideStats.map((s) => (
@@ -393,11 +457,12 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
             slotNames={[
               ...roster
                 .filter((p) => p.side === s.side)
-                .map((p) => p.name ?? p.phone ?? tr("matches.player")),
+                .map((p) => p.name ?? (p.phone ? maskPhone(p.phone) : tr("matches.player"))),
               ...guests
                 .filter((g) => g.side === s.side)
                 .map((g) => g.name),
             ]}
+            showNarrative={managesMatch}
           />
         ))}
         {managesMatch && rosterOpen(m.state) ? (
@@ -655,7 +720,9 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
               id: g.id,
               side: g.side,
               name: g.name,
-              phone: g.phone,
+              // Guest phones are manager-only — never shipped to the teams
+              // grid for other viewers.
+              phone: managesMatch ? g.phone : null,
               position: g.position,
               jerseyNumber: g.jerseyNumber,
               linkedUserId: g.linkedUserId,
@@ -666,7 +733,7 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
       ) : null}
 
 
-      {user ? (
+      {user && (managesMatch || onRoster) ? (
         <MatchActions
           matchId={m.id}
           matchState={m.state}
@@ -685,7 +752,7 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
           canLeave={canLeave}
           canConfirmResult={canConfirmResult}
         />
-      ) : (
+      ) : !user ? (
         <EmptyState
           title={tr("matches.signInTitle")}
           description={
@@ -702,7 +769,7 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
             </div>
           }
         />
-      )}
+      ) : null}
     </div>
   )
 }
