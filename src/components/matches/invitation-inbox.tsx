@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
 import { useI18n } from "@/i18n/client"
+import { formatSlotTime } from "@/lib/format-time"
 
 import { Button } from "@/components/ui/button"
 import { respondToMatchInvitationAction } from "@/features/matches/actions"
@@ -25,7 +26,7 @@ export interface MyInvitation {
 /** Accept/decline for invitations addressed to the current user. */
 export function InvitationInbox({ invitations }: { invitations: MyInvitation[] }) {
   const router = useRouter()
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
   const [pending, start] = useTransition()
 
   function respond(id: string, accept: boolean) {
@@ -55,7 +56,7 @@ export function InvitationInbox({ invitations }: { invitations: MyInvitation[] }
             </p>
             <p className="text-xs text-dt-dim">
               {inv.turfName} · <span className="font-mono">
-                {inv.date} · {inv.slotStart.slice(0, 5)}
+                {inv.date} · {formatSlotTime(inv.slotStart.slice(0, 5), locale)}
               </span>
               {" · "}
               {inv.squadRoleWanted === "substitute"

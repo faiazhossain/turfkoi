@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { MapView } from "@/components/map"
 import { getWalletBalance } from "@/features/wallet/queries"
 import { costShare, MATCH_FEE_BDT } from "@/lib/pricing"
+import { formatSlotTime, slotStartEpochMs } from "@/lib/format-time"
 import { MatchActions } from "@/components/matches/match-actions"
 import { ButtonModal } from "@/components/matches/button-modal"
 import { SquadInvitePanel } from "@/components/matches/squad-invite-panel"
@@ -32,6 +33,7 @@ import {
   type LoggerPlayer,
 } from "@/components/matches/match-event-logger"
 import { MatchLiveRefresh } from "@/components/matches/match-live-refresh"
+import { KickoffCountdown } from "@/components/player/kickoff-countdown"
 import {
   getMatch,
   getSquadCounts,
@@ -331,11 +333,18 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
           </Link>
           {t.area ? ` · ${t.area}` : ""}
         </div>
-        <div className="flex items-center gap-1 text-sm text-dt-dim">
+        <div className="flex flex-wrap items-center gap-1 text-sm text-dt-dim">
           <ClockIcon className="size-4" aria-hidden />
           <span className="font-mono">
-            {b.date} · {b.slotStart.slice(0, 5)}
+            {b.date} · {formatSlotTime(b.slotStart.slice(0, 5), locale)}
           </span>
+          {/* Live "starts in…" tick — self-hides once kickoff has passed;
+              pointless noise on a cancelled/disputed card. */}
+          {!["cancelled", "disputed"].includes(m.state) ? (
+            <KickoffCountdown
+              kickoffMs={slotStartEpochMs(b.date, b.slotStart.slice(0, 5))}
+            />
+          ) : null}
         </div>
       </header>
 
