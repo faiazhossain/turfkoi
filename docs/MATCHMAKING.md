@@ -65,7 +65,10 @@ What creation does (`createMatchAction`):
 
 ## 4. Match room (progressive identification)
 
-`/matches/[id]` — `src/app/(public)/matches/[id]/page.tsx`.
+`/matches/[id]` — `src/app/(public)/matches/[id]/page.tsx`. **Owner-only:** the
+full room (Starting/Substitutes grid, guest details) renders for the side
+captains (`managesMatch`); every other viewer gets the match details plus the
+per-side capacity summary (`SquadSpots`), not the room itself.
 
 ### The one obvious next action
 

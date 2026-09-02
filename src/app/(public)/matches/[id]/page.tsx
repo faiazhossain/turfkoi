@@ -690,8 +690,10 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
         </div>
       ) : null}
 
-      {/* Match room — full squad, Starting / Substitutes per side */}
-      {roster.length > 0 ? (
+      {/* Match room — full squad, Starting / Substitutes per side. Owners
+          only: a visitor reading the match details gets the per-side
+          capacity summary above, not the room itself. */}
+      {managesMatch && roster.length > 0 ? (
         <section className="space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="font-heading text-lg font-semibold">
