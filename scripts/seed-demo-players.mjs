@@ -77,7 +77,9 @@ async function main() {
           ST_SetSRID(ST_MakePoint(${p.lng}, ${p.lat}), 4326)::geography,
           true, now() - (${minutesAgo} * interval '1 minute')
         )
-        ON CONFLICT (user_id) DO NOTHING
+        ON CONFLICT (user_id) DO UPDATE
+          SET available = true,
+              available_at = EXCLUDED.available_at
         RETURNING user_id
       )
       SELECT (SELECT count(*) FROM ins_user) AS inserted`

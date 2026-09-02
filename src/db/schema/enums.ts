@@ -184,3 +184,28 @@ export const refundRequestStatus = pgEnum("refund_request_status", [
   "executed",
   "cancelled",
 ])
+
+// Matchmaking-fee wallet ledger. 'topup' rows move through pending →
+// success/failed with the bKash flow; everything else is written 'success'
+// inside the same statement that moves the stored balance.
+export const walletEntryType = pgEnum("wallet_entry_type", [
+  "topup",
+  "match_fee",
+  "credit",
+  "claim",
+])
+
+export const walletEntryStatus = pgEnum("wallet_entry_status", [
+  "pending",
+  "success",
+  "failed",
+])
+
+// Cash-back claim lifecycle: user requests → admin approves → bKash payout
+// marked paid (offline, within 3 working days) or rejected (credit returns).
+export const walletClaimStatus = pgEnum("wallet_claim_status", [
+  "pending",
+  "approved",
+  "paid",
+  "rejected",
+])

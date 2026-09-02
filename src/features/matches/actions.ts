@@ -19,6 +19,20 @@ import {
 } from "@/db/schema"
 import { getCurrentUser } from "@/lib/auth"
 import { slotStartEpoch } from "@/lib/slot-expansion"
+import { scheduleMatchFeeExpiry } from "@/lib/inngest"
+import { MATCH_FEE_BDT } from "@/lib/pricing"
+import {
+  creditMatchFees,
+  applyWalletMovement,
+  creditFeeEntry,
+  latestAwayFeeEntry,
+} from "@/features/wallet/service"
+import {
+  homeFeeKey,
+  awayFeeKey,
+  shouldCreditMatchFees,
+} from "@/features/wallet/logic"
+import { getWalletBalance } from "@/features/wallet/queries"
 import { isValidPhone, normalizePhone } from "@/features/auth/phone"
 import { createNotifications } from "@/features/notifications/create"
 import { getTeamRole, listTeamMembers } from "@/features/teams/queries"
@@ -125,30 +139,71 @@ export async function createMatchAction(
   // Compute kickoff timestamp.
   const kickoff = slotStartEpoch(booking.date, booking.slotStart.slice(0, 5))
 
-  // Atomic insert (neon-http has no db.transaction — db.batch runs all
-  // statements in one server-side transaction). The id is generated here
-  // because batch takes pre-built builders (no read-back between statements).
+  // Matchmaking fee (wallet-first): ৳25 from the creator's wallet, then the
+  // match insert — ONE multi-CTE statement (neon-http has no interactive
+  // transactions; a single statement is atomic). The balance UPDATE is the
+  // sole authority; the match insert only runs from its RETURNING rows, so
+  // an unfunded captain can never create a fee-less match. The pre-check
+  // only picks the friendly error message.
+  const balance = await getWalletBalance(user.id)
+  if (balance < MATCH_FEE_BDT) {
+    return { ok: false, error: "wallet.errors.insufficientBalance" }
+  }
+
   const matchId = crypto.randomUUID()
-  await db.batch([
-    db.insert(matches).values({
-      id: matchId,
-      bookingId,
-      captainId: user.id,
-      state: "open",
-      matchType,
-      squadSize,
-      placeholderCount: placeholders,
-      kickoffAt: new Date(kickoff),
-      shareToken: mintShareToken(),
-    }),
-    db.insert(matchPlayers).values({
-      matchId,
-      userId: user.id,
-      side: "home",
-      role: "member",
-      squadRole: "starting",
-    }),
-  ])
+  const feeKey = homeFeeKey(matchId)
+  await db.execute(sql`
+    WITH upd AS (
+      UPDATE wallet_balances
+      SET balance = balance - ${MATCH_FEE_BDT}::numeric, updated_at = now()
+      WHERE user_id = ${user.id}
+        AND balance >= ${MATCH_FEE_BDT}::numeric
+        AND NOT EXISTS (
+          SELECT 1 FROM wallet_entries WHERE idempotency_key = ${feeKey}
+        )
+      RETURNING balance
+    ), fee AS (
+      INSERT INTO wallet_entries (
+        user_id, type, status, amount, match_id, balance_after,
+        idempotency_key, description
+      )
+      SELECT ${user.id}, 'match_fee', 'success', ${-MATCH_FEE_BDT}::numeric,
+             ${matchId}, (SELECT balance FROM upd), ${feeKey}, 'match fee (home)'
+      FROM upd
+      RETURNING id
+    ), m AS (
+      INSERT INTO matches (
+        id, booking_id, captain_id, state, match_type, squad_size,
+        placeholder_count, kickoff_at, share_token
+      )
+      SELECT ${matchId}::uuid, ${bookingId}::uuid, ${user.id}::uuid, 'open',
+             ${matchType}::match_type, ${squadSize}, ${placeholders},
+             ${new Date(kickoff).toISOString()}::timestamptz,
+             ${mintShareToken()}
+      WHERE EXISTS (SELECT 1 FROM fee)
+      RETURNING id
+    ), mp AS (
+      INSERT INTO match_players (match_id, user_id, side, role, squad_role)
+      SELECT ${matchId}::uuid, ${user.id}::uuid, 'home', 'member', 'starting'
+      WHERE EXISTS (SELECT 1 FROM m)
+    )
+    SELECT (SELECT count(*) FROM m)::int AS created
+  `)
+
+  // Balance moved concurrently between pre-check and statement → no match.
+  const [created] = await db
+    .select({ id: matches.id })
+    .from(matches)
+    .where(eq(matches.id, matchId))
+    .limit(1)
+  if (!created) {
+    return { ok: false, error: "wallet.errors.insufficientBalance" }
+  }
+
+  // Fall-through safety net: an unclaimed open match expires after kickoff +
+  // grace and the home fee is credited back. Best-effort — the nightly sweep
+  // reconciles missed events.
+  scheduleMatchFeeExpiry(matchId, kickoff).catch(() => {})
 
   revalidatePath("/matches")
   revalidatePath(`/bookings/${bookingId}`)
@@ -246,34 +301,67 @@ export async function claimOpponentSideAction(
     return { ok: false, error: "matches.errors.placeholderTooMany" }
   }
 
-  // FCFS race guard: only one claim lands; everyone else gets "just taken".
-  const claimed = await db
-    .update(matches)
-    .set({
-      awayCaptainId: user.id,
-      awayPlaceholderCount: playerCount - 1,
-      state: "confirmed",
-      updatedAt: new Date(),
-    })
-    .where(
-      and(
-        eq(matches.id, matchId),
-        eq(matches.state, "open"),
-        isNull(matches.awayCaptainId)
+  // Matchmaking fee (wallet-first): claim and fee in ONE multi-CTE statement.
+  // The match-row lock serializes FCFS claimants; the claim only lands if
+  // the wallet (locked read → fresh value) covers the ৳25; the balance
+  // UPDATE is the authority and the fee entry only lands from its RETURNING
+  // rows. A race loser is never charged.
+  const balance = await getWalletBalance(user.id)
+  if (balance < MATCH_FEE_BDT) {
+    return { ok: false, error: "wallet.errors.insufficientBalance" }
+  }
+  const feeKey = awayFeeKey(matchId, user.id)
+
+  await db.execute(sql`
+    WITH lockrow AS (
+      SELECT balance FROM wallet_balances WHERE user_id = ${user.id} FOR UPDATE
+    ), claim AS (
+      UPDATE matches
+      SET away_captain_id = ${user.id}::uuid,
+          away_placeholder_count = ${playerCount - 1},
+          state = 'confirmed',
+          updated_at = now()
+      WHERE id = ${matchId}::uuid
+        AND state = 'open'
+        AND away_captain_id IS NULL
+        AND COALESCE((SELECT balance FROM lockrow), 0) >= ${MATCH_FEE_BDT}::numeric
+      RETURNING id
+    ), upd AS (
+      UPDATE wallet_balances
+      SET balance = balance - ${MATCH_FEE_BDT}::numeric, updated_at = now()
+      WHERE user_id = ${user.id}
+        AND balance >= ${MATCH_FEE_BDT}::numeric
+        AND NOT EXISTS (
+          SELECT 1 FROM wallet_entries WHERE idempotency_key = ${feeKey}
+        )
+        AND EXISTS (SELECT 1 FROM claim)
+      RETURNING balance
+    ), fee AS (
+      INSERT INTO wallet_entries (
+        user_id, type, status, amount, match_id, balance_after,
+        idempotency_key, description
       )
+      SELECT ${user.id}, 'match_fee', 'success', ${-MATCH_FEE_BDT}::numeric,
+             ${matchId}, (SELECT balance FROM upd), ${feeKey}, 'match fee (away)'
+      FROM upd
+      RETURNING id
+    ), mp AS (
+      INSERT INTO match_players (match_id, user_id, side, role, squad_role)
+      SELECT ${matchId}::uuid, ${user.id}::uuid, 'away', 'member', 'starting'
+      WHERE EXISTS (SELECT 1 FROM claim)
     )
-    .returning({ id: matches.id })
-  if (claimed.length === 0) {
+    SELECT (SELECT count(*) FROM claim)::int AS claimed
+  `)
+
+  // Re-read the outcome (statements can't return across neon-http batches).
+  const [claimedMatch] = await db
+    .select({ awayCaptainId: matches.awayCaptainId })
+    .from(matches)
+    .where(eq(matches.id, matchId))
+    .limit(1)
+  if (claimedMatch?.awayCaptainId !== user.id) {
     return { ok: false, error: "matches.errors.matchJustTaken" }
   }
-
-  await db.insert(matchPlayers).values({
-    matchId,
-    userId: user.id,
-    side: "away",
-    role: "member",
-    squadRole: "starting",
-  })
 
   const [turfRow] = await db
     .select({ name: turfs.name })
@@ -1129,6 +1217,27 @@ export async function challengeMatchAction(
     return { ok: false, error: "matches.errors.challengePending" }
   }
 
+  // Matchmaking fee (wallet-first): the away captain pays ৳25 when SENDING
+  // the challenge. The key is unique per attempt so a re-send after a
+  // declined (and credited-back) challenge charges again; the fee is
+  // credited back when their last pending challenge for this match dies.
+  const balance = await getWalletBalance(user.id)
+  if (balance < MATCH_FEE_BDT) {
+    return { ok: false, error: "wallet.errors.insufficientBalance" }
+  }
+  const feeKey = `${awayFeeKey(matchId, user.id)}_${crypto.randomUUID().slice(0, 8)}`
+  const charged = await applyWalletMovement({
+    userId: user.id,
+    amount: -MATCH_FEE_BDT,
+    idempotencyKey: feeKey,
+    entryType: "match_fee",
+    matchId,
+    description: "match fee (away challenge)",
+  })
+  if (!charged) {
+    return { ok: false, error: "wallet.errors.insufficientBalance" }
+  }
+
   await db
     .insert(opponentRequests)
     .values({
@@ -1225,6 +1334,26 @@ export async function respondTeamChallengeAction(
           eq(opponentRequests.status, "pending")
         )
       )
+    // Fee credit-back: when the sender's LAST pending challenge for this
+    // match dies, their latest live ৳25 hold returns to the wallet
+    // (idempotent per-entry key).
+    const [stillPending] = await db
+      .select({ teamId: opponentRequests.teamId })
+      .from(opponentRequests)
+      .where(
+        and(
+          eq(opponentRequests.matchId, matchId),
+          eq(opponentRequests.sentBy, senderId),
+          eq(opponentRequests.status, "pending")
+        )
+      )
+      .limit(1)
+    if (!stillPending) {
+      const hold = await latestAwayFeeEntry(matchId, senderId)
+      if (hold) {
+        await creditFeeEntry(hold.id)
+      }
+    }
     await createNotifications(
       {
         type: "match.challenge_declined",
@@ -1408,4 +1537,68 @@ async function fallbackTeamCaptain(teamId: string): Promise<string | null> {
     members[0]?.userId ??
     null
   )
+}
+
+/**
+ * Captain-initiated match cancellation (fall-through path). Either side's
+ * captain can cancel before kickoff while the game hasn't started; both paid
+ * matchmaking fees are credited back to the paying captains' wallets, and
+ * the other captain is notified.
+ */
+const CANCELLABLE_STATES = ["open", "confirmed", "roster_building", "ready"] as const
+
+export async function cancelMatchAction(matchId: string): Promise<ActionResult> {
+  const user = await getCurrentUser()
+  if (!user) return unauthorized()
+
+  const [match] = await db
+    .select()
+    .from(matches)
+    .where(eq(matches.id, matchId))
+    .limit(1)
+  if (!match) return { ok: false, error: "matches.errors.matchNotFound" }
+  if (match.captainId !== user.id && match.awayCaptainId !== user.id) {
+    return forbidden()
+  }
+  if (!CANCELLABLE_STATES.includes(match.state as (typeof CANCELLABLE_STATES)[number])) {
+    return { ok: false, error: "matches.errors.matchNotCancellable" }
+  }
+
+  const updated = await db
+    .update(matches)
+    .set({ state: "cancelled", updatedAt: new Date() })
+    .where(
+      and(
+        eq(matches.id, matchId),
+        inArray(matches.state, [...CANCELLABLE_STATES])
+      )
+    )
+    .returning({ id: matches.id })
+  if (updated.length === 0) {
+    return { ok: false, error: "matches.errors.matchNotCancellable" }
+  }
+
+  // Fall-through: both fees go back to their payers (idempotent).
+  if (shouldCreditMatchFees("cancelled")) {
+    await creditMatchFees(matchId)
+  }
+
+  // Notify the OTHER captain (best-effort).
+  const otherId =
+    user.id === match.captainId ? match.awayCaptainId : match.captainId
+  if (otherId) {
+    await createNotifications(
+      {
+        type: "match.cancelled",
+        payload: { matchId },
+        entityType: "match",
+        entityId: matchId,
+      },
+      [otherId]
+    ).catch(() => {})
+  }
+
+  revalidatePath("/matches")
+  revalidatePath(`/matches/${matchId}`)
+  return { ok: true }
 }

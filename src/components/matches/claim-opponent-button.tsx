@@ -21,10 +21,13 @@ export function ClaimOpponentButton({
   matchId,
   squadSize,
   size = "sm",
+  canAffordFee = true,
 }: {
   matchId: string
   squadSize: number
   size?: "sm" | "default"
+  /** Server-checked wallet coverage of the ৳25 matchmaking fee. */
+  canAffordFee?: boolean
 }) {
   const router = useRouter()
   const { t, locale } = useI18n()
@@ -44,6 +47,21 @@ export function ClaimOpponentButton({
       setOpen(false)
       router.refresh()
     })
+  }
+
+  if (!canAffordFee) {
+    return (
+      <div className="flex flex-wrap items-center gap-2">
+        <Button size={size} disabled>
+          <SwordsIcon aria-hidden />
+          {t("matches.claim.cta")}
+        </Button>
+        <span className="text-xs text-dt-dim">{t("wallet.errors.insufficientBalance")}</span>
+        <a href="/app/wallet" className="text-xs font-medium text-dt-green hover:underline">
+          {t("wallet.topup")}
+        </a>
+      </div>
+    )
   }
 
   if (!open) {

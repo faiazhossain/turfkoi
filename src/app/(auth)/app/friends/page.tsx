@@ -2,6 +2,7 @@ import { redirect } from "next/navigation"
 
 import { getPlayerProfile } from "@/features/player/queries"
 import {
+  listFriendCandidates,
   listFriends,
   listPendingFriendRequests,
   listSentFriendRequests,
@@ -24,12 +25,16 @@ export default async function FriendsHubPage() {
   const session = await getSession()
   if (!session?.user) redirect("/login")
 
-  const [t, profile, friends, requests, sent] = await Promise.all([
+  const profile = await getPlayerProfile(session.user.id)
+  const [t, friends, requests, sent, suggestions] = await Promise.all([
     getT(),
-    getPlayerProfile(session.user.id),
     listFriends(session.user.id),
     listPendingFriendRequests(session.user.id),
     listSentFriendRequests(session.user.id),
+    listFriendCandidates(session.user.id, {
+      limit: 10,
+      origin: profile?.coords ?? null,
+    }),
   ])
 
   return (
@@ -45,6 +50,7 @@ export default async function FriendsHubPage() {
           friends={friends}
           requests={requests}
           sent={sent}
+          suggestions={suggestions}
           friendIds={friends.map((f) => f.userId)}
         />
       </div>

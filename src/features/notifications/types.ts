@@ -17,6 +17,7 @@ import {
   MailPlusIcon,
   ClipboardListIcon,
   SwordsIcon,
+  WalletIcon,
 } from "lucide-react"
 
 import { formatKickoffLabel } from "@/features/matches/authority"
@@ -163,6 +164,43 @@ export interface NotificationPayloads {
   /** The requester: their friend request was accepted. */
   "friend.request_accepted": {
     friendName: string
+  }
+  /** Player: a bKash wallet top-up landed. */
+  "wallet.topup": {
+    amount: number
+    balanceAfter: number
+  }
+  /** Player: the ৳25 matchmaking fee was charged at a checkpoint. */
+  "match.fee_charged": {
+    matchId: string
+    amount: number
+  }
+  /** Player: a fall-through match credited their fee back. */
+  "match.fee_credited": {
+    matchId: string
+    amount: number
+  }
+  /** The other captain: the match was cancelled by their counterpart. */
+  "match.cancelled": {
+    matchId: string
+  }
+  /** Admin: a cash-back claim awaits review. */
+  "wallet.claim_received": {
+    amount: number
+    userName: string
+  }
+  /** Player: their claim was approved — payout within 3 working days. */
+  "wallet.claim_approved": {
+    amount: number
+  }
+  /** Player: their claim was rejected — balance credited back. */
+  "wallet.claim_rejected": {
+    amount: number
+    note?: string | null
+  }
+  /** Player: their claim was paid out via bKash. */
+  "wallet.claim_paid": {
+    amount: number
   }
 }
 
@@ -472,6 +510,97 @@ export const NOTIFICATION_TYPES: Registry = {
     }),
     body: () => ({ key: "notifications.friendRequestAcceptedBody" }),
     href: () => "/app/friends",
+  },
+  "wallet.topup": {
+    priority: "transactional",
+    audience: "player",
+    icon: WalletIcon,
+    title: (p) => ({
+      key: "notifications.walletTopupTitle",
+      params: { amount: p.amount },
+    }),
+    body: (p) => ({
+      key: "notifications.walletTopupBody",
+      params: { balance: p.balanceAfter },
+    }),
+    href: () => "/app/wallet",
+  },
+  "match.fee_charged": {
+    priority: "info",
+    audience: "player",
+    icon: SwordsIcon,
+    title: (p) => ({
+      key: "notifications.matchFeeChargedTitle",
+      params: { amount: p.amount },
+    }),
+    body: () => null,
+    href: (p) => `/matches/${p.matchId}`,
+  },
+  "match.fee_credited": {
+    priority: "transactional",
+    audience: "player",
+    icon: WalletIcon,
+    title: (p) => ({
+      key: "notifications.matchFeeCreditedTitle",
+      params: { amount: p.amount },
+    }),
+    body: () => ({ key: "notifications.matchFeeCreditedBody" }),
+    href: (p) => `/matches/${p.matchId}`,
+  },
+  "match.cancelled": {
+    priority: "critical",
+    audience: "player",
+    icon: SwordsIcon,
+    title: () => ({ key: "notifications.matchCancelledTitle" }),
+    body: () => ({ key: "notifications.matchCancelledBody" }),
+    href: (p) => `/matches/${p.matchId}`,
+  },
+  "wallet.claim_received": {
+    priority: "info",
+    audience: "admin",
+    icon: BanknoteIcon,
+    title: (p) => ({
+      key: "notifications.walletClaimReceivedTitle",
+      params: { user: p.userName, amount: p.amount },
+    }),
+    body: () => ({ key: "notifications.walletClaimReceivedBody" }),
+    href: () => "/admin/wallet-claims",
+  },
+  "wallet.claim_approved": {
+    priority: "transactional",
+    audience: "player",
+    icon: WalletIcon,
+    title: (p) => ({
+      key: "notifications.walletClaimApprovedTitle",
+      params: { amount: p.amount },
+    }),
+    body: () => ({ key: "notifications.walletClaimApprovedBody" }),
+    href: () => "/app/wallet",
+  },
+  "wallet.claim_rejected": {
+    priority: "transactional",
+    audience: "player",
+    icon: CircleXIcon,
+    title: (p) => ({
+      key: "notifications.walletClaimRejectedTitle",
+      params: { amount: p.amount },
+    }),
+    body: (p): LocalizedText | null =>
+      p.note
+        ? { key: "notifications.walletClaimRejectedBody", params: { note: p.note } }
+        : null,
+    href: () => "/app/wallet",
+  },
+  "wallet.claim_paid": {
+    priority: "transactional",
+    audience: "player",
+    icon: BanknoteIcon,
+    title: (p) => ({
+      key: "notifications.walletClaimPaidTitle",
+      params: { amount: p.amount },
+    }),
+    body: () => null,
+    href: () => "/app/wallet",
   },
 }
 

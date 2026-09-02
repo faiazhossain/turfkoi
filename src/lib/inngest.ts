@@ -385,6 +385,107 @@ export const erpNotificationsDaily = inngest.createFunction(
   }
 )
 
+// All durable jobs, declared after every function above (see the tail of
+// this file for the full export).
+
+/** Grace after kickoff before an unclaimed open match expires. */
+export const MATCH_EXPIRY_GRACE_MS = 90 * 60 * 1000 // 90 minutes
+
+/**
+ * Fall-through safety net: an open match whose kickoff + grace elapsed never
+ * found an opponent — expire it and credit the home captain's matchmaking
+ * fee back. Conditional UPDATE makes re-runs safe.
+ */
+export const expireUnclaimedMatch = inngest.createFunction(
+  {
+    id: "match-expire-unclaimed",
+    name: "Expire unclaimed open match and credit fee",
+    triggers: [{ event: "match/expire.unclaimed" }],
+  },
+  async ({ event, step }) => {
+    const { matchId } = (event.data ?? {}) as { matchId?: string }
+    if (!matchId) return
+
+    await step.run("expire-and-credit", async () => {
+      const { matches } = await import("@/db/schema")
+      const { creditMatchFees } = await import("@/features/wallet/service")
+      const updated = await db
+        .update(matches)
+        .set({ state: "expired", updatedAt: new Date() })
+        .where(and(eq(matches.id, matchId), eq(matches.state, "open")))
+        .returning({ id: matches.id })
+      if (updated.length === 0) return { expired: false }
+      await creditMatchFees(matchId)
+      return { expired: true }
+    })
+  }
+)
+
+/**
+ * Helper: schedule unclaimed-match expiry for a freshly created match.
+ * `kickoffTs` is the slot's epoch-ms start time.
+ */
+export async function scheduleMatchFeeExpiry(
+  matchId: string,
+  kickoffTs: number
+) {
+  await inngest.send({
+    name: "match/expire.unclaimed",
+    data: { matchId },
+    ts: kickoffTs + MATCH_EXPIRY_GRACE_MS,
+  })
+}
+
+/**
+ * Nightly catch-up sweep (01:43 Asia/Dhaka = 19:43 UTC; BD fixed UTC+6):
+ *  1. expire still-open matches whose kickoff + grace elapsed (missed events)
+ *     and credit their fees — creditMatchFees is idempotent;
+ *  2. fail wallet top-up entries stuck `pending` for over 24h (bKash never
+ *     called back) so users can retry cleanly.
+ */
+export const matchFeeSweepNightly = inngest.createFunction(
+  {
+    id: "match-fee-sweep-nightly",
+    name: "Expire stale open matches and stale wallet top-ups",
+    triggers: [{ cron: "43 19 * * *" }],
+  },
+  async ({ step }) => {
+    await step.run("expire-stale-open-matches", async () => {
+      const { matches } = await import("@/db/schema")
+      const { creditMatchFees } = await import("@/features/wallet/service")
+      const cutoff = new Date(Date.now() - MATCH_EXPIRY_GRACE_MS)
+      const stale = await db
+        .update(matches)
+        .set({ state: "expired", updatedAt: new Date() })
+        .where(and(eq(matches.state, "open"), lte(matches.kickoffAt, cutoff)))
+        .returning({ id: matches.id })
+      let credited = 0
+      for (const m of stale) {
+        const n = await creditMatchFees(m.id)
+        credited += n
+      }
+      return { expired: stale.length, feeCredits: credited }
+    })
+
+    await step.run("fail-stale-pending-topups", async () => {
+      const { walletEntries } = await import("@/db/schema")
+      const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000)
+      const failed = await db
+        .update(walletEntries)
+        .set({ status: "failed", updatedAt: new Date() })
+        .where(
+          and(
+            eq(walletEntries.type, "topup"),
+            eq(walletEntries.status, "pending"),
+            lte(walletEntries.createdAt, cutoff)
+          )
+        )
+        .returning({ id: walletEntries.id })
+      return { failed: failed.length }
+    })
+  }
+)
+
 // All durable jobs, declared after every function above.
 export const inngestFunctionsAll = [
   expireSlotHold,
@@ -393,4 +494,6 @@ export const inngestFunctionsAll = [
   materializeSchedulesNightly,
   erpAutoPostBills,
   erpNotificationsDaily,
+  expireUnclaimedMatch,
+  matchFeeSweepNightly,
 ]

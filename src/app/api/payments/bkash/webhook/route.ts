@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 
 import { bkashProvider } from "@/lib/payment"
 import { rateLimit } from "@/lib/ratelimit"
-import { confirmPaymentAction } from "@/features/bookings/actions"
+import { confirmAnyPaymentAction } from "@/features/payments/confirm"
 
 /**
  * bKash server-to-server webhook (H3: signature + IP allowlist).
@@ -57,6 +57,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, status: "ignored" })
   }
 
-  await confirmPaymentAction(verified.providerReference)
+  await confirmAnyPaymentAction(verified.providerReference)
   return NextResponse.json({ ok: true })
 }

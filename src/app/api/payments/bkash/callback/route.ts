@@ -11,17 +11,25 @@ import { NextResponse } from "next/server"
 export async function GET(req: Request) {
   const url = new URL(req.url)
   const bookingId = url.searchParams.get("bookingId")
+  const purpose = url.searchParams.get("purpose")
   const status =
     url.searchParams.get("payment_status") ??
     url.searchParams.get("status") ??
     ""
 
+  const success =
+    status === "Completed" || status === "completed" || status === "success"
+
+  // Wallet top-ups bounce back to the wallet page, not a booking.
+  if (purpose === "wallet") {
+    const target = new URL("/app/wallet", url.origin)
+    target.searchParams.set("topup", success ? "success" : "failed")
+    return NextResponse.redirect(target)
+  }
+
   if (!bookingId) {
     return NextResponse.redirect(new URL("/app", url.origin))
   }
-
-  const success =
-    status === "Completed" || status === "completed" || status === "success"
 
   const target = new URL(`/bookings/${bookingId}`, url.origin)
   target.searchParams.set("payment", success ? "success" : "failed")

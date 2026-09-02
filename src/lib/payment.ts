@@ -8,7 +8,10 @@ export type PaymentProviderName =
   (typeof paymentProvider.enumValues)[number]
 
 export interface CreatePaymentInput {
-  bookingId: string
+  /** Booking payments only — wallet top-ups omit this. */
+  bookingId?: string
+  /** What the charge is for — decides the dev mock confirm route. */
+  kind?: "booking" | "wallet"
   amount: number
   platformFee: number
   idempotencyKey: string
@@ -114,7 +117,15 @@ async function grantToken(): Promise<string> {
 export const bkashProvider: PaymentProvider = {
   async createPayment(input) {
     if (devMode()) {
-      // Mock mode: the "payment" is confirmed via /bookings/[id]/pay/mock.
+      // Mock mode: the "payment" is confirmed via the mock confirm route —
+      // per kind, so wallet top-ups bounce to their own dev checkout.
+      if (input.kind === "wallet") {
+        const ref = `mock_wallet_${randomUUID().slice(0, 8)}`
+        return {
+          providerReference: ref,
+          paymentUrl: `/app/wallet/topup/mock?ref=${ref}`,
+        }
+      }
       const ref = `mock_${input.bookingId}_${randomUUID().slice(0, 8)}`
       return {
         providerReference: ref,

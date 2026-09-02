@@ -6,6 +6,8 @@ import { getT } from "@/i18n/server"
 import { StatusBadge, EmptyState } from "@/components/shared"
 import { Button } from "@/components/ui/button"
 import { MapView } from "@/components/map"
+import { getWalletBalance } from "@/features/wallet/queries"
+import { MATCH_FEE_BDT, formatBdt } from "@/lib/pricing"
 import { MatchActions } from "@/components/matches/match-actions"
 import { ButtonModal } from "@/components/matches/button-modal"
 import { SquadInvitePanel } from "@/components/matches/squad-invite-panel"
@@ -192,6 +194,10 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
   const homeCaptainWaitsForOpponent =
     isHomeCaptain && m.state === "open" && m.awayCaptainId === null
 
+  // Matchmaking fee context for the claim/challenge CTAs (wallet-first).
+  const walletBalance = canClaim ? await getWalletBalance(user.id) : 0
+  const canAffordFee = walletBalance >= MATCH_FEE_BDT
+
   // Visitor teams they could challenge with (captain-role only).
   const myTeams =
     user && !managesMatch
@@ -322,7 +328,15 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
             {tr("matches.claim.title")}
           </h2>
           <p className="text-sm text-dt-dim">{tr("matches.claim.desc")}</p>
-          <ClaimOpponentButton matchId={m.id} squadSize={squadSize} size="default" />
+          <p className="text-xs text-dt-dim">
+            {tr("matches.feeBannerClaim", { amount: MATCH_FEE_BDT })}
+          </p>
+          <ClaimOpponentButton
+            matchId={m.id}
+            squadSize={squadSize}
+            size="default"
+            canAffordFee={canAffordFee}
+          />
         </section>
       ) : homeCaptainWaitsForOpponent ? (
         <p className="rounded-2xl border border-dt-green/40 bg-dt-green/5 p-3 text-sm text-dt-dim">
@@ -596,14 +610,19 @@ export default async function MatchDetailPage({ params, searchParams }: PageProp
 
       {/* Team challenges — send (visiting captains) / accept (home captain) */}
       {showChallengePanel ? (
-        <TeamChallengePanel
-          matchId={m.id}
-          matchOpen={m.state === "open"}
-          canChallenge={canClaim && myTeams.length > 0}
-          isHomeCaptain={isHomeCaptain}
-          myTeams={myTeams}
-          challenges={challenges}
-        />
+        <div className="space-y-1">
+          <p className="text-xs text-dt-dim">
+            {tr("matches.feeBannerChallenge", { amount: MATCH_FEE_BDT })}
+          </p>
+          <TeamChallengePanel
+            matchId={m.id}
+            matchOpen={m.state === "open"}
+            canChallenge={canClaim && myTeams.length > 0}
+            isHomeCaptain={isHomeCaptain}
+            myTeams={myTeams}
+            challenges={challenges}
+          />
+        </div>
       ) : null}
 
       {/* Match room — full squad, Starting / Substitutes per side */}

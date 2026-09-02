@@ -9,6 +9,7 @@ import { db } from "@/db"
 import { isUniqueViolation } from "@/db/errors"
 import {
   bookings,
+  matches,
   slotHolds,
   transactions,
   turfSlots,
@@ -30,6 +31,7 @@ import {
   SLOT_HOLD_TTL_MS,
 } from "@/lib/inngest"
 import { createNotifications } from "@/features/notifications/create"
+import { creditMatchFees } from "@/features/wallet/service"
 
 import {
   holdSlotSchema,
@@ -492,6 +494,26 @@ export async function cancelBookingAction(
       .update(transactions)
       .set({ status: newStatus, updatedAt: new Date() })
       .where(eq(transactions.id, txn.id))
+  }
+
+  // Fall-through gap close: the booking anchored a match — the game can't
+  // happen, so cancel it and credit both matchmaking fees back.
+  const [attachedMatch] = await db
+    .select({ id: matches.id, state: matches.state })
+    .from(matches)
+    .where(eq(matches.bookingId, bookingId))
+    .limit(1)
+  if (
+    attachedMatch &&
+    !["ongoing", "completed", "cancelled", "expired", "disputed"].includes(
+      attachedMatch.state
+    )
+  ) {
+    await db
+      .update(matches)
+      .set({ state: "cancelled", updatedAt: new Date() })
+      .where(eq(matches.id, attachedMatch.id))
+    await creditMatchFees(attachedMatch.id)
   }
 
   revalidatePath(`/bookings/${bookingId}`)

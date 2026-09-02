@@ -149,6 +149,9 @@ export default async function ProfilePage() {
             <PencilIcon aria-hidden />
             {t("profile.editCta")}
           </Button>
+          <p className="mt-2 text-xs text-dt-dim">
+            {t(availableNow ? "player.soloHintOn" : "player.soloHintOff")}
+          </p>
         </div>
       </section>
 

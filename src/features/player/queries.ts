@@ -227,10 +227,12 @@ export function isAvailabilityFresh(profile: {
 
 /**
  * SS20 / SS32: matches that need players. A match is "needs players" when the
- * roster is open (open / confirmed / roster_building) and at least one side
- * has free seats. Every open match also wants an opponent-side claim — that
- * signal is surfaced by the claim UI, not here; joining players always go to
- * a side with free seats (home while the away side is unclaimed).
+ * roster is open (open / confirmed / roster_building), at least one side
+ * has free seats, and kickoff hasn't passed — a match that already started
+ * is never joinable, whatever its state says. Every open match also wants an
+ * opponent-side claim — that signal is surfaced by the claim UI, not here;
+ * joining players always go to a side with free seats (home while the away
+ * side is unclaimed).
  *
  * Geo-sorted by distance from the player's coords when available.
  */
@@ -254,6 +256,7 @@ export async function listMatchesNeedingPlayers(
       turfName: turfs.name,
       turfArea: turfs.area,
       turfCity: turfs.city,
+      captainId: users.id,
       captainName: users.name,
     })
     .from(matches)
@@ -261,9 +264,12 @@ export async function listMatchesNeedingPlayers(
     .innerJoin(turfs, eq(turfs.id, bookings.turfId))
     .innerJoin(users, eq(users.id, matches.captainId))
     .where(
-      or(
-        inArray(matches.state, ["roster_building", "confirmed"]),
-        eq(matches.state, "open")
+      and(
+        or(
+          inArray(matches.state, ["roster_building", "confirmed"]),
+          eq(matches.state, "open")
+        ),
+        sql`${matches.kickoffAt} > now()`
       )
     )
     .orderBy(asc(matches.kickoffAt))
@@ -455,6 +461,45 @@ export async function listPlayerMatchHistory(
       .limit(limit),
   ])
   return mergeMatchHistory(playerRows, guestRows, limit)
+}
+
+/**
+ * Completed matches the player took part in — the XP basis for the dashboard
+ * level bar. Same two-source merge as listPlayerMatchHistory (rostered rows
+ * plus pre-account guest rows linked by user id or phone), deduped by match
+ * id so a match counts once. Completed-only: unfinished matches grant no XP.
+ */
+export async function countPlayerMatches(
+  userId: string,
+  phone: string | null
+): Promise<number> {
+  const completed = eq(matches.state, "completed")
+  const [playerRows, guestRows] = await Promise.all([
+    db
+      .select({ matchId: matchPlayers.matchId })
+      .from(matchPlayers)
+      .innerJoin(matches, eq(matches.id, matchPlayers.matchId))
+      .where(and(eq(matchPlayers.userId, userId), completed)),
+    db
+      .select({ matchId: matchGuests.matchId })
+      .from(matchGuests)
+      .innerJoin(matches, eq(matches.id, matchGuests.matchId))
+      .where(
+        and(
+          phone
+            ? or(
+                eq(matchGuests.linkedUserId, userId),
+                and(
+                  isNull(matchGuests.linkedUserId),
+                  eq(matchGuests.phone, phone)
+                )
+              )
+            : eq(matchGuests.linkedUserId, userId),
+          completed
+        )
+      ),
+  ])
+  return new Set(playerRows.concat(guestRows).map((r) => r.matchId)).size
 }
 
 /** Pending player requests for one match — shown to both side captains. */

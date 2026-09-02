@@ -10,6 +10,7 @@ import { useI18n } from "@/i18n/client"
 import { PlayerAvatar } from "@/components/player/player-avatar"
 import { resolveAvatarDisplay } from "@/features/player/avatar"
 import { isPresenceOnline } from "@/lib/presence"
+import { MapView, type MapMarker } from "@/components/map"
 import { InviteToMatchDialog } from "@/components/players/invite-to-match-dialog"
 import {
   sendFriendRequestAction,
@@ -17,7 +18,11 @@ import {
   removeFriendAction,
 } from "@/features/friends/actions"
 import { searchPlayersAction } from "@/features/player/actions"
-import type { FriendRow, PendingRequestRow } from "@/features/friends/queries"
+import type {
+  FriendCandidateRow,
+  FriendRow,
+  PendingRequestRow,
+} from "@/features/friends/queries"
 import type { PlayerCardRow } from "@/features/player/queries"
 
 type Tab = "friends" | "requests" | "sent"
@@ -169,12 +174,15 @@ export function FriendsPage({
   friends,
   requests,
   sent,
+  suggestions,
   friendIds,
 }: {
   myPlayerId: string | null
   friends: FriendRow[]
   requests: PendingRequestRow[]
   sent: PendingRequestRow[]
+  /** Recently-available players to suggest (server-filtered for friends/pending/blocks). */
+  suggestions: FriendCandidateRow[]
   /** Ids already befriended — used to hide stale search hits. */
   friendIds: string[]
 }) {
@@ -184,7 +192,9 @@ export function FriendsPage({
   const [pending, start] = useTransition()
   const [term, setTerm] = useState("")
   const [hits, setHits] = useState<PlayerCardRow[] | null>(null)
+  const [sentSuggestions, setSentSuggestions] = useState<string[]>([])
   const [copied, setCopied] = useState(false)
+  const [suggestionView, setSuggestionView] = useState<"map" | "list">("map")
   const [inviteTarget, setInviteTarget] = useState<{ userId: string; name: string } | null>(
     null
   )
@@ -209,6 +219,7 @@ export function FriendsPage({
       }
       toast.success(t("friends.requestSent"))
       setHits((prev) => (prev ?? []).filter((h) => h.userId !== userId))
+      setSentSuggestions((prev) => [...prev, userId])
     })
   }
 
@@ -244,6 +255,13 @@ export function FriendsPage({
 
   const searched = hits !== null
   const visibleHits = (hits ?? []).filter((h) => !friendIds.includes(h.userId))
+  const visibleSuggestions = suggestions.filter(
+    (s) => !friendIds.includes(s.userId) && !sentSuggestions.includes(s.userId)
+  )
+  // Map tab only makes sense when pins exist (viewer + candidate coords).
+  const showSuggestionMap = visibleSuggestions.some(
+    (s) => s.lat != null && s.lng != null
+  )
 
   return (
     <div className="text-dt-txt">
@@ -352,6 +370,81 @@ export function FriendsPage({
             </button>
           ))}
         </div>
+
+        {tab === "friends" ? (
+          <>
+            {/* Suggestions: recently-available players (server-filtered) */}
+            {visibleSuggestions.length > 0 ? (
+              <div className="space-y-1">
+                <SectionDivider
+                  legend={`${t("friends.suggestionsTitle")} · ${visibleSuggestions.length}`}
+                  dot="online"
+                />
+                <p className="px-1 text-xs text-dt-dim">
+                  {t("friends.suggestionsDesc")}
+                </p>
+                {showSuggestionMap ? (
+                  /* Map / Players toggle — one view at a time */
+                  <div className="grid grid-cols-2 gap-2" role="tablist">
+                    {(
+                      [
+                        ["map", t("friends.mapTab")],
+                        ["list", t("friends.playersTab")],
+                      ] as const
+                    ).map(([key, label]) => (
+                      <button
+                        key={key}
+                        role="tab"
+                        aria-selected={suggestionView === key}
+                        onClick={() => setSuggestionView(key)}
+                        className={`rounded-xl border px-2 py-2 text-[12.5px] font-bold transition ${
+                          suggestionView === key
+                            ? "border-dt-blue bg-dt-blue/10 text-dt-blue"
+                            : "border-dt-line bg-dt-card text-dt-dim hover:bg-dt-card2"
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+                {showSuggestionMap && suggestionView === "map" ? (
+                  <MapView
+                    ariaLabel={t("friends.suggestionsMapAria")}
+                    className="h-64 rounded-[14px]"
+                    markers={suggestionMarkers(visibleSuggestions)}
+                  />
+                ) : (
+                  <ul className="space-y-2">
+                    {visibleSuggestions.map((s) => (
+                      <PlayerRow
+                        key={s.userId}
+                        row={{
+                          userId: s.userId,
+                          name: s.name,
+                          playerId: s.playerId,
+                          username: s.username,
+                          position: s.position,
+                          lastSeenAt: null,
+                          avatarType: s.avatarType,
+                          avatarPresetId: s.avatarPresetId,
+                          avatarPublicId: s.avatarPublicId,
+                        }}
+                        onClick={() =>
+                          s.playerId && router.push(`/players/${s.playerId}`)
+                        }
+                      >
+                        <GreenButton onClick={() => request(s.userId)} loading={pending}>
+                          {t("friends.addFriend")}
+                        </GreenButton>
+                      </PlayerRow>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            ) : null}
+          </>
+        ) : null}
 
         {tab === "friends" ? (
           friends.length === 0 ? (
@@ -500,6 +593,27 @@ export function FriendsPage({
       />
     </div>
   )
+}
+
+/** Player pins for the suggestions map — area / distance in the popup label. */
+function suggestionMarkers(rows: FriendCandidateRow[]): MapMarker[] {
+  return rows
+    .filter((r) => r.lat != null && r.lng != null)
+    .map((r) => ({
+      id: r.userId,
+      lat: r.lat as number,
+      lng: r.lng as number,
+      label: [
+        r.name ?? "",
+        r.distanceKm != null
+          ? `${r.distanceKm.toFixed(1)} km`
+          : (r.area ?? ""),
+      ]
+        .filter(Boolean)
+        .join(" · "),
+      href: r.playerId ? `/players/${r.playerId}` : undefined,
+      kind: "player" as const,
+    }))
 }
 
 /** Mockup empty state: big emoji / title / dim description. */

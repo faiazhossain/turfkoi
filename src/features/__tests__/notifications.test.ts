@@ -90,6 +90,14 @@ const SAMPLE_PAYLOADS: {
   },
   "friend.request_received": { friendName: "Rahim" },
   "friend.request_accepted": { friendName: "Karim" },
+  "wallet.topup": { amount: 100, balanceAfter: 100 },
+  "match.fee_charged": { matchId: "m-1", amount: 25 },
+  "match.fee_credited": { matchId: "m-1", amount: 25 },
+  "match.cancelled": { matchId: "m-1" },
+  "wallet.claim_received": { amount: 100, userName: "Rakib" },
+  "wallet.claim_approved": { amount: 100 },
+  "wallet.claim_rejected": { amount: 100, note: null },
+  "wallet.claim_paid": { amount: 100 },
 }
 
 describe("notification registry", () => {

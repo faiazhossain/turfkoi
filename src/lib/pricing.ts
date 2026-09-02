@@ -9,6 +9,14 @@
 export const PLATFORM_FEE_PERCENT = 0.05
 export const PLATFORM_FEE_CAP_BDT = 100
 
+/**
+ * Matchmaking fee: ৳25 per team per match (both sides pay — the platform
+ * earns ৳50 per completed match). Collected wallet-first at the match
+ * checkpoints; credited back when a match falls through (see
+ * features/wallet). Pure constant — keep this file pure.
+ */
+export const MATCH_FEE_BDT = 25
+
 export interface FeeBreakdown {
   /** What the turf owner will be paid out (net of platform fee). */
   turfAmount: number

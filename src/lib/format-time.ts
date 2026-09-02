@@ -15,6 +15,15 @@ export function toBnDigits(s: string): string {
   return s.replace(/\d/g, (d) => BN_DIGITS[Number(d)])
 }
 
+/**
+ * Epoch-ms of a Dhaka slot start from its machine parts ("YYYY-MM-DD" +
+ * "HH:MM"). Slots live in Asia/Dhaka (fixed +06, no DST). Pure module —
+ * safe from server and client.
+ */
+export function slotStartEpochMs(date: string, hhmm: string): number {
+  return new Date(`${date}T${hhmm}:00+06:00`).getTime()
+}
+
 /** রাত 18:00–03:59 · সকাল 04:00–11:59 · দুপুর 12:00–15:59 · বিকাল 16:00–17:59 */
 function bnDayPart(hour: number): string {
   if (hour >= 4 && hour < 12) return "সকাল"

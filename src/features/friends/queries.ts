@@ -133,16 +133,58 @@ export async function listSentFriendRequests(userId: string): Promise<PendingReq
   return rows
 }
 
+export type FriendCandidateRow = {
+  userId: string
+  name: string | null
+  phone: string
+  playerId: string | null
+  username: string | null
+  position: string | null
+  area: string | null
+  avatarType: string | null
+  avatarPresetId: string | null
+  avatarPublicId: string | null
+  /** Set only when the viewer has profile coords (10 km radius search). */
+  distanceKm: number | null
+  lat: number | null
+  lng: number | null
+}
+
 /**
  * Candidate suggestions: players recently marked available (24h freshness),
- * excluding the user + blocked pairs. Friends are filtered out by the client.
+ * excluding the user, blocked pairs, and anyone with an existing friendship
+ * or pending request in either direction. When the viewer has profile coords,
+ * only players within 10 km are returned (SS20/SS32 radius), nearest first;
+ * otherwise suggestions are unfiltered by distance, most recently available
+ * first. Pins stay approximate — coords are rounded to ~110m at write time.
  */
-export async function listFriendCandidates(userId: string, limit = 10) {
-  return db
+export async function listFriendCandidates(
+  userId: string,
+  opts: { limit?: number; origin?: { lat: number; lng: number } | null } = {}
+): Promise<FriendCandidateRow[]> {
+  const { limit = 10, origin } = opts
+  const originPoint = origin
+    ? sql`ST_SetSRID(ST_MakePoint(${origin.lng}, ${origin.lat}), 4326)::geography`
+    : null
+  const distanceExpr = sql<number>`ST_Distance(${playerProfiles.coords}, ${originPoint}) / 1000.0`
+
+  const rows = await db
     .select({
-      id: users.id,
+      userId: users.id,
       name: users.name,
       phone: users.phone,
+      playerId: playerProfiles.playerId,
+      username: playerProfiles.username,
+      position: playerProfiles.position,
+      area: playerProfiles.area,
+      avatarType: playerProfiles.avatarType,
+      avatarPresetId: playerProfiles.avatarPresetId,
+      avatarPublicId: playerProfiles.avatarPublicId,
+      lat: sql<number | null>`ST_Y(${playerProfiles.coords}::geometry)`,
+      lng: sql<number | null>`ST_X(${playerProfiles.coords}::geometry)`,
+      distanceKm: originPoint
+        ? distanceExpr
+        : sql<number | null>`NULL::double precision`,
     })
     .from(playerProfiles)
     .innerJoin(users, eq(users.id, playerProfiles.userId))
@@ -151,10 +193,43 @@ export async function listFriendCandidates(userId: string, limit = 10) {
         ne(users.id, userId),
         eq(playerProfiles.available, true),
         sql`${playerProfiles.availableAt} >= now() - interval '24 hours'`,
-        notBlockedEitherDirection(userId, users.id)
+        notBlockedEitherDirection(userId, users.id),
+        notExists(
+          db
+            .select({ one: sql`1` })
+            .from(friendships)
+            .where(
+              or(
+                and(
+                  eq(friendships.requesterId, userId),
+                  eq(friendships.addresseeId, users.id)
+                ),
+                and(
+                  eq(friendships.addresseeId, userId),
+                  eq(friendships.requesterId, users.id)
+                )
+              )
+            )
+        ),
+        // 10 km radius from the viewer when their coords are known (SS20).
+        ...(originPoint
+          ? [sql`ST_DWithin(${playerProfiles.coords}, ${originPoint}, 10000)`]
+          : [])
       )
     )
+    .orderBy(
+      originPoint
+        ? asc(distanceExpr)
+        : desc(playerProfiles.availableAt)
+    )
     .limit(limit)
+
+  return rows.map((r) => ({
+    ...r,
+    distanceKm: r.distanceKm == null ? null : Number(r.distanceKm),
+    lat: r.lat == null ? null : Number(r.lat),
+    lng: r.lng == null ? null : Number(r.lng),
+  }))
 }
 
 /** Search registered players by name/phone prefix for the friend search box. */

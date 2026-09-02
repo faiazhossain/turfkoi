@@ -110,6 +110,35 @@ export const notificationPayloadSchemas = {
   "friend.request_accepted": z.object({
     friendName: z.string(),
   }),
+  "wallet.topup": z.object({
+    amount: z.number(),
+    balanceAfter: z.number(),
+  }),
+  "match.fee_charged": z.object({
+    matchId: z.string(),
+    amount: z.number(),
+  }),
+  "match.fee_credited": z.object({
+    matchId: z.string(),
+    amount: z.number(),
+  }),
+  "match.cancelled": z.object({
+    matchId: z.string(),
+  }),
+  "wallet.claim_received": z.object({
+    amount: z.number(),
+    userName: z.string(),
+  }),
+  "wallet.claim_approved": z.object({
+    amount: z.number(),
+  }),
+  "wallet.claim_rejected": z.object({
+    amount: z.number(),
+    note: z.string().nullish(),
+  }),
+  "wallet.claim_paid": z.object({
+    amount: z.number(),
+  }),
 } satisfies Record<NotificationType, z.ZodType>
 
 export type NotificationPayloadInput = {
