@@ -172,5 +172,14 @@ export const payouts = pgTable(
       .notNull(),
     paidAt: timestamp("paid_at", { withTimezone: true }),
   },
-  (t) => [index("payouts_owner_status_idx").on(t.turfOwnerId, t.status)]
+  (t) => [
+    index("payouts_owner_status_idx").on(t.turfOwnerId, t.status),
+    // One payout row per owner per weekly period — the generation action is
+    // admin-triggered and must never double-generate a period.
+    uniqueIndex("payouts_period_unique").on(
+      t.turfOwnerId,
+      t.periodStart,
+      t.periodEnd
+    ),
+  ]
 )

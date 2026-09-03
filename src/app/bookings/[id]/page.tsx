@@ -1,16 +1,19 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { CheckCircle2Icon, ClockIcon, MapPinIcon } from "lucide-react"
+import { and, eq } from "drizzle-orm"
 
 import { StatusBadge, EmptyState } from "@/components/shared"
 import { FeeBreakdown } from "@/components/bookings/fee-breakdown"
 import { BookingActions } from "@/components/bookings/booking-actions"
 import { CreateMatchButton } from "@/components/bookings/create-match-button"
+import { PaymentSubmissionForm } from "@/components/payments/payment-submission-form"
 import { getBooking } from "@/features/bookings/queries"
+import { getBookingPaymentSubmission } from "@/features/payments/queries"
 import { db } from "@/db"
-import { matches } from "@/db/schema"
-import { eq } from "drizzle-orm"
+import { matches, turfSlots } from "@/db/schema"
 import { computeFees } from "@/lib/pricing"
+import { PLATFORM_BKASH_NUMBER } from "@/lib/platform-payments"
 import { getCurrentUser } from "@/lib/auth"
 import { getT } from "@/i18n/server"
 import type { Metadata } from "next"
@@ -19,7 +22,6 @@ import { bookingStatusLabel } from "@/i18n/labels"
 
 interface PageProps {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ payment?: string }>
 }
 
 const STATUS_TONE: Record<string, "success" | "warning" | "neutral" | "primary"> = {
@@ -37,13 +39,9 @@ export async function generateMetadata(): Promise<Metadata> {
   return buildMetadata({ titleKey: "metadata.bookingTitle" })
 }
 
-export default async function BookingDetailPage({
-  params,
-  searchParams,
-}: PageProps) {
+export default async function BookingDetailPage({ params }: PageProps) {
   const t = await getT()
   const { id } = await params
-  const { payment } = await searchParams
 
   const user = await getCurrentUser()
   const booking = await getBooking(id)
@@ -75,7 +73,26 @@ export default async function BookingDetailPage({
 
   const fmt = (time: string) => time.slice(0, 5)
   const tone = STATUS_TONE[b.status] ?? "neutral"
-  const paymentFailed = payment === "failed"
+
+  // Manual bKash intake: the authoritative expected amount comes from the
+  // slot price (server recompute), and the latest submission drives the banner.
+  const awaitingPayment = b.status === "held" || b.status === "payment_pending"
+  const submission = awaitingPayment ? await getBookingPaymentSubmission(b.id) : null
+  let expectedTotal = Math.round(total)
+  if (awaitingPayment) {
+    const [slot] = await db
+      .select({ price: turfSlots.price })
+      .from(turfSlots)
+      .where(
+        and(
+          eq(turfSlots.turfId, b.turfId),
+          eq(turfSlots.date, b.date),
+          eq(turfSlots.startTime, b.slotStart)
+        )
+      )
+      .limit(1)
+    if (slot) expectedTotal = computeFees(Number(slot.price)).total
+  }
 
   // Labels resolve from the typed key maps (unknown enum values fail typecheck).
   const statusText = t(bookingStatusLabel(b.status))
@@ -141,11 +158,32 @@ export default async function BookingDetailPage({
         />
       </section>
 
-      <BookingActions
-        bookingId={b.id}
-        status={b.status}
-        paymentFailed={paymentFailed}
-      />
+      {awaitingPayment && user.id === b.bookerId ? (
+        submission?.status === "pending" ? (
+          <div className="rounded-lg border border-warning/40 bg-warning/10 p-3 text-sm text-warning">
+            {t("payments.pendingBanner")}
+          </div>
+        ) : (
+          <>
+            {submission?.status === "rejected" ? (
+              <div className="rounded-lg border border-dt-red/40 bg-dt-red/10 p-3 text-sm text-dt-red">
+                {t("payments.rejectedBanner", {
+                  reason: submission.rejectReason ?? "",
+                })}
+              </div>
+            ) : null}
+            <PaymentSubmissionForm
+              userId={user.id}
+              purpose="turf_booking"
+              amount={expectedTotal}
+              platformNumber={PLATFORM_BKASH_NUMBER}
+              bookingId={b.id}
+            />
+          </>
+        )
+      ) : null}
+
+      <BookingActions bookingId={b.id} status={b.status} />
 
       {b.status === "confirmed" && existingMatch ? (
         <div className="rounded-lg border border-dt-line bg-dt-card p-3 text-sm">

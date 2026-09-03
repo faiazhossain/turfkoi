@@ -1,4 +1,5 @@
-import { pgTable, uuid, text, timestamp, primaryKey, index } from "drizzle-orm/pg-core"
+import { sql } from "drizzle-orm"
+import { pgTable, uuid, text, timestamp, primaryKey, index, uniqueIndex } from "drizzle-orm/pg-core"
 
 import { teamMemberRole } from "./enums"
 import { users } from "./users"
@@ -65,5 +66,9 @@ export const teamInvitations = pgTable(
     // One pending invite per (team, phone) — dedupes re-adds.
     index("team_invitations_team_phone_idx").on(t.teamId, t.phone),
     index("team_invitations_phone_idx").on(t.phone),
+    // Race-proof guard: an unfulfilled (team, phone) invite is unique.
+    uniqueIndex("team_invitations_pending")
+      .on(t.teamId, t.phone)
+      .where(sql`fulfilled_at IS NULL`),
   ]
 )

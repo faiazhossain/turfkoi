@@ -1,9 +1,15 @@
 import "server-only"
-import { and, eq, lte } from "drizzle-orm"
+import { and, eq, inArray, lte } from "drizzle-orm"
 import { Inngest } from "inngest"
 
 import { db } from "@/db"
-import { bookings, slotHolds, turfSchedules } from "@/db/schema"
+import {
+  bookings,
+  paymentSubmissions,
+  slotHolds,
+  turfSchedules,
+  turfSlots,
+} from "@/db/schema"
 import { materializeTurfSchedule } from "@/features/turfs/materialize"
 
 /**
@@ -11,7 +17,7 @@ import { materializeTurfSchedule } from "@/features/turfs/materialize"
  * scheduled jobs:
  *
  *   slot-hold-expire  — fires at a hold's expiresAt; releases the slot if the
- *                       booking never progressed past `held`.
+ *                       booking never progressed past payment verification.
  *   settle-at-kickoff — fires at the booking's kickoff; flips a `confirmed`
  *                       booking to `completed`. The transaction then becomes
  *                       payout-eligible for the weekly admin sweep.
@@ -21,12 +27,14 @@ import { materializeTurfSchedule } from "@/features/turfs/materialize"
  */
 export const inngest = new Inngest({ id: "deshiturf" })
 
-export const SLOT_HOLD_TTL_MS = 10 * 60 * 1000 // §27: 10-minute hold
+export { SLOT_HOLD_TTL_MS } from "@/lib/slot-expansion"
 
 /**
- * Release a hold whose TTL elapsed. If the booking is still `held` (no payment
- * initiated), expire it too. Conditional updates make this safe to fire
- * multiple times.
+ * Release a hold whose TTL elapsed (3h, or the booking cutoff — manual bKash
+ * verification needs a long leash, but never past kickoff-20min). Fully cleans
+ * up: slot back to `available`, `held`/`payment_pending` booking expired, and
+ * any still-pending payment submission auto-rejected (frees its TxID).
+ * Conditional updates make this safe to fire multiple times.
  */
 export const expireSlotHold = inngest.createFunction(
   {
@@ -42,16 +50,68 @@ export const expireSlotHold = inngest.createFunction(
     if (!holdId || !bookingId) return
 
     await step.run("expire-hold", async () => {
-      await db.delete(slotHolds).where(eq(slotHolds.id, holdId))
-      // Flip the booking to expired ONLY if it's still in `held` (payment
-      // was never initiated). Confirmed/payment_pending bookings are left alone.
-      await db
+      // Read the hold's slot coordinates before deleting it.
+      const [hold] = await db
+        .select({
+          turfId: slotHolds.turfId,
+          date: slotHolds.date,
+          startTime: slotHolds.startTime,
+        })
+        .from(slotHolds)
+        .where(eq(slotHolds.id, holdId))
+        .limit(1)
+
+      // Release the slot unconditionally-by-status-shape: it may still read
+      // `held` (never paid) — a `booked`/`maintenance`/`blocked` slot is left
+      // untouched by the conditional below.
+      if (hold) {
+        await db
+          .update(turfSlots)
+          .set({ status: "available" })
+          .where(
+            and(
+              eq(turfSlots.turfId, hold.turfId),
+              eq(turfSlots.date, hold.date),
+              eq(turfSlots.startTime, hold.startTime),
+              eq(turfSlots.status, "held")
+            )
+          )
+      }
+
+      // Expire the booking ONLY if payment never landed (`held` — no
+      // submission yet — or `payment_pending` — submission awaiting review).
+      // Confirmed/completed bookings are left alone.
+      const expired = await db
         .update(bookings)
         .set({ status: "expired", updatedAt: new Date() })
         .where(
-          and(eq(bookings.id, bookingId), eq(bookings.status, "held"))
+          and(
+            eq(bookings.id, bookingId),
+            inArray(bookings.status, ["held", "payment_pending"])
+          )
         )
-      return { holdId, bookingId }
+        .returning({ id: bookings.id })
+
+      // If the booking died, auto-reject any pending submission so the admin
+      // queue stays clean and the TxID is freed for the user's retry.
+      if (expired.length > 0) {
+        await db
+          .update(paymentSubmissions)
+          .set({
+            status: "rejected",
+            rejectReason: "hold_expired",
+            updatedAt: new Date(),
+          })
+          .where(
+            and(
+              eq(paymentSubmissions.bookingId, bookingId),
+              eq(paymentSubmissions.status, "pending")
+            )
+          )
+      }
+
+      await db.delete(slotHolds).where(eq(slotHolds.id, holdId))
+      return { holdId, bookingId, expired: expired.length > 0 }
     })
   }
 )
@@ -87,14 +147,19 @@ export const settleAtKickoff = inngest.createFunction(
 
 /**
  * Helper: schedule the expiry of a freshly created hold. Callers fire this
- * right after inserting the slot_hold row. The wait time matches the hold TTL
- * (§27: 10 minutes).
+ * right after inserting the slot_hold row. `expiresAt` comes from
+ * holdExpiryFor() — min(now + 3h, kickoff − 20min) — and matches the stored
+ * slot_hold.expiresAt.
  */
-export async function scheduleHoldExpiry(holdId: string, bookingId: string) {
+export async function scheduleHoldExpiry(
+  holdId: string,
+  bookingId: string,
+  expiresAt: Date
+) {
   await inngest.send({
     name: "slot/hold.expired",
     data: { holdId, bookingId },
-    ts: Date.now() + SLOT_HOLD_TTL_MS,
+    ts: expiresAt.getTime(),
   })
 }
 
@@ -440,13 +505,15 @@ export async function scheduleMatchFeeExpiry(
  * Nightly catch-up sweep (01:43 Asia/Dhaka = 19:43 UTC; BD fixed UTC+6):
  *  1. expire still-open matches whose kickoff + grace elapsed (missed events)
  *     and credit their fees — creditMatchFees is idempotent;
- *  2. fail wallet top-up entries stuck `pending` for over 24h (bKash never
- *     called back) so users can retry cleanly.
+ *  2. auto-reject manual payment submissions stuck `pending` for over 48h
+ *     (nobody verified them) — frees the TxID for a corrected resubmission;
+ *  3. backstop: credit back any rejected cash claim whose credit entry is
+ *     missing (heals rows from before the atomic claim-reject CTE).
  */
 export const matchFeeSweepNightly = inngest.createFunction(
   {
     id: "match-fee-sweep-nightly",
-    name: "Expire stale open matches and stale wallet top-ups",
+    name: "Expire stale open matches, stale submissions, missed claim credits",
     triggers: [{ cron: "43 19 * * *" }],
   },
   async ({ step }) => {
@@ -467,21 +534,53 @@ export const matchFeeSweepNightly = inngest.createFunction(
       return { expired: stale.length, feeCredits: credited }
     })
 
-    await step.run("fail-stale-pending-topups", async () => {
-      const { walletEntries } = await import("@/db/schema")
-      const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000)
-      const failed = await db
-        .update(walletEntries)
-        .set({ status: "failed", updatedAt: new Date() })
+    await step.run("reject-stale-pending-submissions", async () => {
+      const { paymentSubmissions } = await import("@/db/schema")
+      const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000)
+      const rejected = await db
+        .update(paymentSubmissions)
+        .set({
+          status: "rejected",
+          rejectReason: "expired_unreviewed",
+          updatedAt: new Date(),
+        })
         .where(
           and(
-            eq(walletEntries.type, "topup"),
-            eq(walletEntries.status, "pending"),
-            lte(walletEntries.createdAt, cutoff)
+            eq(paymentSubmissions.status, "pending"),
+            lte(paymentSubmissions.createdAt, cutoff)
           )
         )
-        .returning({ id: walletEntries.id })
-      return { failed: failed.length }
+        .returning({ id: paymentSubmissions.id })
+      return { rejected: rejected.length }
+    })
+
+    await step.run("credit-missing-claim-backs", async () => {
+      const { walletClaims, walletEntries } = await import("@/db/schema")
+      const { applyWalletMovement } = await import("@/features/wallet/service")
+      const rejected = await db
+        .select({ id: walletClaims.id, userId: walletClaims.userId, amount: walletClaims.amount })
+        .from(walletClaims)
+        .where(eq(walletClaims.status, "rejected"))
+      let healed = 0
+      for (const claim of rejected) {
+        const backKey = `claim_back_${claim.id}`
+        const [entry] = await db
+          .select({ id: walletEntries.id })
+          .from(walletEntries)
+          .where(eq(walletEntries.idempotencyKey, backKey))
+          .limit(1)
+        if (entry) continue
+        const applied = await applyWalletMovement({
+          userId: claim.userId,
+          amount: Number(claim.amount),
+          idempotencyKey: backKey,
+          entryType: "credit",
+          claimId: claim.id,
+          description: "claim rejected — balance returned (sweep)",
+        })
+        if (applied) healed += 1
+      }
+      return { healed }
     })
   }
 )

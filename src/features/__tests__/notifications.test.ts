@@ -98,6 +98,21 @@ const SAMPLE_PAYLOADS: {
   "wallet.claim_approved": { amount: 100 },
   "wallet.claim_rejected": { amount: 100, note: null },
   "wallet.claim_paid": { amount: 100 },
+  "payment.submission_received": {
+    purpose: "turf_booking",
+    amount: 850,
+    payerName: "Rahim",
+    turfName: "Dhanmondi Arena",
+  },
+  "payment.submission_verified": {
+    purpose: "wallet_topup",
+    amount: 500,
+    balanceAfter: 500,
+  },
+  "payment.submission_rejected": {
+    purpose: "wallet_topup",
+    reason: "Transaction ID not found",
+  },
 }
 
 describe("notification registry", () => {

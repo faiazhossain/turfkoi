@@ -1,7 +1,7 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { and, eq, inArray, isNull, ne, or, sql } from "drizzle-orm"
+import { and, eq, inArray, or, sql } from "drizzle-orm"
 import type { z } from "zod"
 
 import { db } from "@/db"
@@ -17,6 +17,7 @@ import {
   teams,
   users,
   userBlocks,
+  walletEntries,
 } from "@/db/schema"
 import { getCurrentUser } from "@/lib/auth"
 import { slotStartEpoch } from "@/lib/slot-expansion"
@@ -24,9 +25,11 @@ import { scheduleMatchFeeExpiry } from "@/lib/inngest"
 import { MATCH_FEE_BDT } from "@/lib/pricing"
 import {
   creditMatchFees,
-  applyWalletMovement,
   creditFeeEntry,
   latestAwayFeeEntry,
+  ensureBalanceSql,
+  matchFeeDebitSql,
+  feeAppliedGuardSql,
 } from "@/features/wallet/service"
 import {
   homeFeeKey,
@@ -1228,39 +1231,60 @@ export async function challengeMatchAction(
   }
 
   // Matchmaking fee (wallet-first): the away captain pays ৳25 when SENDING
-  // the challenge. The key is unique per attempt so a re-send after a
-  // declined (and credited-back) challenge charges again; the fee is
-  // credited back when their last pending challenge for this match dies.
+  // the challenge. ATOMIC (audit G-2): the fee debit and the challenge row
+  // land in ONE db.batch (one server-side transaction) — a crash can no
+  // longer eat the ৳25 without creating the challenge. The key is unique per
+  // attempt so a re-send after a declined (and credited-back) challenge
+  // charges again; the fee is credited back when their last pending challenge
+  // for this match dies.
   const balance = await getWalletBalance(user.id)
   if (balance < MATCH_FEE_BDT) {
     return { ok: false, error: "wallet.errors.insufficientBalance" }
   }
   const feeKey = `${awayFeeKey(matchId, user.id)}_${crypto.randomUUID().slice(0, 8)}`
-  const charged = await applyWalletMovement({
-    userId: user.id,
-    amount: -MATCH_FEE_BDT,
-    idempotencyKey: feeKey,
-    entryType: "match_fee",
-    matchId,
-    description: "match fee (away challenge)",
-  })
-  if (!charged) {
-    return { ok: false, error: "wallet.errors.insufficientBalance" }
-  }
+  await db.batch([
+    db.execute(ensureBalanceSql(user.id)),
+    db.execute(
+      matchFeeDebitSql({
+        userId: user.id,
+        matchId,
+        idempotencyKey: feeKey,
+        side: "away",
+      })
+    ),
+    db.execute(sql`
+      INSERT INTO opponent_requests (match_id, team_id, sent_by, status)
+      SELECT ${matchId}::uuid, ${teamId}::uuid, ${user.id}::uuid, 'pending'
+      WHERE ${feeAppliedGuardSql(feeKey)}
+      ON CONFLICT (match_id, team_id) DO UPDATE
+        SET sent_by = ${user.id}::uuid,
+            status = 'pending',
+            responded_at = NULL
+        WHERE opponent_requests.status <> 'pending'
+    `),
+  ])
 
-  await db
-    .insert(opponentRequests)
-    .values({
-      matchId,
-      teamId,
-      sentBy: user.id,
-      status: "pending",
-    })
-    .onConflictDoUpdate({
-      target: [opponentRequests.matchId, opponentRequests.teamId],
-      set: { sentBy: user.id, status: "pending", respondedAt: null },
-      setWhere: ne(opponentRequests.status, "pending"),
-    })
+  // Fee charged but the request row didn't land (upsert guard hit a pending
+  // row in a race) → undo the fee so nothing is silently held.
+  const [request] = await db
+    .select({ status: opponentRequests.status })
+    .from(opponentRequests)
+    .where(
+      and(
+        eq(opponentRequests.matchId, matchId),
+        eq(opponentRequests.teamId, teamId)
+      )
+    )
+    .limit(1)
+  if (!request || request.status !== "pending") {
+    const [feeEntry] = await db
+      .select({ id: walletEntries.id })
+      .from(walletEntries)
+      .where(eq(walletEntries.idempotencyKey, feeKey))
+      .limit(1)
+    if (feeEntry) await creditFeeEntry(feeEntry.id)
+    return { ok: false, error: "matches.errors.challengePending" }
+  }
 
   const [turfRow] = await db
     .select({ name: turfs.name })
@@ -1377,6 +1401,14 @@ export async function respondTeamChallengeAction(
     return { ok: true }
   }
 
+  // G-2 fee re-verify: the challenger's ৳25 hold must still exist — the
+  // liveness predicate (no `fee_back_` credit) is enforced INSIDE the claim
+  // UPDATE below, so a concurrent credit-back can't slip through.
+  const hold = await latestAwayFeeEntry(matchId, senderId)
+  if (!hold) {
+    return { ok: false, error: "matches.errors.challengeNoLongerPending" }
+  }
+
   // Captain-FCFS order: the sending captain (or fallback) first, then the
   // rest by join order.
   const members = await listTeamMembers(teamId)
@@ -1396,7 +1428,8 @@ export async function respondTeamChallengeAction(
 
   await db.batch([
     lockMatchForSeatClaim(matchId),
-    // The away-side claim — same single-row race guard as claimOpponentSide.
+    // The away-side claim — same single-row race guard as claimOpponentSide,
+    // plus the fee-liveness guard (G-2).
     db.execute(sql`
       UPDATE matches
       SET away_captain_id = ${senderId}::uuid,
@@ -1404,6 +1437,15 @@ export async function respondTeamChallengeAction(
           state = 'confirmed',
           updated_at = now()
       WHERE id = ${matchId} AND state = 'open' AND away_captain_id IS NULL
+        AND EXISTS (
+          SELECT 1 FROM wallet_entries w
+          WHERE w.id = ${hold.id}::uuid
+            AND w.type = 'match_fee' AND w.status = 'success'
+            AND NOT EXISTS (
+              SELECT 1 FROM wallet_entries b
+              WHERE b.idempotency_key = ${`fee_back_${hold.id}`}
+            )
+        )
     `),
     // Seat the squad only while the claim above actually landed AND the away
     // side still has room. `ord` makes the per-row capacity check incremental

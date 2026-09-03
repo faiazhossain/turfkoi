@@ -14,6 +14,7 @@ import {
   FlagIcon,
   BadgeCheckIcon,
   WalletIcon,
+  ReceiptTextIcon,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useI18n } from "@/i18n/client"
@@ -30,6 +31,7 @@ const NAV = [
   { href: "/admin/reports", labelKey: "admin.sections.reports", icon: FlagIcon },
   { href: "/admin/erp-premium", labelKey: "admin.sections.erpPremium", icon: BadgeCheckIcon },
   { href: "/admin/wallet-claims", labelKey: "admin.sections.walletClaims", icon: WalletIcon },
+  { href: "/admin/payments", labelKey: "admin.sections.payments", icon: ReceiptTextIcon },
 ]
 
 export function AdminSubNav({

@@ -1,18 +1,20 @@
 "use server"
 
-import { randomUUID } from "node:crypto"
 import { revalidatePath } from "next/cache"
-import { and, eq } from "drizzle-orm"
+import { and, eq, sql } from "drizzle-orm"
 
 import { db } from "@/db"
-import { users, walletClaims, walletEntries } from "@/db/schema"
+import { isUniqueViolation } from "@/db/errors"
+import { paymentSubmissions, users, walletClaims } from "@/db/schema"
 import { getCurrentUser } from "@/lib/auth"
-import { bkashProvider } from "@/lib/payment"
+import { logAudit } from "@/lib/audit"
 import { createNotifications, notifyAdmins } from "@/features/notifications/create"
+import { confirmAsset } from "@/features/images/service"
 
+import { submissionEvidenceSchema, normalizeTxId } from "@/features/payments/schemas"
 import { isTopupAmountValid, claimableBalance } from "./logic"
 import { getWalletBalance, hasPendingWalletClaim } from "./queries"
-import { applyWalletMovement, confirmWalletTopUp } from "./service"
+import { applyWalletMovement, ensureBalanceSql } from "./service"
 
 export type ActionResult =
   | { ok: true; id?: string }
@@ -32,108 +34,93 @@ function revalidateWallet() {
 }
 
 /**
- * Wallet-first matchmaking fee, step 1: mint a pending top-up entry and a
- * bKash checkout URL (dev: the mock confirm route). The balance only moves
- * when the webhook / mock route confirms the entry.
+ * Manual bKash Send Money top-up, step 1: the user sends money to the
+ * DeshiTurf bKash number and files the TxID + optional receipt. NO ledger row
+ * is written — the balance only moves when an admin VERIFIES the submission
+ * (verifyTopupSubmission). Amount is validated server-side.
  */
-export async function initiateWalletTopUpAction(input: {
+export async function submitWalletTopUpAction(input: {
   amount: number
-}): Promise<{ ok: true; id?: string; paymentUrl?: string } | { ok: false; error: string }> {
+  transactionId: string
+  senderNumber: string
+  receiptPublicId?: string
+  userNote?: string
+}): Promise<ActionResult> {
   const user = await getCurrentUser()
   if (!user) return unauthorized()
   if (!isTopupAmountValid(input.amount)) {
     return { ok: false, error: "wallet.errors.topupInvalidAmount" }
   }
-
-  const idempotencyKey = randomUUID()
-  const [entry] = await db
-    .insert(walletEntries)
-    .values({
-      userId: user.id,
-      type: "topup",
-      status: "pending",
-      amount: String(input.amount),
-      idempotencyKey,
-      provider: "bkash",
-      description: "bKash top-up",
-    })
-    .returning({ id: walletEntries.id })
-
-  const callbackUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/api/payments/bkash/callback?purpose=wallet`
-
-  let paymentUrl: string
-  let providerReference: string
-  try {
-    const result = await bkashProvider.createPayment({
-      kind: "wallet",
-      amount: input.amount,
-      platformFee: 0,
-      idempotencyKey,
-      callbackUrl,
-    })
-    paymentUrl = result.paymentUrl
-    providerReference = result.providerReference
-  } catch {
-    await db
-      .update(walletEntries)
-      .set({ status: "failed", updatedAt: new Date() })
-      .where(eq(walletEntries.id, entry.id))
-    return { ok: false, error: "payments.errors.initFailed" }
-  }
-
-  await db
-    .update(walletEntries)
-    .set({ providerReference, updatedAt: new Date() })
-    .where(eq(walletEntries.id, entry.id))
-
-  return { ok: true, id: entry.id, paymentUrl }
-}
-
-/**
- * Step 2: a verified bKash webhook (or the dev mock route) landed for a
- * top-up — flip the entry to success and move the balance. Idempotent.
- */
-export async function confirmWalletTopUpAction(
-  providerReference: string
-): Promise<ActionResult> {
-  const [entry] = await db
-    .select({
-      userId: walletEntries.userId,
-      amount: walletEntries.amount,
-      status: walletEntries.status,
-      idempotencyKey: walletEntries.idempotencyKey,
-    })
-    .from(walletEntries)
-    .where(eq(walletEntries.providerReference, providerReference))
-    .limit(1)
-  if (!entry) return { ok: false, error: "wallet.errors.topupNotFound" }
-  if (entry.status === "success") return { ok: true }
-  if (entry.status !== "pending") {
-    return { ok: false, error: "wallet.errors.topupNotPending" }
-  }
-
-  const finalStatus = await confirmWalletTopUp({
-    userId: entry.userId,
-    idempotencyKey: entry.idempotencyKey,
-    amount: Number(entry.amount),
+  const evidence = submissionEvidenceSchema.safeParse({
+    transactionId: input.transactionId,
+    senderNumber: input.senderNumber,
+    receiptPublicId: input.receiptPublicId,
+    userNote: input.userNote,
   })
-  if (finalStatus !== "success") {
-    return { ok: false, error: "wallet.errors.topupNotPending" }
+  if (!evidence.success) {
+    return { ok: false, error: evidence.error.issues[0]?.message ?? "errors.invalid" }
   }
 
-  const balance = await getWalletBalance(entry.userId)
-  await createNotifications(
-    {
-      type: "wallet.topup",
-      payload: { amount: Number(entry.amount), balanceAfter: balance },
-      entityType: "wallet_entry",
-      entityId: entry.idempotencyKey,
+  // One pending top-up submission at a time keeps the review queue honest;
+  // resubmission is possible after a rejection.
+  const [pending] = await db
+    .select({ id: paymentSubmissions.id })
+    .from(paymentSubmissions)
+    .where(
+      and(
+        eq(paymentSubmissions.payerId, user.id),
+        eq(paymentSubmissions.purpose, "wallet_topup"),
+        eq(paymentSubmissions.status, "pending")
+      )
+    )
+    .limit(1)
+  if (pending) {
+    return { ok: false, error: "payments.errors.alreadyPending" }
+  }
+
+  // Receipt (optional): must exist in the payer's receipts folder.
+  if (evidence.data.receiptPublicId) {
+    const confirm = await confirmAsset(
+      "receipt",
+      user.id,
+      evidence.data.receiptPublicId
+    )
+    if (!confirm.ok) return { ok: false, error: "payments.errors.receiptInvalid" }
+  }
+
+  const [submission] = await db
+    .insert(paymentSubmissions)
+    .values({
+      payerId: user.id,
+      purpose: "wallet_topup",
+      amount: String(input.amount),
+      transactionId: normalizeTxId(evidence.data.transactionId),
+      senderNumber: evidence.data.senderNumber,
+      receiptPublicId: evidence.data.receiptPublicId ?? null,
+      userNote: evidence.data.userNote || null,
+    })
+    .returning({ id: paymentSubmissions.id })
+
+  const [profile] = await db
+    .select({ name: users.name })
+    .from(users)
+    .where(eq(users.id, user.id))
+    .limit(1)
+
+  await notifyAdmins({
+    type: "payment.submission_received",
+    payload: {
+      purpose: "wallet_topup",
+      amount: input.amount,
+      payerName: profile?.name ?? "",
     },
-    [entry.userId]
-  ).catch(() => {})
+    entityType: "payment_submission",
+    entityId: submission.id,
+  }).catch(() => {})
 
   revalidateWallet()
-  return { ok: true }
+  revalidatePath("/admin/payments")
+  return { ok: true, id: submission.id }
 }
 
 /**
@@ -159,6 +146,14 @@ export async function requestWalletClaimAction(): Promise<ActionResult> {
     .insert(walletClaims)
     .values({ userId: user.id, amount: String(balance) })
     .returning({ id: walletClaims.id })
+    .catch((err: unknown) => {
+      // Race: a pending claim already exists (wallet_claims_one_pending).
+      if (isUniqueViolation(err)) return []
+      throw err
+    })
+  if (!claim) {
+    return { ok: false, error: "wallet.errors.claimAlreadyPending" }
+  }
 
   const moved = await applyWalletMovement({
     userId: user.id,
@@ -238,25 +233,47 @@ export async function decideWalletClaimAction(input: {
     if (claim.status !== "pending") {
       return { ok: false, error: "wallet.errors.claimAlreadyHandled" }
     }
-    await db
-      .update(walletClaims)
-      .set({
-        status: "rejected",
-        handledBy: admin.id,
-        handledAt: new Date(),
-        note: input.note ?? claim.note,
-        updatedAt: new Date(),
-      })
-      .where(and(eq(walletClaims.id, claim.id), eq(walletClaims.status, "pending")))
-    // Give the held balance back — the claim debit reverses.
-    await applyWalletMovement({
-      userId: claim.userId,
-      amount,
-      idempotencyKey: `claim_back_${claim.id}`,
-      entryType: "credit",
-      claimId: claim.id,
-      description: "claim rejected — balance returned",
-    })
+    // ATOMIC (audit G-3): claim rejection + the held-balance credit-back are
+    // ONE statement — a crash can no longer leave the claim rejected with the
+    // user's money still held. The nightly sweep backstops with the same
+    // idempotency key.
+    await db.execute(ensureBalanceSql(claim.userId))
+    const rejectCte = await db.execute(sql`
+      WITH cl AS (
+        UPDATE wallet_claims
+        SET status = 'rejected',
+            handled_by = ${admin.id}::uuid,
+            handled_at = now(),
+            note = ${input.note ?? claim.note},
+            updated_at = now()
+        WHERE id = ${claim.id}::uuid AND status = 'pending'
+        RETURNING user_id, amount
+      ), upd AS (
+        UPDATE wallet_balances
+        SET balance = balance + (SELECT amount::numeric FROM cl), updated_at = now()
+        WHERE user_id = (SELECT user_id FROM cl)
+        RETURNING balance
+      ), entry AS (
+        INSERT INTO wallet_entries (
+          user_id, type, status, amount, claim_id, balance_after,
+          idempotency_key, description
+        )
+        SELECT (SELECT user_id FROM cl), 'credit', 'success',
+               (SELECT amount FROM cl), ${claim.id}::uuid,
+               (SELECT balance FROM upd),
+               ${`claim_back_${claim.id}`},
+               'claim rejected — balance returned'
+        FROM upd
+        RETURNING id
+      )
+      SELECT (SELECT count(*) FROM entry)::int AS applied
+    `)
+    const applied = Number(
+      (rejectCte as unknown as { rows: { applied: number }[] }).rows?.[0]?.applied ?? 0
+    )
+    if (applied === 0) {
+      return { ok: false, error: "wallet.errors.claimAlreadyHandled" }
+    }
     await createNotifications(
       { type: "wallet.claim_rejected", payload: { amount, note: input.note ?? null }, entityType: "wallet_claim", entityId: claim.id },
       [claim.userId]
@@ -280,6 +297,15 @@ export async function decideWalletClaimAction(input: {
       [claim.userId]
     ).catch(() => {})
   }
+
+  void logAudit({
+    actorId: admin.id,
+    action: `wallet_claim.${input.decision}`,
+    resourceType: "wallet_claim",
+    resourceId: claim.id,
+    before: { status: claim.status, amount: claim.amount },
+    after: { status: input.decision === "approve" ? "approved" : input.decision === "reject" ? "rejected" : "paid" },
+  }).catch(() => {})
 
   revalidatePath("/admin/wallet-claims")
   revalidateWallet()

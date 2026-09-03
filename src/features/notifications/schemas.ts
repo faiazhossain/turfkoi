@@ -136,6 +136,21 @@ export const notificationPayloadSchemas = {
     amount: z.number(),
     note: z.string().nullish(),
   }),
+  "payment.submission_received": z.object({
+    purpose: z.enum(["wallet_topup", "turf_booking"]),
+    amount: z.number(),
+    payerName: z.string(),
+    turfName: z.string().optional(),
+  }),
+  "payment.submission_verified": z.object({
+    purpose: z.enum(["wallet_topup", "turf_booking"]),
+    amount: z.number(),
+    balanceAfter: z.number().optional(),
+  }),
+  "payment.submission_rejected": z.object({
+    purpose: z.enum(["wallet_topup", "turf_booking"]),
+    reason: z.string(),
+  }),
   "wallet.claim_paid": z.object({
     amount: z.number(),
   }),

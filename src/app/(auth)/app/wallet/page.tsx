@@ -7,7 +7,7 @@ import { buildMetadata } from "@/i18n/metadata"
 import { getT } from "@/i18n/server"
 import { getSession } from "@/lib/auth"
 import { formatBdt } from "@/lib/pricing"
-import { TopUpButton } from "@/components/wallet/topup-button"
+import { Button } from "@/components/ui/button"
 import { ClaimButton } from "@/components/wallet/claim-button"
 import {
   getWalletBalance,
@@ -15,6 +15,7 @@ import {
   listWalletEntries,
   type WalletEntryRow,
 } from "@/features/wallet/queries"
+import { listMyPaymentSubmissions } from "@/features/payments/queries"
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildMetadata({ titleKey: "wallet.title" })
@@ -27,20 +28,16 @@ const ENTRY_LABEL: Record<WalletEntryRow["type"], string> = {
   claim: "wallet.entryClaim",
 }
 
-export default async function WalletPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ topup?: string }>
-}) {
+export default async function WalletPage() {
   const t = await getT()
   const session = await getSession()
   if (!session?.user) redirect("/login")
-  const { topup } = await searchParams
 
-  const [balance, entries, pendingClaim] = await Promise.all([
+  const [balance, entries, pendingClaim, submissions] = await Promise.all([
     getWalletBalance(session.user.id),
     listWalletEntries(session.user.id),
     hasPendingWalletClaim(session.user.id),
+    listMyPaymentSubmissions(session.user.id),
   ])
 
   return (
@@ -54,17 +51,6 @@ export default async function WalletPage({
         </h1>
       </header>
 
-      {topup === "success" ? (
-        <p className="rounded-xl border border-dt-line bg-dt-card p-3 text-sm text-dt-green">
-          {t("wallet.topupSuccess")}
-        </p>
-      ) : null}
-      {topup === "failed" ? (
-        <p className="rounded-xl border border-dt-line bg-dt-card p-3 text-sm text-dt-red">
-          {t("wallet.topupFailed")}
-        </p>
-      ) : null}
-
       {/* Balance card */}
       <section className="player-hero rounded-2xl p-5">
         <div className="flex items-center gap-3">
@@ -76,7 +62,9 @@ export default async function WalletPage({
         </p>
 
         <div className="mt-5">
-          <TopUpButton />
+          <Button render={<Link href="/app/wallet/topup" />} className="w-full">
+            {t("wallet.topupCta")}
+          </Button>
         </div>
 
         <div className="mt-4 border-t border-dt-line pt-4">
@@ -92,6 +80,45 @@ export default async function WalletPage({
           )}
         </div>
       </section>
+
+      {/* Payment submissions (manual bKash intake) */}
+      {submissions.length > 0 ? (
+        <section className="space-y-3">
+          <h2 className="match-eyebrow">{t("payments.submissionsTitle")}</h2>
+          <ul className="space-y-2">
+            {submissions.map((s) => (
+              <li
+                key={s.id}
+                className="flex items-center justify-between gap-3 rounded-xl border border-dt-line bg-dt-card p-4 text-sm"
+              >
+                <div className="min-w-0">
+                  <p className="font-mono text-xs text-dt-dim">{s.transactionId}</p>
+                  <p className="text-xs text-dt-dim">
+                    {new Date(s.createdAt).toLocaleDateString("en-CA")}
+                    {s.rejectReason ? ` · ${s.rejectReason}` : ""}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="match-score tabular-nums font-bold">
+                    {formatBdt(Number(s.amount))}
+                  </p>
+                  <p
+                    className={`text-xs ${
+                      s.status === "pending"
+                        ? "text-warning"
+                        : s.status === "consumed"
+                          ? "text-dt-green"
+                          : "text-dt-red"
+                    }`}
+                  >
+                    {t(`payments.status.${s.status}`)}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       {/* Fee explainer */}
       <p className="text-small text-dt-dim">{t("wallet.feeNotice")}</p>

@@ -8,17 +8,16 @@ import { db } from "@/db"
 import { isForeignKeyViolation } from "@/db/errors"
 import {
   bookings,
-  cancellations,
   matches,
   refundRequests,
   reports,
-  transactions,
   turfSlots,
   turfs,
   userRoles,
   users,
 } from "@/db/schema"
 import { getCurrentUser } from "@/lib/auth"
+import { logAudit } from "@/lib/audit"
 import { logger } from "@/lib/logger"
 import { createNotifications } from "@/features/notifications/create"
 
@@ -59,12 +58,17 @@ const DUAL_CONTROL_THRESHOLD = 5000
 
 /**
  * Shared money mutation. Mirrors `cancelBookingAction` minus the policy
- * computation — admins override the policy per B4. Records a `cancellations`
- * row, flips the transaction to refunded/partially_refunded, the booking to
- * refunded, and reopens the slot.
+ * computation — admins override the policy per B4.
+ *
+ * ATOMIC (audit G-1): the whole refund — booking `→refunded`, slot reopen,
+ * transaction flip, `cancellations` row — is ONE multi-CTE statement. Every
+ * CTE is guarded and cascades from the booking flip's RETURNING, so a mid-
+ * statement crash can no longer leave booking/transaction/slot/audit states
+ * disagreeing about whether the money was returned.
  *
  * Returns the new transaction status so callers can persist it on the
- * refund_requests row.
+ * refund_requests row. Returns txnStatus "none" when the booking flip found
+ * no eligible row (already terminal) — nothing was written.
  */
 async function executeRefund(
   bookingId: string,
@@ -80,56 +84,58 @@ async function executeRefund(
   const booking = rows[0]?.booking
   if (!booking) throw new Error("Booking not found")
 
-  await db.insert(cancellations).values({
-    bookingId,
-    cancelledBy: actorId,
-    reason: reason ?? "Admin refund override",
-    refundAmount: refundAmount.toFixed(2),
-  })
-
-  // Flip booking → refunded (conditional; only if not already terminal).
-  await db
-    .update(bookings)
-    .set({ status: "refunded", updatedAt: new Date() })
-    .where(
-      and(
-        eq(bookings.id, bookingId),
-        sql`${bookings.status} in ('confirmed','payment_pending','held','completed')`
-      )
+  const result = await db.execute(sql`
+    WITH bk AS (
+      UPDATE bookings
+      SET status = 'refunded', updated_at = now()
+      WHERE id = ${bookingId}::uuid
+        AND status IN ('confirmed','payment_pending','held','completed')
+      RETURNING date, slot_start
+    ), slot AS (
+      UPDATE turf_slots
+      SET status = 'available'
+      WHERE date = (SELECT date FROM bk)
+        AND start_time = (SELECT slot_start FROM bk)
+        AND status IN ('held','booked')
+      RETURNING id
+    ), latest_txn AS (
+      SELECT id, amount FROM transactions
+      WHERE booking_id = ${bookingId}::uuid
+      ORDER BY created_at DESC
+      LIMIT 1
+    ), txn AS (
+      UPDATE transactions
+      SET status = CASE
+            WHEN ${refundAmount}::numeric >= (SELECT amount FROM latest_txn)
+              THEN 'refunded'::transaction_status
+            ELSE 'partially_refunded'::transaction_status
+          END,
+          updated_at = now()
+      WHERE id = (SELECT id FROM latest_txn)
+        AND status = 'success'
+        AND EXISTS (SELECT 1 FROM bk)
+      RETURNING status
+    ), cx AS (
+      INSERT INTO cancellations (booking_id, cancelled_by, reason, refund_amount)
+      SELECT ${bookingId}::uuid, ${actorId}::uuid,
+             ${reason ?? "Admin refund override"}, ${refundAmount.toFixed(2)}::numeric
+      FROM bk
+      RETURNING id
     )
-
-  // Reopen the slot so it can be re-sold.
-  await db
-    .update(turfSlots)
-    .set({ status: "available" })
-    .where(
-      and(
-        eq(turfSlots.date, booking.date),
-        eq(turfSlots.startTime, booking.slotStart),
-        sql`${turfSlots.status} in ('held','booked')`
-      )
-    )
-
-  // Flip the latest transaction.
-  const [txn] = await db
-    .select()
-    .from(transactions)
-    .where(eq(transactions.bookingId, bookingId))
-    .orderBy(sql`${transactions.createdAt} desc`)
-    .limit(1)
-
-  let txnStatus = "refunded"
-  if (txn) {
-    txnStatus =
-      txn && refundAmount >= Number(txn.amount)
-        ? "refunded"
-        : "partially_refunded"
-    await db
-      .update(transactions)
-      .set({ status: txnStatus as "refunded" | "partially_refunded", updatedAt: new Date() })
-      .where(eq(transactions.id, txn.id))
+    SELECT
+      (SELECT count(*) FROM bk)::int AS flipped,
+      (SELECT status::text FROM txn) AS txn_status
+  `)
+  const row = (
+    result as unknown as {
+      rows: { flipped: number; txn_status: string | null }[]
+    }
+  ).rows?.[0]
+  if (!row || row.flipped === 0) {
+    return { txnStatus: "none" }
   }
 
+  const txnStatus = row.txn_status ?? "refunded"
   logger.info("admin.refund_executed", {
     bookingId,
     refundAmount,
@@ -362,6 +368,14 @@ export async function setUserStatusAction(
     .set({ status: parsed.data.status, updatedAt: new Date() })
     .where(eq(users.id, parsed.data.userId))
 
+  void logAudit({
+    actorId: actor.id,
+    action: `user.${parsed.data.status}`,
+    resourceType: "user",
+    resourceId: parsed.data.userId,
+    after: { status: parsed.data.status },
+  }).catch(() => {})
+
   revalidatePath("/admin/users")
   return { ok: true, id: parsed.data.userId }
 }
@@ -459,6 +473,14 @@ export async function requestRefundAction(
     .set({ status: "executed", updatedAt: new Date() })
     .where(eq(refundRequests.id, req.id))
 
+  void logAudit({
+    actorId: actor.id,
+    action: "refund.executed",
+    resourceType: "booking",
+    resourceId: bookingId,
+    after: { refundRequestId: req.id, amount, inline: true },
+  }).catch(() => {})
+
   revalidatePath("/admin/bookings")
   revalidatePath(`/bookings/${bookingId}`)
   return { ok: true, id: req.id, needsApproval: false }
@@ -502,6 +524,14 @@ export async function approveRefundAction(
     })
     .where(eq(refundRequests.id, req.id))
 
+  void logAudit({
+    actorId: actor.id,
+    action: "refund.approved_executed",
+    resourceType: "booking",
+    resourceId: req.bookingId,
+    after: { refundRequestId: req.id, amount: Number(req.amount), dualControl: true },
+  }).catch(() => {})
+
   revalidatePath("/admin/bookings")
   revalidatePath(`/bookings/${req.bookingId}`)
   return { ok: true, id: req.id }
@@ -530,6 +560,14 @@ export async function rejectRefundAction(
   if (updated.length === 0) {
     return { ok: false, error: "admin.errors.refundNotFoundOrPending" }
   }
+  void logAudit({
+    actorId: actor.id,
+    action: "refund.rejected",
+    resourceType: "refund_request",
+    resourceId: parsed.data.refundRequestId,
+    before: { status: "pending" },
+    after: { status: "rejected" },
+  }).catch(() => {})
   revalidatePath("/admin/bookings")
   return { ok: true, id: updated[0].id }
 }
@@ -585,6 +623,14 @@ export async function resolveMatchDisputeAction(
       })
       .where(eq(matches.id, matchId))
   }
+
+  void logAudit({
+    actorId: actor.id,
+    action: "match.dispute_resolved",
+    resourceType: "match",
+    resourceId: matchId,
+    after: { decision, homeScore, awayScore },
+  }).catch(() => {})
 
   revalidatePath("/admin/matches")
   revalidatePath(`/matches/${matchId}`)

@@ -1,9 +1,11 @@
+import { sql } from "drizzle-orm"
 import {
   index,
   numeric,
   pgTable,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core"
 
@@ -59,7 +61,14 @@ export const walletClaims = pgTable(
       .defaultNow()
       .notNull(),
   },
-  (t) => [index("wallet_claims_status_idx").on(t.status)]
+  (t) => [
+    index("wallet_claims_status_idx").on(t.status),
+    // A user can have at most one pending claim — the app-level pre-check is
+    // best-effort only; this is the race-proof guard.
+    uniqueIndex("wallet_claims_one_pending")
+      .on(t.userId)
+      .where(sql`status = 'pending'`),
+  ]
 )
 
 export const walletEntries = pgTable(

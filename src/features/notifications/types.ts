@@ -202,6 +202,24 @@ export interface NotificationPayloads {
   "wallet.claim_paid": {
     amount: number
   }
+  /** Admin: a manual bKash payment submission awaits verification. */
+  "payment.submission_received": {
+    purpose: "wallet_topup" | "turf_booking"
+    amount: number
+    payerName: string
+    turfName?: string
+  }
+  /** Player: their payment submission was verified — the feature unlocked. */
+  "payment.submission_verified": {
+    purpose: "wallet_topup" | "turf_booking"
+    amount: number
+    balanceAfter?: number
+  }
+  /** Player: their payment submission was rejected — TxID freed, resubmit. */
+  "payment.submission_rejected": {
+    purpose: "wallet_topup" | "turf_booking"
+    reason: string
+  }
 }
 
 export type NotificationType = keyof NotificationPayloads
@@ -600,6 +618,56 @@ export const NOTIFICATION_TYPES: Registry = {
       params: { amount: p.amount },
     }),
     body: () => null,
+    href: () => "/app/wallet",
+  },
+  "payment.submission_received": {
+    priority: "info",
+    audience: "admin",
+    icon: ReceiptTextIcon,
+    title: (p) => ({
+      key: "notifications.paymentSubmissionReceivedTitle",
+      params: { user: p.payerName, amount: p.amount },
+    }),
+    body: (p): LocalizedText | null =>
+      p.turfName
+        ? {
+            key: "notifications.paymentSubmissionReceivedBookingBody",
+            params: { turf: p.turfName },
+          }
+        : { key: "notifications.paymentSubmissionReceivedBody" },
+    href: () => "/admin/payments",
+  },
+  "payment.submission_verified": {
+    priority: "transactional",
+    audience: "player",
+    icon: BadgeCheckIcon,
+    title: (p) => ({
+      key: "notifications.paymentSubmissionVerifiedTitle",
+      params: { amount: p.amount },
+    }),
+    body: (p): LocalizedText | null =>
+      p.balanceAfter !== undefined
+        ? {
+            key: "notifications.paymentSubmissionVerifiedWalletBody",
+            params: { balance: p.balanceAfter },
+          }
+        : null,
+    href: (p) => (p.purpose === "turf_booking" ? "/app" : "/app/wallet"),
+  },
+  "payment.submission_rejected": {
+    priority: "transactional",
+    audience: "player",
+    icon: CircleXIcon,
+    title: () => ({
+      key: "notifications.paymentSubmissionRejectedTitle",
+    }),
+    body: (p): LocalizedText | null =>
+      p.reason
+        ? {
+            key: "notifications.paymentSubmissionRejectedBody",
+            params: { reason: p.reason },
+          }
+        : null,
     href: () => "/app/wallet",
   },
 }

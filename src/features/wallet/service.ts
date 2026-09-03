@@ -153,32 +153,38 @@ export function matchFeeDebitSql(charge: MatchFeeCharge): SQL {
 }
 
 function topupConfirmSql(input: {
-  userId: string
+  submissionId: string
+  adminId: string
   idempotencyKey: string
-  amount: number
 }): SQL {
   return sql`
-    WITH upd AS (
+    WITH sub AS (
+      UPDATE payment_submissions
+      SET status = 'consumed',
+          consumed_at = now(),
+          consumed_by = ${input.adminId}::uuid,
+          reviewed_by = ${input.adminId}::uuid,
+          reviewed_at = now(),
+          updated_at = now()
+      WHERE id = ${input.submissionId}::uuid
+        AND status = 'pending'
+        AND purpose = 'wallet_topup'
+      RETURNING payer_id, amount, transaction_id
+    ), upd AS (
       UPDATE wallet_balances
-      SET balance = balance + ${input.amount}::numeric, updated_at = now()
-      WHERE user_id = ${input.userId}
-        AND EXISTS (
-          SELECT 1 FROM wallet_entries
-          WHERE idempotency_key = ${input.idempotencyKey} AND status = 'pending'
-        )
-        AND NOT EXISTS (
-          SELECT 1 FROM wallet_entries
-          WHERE idempotency_key = ${input.idempotencyKey} AND status = 'success'
-        )
+      SET balance = balance + (SELECT amount::numeric FROM sub), updated_at = now()
+      WHERE user_id = (SELECT payer_id FROM sub)
       RETURNING balance
     ), entry AS (
-      UPDATE wallet_entries
-      SET status = 'success',
-          balance_after = (SELECT balance FROM upd),
-          updated_at = now()
-      WHERE idempotency_key = ${input.idempotencyKey}
-        AND status = 'pending'
-        AND EXISTS (SELECT 1 FROM upd)
+      INSERT INTO wallet_entries (
+        user_id, type, status, amount, balance_after,
+        idempotency_key, provider, provider_reference, description
+      )
+      SELECT (SELECT payer_id FROM sub), 'topup', 'success',
+             (SELECT amount FROM sub), (SELECT balance FROM upd),
+             ${input.idempotencyKey}, 'bkash', (SELECT transaction_id FROM sub),
+             'bKash send-money top-up (admin verified)'
+      FROM upd
       RETURNING id
     )
     SELECT 1
@@ -186,29 +192,33 @@ function topupConfirmSql(input: {
 }
 
 /**
- * Land a confirmed top-up: flip the pending entry to success and move the
- * balance in the same batch. Concurrent webhooks collapse on the pending →
- * success conditional. Returns the entry's final status.
+ * Land an admin-verified manual top-up: consume the payment submission and
+ * credit the wallet in ONE statement — the pending → consumed flip is the
+ * guard, so a crash between "verified" and "applied" is impossible by
+ * construction and double-verify is a clean no-op. Caller must run
+ * ensureBalanceSql(payerId) first (a first-time top-up has no balance row).
+ * Returns true when the ledger entry exists afterwards.
  */
-export async function confirmWalletTopUp(input: {
-  userId: string
-  idempotencyKey: string
-  amount: number
-}): Promise<"success" | "pending" | "failed"> {
-  await db.execute(ensureBalanceSql(input.userId))
+export async function verifyTopupSubmission(input: {
+  submissionId: string
+  adminId: string
+  payerId: string
+}): Promise<boolean> {
+  const idempotencyKey = `topup_pay_${input.submissionId}`
+  await db.execute(ensureBalanceSql(input.payerId))
   await db.execute(
     topupConfirmSql({
-      userId: input.userId,
-      idempotencyKey: input.idempotencyKey,
-      amount: input.amount,
+      submissionId: input.submissionId,
+      adminId: input.adminId,
+      idempotencyKey,
     })
   )
   const [row] = await db
-    .select({ status: walletEntries.status })
+    .select({ id: walletEntries.id })
     .from(walletEntries)
-    .where(eq(walletEntries.idempotencyKey, input.idempotencyKey))
+    .where(eq(walletEntries.idempotencyKey, idempotencyKey))
     .limit(1)
-  return row?.status ?? "failed"
+  return row !== undefined
 }
 
 /**

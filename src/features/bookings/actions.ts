@@ -10,6 +10,7 @@ import { isUniqueViolation } from "@/db/errors"
 import {
   bookings,
   matches,
+  paymentSubmissions,
   slotHolds,
   transactions,
   turfSlots,
@@ -19,19 +20,20 @@ import {
 } from "@/db/schema"
 import { can } from "@/lib/capabilities"
 import { getCurrentUser } from "@/lib/auth"
+import { logAudit } from "@/lib/audit"
 import { rateLimit } from "@/lib/ratelimit"
 import { logger } from "@/lib/logger"
 import { computeFees } from "@/lib/pricing"
-import { isSlotBookable, slotStartEpoch } from "@/lib/slot-expansion"
+import { holdExpiryFor, isSlotBookable, slotStartEpoch } from "@/lib/slot-expansion"
 import { computeRefund } from "@/lib/cancellation"
-import { bkashProvider } from "@/lib/payment"
-import {
-  scheduleHoldExpiry,
-  scheduleSettleAtKickoff,
-  SLOT_HOLD_TTL_MS,
-} from "@/lib/inngest"
-import { createNotifications } from "@/features/notifications/create"
+import { scheduleHoldExpiry } from "@/lib/inngest"
+import { createNotifications, notifyAdmins } from "@/features/notifications/create"
 import { creditMatchFees } from "@/features/wallet/service"
+import { confirmAsset } from "@/features/images/service"
+import {
+  submissionEvidenceSchema,
+  normalizeTxId,
+} from "@/features/payments/schemas"
 
 import {
   holdSlotSchema,
@@ -40,7 +42,7 @@ import {
 } from "./schemas"
 
 export type ActionResult =
-  | { ok: true; id?: string; paymentUrl?: string }
+  | { ok: true; id?: string }
   | { ok: false; error: string }
 
 function unauthorized(): ActionResult {
@@ -125,7 +127,9 @@ export async function holdSlotAction(
   const bookingId = randomUUID()
   const holdId = randomUUID()
   const idempotencyKey = randomUUID()
-  const expiresAt = new Date(Date.now() + SLOT_HOLD_TTL_MS)
+  // Manual bKash model: the hold lives up to 3h (capped at the booking
+  // cutoff) so the user has time to send money and file the TxID.
+  const expiresAt = holdExpiryFor(date, startTime)
 
   // Atomically claim the slot. The conditional UPDATE guarantees only one
   // concurrent request can flip it from available→held; the INSERT into
@@ -187,7 +191,7 @@ export async function holdSlotAction(
   })
 
   // Schedule TTL expiry (best-effort; check-on-read in queries is the fallback).
-  await scheduleHoldExpiry(holdId, bookingId).catch(() => {
+  await scheduleHoldExpiry(holdId, bookingId, expiresAt).catch(() => {
     /* non-fatal: hold still expires via check-on-read */
   })
 
@@ -196,25 +200,28 @@ export async function holdSlotAction(
 }
 
 /**
- * Compute fees, create the transaction row (with immutable platformFee), call
- * bKash to mint a payment URL, and flip the booking `held → payment_pending`.
+ * Manual bKash Send Money intake for a held booking: the user sends the
+ * expected total to the DeshiTurf bKash number and files the TxID + optional
+ * receipt. The submission sits `pending` until an admin VERIFIES it — only
+ * then does the booking confirm (see payments/actions.ts). The amount is
+ * recomputed SERVER-side from the slot price; the client never dictates money.
  */
-export async function initiatePaymentAction(
+export async function submitBookingPaymentAction(input: {
   bookingId: string
-): Promise<ActionResult & { paymentUrl?: string }> {
+  transactionId: string
+  senderNumber: string
+  receiptPublicId?: string
+  userNote?: string
+}): Promise<ActionResult> {
   const user = await getCurrentUser()
   if (!user) return unauthorized()
 
   const rows = await db
     .select({
       booking: bookings,
-      turfOwnerId: turfs.ownerId,
       slotPrice: turfSlots.price,
-      slotStatus: turfSlots.status,
-      slotDuration: turfSlots.durationMinutes,
     })
     .from(bookings)
-    .innerJoin(turfs, eq(turfs.id, bookings.turfId))
     .innerJoin(
       turfSlots,
       and(
@@ -223,164 +230,112 @@ export async function initiatePaymentAction(
         eq(turfSlots.startTime, bookings.slotStart)
       )
     )
-    .where(eq(bookings.id, bookingId))
+    .where(eq(bookings.id, input.bookingId))
     .limit(1)
   const row = rows[0]
   if (!row) return { ok: false, error: "booking.errors.notFound" }
   if (row.booking.bookerId !== user.id) return forbidden()
-  if (row.booking.status !== "held") {
+  // `held` = not submitted yet; `payment_pending` = resubmission after a
+  // rejection. Anything else is not payable.
+  if (!["held", "payment_pending"].includes(row.booking.status)) {
     return { ok: false, error: "booking.errors.notPayable" }
   }
 
-  const slotPrice = Number(row.slotPrice)
-  const { platformFee, total } = computeFees(slotPrice)
-
-  const txnIdempotencyKey = randomUUID()
-  const callbackUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/api/payments/bkash/callback?bookingId=${bookingId}`
-
-  // Create the transaction first so the immutable platformFee is recorded
-  // before we ever talk to bKash. Status `pending` until the webhook confirms.
-  const [txn] = await db
-    .insert(transactions)
-    .values({
-      bookingId,
-      payerId: user.id,
-      receiverId: row.turfOwnerId,
-      // `amount` is the gross charge (what bKash collects); owner payout and
-      // ERP revenue derive from amount − platformFee everywhere else.
-      amount: String(total),
-      platformFee: String(platformFee),
-      provider: "bkash",
-      status: "pending",
-      idempotencyKey: txnIdempotencyKey,
-    })
-    .returning({ id: transactions.id })
-
-  let paymentUrl: string
-  let providerReference: string
-  try {
-    const result = await bkashProvider.createPayment({
-      bookingId,
-      amount: total,
-      platformFee,
-      idempotencyKey: txnIdempotencyKey,
-      callbackUrl,
-    })
-    paymentUrl = result.paymentUrl
-    providerReference = result.providerReference
-  } catch (err) {
-    // Roll back the pending transaction so the user can retry cleanly.
-    await db
-      .update(transactions)
-      .set({ status: "failed", updatedAt: new Date() })
-      .where(eq(transactions.id, txn.id))
-    if (err instanceof Error) logger.warn("payment.initiation_failed", { bookingId, reason: err.message })
-    return { ok: false, error: "payments.errors.initFailed" }
+  const evidence = submissionEvidenceSchema.safeParse({
+    transactionId: input.transactionId,
+    senderNumber: input.senderNumber,
+    receiptPublicId: input.receiptPublicId,
+    userNote: input.userNote,
+  })
+  if (!evidence.success) {
+    return { ok: false, error: evidence.error.issues[0]?.message ?? "errors.invalid" }
   }
 
-  await db
-    .update(transactions)
-    .set({ providerReference, updatedAt: new Date() })
-    .where(eq(transactions.id, txn.id))
-
-  // Flip booking held → payment_pending (conditional; only if still held).
-  await db
-    .update(bookings)
-    .set({ status: "payment_pending", totalAmount: String(total), updatedAt: new Date() })
-    .where(and(eq(bookings.id, bookingId), eq(bookings.status, "held")))
-
-  return { ok: true, id: bookingId, paymentUrl }
-}
-
-/**
- * Confirm a payment (called from the webhook handler or the dev mock-confirm
- * route). Idempotent: a second call for an already-success transaction is a
- * no-op. Conditional UPDATEs make concurrent webhooks safe.
- */
-export async function confirmPaymentAction(
-  providerReference: string
-): Promise<ActionResult> {
-  const txnRows = await db
-    .select()
-    .from(transactions)
-    .where(eq(transactions.providerReference, providerReference))
-    .limit(1)
-  const txn = txnRows[0]
-  if (!txn) return { ok: false, error: "payments.errors.unknownTransaction" }
-  if (txn.status === "success") return { ok: true }
-
-  // Mark transaction success (only if currently pending).
-  const updated = await db
-    .update(transactions)
-    .set({ status: "success", updatedAt: new Date() })
-    .where(and(eq(transactions.id, txn.id), eq(transactions.status, "pending")))
-    .returning({ id: transactions.id })
-  if (updated.length === 0) return { ok: true }
-
-  // Flip booking payment_pending → confirmed (conditional).
-  const bookingUpdated = await db
-    .update(bookings)
-    .set({ status: "confirmed", updatedAt: new Date() })
+  // One pending submission per booking keeps the review queue honest.
+  const [pending] = await db
+    .select({ id: paymentSubmissions.id })
+    .from(paymentSubmissions)
     .where(
       and(
-        eq(bookings.id, txn.bookingId),
-        eq(bookings.status, "payment_pending")
+        eq(paymentSubmissions.bookingId, input.bookingId),
+        eq(paymentSubmissions.status, "pending")
       )
     )
-    .returning({
-      id: bookings.id,
-      date: bookings.date,
-      slotStart: bookings.slotStart,
-    })
+    .limit(1)
+  if (pending) {
+    return { ok: false, error: "payments.errors.alreadyPending" }
+  }
 
-  if (bookingUpdated.length > 0) {
-    const b = bookingUpdated[0]
-    logger.info("booking.confirmed", { bookingId: b.id })
-    // Mark the slot booked.
+  // Receipt (optional): must exist in the payer's receipts folder.
+  if (evidence.data.receiptPublicId) {
+    const confirm = await confirmAsset(
+      "receipt",
+      user.id,
+      evidence.data.receiptPublicId
+    )
+    if (!confirm.ok) return { ok: false, error: "payments.errors.receiptInvalid" }
+  }
+
+  // Amount authority: recompute from the slot price.
+  const { total } = computeFees(Number(row.slotPrice))
+
+  try {
+    const [submission] = await db
+      .insert(paymentSubmissions)
+      .values({
+        payerId: user.id,
+        purpose: "turf_booking",
+        bookingId: input.bookingId,
+        amount: String(total),
+        transactionId: normalizeTxId(evidence.data.transactionId),
+        senderNumber: evidence.data.senderNumber,
+        receiptPublicId: evidence.data.receiptPublicId ?? null,
+        userNote: evidence.data.userNote || null,
+      })
+      .returning({ id: paymentSubmissions.id })
+
+    // Flip booking held → payment_pending (conditional; only if still held).
     await db
-      .update(turfSlots)
-      .set({ status: "booked" })
+      .update(bookings)
+      .set({
+        status: "payment_pending",
+        totalAmount: String(total),
+        updatedAt: new Date(),
+      })
       .where(
-        and(
-          eq(turfSlots.date, b.date),
-          eq(turfSlots.startTime, b.slotStart),
-          eq(turfSlots.status, "held")
-        )
+        and(eq(bookings.id, input.bookingId), eq(bookings.status, "held"))
       )
 
-    // Schedule settle-at-kickoff. Best-effort — the admin sweep can reconcile.
-    const kickoffTs = slotStartEpoch(b.date, b.slotStart.slice(0, 5))
-    await scheduleSettleAtKickoff(b.id, kickoffTs).catch(() => {})
-
-    // Notify the booker and the turf owner (in-app; best-effort by design).
-    const infoRows = await db
+    const [turfNameRow] = await db
       .select({ turfName: turfs.name })
       .from(bookings)
       .innerJoin(turfs, eq(turfs.id, bookings.turfId))
-      .where(eq(bookings.id, txn.bookingId))
+      .where(eq(bookings.id, input.bookingId))
       .limit(1)
-    const turfName = infoRows[0]?.turfName ?? "your turf"
-    const shared = {
-      bookingId: txn.bookingId,
-      turfName,
-      date: b.date,
-      startTime: b.slotStart.slice(0, 5),
+
+    await notifyAdmins({
+      type: "payment.submission_received",
+      payload: {
+        purpose: "turf_booking",
+        amount: total,
+        payerName: "",
+        turfName: turfNameRow?.turfName ?? "",
+      },
+      entityType: "payment_submission",
+      entityId: submission.id,
+    }).catch(() => {})
+  } catch (err) {
+    if (isUniqueViolation(err)) {
+      // payment_submissions_txid_live: this TxID already backs a live
+      // (pending/consumed) submission — reuse is blocked.
+      return { ok: false, error: "payments.errors.txidAlreadyUsed" }
     }
-    await createNotifications(
-      { type: "booking.confirmed", payload: shared, entityType: "booking", entityId: txn.bookingId },
-      [txn.payerId]
-    )
-    if (txn.receiverId && txn.receiverId !== txn.payerId) {
-      await createNotifications(
-        { type: "booking.received", payload: shared, entityType: "booking", entityId: txn.bookingId },
-        [txn.receiverId]
-      )
-    }
+    throw err
   }
 
-  revalidatePath(`/bookings/${txn.bookingId}`)
-  revalidatePath("/app")
-  return { ok: true }
+  revalidatePath(`/bookings/${input.bookingId}`)
+  revalidatePath("/admin/payments")
+  return { ok: true, id: input.bookingId }
 }
 
 /**
@@ -466,6 +421,22 @@ export async function cancelBookingAction(
     .update(bookings)
     .set({ status: "cancelled", updatedAt: new Date() })
     .where(eq(bookings.id, bookingId))
+
+  // Void any pending payment evidence: the admin queue stays clean and the
+  // TxID is freed (manual bKash model — the money may need re-sending).
+  await db
+    .update(paymentSubmissions)
+    .set({
+      status: "rejected",
+      rejectReason: "booking_cancelled",
+      updatedAt: new Date(),
+    })
+    .where(
+      and(
+        eq(paymentSubmissions.bookingId, bookingId),
+        eq(paymentSubmissions.status, "pending")
+      )
+    )
 
   // Reopen the slot.
   await db
@@ -566,7 +537,8 @@ export async function generateWeeklyPayoutsAction(
     return { ok: false, error: "booking.errors.noPayouts" }
   }
 
-  // Insert one payout row per owner.
+  // Insert one payout row per owner (payouts_period_unique guarantees a
+  // period is never generated twice, even by two racing admins).
   const rows = candidates.map((c) => ({
     turfOwnerId: c.turfOwnerId,
     amount: c.amount.toFixed(2),
@@ -574,9 +546,25 @@ export async function generateWeeklyPayoutsAction(
     periodEnd,
     status: "pending" as const,
   }))
-  await db.insert(payouts).values(rows)
+  try {
+    await db.insert(payouts).values(rows)
+  } catch (err) {
+    if (isUniqueViolation(err)) {
+      return { ok: false, error: "booking.errors.payoutAlreadyGenerated" }
+    }
+    throw err
+  }
+
+  void logAudit({
+    actorId: user.id,
+    action: "payout.generated",
+    resourceType: "payout_period",
+    resourceId: `${periodStart}..${periodEnd}`,
+    after: { owners: rows.length, total: candidates.reduce((s, c) => s + c.amount, 0) },
+  }).catch(() => {})
 
   revalidatePath("/admin")
+  revalidatePath("/admin/payments")
   return { ok: true, count: rows.length }
 }
 
@@ -607,6 +595,14 @@ export async function markPayoutPaidAction(
   if (updated.length === 0) {
     return { ok: false, error: "booking.errors.payoutAlreadyPaid" }
   }
+  void logAudit({
+    actorId: user.id,
+    action: "payout.marked_paid",
+    resourceType: "payout",
+    resourceId: parsed.data.payoutId,
+    after: { providerReference: parsed.data.providerReference },
+  }).catch(() => {})
   revalidatePath("/admin")
+  revalidatePath("/admin/payments")
   return { ok: true }
 }

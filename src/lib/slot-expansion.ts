@@ -393,6 +393,30 @@ export function isSlotBookable(
 }
 
 /**
+ * Manual bKash send-money model: the user must send money and file a TxID for
+ * admin verification, which takes far longer than the old 10-minute checkout
+ * window. A hold therefore lives up to 3 hours — but never past the booking
+ * cutoff (kickoff − 20 min), whichever comes first.
+ */
+export const SLOT_HOLD_TTL_MS = 3 * 60 * 60 * 1000
+
+/**
+ * When a hold created at `now` expires: the earlier of (now + TTL) and the
+ * booking cutoff. Callers only hold bookable slots, so this is always in the
+ * future at hold time.
+ */
+export function holdExpiryFor(
+  date: string,
+  startTime: string,
+  now: Date = new Date()
+): Date {
+  const cutoffTs =
+    slotStartEpoch(date, startTime) -
+    SLOT_BOOKING_CUTOFF_MINUTES * 60 * 1000
+  return new Date(Math.min(now.getTime() + SLOT_HOLD_TTL_MS, cutoffTs))
+}
+
+/**
  * Owner-facing label of the section covering a slot's start time on a date
  * (e.g. "Evening"), for peak/off-peak display on the public page. Slots
  * spilling from a previous evening's wrapping section inherit its label.

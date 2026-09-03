@@ -1,0 +1,3354 @@
+<!DOCTYPE html>
+<html lang="bn">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DeshiTurf — Business Logic Audit Report</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --panel: #161b22;
+      --panel2: #1c2330;
+      --border: #2d333b;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --green: #3fb950;
+      --yellow: #d29922;
+      --red: #f85149;
+      --orange: #db6d28;
+      --blue: #58a6ff;
+      --purple: #bc8cff;
+      --pink: #ec6cb9;
+      --green-bg: rgba(63, 185, 80, .12);
+      --yellow-bg: rgba(210, 153, 34, .12);
+      --red-bg: rgba(248, 81, 73, .12);
+      --orange-bg: rgba(219, 109, 40, .12);
+      --blue-bg: rgba(88, 166, 255, .12);
+      --sidebar: 264px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    html {
+      scroll-behavior: smooth;
+      scroll-padding-top: 80px
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, -apple-system, 'Noto Sans Bengali', sans-serif;
+      line-height: 1.6;
+      font-size: 15px
+    }
+
+    a {
+      color: var(--blue);
+      text-decoration: none
+    }
+
+    a:hover {
+      text-decoration: underline
+    }
+
+    code {
+      background: #0d1117;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-family: Consolas, monospace;
+      font-size: .86em;
+      color: #79c0ff;
+      word-break: break-all
+    }
+
+    /* header */
+    header.topbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background: rgba(13, 17, 23, .95);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      z-index: 100;
+      gap: 14px
+    }
+
+    .topbar .logo {
+      font-weight: 800;
+      font-size: 18px;
+      letter-spacing: .5px;
+      color: var(--text)
+    }
+
+    .topbar .logo span {
+      color: var(--green)
+    }
+
+    .topbar .tag {
+      font-size: 12px;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2px 12px
+    }
+
+    .topbar .date {
+      margin-left: auto;
+      font-size: 12px;
+      color: var(--muted)
+    }
+
+    #menuBtn {
+      display: none;
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 6px;
+      padding: 6px 10px;
+      cursor: pointer;
+      font-size: 16px
+    }
+
+    /* sidebar */
+    nav.sidebar {
+      position: fixed;
+      top: 60px;
+      left: 0;
+      bottom: 0;
+      width: var(--sidebar);
+      background: var(--panel);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 16px 0;
+      z-index: 90
+    }
+
+    nav.sidebar .group {
+      padding: 10px 18px 4px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+      font-weight: 700
+    }
+
+    nav.sidebar a {
+      display: block;
+      padding: 5px 18px;
+      color: #adbac7;
+      font-size: 13.5px;
+      border-left: 3px solid transparent
+    }
+
+    nav.sidebar a:hover {
+      background: var(--panel2);
+      color: var(--text);
+      text-decoration: none;
+      border-left-color: var(--border)
+    }
+
+    nav.sidebar a.active {
+      border-left-color: var(--green);
+      color: var(--text);
+      background: var(--panel2)
+    }
+
+    /* layout */
+    main {
+      margin-left: var(--sidebar);
+      padding: 84px 34px 60px;
+      max-width: 1180px
+    }
+
+    section {
+      margin-bottom: 56px;
+      scroll-margin-top: 80px
+    }
+
+    h1 {
+      font-size: 30px;
+      margin-bottom: 6px
+    }
+
+    h2 {
+      font-size: 22px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px
+    }
+
+    h2 .num {
+      color: var(--green);
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 1px
+    }
+
+    h3 {
+      font-size: 16.5px;
+      margin: 22px 0 10px;
+      color: #cdd9e5
+    }
+
+    h4 {
+      font-size: 14.5px;
+      margin: 14px 0 6px;
+      color: #adbac7
+    }
+
+    p {
+      margin-bottom: 10px
+    }
+
+    .muted {
+      color: var(--muted)
+    }
+
+    .small {
+      font-size: 13px
+    }
+
+    /* cards */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 14px;
+      margin: 14px 0
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px
+    }
+
+    .card h4 {
+      margin: 0 0 8px;
+      color: var(--text)
+    }
+
+    .card .kpi {
+      font-size: 28px;
+      font-weight: 800
+    }
+
+    .card ul {
+      padding-left: 18px;
+      margin: 6px 0
+    }
+
+    /* badges */
+    .badge {
+      display: inline-block;
+      font-size: 11.5px;
+      font-weight: 700;
+      border-radius: 20px;
+      padding: 2px 10px;
+      white-space: nowrap
+    }
+
+    .b-green {
+      background: var(--green-bg);
+      color: var(--green)
+    }
+
+    .b-yellow {
+      background: var(--yellow-bg);
+      color: var(--yellow)
+    }
+
+    .b-red {
+      background: var(--red-bg);
+      color: var(--red)
+    }
+
+    .b-orange {
+      background: var(--orange-bg);
+      color: var(--orange)
+    }
+
+    .b-blue {
+      background: var(--blue-bg);
+      color: var(--blue)
+    }
+
+    .b-purple {
+      background: rgba(188, 140, 255, .12);
+      color: var(--purple)
+    }
+
+    .b-muted {
+      background: rgba(139, 148, 158, .15);
+      color: var(--muted)
+    }
+
+    /* tables */
+    .tblwrap {
+      overflow-x: auto;
+      margin: 12px 0;
+      border: 1px solid var(--border);
+      border-radius: 10px
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 13.5px;
+      background: var(--panel)
+    }
+
+    th {
+      background: var(--panel2);
+      text-align: left;
+      padding: 9px 12px;
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .6px;
+      color: var(--muted);
+      white-space: nowrap
+    }
+
+    td {
+      padding: 9px 12px;
+      border-bottom: 1px solid #21262d;
+      vertical-align: top
+    }
+
+    tr:last-child td {
+      border-bottom: none
+    }
+
+    tr:hover td {
+      background: rgba(255, 255, 255, .02)
+    }
+
+    /* finding block */
+    .finding {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--muted);
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin: 12px 0
+    }
+
+    .finding.p0 {
+      border-left-color: var(--red)
+    }
+
+    .finding.p1 {
+      border-left-color: var(--orange)
+    }
+
+    .finding.p2 {
+      border-left-color: var(--yellow)
+    }
+
+    .finding.p3 {
+      border-left-color: var(--muted)
+    }
+
+    .finding .fhead {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 6px
+    }
+
+    .finding .ftitle {
+      font-weight: 700;
+      font-size: 15px
+    }
+
+    .finding .kv {
+      margin: 4px 0;
+      font-size: 13.5px
+    }
+
+    .finding .kv b {
+      color: #adbac7;
+      min-width: 120px;
+      display: inline-block
+    }
+
+    .finding .bn {
+      background: var(--panel2);
+      border-radius: 6px;
+      padding: 8px 12px;
+      margin-top: 8px;
+      font-size: 14px
+    }
+
+    .finding .bn::before {
+      content: "ব্যাখ্যা (Bangla)";
+      display: block;
+      font-size: 10.5px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 3px
+    }
+
+    /* flow diagram */
+    .flow {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0;
+      margin: 16px 0
+    }
+
+    .fstep {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap
+    }
+
+    .fstep .fname {
+      font-weight: 700
+    }
+
+    .farrow {
+      align-self: center;
+      color: var(--muted);
+      font-size: 18px;
+      padding: 2px 0
+    }
+
+    .frow {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px
+    }
+
+    /* svg */
+    .svgwrap {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      overflow-x: auto;
+      margin: 14px 0
+    }
+
+    /* scorebar */
+    .scorebar {
+      background: var(--panel2);
+      border-radius: 6px;
+      height: 10px;
+      overflow: hidden;
+      min-width: 110px
+    }
+
+    .scorebar>div {
+      height: 100%
+    }
+
+    /* progress chips */
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 10px 0;
+      font-size: 13px
+    }
+
+    .legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px
+    }
+
+    /* details */
+    details {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin: 8px 0
+    }
+
+    details summary {
+      cursor: pointer;
+      padding: 10px 14px;
+      font-weight: 600;
+      color: #cdd9e5
+    }
+
+    details>div {
+      padding: 4px 16px 14px
+    }
+
+    @media(max-width:900px) {
+      nav.sidebar {
+        transform: translateX(-100%);
+        transition: transform .25s
+      }
+
+      nav.sidebar.open {
+        transform: none
+      }
+
+      main {
+        margin-left: 0;
+        padding: 76px 16px 50px
+      }
+
+      #menuBtn {
+        display: block
+      }
+
+      h1 {
+        font-size: 24px
+      }
+    }
+
+    @media print {
+
+      nav.sidebar,
+      header.topbar,
+      #menuBtn {
+        display: none
+      }
+
+      main {
+        margin: 0;
+        padding: 10px
+      }
+
+      body {
+        background: #fff;
+        color: #111
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="topbar">
+    <button id="menuBtn" aria-label="menu">☰</button>
+    <div class="logo">Deshi<span>Turf</span></div>
+    <div class="tag">Business Logic Audit</div>
+    <div class="tag" style="border-color:var(--orange);color:var(--orange)">CONFIDENTIAL — Internal</div>
+    <div class="date">Generated: ২০২৬-০৯-০৩ · Re-audit (manual payment): ২০২৬-০৯-০৩ · main@25f1416</div>
+  </header>
+  <nav class="sidebar" id="sidebar">
+    <div class="group">Overview</div>
+    <a href="#exec">1. Executive Summary</a>
+    <a href="#arch">2. Project Architecture</a>
+    <a href="#roles">3. Role Architecture</a>
+    <a href="#inventory">4. Feature Inventory</a>
+    <div class="group">Role Flows</div>
+    <a href="#owner-flow">5. Turf Owner Flow</a>
+    <a href="#player-flow">6. Solo Player Flow</a>
+    <a href="#team-flow">7. Team / Matchmaking Flow</a>
+    <a href="#admin-flow">8. Admin Flow</a>
+    <a href="#cross-role">9. Cross-Role Flows</a>
+    <div class="group">Deep Audit</div>
+    <a href="#endpoints">10. Endpoint Audit</a>
+    <a href="#rules">11. Business Rule Matrix</a>
+    <a href="#states">12. State Machines</a>
+    <a href="#matchmaking">13. Matchmaking Deep Dive</a>
+    <a href="#booking">14. Turf Booking Audit</a>
+    <a href="#finance">15. Payment &amp; Financial</a>
+    <a href="#manual-flow">15b. Manual Payment Architecture <span class="badge b-green">NEW</span></a>
+    <a href="#security">16. Authorization &amp; Security</a>
+    <a href="#db">17. Database Integrity</a>
+    <a href="#notify">18. Notification Flow</a>
+    <a href="#fe-be">19. Frontend vs Backend</a>
+    <a href="#sot">20. Source of Truth</a>
+    <div class="group">Findings</div>
+    <a href="#gaps">21. Business Logic Gaps</a>
+    <a href="#ux">22. UX / Flow Problems</a>
+    <a href="#risks">23. Risk Register</a>
+    <a href="#recs">24. Recommendations</a>
+    <a href="#decisions">25. Decisions Required</a>
+    <a href="#roadmap">26. Priority Roadmap</a>
+    <a href="#scorecard">27. Scorecard</a>
+    <a href="#conclusion">28. Conclusion</a>
+  </nav>
+  <main>
+
+    <!-- ============ 1. EXEC SUMMARY ============ -->
+    <section id="exec">
+      <h1>DeshiTurf — সম্পূর্ণ Business Logic ও Architecture Audit</h1>
+      <p class="muted">এই audit-টা senior product architect + business logic auditor + full-stack engineer + QA +
+        security — এই পাঁচটা দৃষ্টিকোণ মিলিয়ে পুরো repository level-এ করা হয়েছে। প্রতিটি finding evidence-based — সাথে
+        আসল file:line reference দেওয়া আছে।</p>
+
+      <div class="finding" style="border-left-color:var(--green)">
+        <div class="fhead"><span class="ftitle">RE-AUDIT UPDATE — Manual bKash Send Money Architecture (২০২৬-০৯-০৩)</span>
+          <span class="badge b-green">IMPLEMENTED</span></div>
+        <div class="bn">Product owner-এর সিদ্ধান্ত: platform-এ bKash merchant API নেই — সব টাকা এখন <b>manual bKash
+          Send Money</b> পথে আসে। User DeshiTurf-এর bKash নম্বরে Send Money করে Transaction ID (+ ঐচ্ছিক রিসিট
+          স্ক্রিনশট) জমা দেয় → payment <code>PENDING_VERIFICATION</code> থাকে → <b>Admin verify না করা পর্যন্ত কোনো
+          paid feature unlock হয় না</b>। পুরনো bKash Tokenized Checkout (webhook/mock route সহ) intake থেকে সরিয়ে
+          দেওয়া হয়েছে। মূল audit-এর তিনটা P0 (G-1, G-2, G-3) atomic CTE দিয়ে ঠিক করা হয়েছে, audit trail (<code>audit_logs</code>)
+          এখন প্রতিটা admin money action-এ লেখা হয়, আর payout-এর জন্য unique period index + audit logging যোগ হয়েছে।
+          বিস্তারিত: <a href="#manual-flow">সেকশন 15b</a>।</div>
+      </div>
+
+      <div class="cards">
+        <div class="card">
+          <h4>Overall Business Readiness</h4>
+          <div class="kpi" style="color:var(--green)">8.3<span style="font-size:16px;color:var(--muted)">/10</span>
+          </div>
+          <p class="small muted">Re-audit: টাকার সব পথ admin-verified ও atomic; trade-off — manual verification-এর
+            latency।</p>
+        </div>
+        <div class="card">
+          <h4>Fully Implemented</h4>
+          <div class="kpi" style="color:var(--green)">46</div>
+          <p class="small muted">double-booking guard, wallet CTE, slot engine, ERP revenue — production-grade।</p>
+        </div>
+        <div class="card">
+          <h4>Partially Implemented</h4>
+          <div class="kpi" style="color:var(--yellow)">21</div>
+          <p class="small muted">refund clawback, admin surface, discovery ranking, notifications।</p>
+        </div>
+        <div class="card">
+          <h4>Missing / At-Risk</h4>
+          <div class="kpi" style="color:var(--red)">17</div>
+          <p class="small muted">payouts, rescheduling, no-show, skill matching, admin audit trail।</p>
+        </div>
+      </div>
+
+      <h3>সবচেয়ে গুরুত্বপূর্ণ ৮টি ফাইন্ডিং (TL;DR)</h3>
+      <div class="tblwrap">
+        <table>
+          <tr>
+            <th>#</th>
+            <th>Finding</th>
+            <th>Priority</th>
+            <th>এক লাইনে ব্যাখ্যা</th>
+          </tr>
+          <tr>
+            <td>1</td>
+            <td><code>executeRefund</code> non-atomic multi-write</td>
+            <td><span class="badge b-red">P0</span></td>
+            <td><code>executeRefund</code>-এ refund করার জন্য ৪–৫টা আলাদা database statement চলছে। মাঝখানে কোনো একটা
+              operation fail করলে booking-টা refunded হয়ে যেতে পারে, কিন্তু transaction status update নাও হতে পারে। ফলে
+              সিস্টেমের হিসাব আর আসল টাকার মধ্যে অমিল তৈরি হতে পারে।</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td>Team-challenge acceptance ফি যাচাই করে না</td>
+            <td><span class="badge b-red">P0</span></td>
+            <td>Team challenge accept করার সময় fee আবার verify করা হচ্ছে না। challenge পাঠানোর সময় ৳25 charge হলেও
+              <code>respondTeamChallengeAction</code> accept করে দিলে ফি ছাড়াই match confirm হয়ে যেতে পারে।</td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td>Wallet claim reject credit-back non-atomic</td>
+            <td><span class="badge b-red">P0</span></td>
+            <td>Claim reject করার সময় status update আর ৳25 credit-back আলাদা operation হিসেবে হচ্ছে। মাঝখানে server
+              crash করলে status বদলে যেতে পারে, কিন্তু credit-back নাও হতে পারে। এতে ইউজারের টাকা আটকে যাওয়ার ঝুঁকি
+              আছে।</td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td>Payout lifecycle নেই</td>
+            <td><span class="badge b-orange">P1</span></td>
+            <td><code>payouts</code> table থাকলেও owner-কে টাকা দেওয়ার পুরো flow এখনো implement করা হয়নি। অর্থাৎ owner
+              কখন payout পাবে, কীভাবে payout request হবে এবং payout complete হলে status কীভাবে update হবে — এসব এখনো
+              missing।</td>
+          </tr>
+          <tr>
+            <td>5</td>
+            <td>bKash prod IP allowlist ফাঁকা</td>
+            <td><span class="badge b-orange">P1</span></td>
+            <td><code>BKASH_PROD_IP_ALLOWLIST=[]</code> থাকলে বর্তমানে IP allowlist check কার্যত bypass হয়ে যাচ্ছে। ফলে
+              request যাচাইয়ের ক্ষেত্রে মূলত HMAC signature-এর ওপরই নির্ভর করতে হচ্ছে।</td>
+          </tr>
+          <tr>
+            <td>6</td>
+            <td>৫+ জায়গায় DB unique constraint নেই</td>
+            <td><span class="badge b-orange">P1</span></td>
+            <td>match invitation, team invitation, wallet pending claim, payout period, report — এই ৫ জায়গায় duplicate
+              row ঢুকতে পারে। app-level dedupe আছে, কিন্তু race condition-এ সেটা ঠেকতে পারে না।</td>
+          </tr>
+          <tr>
+            <td>7</td>
+            <td>Admin audit trail নেই</td>
+            <td><span class="badge b-orange">P1</span></td>
+            <td><code>auditLogs</code> table আছে, কিন্তু কোনো admin action এখনো এতে লেখে না। ফলে টাকা-জড়িত
+              সিদ্ধান্তগুলো পরে trace করা যায় না।</td>
+          </tr>
+          <tr>
+            <td>8</td>
+            <td>Skill/position matching-এ ব্যবহারই হয় না</td>
+            <td><span class="badge b-yellow">P2</span></td>
+            <td>skill এখনো শুধু profile display-তে; discovery শুধু distance + kickoff দিয়ে sort করে। তাই "সঠিক
+              দল/প্লেয়ার খুঁজে দেওয়া" — যেটা product প্রতিশ্রুতি দেয় — সেটা আসলে পূরণ হচ্ছে না।</td>
+          </tr>
+        </table>
+      </div>
+
+      <h3>এক নজরে: কী ভালো, কী ঝুঁকি</h3>
+      <div class="cards">
+        <div class="card" style="border-top:3px solid var(--green)">
+          <h4 style="color:var(--green)">যা শক্ত (Production-grade)</h4>
+          <ul class="small">
+            <li>Double-booking: conditional UPDATE + partial unique index <code>bookings_active_unique</code> + slot
+              EXCLUDE constraint — তিন স্তরে সুরক্ষা</li>
+            <li>Wallet money math: এক statement-এর guarded CTE, unique <code>idempotency_key</code> — race-এ পরে ঢোকা
+              কেউ কখনো charge হয় না</li>
+            <li>Price সবসময় server-side recompute হয় — client কখনো amount পাঠায় না</li>
+            <li>Slot engine: schedule → exception → manual precedence, 20-min cutoff, structural peak pricing</li>
+            <li>Inngest cron: hold expiry, kickoff settle, match expiry + nightly sweep</li>
+            <li>Server action-গুলোতে সব জায়গায় capability check (<code>src/lib/capabilities.ts</code>)</li>
+          </ul>
+        </div>
+        <div class="card" style="border-top:3px solid var(--red)">
+          <h4 style="color:var(--red)">যা ঝুঁকি / নেই</h4>
+          <ul class="small">
+            <li>refund আর claim-reject-এর money path transaction-এর বাইরে — non-atomic</li>
+            <li>owner payout কখনোই execute হয় না — পুরো flow missing</li>
+            <li>reschedule, no-show, booking dispute — কোনোটারই কোনো ব্যবস্থা নেই</li>
+            <li><code>rebook_contingent</code> refund-এর clawback এখনো অসম্পূর্ণ</li>
+            <li>একই player একই সময়ে দুইটা match-এ থাকতে পারছে</li>
+            <li>Admin-এর হাতে audit log, payout management, wallet balance correction — কিছুই নেই</li>
+            <li>গুরুত্বপূর্ণ state change-গুলোতে notification missing (expiry, refund, suspension)</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 2. ARCHITECTURE ============ -->
+    <section id="arch">
+      <h2><span class="num">02</span> Project Architecture</h2>
+      <div class="cards">
+        <div class="card">
+          <h4>Frontend</h4>
+          <ul class="small">
+            <li>Next.js <b>16.3.3</b> App Router, React 19.2.8</li>
+            <li>Tailwind, TanStack Query, MapLibre v6 (OpenFreeMap + Photon)</li>
+            <li>i18n: <code>src/i18n/dictionaries/{en,bn}.ts</code> — Bangla-first, cookie <code>tk_locale</code></li>
+          </ul>
+        </div>
+        <div class="card">
+          <h4>Backend</h4>
+          <ul class="small">
+            <li>Server Actions (<code>src/features/*/actions.ts</code> × 16 মডিউল) + সামান্য API route</li>
+            <li>Drizzle ORM + Neon Postgres (<b>neon-http</b> — <code>db.transaction()</code> নেই,
+              <code>db.batch()</code> / single CTE pattern)</li>
+            <li>PostGIS (distance), generated columns + EXCLUDE constraints</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h4>Auth</h4>
+          <ul class="small">
+            <li>NextAuth v5 beta, JWT session, Credentials (phone/email + password) + OTP + email provider + owner
+              phone-code</li>
+            <li>Route guard: <code>src/auth.config.ts:31-49</code> authorized callback; middleware =
+              <code>src/proxy.ts</code></li>
+            <li>Roles: <code>user_role = admin | turf_owner | team_owner | player</code>
+              (<code>src/db/schema/enums.ts:9-14</code>)</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h4>Infra / Integrations</h4>
+          <ul class="small">
+            <li>Inngest (cron + event jobs, <code>src/lib/inngest.ts</code>), Pusher (realtime notify), Upstash (rate
+              limit)</li>
+            <li>bKash payment (<code>src/lib/payment.ts</code>), Cloudinary images, Resend, PostHog</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>Route Map (আসলে যা আছে)</h3>
+      <div class="tblwrap">
+        <table>
+          <tr>
+            <th>Group</th>
+            <th>Routes</th>
+            <th>Guard</th>
+          </tr>
+          <tr>
+            <td><b>Public</b> <code>(public)</code></td>
+            <td class="small"><code>/</code>, <code>/turfs</code>, <code>/turfs/[slug]</code>, <code>/matches</code>,
+              <code>/matches/new</code>, <code>/matches/logs</code>, <code>/matches/[id]</code>,
+              <code>/players/[code]</code>, <code>/claim/[token]</code>, <code>/invite/[code]</code>,
+              <code>/m/[token]</code></td>
+            <td><span class="badge b-green">open</span></td>
+          </tr>
+          <tr>
+            <td><b>Player app</b> <code>(auth)/app</code></td>
+            <td class="small"><code>/app</code>, <code>/app/friends</code>, <code>/app/profile[/edit]</code>,
+              <code>/app/settings</code>, <code>/app/wallet[/topup]</code></td>
+            <td><span class="badge b-blue">login</span></td>
+          </tr>
+          <tr>
+            <td><b>Team</b></td>
+            <td class="small"><code>/team</code>, <code>/team/new</code>, <code>/team/[slug][/edit]</code></td>
+            <td><span class="badge b-blue">login</span></td>
+          </tr>
+          <tr>
+            <td><b>Turf owner</b></td>
+            <td class="small"><code>/turf-owner</code>, <code>/turf-owner/turfs/new</code>,
+              <code>/turf-owner/turfs/[id]</code>, ERP:
+              <code>/turf-owner/erp/{analytics,assistant,bills,expenses,goals,income,maintenance,premium,profit,reports,settings,staff[/salaries|/[id]],export}</code>
+            </td>
+            <td><span class="badge b-blue">login</span> + ERP: <span class="badge b-purple">turf_owner</span></td>
+          </tr>
+          <tr>
+            <td><b>Admin</b></td>
+            <td class="small">
+              <code>/admin{,/applications,/bookings,/erp-premium,/matches,/reports,/teams,/transactions,/turfs[/new|/[id]],/users,/wallet-claims}</code>
+            </td>
+            <td><span class="badge b-purple">admin</span> (layout + per-action)</td>
+          </tr>
+          <tr>
+            <td><b>Misc</b></td>
+            <td class="small"><code>/login</code>, <code>/register</code>, <code>/forgot-password</code>,
+              <code>/auth/onboarding</code>, <code>/bookings/[id]</code>, <code>/own-a-turf</code>,
+              <code>/notifications</code></td>
+            <td>mixed</td>
+          </tr>
+        </table>
+      </div>
+
+      <h3>API Routes (প্রায় সব business logic Server Action-এ)</h3>
+      <ul class="small">
+        <li><code>POST /api/auth/[...nextauth]</code>, <code>POST /api/images/sign</code> + <code>/confirm</code>,
+          <code>POST /api/inngest</code>, <code>GET /api/notifications</code></li>
+        <li><code>POST /api/payments/bkash/callback</code> + <code>/webhook</code> (HMAC + IP allowlist + 30/min/IP)
+        </li>
+        <li>Dev-only mock: <code>GET /app/wallet/topup/mock</code>, <code>GET /bookings/[id]/pay/mock</code> —
+          production-এ 404 দেয়, তবে route-এ <b>ownership check নেই</b> (ref জানা থাকলেই confirm করা যায়)</li>
+        <li><code>GET /turf-owner/erp/export</code> — শুধু <code>turf_owner</code> role check হয়, per-turf ownership
+          verify দুর্বল</li>
+      </ul>
+    </section>
+
+    <!-- ============ 3. ROLE ARCHITECTURE ============ -->
+    <section id="roles">
+      <h2><span class="num">03</span> Role Architecture</h2>
+      <div class="tblwrap">
+        <table>
+          <tr>
+            <th>Role (DB enum)</th>
+            <th>Home</th>
+            <th>কী করতে পারে (server-enforced)</th>
+            <th>Enforcement</th>
+          </tr>
+          <tr>
+            <td><b>admin</b></td>
+            <td><code>/admin</code></td>
+            <td class="small">turf verify/activate/delete, user status/role, dual-control refund (৳5,000+ এ দ্বিতীয়
+              admin), match dispute, report moderation, wallet claim decision, turf application approve, claim invite +
+              owner login code mint, ERP premium</td>
+            <td><code>requireAdmin()</code> প্রতিটি action-এ + layout gate</td>
+          </tr>
+          <tr>
+            <td><b>turf_owner</b></td>
+            <td><code>/turf-owner</code></td>
+            <td class="small">turf CRUD (নিজের <code>ownerId</code>), schedule/slot/pricing, booking cancel (owner
+              হিসেবে), ERP সম্পূর্ণ (expense/salary/rent/budget/report/premium)</td>
+            <td><code>can(user,"turf.update",{ownerId})</code> ইত্যাদি — <code>src/lib/capabilities.ts</code></td>
+          </tr>
+          <tr>
+            <td><b>team_owner / player</b></td>
+            <td><code>/app</code>, <code>/team</code></td>
+            <td class="small">team create, membership (owner/captain/manager/player), match create/claim/challenge,
+              invite, join request, wallet, friends/blocks, result submit/confirm</td>
+            <td><code>getTeamRole</code> + <code>resolveSideCaptain</code> + <code>isCaptainRole</code></td>
+          </tr>
+        </table>
+      </div>
+      <div class="finding p2">
+        <div class="fhead"><span class="ftitle">Role model-এ দ্বৈত সত্য</span><span class="badge b-yellow">P2</span>
+        </div>
+        <div class="kv"><b>Evidence</b> <code>src/db/schema/enums.ts:9-14</code>,
+          <code>src/db/schema/teams.ts:12-13</code></div>
+        <div class="bn">DB-তে <code>team_owner</code> নামের একটা role আছে, অথচ team-এর আসল ownership নির্ধারণ হয়
+          <code>team_members.role='owner'</code> দিয়ে — মানে ownership যাচাই হয় দুই জায়গায়। একজন user-এর DB role
+          <code>player</code> থাকতে পারে, অথচ সে team-এর owner — এই দুই তথ্যের উৎস আলাদা। ভবিষ্যতে কোনো role-based
+          feature বানাতে গেলে (যেমন "team_owner-only") এখানে বিভ্রান্তি হবে। <b>Decision required:</b>
+          <code>team_owner</code> enum value-টা বাদ দেওয়া হবে, নাকি sync-এ রাখা হবে?</div>
+      </div>
+    </section>
+    <!-- ============ 4. FEATURE INVENTORY ============ -->
+    <section id="inventory">
+      <h2><span class="num">04</span> Complete Feature Inventory</h2>
+      <div class="legend"><span>🟢 Working</span><span>🟡 Partial</span><span>🔴 Missing</span><span>⚠️
+          Risk</span><span>🔵 Decision needed</span></div>
+      <div class="tblwrap">
+        <table>
+          <tr>
+            <th>Feature</th>
+            <th>Role</th>
+            <th>UI</th>
+            <th>Backend</th>
+            <th>DB</th>
+            <th>Status</th>
+            <th>Issue / Gap</th>
+          </tr>
+          <tr>
+            <td>Turf CRUD + images</td>
+            <td>Owner/Admin</td>
+            <td class="small"><code>/turf-owner/turfs/*</code></td>
+            <td class="small"><code>turfs/actions.ts</code></td>
+            <td class="small"><code>turfs</code>, <code>turf_photos</code></td>
+            <td>🟢</td>
+            <td class="small">Owner নিজে তৈরি করা turf <code>isVerified=false</code> থাকে — admin verify না করা পর্যন্ত
+              booking হয় না (এটা ঠিক আছে)। <code>turf_owners</code> M:N table-টা unused (post-MVP)।</td>
+          </tr>
+          <tr>
+            <td>Turf claim funnel (seeded turf)</td>
+            <td>Owner</td>
+            <td class="small"><code>/claim/[token]</code>, <code>/own-a-turf</code></td>
+            <td class="small"><code>turf-claims/actions.ts</code>, <code>turf-applications/actions.ts</code></td>
+            <td class="small"><code>turf_claim_invites</code>, <code>turf_applications</code></td>
+            <td>🟢</td>
+            <td class="small">token hash + OTP + one-active-invite-per-turf partial unique — ভালোভাবে বানানো।</td>
+          </tr>
+          <tr>
+            <td>Slot engine (schedule/exception/manual)</td>
+            <td>Owner</td>
+            <td class="small"><code>turf-owner/turfs/[id]</code></td>
+            <td class="small"><code>materialize.ts</code>, <code>slot-expansion.ts</code></td>
+            <td class="small"><code>turf_schedules(_sections)</code>, <code>turf_date_exceptions</code>,
+              <code>turf_slots</code></td>
+            <td>🟢</td>
+            <td class="small">one-active-schedule partial unique, EXCLUDE overlap, per-section pricing (peak/off-peak) —
+              সব DB থেকে enforce হয়।</td>
+          </tr>
+          <tr>
+            <td>Booking hold → pay → confirm</td>
+            <td>Player/Team</td>
+            <td class="small"><code>/turfs/[slug]</code>, <code>/bookings/[id]</code></td>
+            <td class="small"><code>bookings/actions.ts:69-384</code></td>
+            <td class="small"><code>bookings</code>, <code>turf_slots</code>, <code>slot_holds</code>,
+              <code>transactions</code></td>
+            <td>🟢</td>
+            <td class="small">conditional slot UPDATE + partial unique + 10-min hold expiry + idempotent webhook — তিন
+              স্তরে guard করা।</td>
+          </tr>
+          <tr>
+            <td>Owner booking confirm/reject</td>
+            <td>Owner</td>
+            <td>—</td>
+            <td>—</td>
+            <td>—</td>
+            <td>🔴 (by design)</td>
+            <td class="small">payment success হলে webhook থেকে auto-confirm হয়। owner নিজে manually accept/reject করার
+              কোনো ধারণাই এখানে নেই। এটা business model হিসেবে ঠিক আছে কি না, সেটা স্পষ্ট করা দরকার।</td>
+          </tr>
+          <tr>
+            <td>Booking cancellation + refund policy</td>
+            <td>Both</td>
+            <td class="small"><code>/bookings/[id]</code></td>
+            <td class="small"><code>bookings/actions.ts:390-548</code>, <code>lib/cancellation.ts</code></td>
+            <td class="small"><code>cancellations</code></td>
+            <td>⚠️</td>
+            <td class="small"><code>rebook_contingent</code> policy-র settle-time clawback এখনো implement করা হয়নি;
+              cancel-এর পর slot <code>maintenance</code> থাকলেও আবার open হয়ে যায়।</td>
+          </tr>
+          <tr>
+            <td>Rescheduling</td>
+            <td>Both</td>
+            <td>—</td>
+            <td>—</td>
+            <td>—</td>
+            <td>🔴</td>
+            <td class="small">এখনো কোনো ব্যবস্থাই নেই — একমাত্র পথ cancel করে আবার book করা।</td>
+          </tr>
+          <tr>
+            <td>No-show handling</td>
+            <td>Owner</td>
+            <td>—</td>
+            <td>—</td>
+            <td>—</td>
+            <td>🔴</td>
+            <td class="small">কোনো status/flow নেই; kickoff পার হলে booking auto-<code>completed</code> হয়ে যায়।</td>
+          </tr>
+          <tr>
+            <td>Owner payouts</td>
+            <td>Owner/Admin</td>
+            <td>—</td>
+            <td>—</td>
+            <td class="small"><code>payouts</code> table আছে</td>
+            <td>🔴</td>
+            <td class="small">action/route/cron/UI কিছুই নেই — অর্থাৎ owner কীভাবে টাকা পাবে, সেই পুরো lifecycle-টাই
+              missing।</td>
+          </tr>
+          <tr>
+            <td>ERP (expense/salary/rent/income/budget/maintenance)</td>
+            <td>Owner</td>
+            <td class="small"><code>/turf-owner/erp/*</code> (১২ পেজ)</td>
+            <td class="small"><code>erp/actions.ts</code>, <code>erp/finance.ts</code>, <code>erp/analytics.ts</code>
+            </td>
+            <td class="small">১২টা <code>erp_*</code> table</td>
+            <td>🟢</td>
+            <td class="small">Revenue DB-side SQL দিয়ে হিসাব হয় (<code>amount − platform_fee</code>); expense delete
+              করা যায় না, শুধু void; audit log append-only।</td>
+          </tr>
+          <tr>
+            <td>ERP premium gating</td>
+            <td>Owner/Admin</td>
+            <td class="small"><code>/erp/premium</code>, <code>/admin/erp-premium</code></td>
+            <td class="small"><code>erp/premium-actions.ts</code></td>
+            <td class="small"><code>erp_premium_requests</code></td>
+            <td>🟡</td>
+            <td class="small">এখনো manual MFS verify — কোনো automated payment/subscription নেই।</td>
+          </tr>
+          <tr>
+            <td>Team CRUD + membership</td>
+            <td>Team</td>
+            <td class="small"><code>/team/*</code></td>
+            <td class="small"><code>teams/actions.ts</code></td>
+            <td class="small"><code>teams</code>, <code>team_members</code>, <code>team_invitations</code></td>
+            <td>🟡</td>
+            <td class="small">ownership নির্ভর করে শুধু <code>team_members.role</code>-এর ওপর; team capacity-র কোনো
+              limit নেই; invitation dedupe শুধু app-level।</td>
+          </tr>
+          <tr>
+            <td>Match create (home) + ৳25 fee</td>
+            <td>Team</td>
+            <td class="small"><code>/matches/new</code></td>
+            <td class="small"><code>matches/actions.ts:107-221</code></td>
+            <td class="small"><code>matches</code>, <code>wallet_*</code></td>
+            <td>🟢</td>
+            <td class="small">এক CTE-তে guarded wallet debit + match insert — wallet-এ টাকা না থাকলে captain ম্যাচ তৈরিই
+              করতে পারে না।</td>
+          </tr>
+          <tr>
+            <td>Opponent claim (person FCFS)</td>
+            <td>Any</td>
+            <td class="small"><code>/matches/[id]</code></td>
+            <td class="small"><code>matches/actions.ts:275-399</code></td>
+            <td class="small"><code>matches.away_captain_id</code></td>
+            <td>🟢</td>
+            <td class="small">atomic conditional UPDATE; race-এ পরে ঢোকা কেউ charge হয় না। তবে claim করে ব্যক্তি —
+              "team vs team" identity টা হারিয়ে যায়।</td>
+          </tr>
+          <tr>
+            <td>Team challenge (opponent)</td>
+            <td>Team captain</td>
+            <td class="small"><code>/matches/[id]</code></td>
+            <td class="small"><code>matches/actions.ts:1182-1489</code></td>
+            <td class="small"><code>opponent_requests</code></td>
+            <td>⚠️</td>
+            <td class="small">send-এর সময় fee charge আর request insert দুটো আলাদা statement (মাঝে crash হলে ৳25
+              হারায়); accept-এর সময় fee আবার verify হয় না।</td>
+          </tr>
+          <tr>
+            <td>Player invite / phone invite / guest</td>
+            <td>Captain</td>
+            <td class="small"><code>/matches/[id]</code> room</td>
+            <td class="small"><code>matches/actions.ts:527-959</code></td>
+            <td class="small"><code>match_invitations</code>, <code>match_guests</code></td>
+            <td>🟡</td>
+            <td class="small">duplicate invite-এর কোনো DB constraint নেই; XOR (userId/phone) শুধু app-level; guest-এর
+              (matchId, phone) unique-ও নেই।</td>
+          </tr>
+          <tr>
+            <td>Solo player "available tonight" + discovery</td>
+            <td>Player</td>
+            <td class="small"><code>/app</code>, match room</td>
+            <td class="small"><code>player/queries.ts:353-403</code></td>
+            <td class="small"><code>player_profiles.available*</code></td>
+            <td>🟢</td>
+            <td class="small">২৪ ঘণ্টার window + 10km PostGIS radius + position filter; skill-based ranking নেই।</td>
+          </tr>
+          <tr>
+            <td>Join request (solo → match)</td>
+            <td>Player</td>
+            <td class="small"><code>/matches/[id]</code></td>
+            <td class="small"><code>player/actions.ts:158-336</code></td>
+            <td class="small"><code>player_requests</code></td>
+            <td>🟡</td>
+            <td class="small">accept করলে registered user হয়েও role=<code>guest</code> বসে যায় —
+              <code>matchPlayerRole</code>-এর semantics ভেঙে যায়।</td>
+          </tr>
+          <tr>
+            <td>Squad capacity (spotsLeft)</td>
+            <td>Captain</td>
+            <td class="small">match room</td>
+            <td class="small"><code>seat-claim.ts</code> FOR UPDATE + seatsFreeSql</td>
+            <td class="small"><code>match_players</code> PK</td>
+            <td>🟢</td>
+            <td class="small">row-lock + capacity predicate — atomic; UI-র pre-check ইচ্ছাকৃতভাবে non-authoritative।
+            </td>
+          </tr>
+          <tr>
+            <td>Match lifecycle (start/result/confirm)</td>
+            <td>Side captains</td>
+            <td class="small"><code>/matches/[id]</code></td>
+            <td class="small"><code>actions.ts:1499-1172</code></td>
+            <td class="small"><code>matches.state</code>, <code>resultStatus</code></td>
+            <td>🟡</td>
+            <td class="small">result confirm করে শুধু অন্য captain — ভালো; তবে start করতে kickoff gate নেই,
+              <code>roster_building/ready</code> state কেউ set করেই না, dispute flow নির্ভর করে শুধু admin-এর ওপর।</td>
+          </tr>
+          <tr>
+            <td>Live event log + recorder</td>
+            <td>Cap./Recorder</td>
+            <td class="small"><code>/matches/[id]</code>, <code>/matches/logs</code></td>
+            <td class="small"><code>actions.ts:1622-1768</code>, <code>authority.ts</code></td>
+            <td class="small"><code>match_events</code></td>
+            <td>🟢</td>
+            <td class="small">ongoing-only write; side/player server-resolved; recorder roster-checked।</td>
+          </tr>
+          <tr>
+            <td>Wallet (topup/fee/credit/claim)</td>
+            <td>All</td>
+            <td class="small"><code>/app/wallet</code></td>
+            <td class="small"><code>wallet/service.ts</code> CTE</td>
+            <td class="small"><code>wallet_balances</code>, <code>wallet_entries</code></td>
+            <td>🟢⚠️</td>
+            <td class="small">প্রতিটি movement atomic; কিন্তু claim reject-এর credit-back আর refund-এর পথ non-atomic।
+            </td>
+          </tr>
+          <tr>
+            <td>Wallet top-up (bKash)</td>
+            <td>All</td>
+            <td class="small"><code>/app/wallet/topup</code></td>
+            <td class="small"><code>wallet/actions.ts:39-90</code></td>
+            <td class="small"><code>wallet_entries(pending)</code></td>
+            <td>🟢</td>
+            <td class="small">24h pending sweep আছে; callback কখনো mutate করে না — লেনদেন শুধু signed webhook দিয়ে।
+            </td>
+          </tr>
+          <tr>
+            <td>Manual wallet claim (admin-approved cash-in)</td>
+            <td>All/Admin</td>
+            <td class="small"><code>/admin/wallet-claims</code></td>
+            <td class="small"><code>wallet/actions.ts:120-287</code></td>
+            <td class="small"><code>wallet_claims</code></td>
+            <td>⚠️</td>
+            <td class="small">debit-এর আগে insert হয় → race-এ দুটো claim row তৈরি হতে পারে; reject-এর credit-back
+              non-atomic।</td>
+          </tr>
+          <tr>
+            <td>Player Network (DT-ID, friends, blocks)</td>
+            <td>All</td>
+            <td class="small"><code>/app/friends</code>, <code>/players/[code]</code></td>
+            <td class="small"><code>friends/*</code>, <code>player/*</code></td>
+            <td class="small"><code>friendships</code>, <code>user_blocks</code></td>
+            <td>🟢</td>
+            <td class="small">block server-enforced (invite/search সহ, test-ও আছে); কিন্তু friendship-এ canonical
+              ordering নেই — A→B ও B→A দুটোই একসাথে থাকতে পারে।</td>
+          </tr>
+          <tr>
+            <td>Notifications (in-app + Pusher)</td>
+            <td>All</td>
+            <td class="small"><code>/notifications</code></td>
+            <td class="small"><code>notifications/create.ts</code></td>
+            <td class="small"><code>notifications</code></td>
+            <td>🟡</td>
+            <td class="small">৩১টা type wired আছে; কিন্তু expiry/refund-executed/payout-paid/report-resolved/suspension
+              missing; delivery best-effort।</td>
+          </tr>
+          <tr>
+            <td>Admin moderation/disputes</td>
+            <td>Admin</td>
+            <td class="small"><code>/admin/*</code></td>
+            <td class="small"><code>admin/actions.ts</code></td>
+            <td class="small">multiple</td>
+            <td>🟡</td>
+            <td class="small">refund dual-control ভালো; কিন্তু audit log লেখা হয় না, team moderation বা wallet balance
+              correction-এর সুবিধাও নেই।</td>
+          </tr>
+          <tr>
+            <td>Rate limiting</td>
+            <td>Platform</td>
+            <td>—</td>
+            <td class="small"><code>lib/ratelimit.ts</code></td>
+            <td>Upstash</td>
+            <td>🟡</td>
+            <td class="small">hold/OTP/login/webhook-এ আছে; topup/claim/match-create/invite/report-এ নেই; আর Redis
+              unconfigured থাকলে limiter নীরবে সব allow করে দেয়।</td>
+          </tr>
+          <tr>
+            <td>Background jobs</td>
+            <td>Platform</td>
+            <td>—</td>
+            <td class="small"><code>lib/inngest.ts</code></td>
+            <td>—</td>
+            <td>🟡</td>
+            <td class="small">hold-expiry শুধু event-driven (backstop sweep নেই); payment_pending booking-এর নিজস্ব
+              sweeper নেই; payout sweep-ও নেই।</td>
+          </tr>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ 5. OWNER FLOW ============ -->
+    <section id="owner-flow">
+      <h2><span class="num">05</span> Turf Owner — End-to-End Flow</h2>
+      <div class="flow">
+        <div class="fstep"><span class="badge b-blue">1</span><span class="fname">Register/Login</span><span
+            class="small muted">phone/email+password, OTP, বা admin-minted owner login code</span><span
+            class="badge b-green">🟢</span></div>
+        <div class="farrow">↓</div>
+        <div class="fstep"><span class="badge b-blue">2</span><span class="fname">Turf তৈরির ৩ পথ</span><span
+            class="small muted">self-serve (unverified) · admin concierge · application funnel → claim
+            invite</span><span class="badge b-green">🟢</span></div>
+        <div class="farrow">↓</div>
+        <div class="fstep"><span class="badge b-blue">3</span><span class="fname">Admin verification</span><span
+            class="small muted"><code>verifyTurfAction</code> — unverified turf-এ booking হয় না
+            (<code>bookings/actions.ts:113-115</code>)</span><span class="badge b-green">🟢</span></div>
+        <div class="farrow">↓</div>
+        <div class="fstep"><span class="badge b-blue">4</span><span class="fname">Schedule + Slots + Pricing</span><span
+            class="small muted">weekly sections (per-section price = structural peak/off-peak), date exceptions
+            (multiplier/absolute), nightly materialization 00:17 Dhaka</span><span class="badge b-green">🟢</span></div>
+        <div class="farrow">↓</div>
+        <div class="fstep"><span class="badge b-blue">5</span><span class="fname">Booking গ্রহণ</span><span
+            class="small muted">hold (10 min) → bKash payment → auto-confirm; owner manually accept/reject করার সুযোগ
+            নেই</span><span class="badge b-yellow">🟡</span></div>
+        <div class="farrow">↓</div>
+        <div class="fstep"><span class="badge b-blue">6</span><span class="fname">Cancellation / Refund</span><span
+            class="small muted">owner বা booker যে কেউ cancel করতে পারে; policy engine
+            (flexible/moderate/strict/rebook_contingent); refund আসে owner share থেকে</span><span
+            class="badge b-yellow">🟡 clawback অসম্পূর্ণ</span></div>
+        <div class="farrow">↓</div>
+        <div class="fstep"><span class="badge b-blue">7</span><span class="fname">Kickoff settle</span><span
+            class="small muted">confirmed → completed (payout-eligible) Inngest cron-এ</span><span
+            class="badge b-green">🟢</span></div>
+        <div class="farrow">↓</div>
+        <div class="fstep"><span class="badge b-blue">8</span><span class="fname">Payout</span><span
+            class="small muted"><code>payouts</code> table + weekly aggregation query আছে, কিন্তু কোনো cron/action/UI
+            নেই — flow এখানেই থেমে আছে</span><span class="badge b-red">🔴</span></div>
+        <div class="farrow">↓</div>
+        <div class="fstep"><span class="badge b-blue">9</span><span class="fname">ERP: Expense → Profit</span><span
+            class="small muted">expense/salary/rent/electricity/other-income/budget; Profit = revenue + otherIncome −
+            refunds − expenses (DB-side)</span><span class="badge b-green">🟢</span></div>
+      </div>
+      <div class="finding p1">
+        <div class="fhead"><span class="ftitle">Owner টাকা পায় না — payout lifecycle নেই</span><span
+            class="badge b-orange">P1</span></div>
+        <div class="kv"><b>Evidence</b> <code>src/db/schema/bookings.ts:158-176</code> (table আছে),
+          <code>bookings/actions.ts:555-612</code> (admin action আছে, কিন্তু কোনো UI/cron-এ wired না)</div>
+        <div class="kv"><b>Current</b> <code>generateWeeklyPayoutsAction</code> / <code>markPayoutPaidAction</code>
+          admin action লেখা আছে, কিন্তু এগুলোকে ব্যবহার করে এমন কোনো পেজ, cron বা notification নেই।</div>
+        <div class="bn">ব্যবসার দিক থেকে এটাই সবচেয়ে বড় ফাঁক: platform booking-এর পুরো টাকা (owner share + platform
+          fee) ধরে রাখে, কিন্তু owner-কে টাকা দেওয়ার কোনো ব্যবস্থাই এখনো চালু নেই। ERP-তে owner "আয়" দেখতে পায়, অথচ
+          বাস্তবে সেটা এখনো receivable — paid না। আর ERP report-এ receivable আর settled-এর পার্থক্যও কোথাও দেখানো হয়
+          না। ফলে owner আর platform — দুজনের হিসাবই অসম্পূর্ণ।</div>
+      </div>
+    </section>
+
+    <!-- ============ 6. PLAYER FLOW ============ -->
+    <section id="player-flow">
+      <h2><span class="num">06</span> Solo Player — End-to-End Flow</h2>
+      <div class="flow">
+        <div class="fstep"><span class="badge b-blue">1</span><span class="fname">Register/Login →
+            Onboarding</span><span class="badge b-green">🟢</span></div>
+        <div class="farrow">↓</div>
+        <div class="fstep"><span class="badge b-blue">2</span><span class="fname">Player Profile</span><span
+            class="small muted">DT-ID, username, position + secondary, skill (learning→competitive), avatar, location
+            (write-এ ~110m এ round)</span><span class="badge b-green">🟢</span></div>
+        <div class="farrow">↓</div>
+        <div class="fstep"><span class="badge b-blue">3</span><span class="fname">Availability toggle ("Available
+            tonight")</span><span class="small muted">24h window, PostGIS point</span><span
+            class="badge b-green">🟢</span></div>
+        <div class="farrow">↓</div>
+        <div class="fstep"><span class="badge b-blue">4</span><span class="fname">Match discovery</span><span
+            class="small muted"><code>listOpenMatches</code>: state=open + kickoff future, distance/kickoff sort —
+            skill/size matching নেই</span><span class="badge b-yellow">🟡</span></div>
+        <div class="farrow">↓</div>
+        <div class="fstep"><span class="badge b-blue">5</span><span class="fname">Join request / Invitation
+            গ্রহণ</span><span class="small muted"><code>requestToJoinAction</code> → captain accept (side-seat,
+            capacity-locked)</span><span class="badge b-green">🟢</span></div>
+        <div class="farrow">↓</div>
+        <div class="fstep"><span class="badge b-blue">6</span><span class="fname">Squad complete → Match
+            confirmed</span><span class="small muted">kickoff countdown (12-hour format) — booking slot থেকে
+            derive</span><span class="badge b-green">🟢</span></div>
+        <div class="farrow">↓</div>
+        <div class="fstep"><span class="badge b-blue">7</span><span class="fname">Match played → Result →
+            Confirm</span><span class="small muted">এক captain submit, অন্য captain confirm; disagree → disputed
+            (admin)</span><span class="badge b-yellow">🟡</span></div>
+      </div>
+      <div class="finding p2">
+        <div class="fhead"><span class="ftitle">একই প্লেয়ার একই সময়ে দুই ম্যাচে rostered</span><span
+            class="badge b-yellow">P2</span></div>
+        <div class="kv"><b>Evidence</b> <code>match_players</code> PK (matchId,userId) — cross-match check কোথাও নেই
+        </div>
+        <div class="bn">সিস্টেম কোথাও check করে না যে প্লেয়ার ইতোমধ্যে একই বা overlapping সময়ের অন্য কোনো ম্যাচে
+          rostered আছে কি না। ফলে একজন প্লেয়ার একই সময়ে দুই ম্যাচে নাম লেখাতে পারে। ম্যাচের দিন তাকে একটা বাদ দিতেই
+          হবে — এতে no-show হয় (যেটা আবার সিস্টেমে modeled-ই নেই) আর অন্য দলের প্রত্যাশাও ভাঙে। "Available tonight"
+          toggle-টাও প্লেয়ার কোনো ম্যাচে rostered থাকলে বন্ধ হয়ে যায় না।</div>
+      </div>
+    </section>
+
+    <!-- ============ 7. TEAM FLOW ============ -->
+    <section id="team-flow">
+      <h2><span class="num">07</span> Team / Matchmaking — End-to-End Flow</h2>
+      <div class="flow">
+        <div class="fstep"><span class="badge b-blue">1</span><span class="fname">Team create</span><span
+            class="small muted">creator → <code>team_members.role=owner</code>; slug unique</span><span
+            class="badge b-green">🟢</span></div>
+        <div class="farrow">↓</div>
+        <div class="fstep"><span class="badge b-blue">2</span><span class="fname">Squad build</span><span
+            class="small muted">phone invite (registered → direct add; unknown → signup-এ invitation fulfill),
+            captain/manager role, ownership transfer</span><span class="badge b-yellow">🟡 dup-invite DB constraint
+            নেই</span></div>
+        <div class="farrow">↓</div>
+        <div class="fstep"><span class="badge b-blue">3</span><span class="fname">Match create + ৳25 fee</span><span
+            class="small muted">matchType (5/7/9/11), squadSize/side, placeholderCount = আর কত জন লাগবে; wallet-first
+            CTE fee</span><span class="badge b-green">🟢</span></div>
+        <div class="farrow">↓</div>
+        <div class="fstep"><span class="badge b-blue">4</span><span class="fname">Missing players পূরণ</span><span
+            class="small muted">invite registered / phone / available-players search (10km+position) / join request
+            accept — capacity FOR UPDATE-locked</span><span class="badge b-green">🟢</span></div>
+        <div class="farrow">↓</div>
+        <div class="fstep"><span class="badge b-blue">5</span><span class="fname">Opponent খোঁজা</span><span
+            class="small muted">match open থাকে; (a) যে আগে claim করে (person FCFS), (b) team challenge → home captain
+            accept; বাকি challenge auto-cancel + fee refund</span><span class="badge b-yellow">🟡 challenge fee
+            gap</span></div>
+        <div class="farrow">↓</div>
+        <div class="fstep"><span class="badge b-blue">6</span><span class="fname">Turf booking (unique 1:1)</span><span
+            class="small muted"><code>matches.bookingId</code> — ম্যাচটাই booking; এক slot-এ দুই ম্যাচ DB level-এই
+            অসম্ভব</span><span class="badge b-green">🟢</span></div>
+        <div class="farrow">↓</div>
+        <div class="fstep"><span class="badge b-blue">7</span><span class="fname">Kickoff → Start → Result</span><span
+            class="small muted">side captain start (kickoff gate নেই), event log, result submit/confirm</span><span
+            class="badge b-yellow">🟡</span></div>
+        <div class="farrow">↓</div>
+        <div class="fstep"><span class="badge b-blue">8</span><span class="fname">Completion / Cancellation</span><span
+            class="small muted">cancel/expired হলে দুই পক্ষের ৳25 wallet-এ ফেরত; completed হলে fee refund হয় না
+            (platform রেখে দেয়)</span><span class="badge b-blue">🔵 policy decision</span></div>
+      </div>
+      <div class="finding p1">
+        <div class="fhead"><span class="ftitle">"পাশের দল খুঁজে দেওয়া" নেই — discovery শুধু listing</span><span
+            class="badge b-orange">P1</span></div>
+        <div class="kv"><b>Evidence</b> <code>src/features/matches/queries.ts:325-434</code> —
+          <code>listOpenMatches</code> শুধু open match-গুলো দেখায়; কোনো candidate discovery/ranking/suggestion নেই
+        </div>
+        <div class="bn">ব্যবসায়িক ব্রিফে ছিল "suitable nearby teams খুঁজে দেওয়া", কিন্তু বাস্তবে সিস্টেমটা
+          marketplace-style: home দল একটা open match ছাড়ে, আর অন্য দলকে নিজে গিয়ে খুঁজে নিতে হয়। Skill, squad-size
+          compatibility, preferred time-window — কোনোটাই matching score-এ যায় না; sort হয় শুধু দূরত্ব (PostGIS) আর
+          kickoff time দিয়ে। অর্থাৎ "matchmaking" নামটা যে প্রতিশ্রুতি দেয়, আর implementation যা করে — দুটোর মধ্যে বেশ
+          ফারাক। এটা matching না, listing।</div>
+      </div>
+    </section>
+
+    <!-- ============ 8. ADMIN FLOW ============ -->
+    <section id="admin-flow">
+      <h2><span class="num">08</span> Admin — Capabilities Audit</h2>
+      <div class="cards">
+        <div class="card" style="border-top:3px solid var(--green)">
+          <h4 style="color:var(--green)">Admin যা পারে (server-enforced)</h4>
+          <ul class="small">
+            <li>Turf: verify / unverify / activate-deactivate / hard delete (কোনো booking না থাকলে)</li>
+            <li>User: suspend/activate (নিজেকে block করা যায় না), role grant/revoke (নিজেকে demote করা যায় না)</li>
+            <li>Refund: request → approve/reject; <b>৳5,000+ হলে dual-control</b> (নিজের approve করা যায় না) — H4</li>
+            <li>Match dispute: scratch (cancelled) বা score set (completed)</li>
+            <li>Report moderation; wallet claim approve/reject/paid</li>
+            <li>Turf application approve (turf seed + claim invite) / reject</li>
+            <li>Owner login code mint (support login); ERP premium grant</li>
+            <li>Monitor: KPI dashboard, bookings, transactions, teams, disputed matches, refund requests</li>
+          </ul>
+        </div>
+        <div class="card" style="border-top:3px solid var(--red)">
+          <h4 style="color:var(--red)">Admin যা পারে না (gap)</h4>
+          <ul class="small">
+            <li><b>Audit trail:</b> <code>audit_logs</code> table আছে, কিন্তু কোনো admin action এখনো এতে লেখে না
+              (<code>schema/system.ts:49</code>)</li>
+            <li>Payout execute/mark-paid করার কোনো UI/cron নেই (শুধু orphan action)</li>
+            <li>Manual wallet balance correction/credit — নেই</li>
+            <li>Team moderation (rename/logo remove/member fix) — নেই</li>
+            <li>Stale <code>payment_pending</code> booking cleanup — নেই</li>
+            <li>Suspension/refund/report resolution-এ user-কে notify করা হয় না</li>
+            <li>Platform configuration (fee %, cap, cutoff) — hardcoded (<code>lib/pricing.ts</code>)</li>
+          </ul>
+        </div>
+      </div>
+      <div class="finding p2">
+        <div class="fhead"><span class="ftitle">Admin read query-গুলোতে নিজস্ব guard নেই</span><span
+            class="badge b-yellow">P2</span></div>
+        <div class="kv"><b>Evidence</b> <code>src/features/admin/queries.ts</code> — listUsers/listTurfsAdmin-সহ
+          অন্যগুলোতে কোনো <code>requireAdmin</code> নেই</div>
+        <div class="bn">এই read query-গুলো এখন শুধু admin RSC পেজ থেকে import হয়, তাই বর্তমানে নিরাপদ — কিন্তু
+          নিরাপত্তা পুরোপুরি নির্ভর করছে "layout gate"-এর ওপর। ভবিষ্যতে অন্য কোথাও (যেমন API route বা client component)
+          এই query reuse করলে পুরো admin data ফাঁস হয়ে যেতে পারে। Defense-in-depth হিসেবে read query-তেও admin assert
+          যোগ করা উচিত।</div>
+      </div>
+    </section>
+
+    <!-- ============ 9. CROSS-ROLE ============ -->
+    <section id="cross-role">
+      <h2><span class="num">09</span> Cross-Role Flows</h2>
+      <div class="tblwrap">
+        <table>
+          <tr>
+            <th>Interaction</th>
+            <th>Flow</th>
+            <th>State sync</th>
+            <th>রায়</th>
+          </tr>
+          <tr>
+            <td><b>Turf Owner ↔ Booker/Team</b></td>
+            <td class="small">hold → payment webhook → auto-confirm → দুই পক্ষকে notification; cancel → slot reopen +
+              policy refund + match cascade</td>
+            <td class="small">একটাই <code>bookings</code> row; owner-এর ERP revenue-ও একই <code>transactions</code> থেকে
+            </td>
+            <td><span class="badge b-green">ঠিক আছে</span> (clawback বাদে)</td>
+          </tr>
+          <tr>
+            <td><b>Home Captain ↔ Challenger Team</b></td>
+            <td class="small">challenge (fee কাটে) → home accept (atomic away-claim) → বাকি challenge auto-cancel +
+              refund; decline → sender-এর fee ফেরত</td>
+            <td class="small"><code>opponent_requests</code> + <code>matches.away_captain_id</code></td>
+            <td><span class="badge b-yellow">fee gap</span> — accept-এর সময় fee আবার verify হয় না</td>
+          </tr>
+          <tr>
+            <td><b>Team ↔ Solo Player</b></td>
+            <td class="small">invite/phone-invite/join-request → captain accept (capacity-locked seat) → squad update
+              সবাই দেখে</td>
+            <td class="small"><code>match_invitations</code>, <code>player_requests</code>, <code>match_players</code>
+            </td>
+            <td><span class="badge b-green">ঠিক আছে</span> (dup constraint ছাড়া)</td>
+          </tr>
+          <tr>
+            <td><b>Match ↔ Turf Booking</b></td>
+            <td class="small">booking cancel → attach করা match cascade-cancel + দুই পক্ষের ৳25 wallet credit
+              (<code>bookings/actions.ts:499-517</code>)</td>
+            <td class="small"><code>matches.bookingId</code> unique 1:1</td>
+            <td><span class="badge b-green">ঠিক আছে</span></td>
+          </tr>
+          <tr>
+            <td><b>Admin ↔ Everyone</b></td>
+            <td class="small">refund/dispute/suspension/verify → (কিছু ক্ষেত্রে) notification → state change</td>
+            <td class="small"><code>audit_logs</code> অব্যবহৃত</td>
+            <td><span class="badge b-yellow">audit trail নেই, কিছু ক্ষেত্রে notification-ও নেই</span></td>
+          </tr>
+          <tr>
+            <td><b>Wallet ↔ Match lifecycle</b></td>
+            <td class="small">cancel/expired → <code>creditMatchFees</code> (idempotent <code>fee_back_*</code>);
+              disputed ইচ্ছাকৃতভাবে বাদ (admin resolve করে)</td>
+            <td class="small"><code>wallet_entries.matchId</code> RESTRICT</td>
+            <td><span class="badge b-green">ঠিক আছে</span></td>
+          </tr>
+        </table>
+      </div>
+    </section>
+    <!-- ============ 10. ENDPOINT AUDIT ============ -->
+    <section id="endpoints">
+      <h2><span class="num">10</span> Endpoint-by-Endpoint Business Logic Audit</h2>
+      <p class="muted small">ব্যবসায়িক প্রায় সব logic Server Action-এ (authenticated, POST-semantics); API route
+        সংখ্যায় কম। নিচে প্রতিটি গুরুত্বপূর্ণ action-এর auth → validation → business rule → DB → side effects → ঝুঁকি।
+      </p>
+
+      <h3>Auth &amp; Account</h3>
+      <div class="tblwrap">
+        <table>
+          <tr>
+            <th>Action / Route</th>
+            <th>Auth</th>
+            <th>Business rules</th>
+            <th>Side effects</th>
+            <th>রিস্ক</th>
+          </tr>
+          <tr>
+            <td class="small"><code>auth/actions.ts</code> (register/login/OTP/verify)</td>
+            <td class="small">public; rate-limited</td>
+            <td class="small"><code>status='active'</code> হতে হবে; bcrypt; role JWT-তে থাকলেও
+              <code>getCurrentUser()</code> প্রতি request-এ DB থেকে fresh role নেয়</td>
+            <td class="small">signup-এ team invitation fulfillment</td>
+            <td><span class="badge b-green">ঠিক</span></td>
+          </tr>
+          <tr>
+            <td class="small"><code>owner-login/actions.ts</code></td>
+            <td class="small">admin-minted phone code</td>
+            <td class="small">one active code per phone (partial unique), rate-limited</td>
+            <td class="small">support session</td>
+            <td><span class="badge b-green">ঠিক</span></td>
+          </tr>
+          <tr>
+            <td class="small"><code>player/actions.ts</code> (profile update)</td>
+            <td class="small">self</td>
+            <td class="small">username/DT-ID unique; coords write-এর সময় round হয়</td>
+            <td class="small">—</td>
+            <td><span class="badge b-green">ঠিক</span></td>
+          </tr>
+        </table>
+      </div>
+
+      <h3>Turfs &amp; Slots</h3>
+      <div class="tblwrap">
+        <table>
+          <tr>
+            <th>Action</th>
+            <th>Auth</th>
+            <th>Business rules</th>
+            <th>DB ops</th>
+            <th>রিস্ক</th>
+          </tr>
+          <tr>
+            <td class="small"><code>createTurfAction</code> <code>turfs/actions.ts:57-83</code></td>
+            <td class="small"><code>turf_owner</code> role</td>
+            <td class="small">zod <code>turfFormSchema</code>; তৈরি হলে <code>isVerified=false</code></td>
+            <td class="small">turfs insert</td>
+            <td><span class="badge b-green">ঠিক</span></td>
+          </tr>
+          <tr>
+            <td class="small"><code>updateTurfAction</code> (:85-116)</td>
+            <td class="small"><code>can(user,"turf.update",{ownerId})</code> — row আবার load করে check হয়</td>
+            <td class="small">slug প্রায় immutable; অন্য owner-এর turf-এ হাত দেওয়া সম্ভব নয়</td>
+            <td class="small">update</td>
+            <td><span class="badge b-green">IDOR-safe</span></td>
+          </tr>
+          <tr>
+            <td class="small"><code>saveScheduleAction</code> / <code>generateSlotsAction</code> /
+              <code>updateSlotAction</code> (:123-396)</td>
+            <td class="small">owner-scoped</td>
+            <td class="small">slotMinutes 30-180; slot section-এ fit না হলে তৈরি হয় না; owner manually
+              <code>booked/held</code> set করতে পারে না (:222-228); touch করলে <code>source='manual'</code> হয়</td>
+            <td class="small">schedules/sections/slots</td>
+            <td><span class="badge b-green">ঠিক</span></td>
+          </tr>
+        </table>
+      </div>
+
+      <h3>Bookings</h3>
+      <div class="tblwrap">
+        <table>
+          <tr>
+            <th>Action</th>
+            <th>Auth</th>
+            <th>Business rules</th>
+            <th>DB ops</th>
+            <th>রিস্ক</th>
+          </tr>
+          <tr>
+            <td class="small"><code>holdSlotAction</code> <code>bookings/actions.ts:69-196</code></td>
+            <td class="small">login, 5/min rate limit</td>
+            <td class="small">turf verified+active হতে হবে; owner নিজের turf-এ book করতে পারে না; 20-min cutoff; slot
+              conditional UPDATE <code>WHERE status='available'</code>; owner-এর নিজস্ব hold না হলে ৳0-তে hold সম্ভব কি
+              না — সেটা payment step-এ চলে যায়</td>
+            <td class="small">slot UPDATE → booking(held) → slot_hold + Inngest event</td>
+            <td><span class="badge b-yellow">booking insert fail হলে slot manually rollback করা হয় (:162-173) —
+                app-level, একটু ভঙ্গুর, তবে acceptable</span></td>
+          </tr>
+          <tr>
+            <td class="small"><code>initiatePaymentAction</code> (:202-293)</td>
+            <td class="small">booker</td>
+            <td class="small"><b>price DB slot থেকে আবার recompute হয়</b> — client থেকে amount নেওয়া হয় না;
+              <code>computeFees</code>: 5%, cap ৳100; <code>platform_fee</code> DB trigger দিয়ে immutable</td>
+            <td class="small">transactions insert; booking held→payment_pending (conditional)</td>
+            <td><span class="badge b-green">price manipulation-safe</span></td>
+          </tr>
+          <tr>
+            <td class="small"><code>confirmPaymentAction</code> (:300-384)</td>
+            <td class="small">signed webhook / dev mock</td>
+            <td class="small">idempotent conditional flips: txn pending→success, booking payment_pending→confirmed, slot
+              held→booked; তারপর schedule settle + notification</td>
+            <td class="small">৩টা conditional update</td>
+            <td><span class="badge b-yellow">prod-এ mock route 404 দেয়, তবে route-এ ownership check নেই — ভবিষ্যতে
+                regression হলে বিপজ্জনক</span></td>
+          </tr>
+          <tr>
+            <td class="small"><code>cancelBookingAction</code> (:390-548)</td>
+            <td class="small"><code>booking.cancel</code>: booker/owner/admin</td>
+            <td class="small">শুধু held/payment_pending/confirmed থেকে cancel করা যায়; policy অনুযায়ী refund (owner
+              share থেকে; platform fee কখনো ফেরত হয় না); audit row লেখে; attach করা ম্যাচ থাকলে cascade-cancel + দুই
+              পক্ষের fee credit</td>
+            <td class="small">booking→cancelled, slot reopen, txn→refunded/partial</td>
+            <td><span class="badge b-yellow">slot reopen-এর সময় maintenance check হয় না; rebook_contingent clawback
+                নেই</span></td>
+          </tr>
+          <tr>
+            <td class="small">Refund admin flow <code>admin/actions.ts:57-139,411-535</code></td>
+            <td class="small">admin, dual-control ৳5k+</td>
+            <td class="small">নিজের approve করা যায় না; booking→refunded, slot reopen, txn flip</td>
+            <td class="small"><b>৪–৫টা আলাদা statement, কোনো transaction নেই</b></td>
+            <td><span class="badge b-red">P0 — মাঝপথে fail করলে টাকার হিসাব মিলবে না</span></td>
+          </tr>
+        </table>
+      </div>
+
+      <h3>Matches</h3>
+      <div class="tblwrap">
+        <table>
+          <tr>
+            <th>Action</th>
+            <th>Auth</th>
+            <th>Business rules</th>
+            <th>রিস্ক</th>
+          </tr>
+          <tr>
+            <td class="small"><code>createMatchAction</code> :107-221</td>
+            <td class="small">login (home captain)</td>
+            <td class="small">এক booking-এ এক ম্যাচ (bookingId unique); fee: guarded UPDATE wallet (balance≥25 AND NOT
+              EXISTS idem) → RETURNING থেকে insert → fee EXISTS না হলে match insert হয় না</td>
+            <td><span class="badge b-green">ফি ছাড়া ম্যাচ তৈরি করা অসম্ভব</span></td>
+          </tr>
+          <tr>
+            <td class="small"><code>claimOpponentSideAction</code> :275-399</td>
+            <td class="small">login, non-rostered</td>
+            <td class="small">atomic
+              <code>UPDATE matches SET away_captain_id=me WHERE state='open' AND away_captain_id IS NULL</code>; fee FOR
+              UPDATE-locked balance-এর ওপর gated; race-এ পরে ঢোকা কেউ charge হয় না</td>
+            <td><span class="badge b-green">FCFS ঠিকভাবে কাজ করে</span></td>
+          </tr>
+          <tr>
+            <td class="small"><code>inviteMatchPlayersAction</code> :527-695</td>
+            <td class="small">side captain</td>
+            <td class="small">roster+pending dedupe শুধু app-level; block check server-side; capacity পরে seat-claim-এ
+              check হয়</td>
+            <td><span class="badge b-yellow">concurrent দুটো dup invite সম্ভব (DB constraint নেই)</span></td>
+          </tr>
+          <tr>
+            <td class="small">invite accept :770-789, guest add :875-959</td>
+            <td class="small">invitee / captain</td>
+            <td class="small"><code>lockMatchForSeatClaim</code> FOR UPDATE + <code>seatsFreeSql</code> + db.batch;
+              pending flip conditional; registered user-এর নম্বরে guest add করা যায় না</td>
+            <td><span class="badge b-green">capacity race-safe</span></td>
+          </tr>
+          <tr>
+            <td class="small"><code>challengeMatchAction</code> :1182-1288</td>
+            <td class="small">captain-role member</td>
+            <td class="small">fee কাটে <b>send-এর সময়</b> (applyWalletMovement, random idem suffix); তারপর আলাদা
+              statement-এ request insert</td>
+            <td><span class="badge b-red">মাঝপথে crash হলে ৳25 হারায়, challenge তৈরিই হয় না</span></td>
+          </tr>
+          <tr>
+            <td class="small"><code>respondTeamChallengeAction</code> :1300-1489</td>
+            <td class="small">home captain</td>
+            <td class="small">accept: একই atomic away-claim; member seat-এ incremental capacity check; বাকি pending
+              challenge auto-cancel + fee credit; decline: sender-এর last pending fee ফেরত</td>
+            <td><span class="badge b-red">accept-এর সময় challenger-এর fee entry এখনো valid কি না re-verify হয় না → ফি
+                ছাড়া confirm সম্ভব</span></td>
+          </tr>
+          <tr>
+            <td class="small"><code>startMatchAction</code> :1499-1527</td>
+            <td class="small">either side captain</td>
+            <td class="small">conditional inArray update (confirmed/roster_building/ready → ongoing); kickoff time-এর
+              কোনো gate নেই — যেকোনো সময় start করা যায়</td>
+            <td><span class="badge b-blue">product decision: kickoff gate দরকার কি না ভাবতে হবে</span></td>
+          </tr>
+          <tr>
+            <td class="small"><code>submitResultAction</code> / <code>confirmResultAction</code> :1101-1172</td>
+            <td class="small">captain / <b>অন্য</b> captain</td>
+            <td class="small">নিজের result নিজে confirm করা যায় না; না মিললে disputed → admin</td>
+            <td><span class="badge b-green">ঠিক</span></td>
+          </tr>
+          <tr>
+            <td class="small"><code>cancelMatchAction</code> :1560-1614</td>
+            <td class="small">captains</td>
+            <td class="small">state-based (open/confirmed/roster_building/ready); comment-এ "before kickoff" লেখা থাকলেও
+              আসলে <b>কোনো সময় check নেই</b>; দুই পক্ষের fee credit হয়</td>
+            <td><span class="badge b-yellow">kickoff-এর পরেও cancel করা যায় — turf owner-এর ক্ষতি হতে পারে</span></td>
+          </tr>
+          <tr>
+            <td class="small"><code>logMatchEventAction</code> :1622-1718</td>
+            <td class="small">side captain বা recorder (<code>canLogMatchEvents</code>)</td>
+            <td class="small">শুধু ongoing ম্যাচে; side/playerName server থেকে resolve হয় (client-কে trust করা হয় না)
+            </td>
+            <td><span class="badge b-green">ঠিক</span></td>
+          </tr>
+        </table>
+      </div>
+
+      <h3>Wallet &amp; Teams &amp; ERP (সংক্ষেপে)</h3>
+      <div class="tblwrap">
+        <table>
+          <tr>
+            <th>Action</th>
+            <th>মূল নিয়ম</th>
+            <th>রিস্ক</th>
+          </tr>
+          <tr>
+            <td class="small"><code>movementSql</code> <code>wallet/service.ts:56-79</code></td>
+            <td class="small">এক statement: guarded UPDATE (floor + NOT EXISTS idem) RETURNING → INSERT … SELECT;
+              balance row-টাই atomic guard হিসেবে কাজ করে</td>
+            <td><span class="badge b-green">কোডবেসের সবচেয়ে শক্ত invariant</span></td>
+          </tr>
+          <tr>
+            <td class="small"><code>requestWalletClaimAction</code> <code>wallet/actions.ts:120-178</code></td>
+            <td class="small">app-level pending dedupe → claim insert → আলাদা debit statement; debit fail (!moved) হলে
+              compensation</td>
+            <td><span class="badge b-yellow">race-এ দুটো claim row তৈরি হতে পারে; পুরোটা atomic না</span></td>
+          </tr>
+          <tr>
+            <td class="small"><code>decideWalletClaimAction</code> :201-287</td>
+            <td class="small">শুধু admin; approve→paid; reject→claim status flip + credit-back</td>
+            <td><span class="badge b-red">reject-এর credit-back আলাদা statement — মাঝে crash হলে ইউজারের টাকা আটকে থাকে,
+                কোনো sweeper-ও নেই</span></td>
+          </tr>
+          <tr>
+            <td class="small">Teams: add/promote/transfer/remove <code>teams/actions.ts</code></td>
+            <td class="small">owner/captain capability; owner remove করা যায় না, নিজেকে demote করা যায় না</td>
+            <td><span class="badge b-yellow">transfer = ২টা unguarded sequential update (idempotent, কিন্তু race guard
+                নেই)</span></td>
+          </tr>
+          <tr>
+            <td class="small">ERP actions <code>erp/actions.ts</code></td>
+            <td class="small"><code>requireErpAuth</code> + category/turf belongs-to guard; expense শুধু void করা যায়;
+              audit log লেখে</td>
+            <td><span class="badge b-green">ঠিক</span></td>
+          </tr>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ 11. RULE MATRIX ============ -->
+    <section id="rules">
+      <h2><span class="num">11</span> Business Rule Matrix</h2>
+      <div class="tblwrap">
+        <table>
+          <tr>
+            <th>প্রশ্ন</th>
+            <th>উত্তর</th>
+            <th>কোথায় enforce হয়</th>
+          </tr>
+          <tr>
+            <td>Double booking সম্ভব?</td>
+            <td><span class="badge b-green">না</span></td>
+            <td class="small">conditional slot UPDATE + <code>bookings_active_unique</code> partial index + slot EXCLUDE
+              (<code>bookings.ts:52-54</code>, migration 0014)</td>
+          </tr>
+          <tr>
+            <td>Unavailable slot-এ booking?</td>
+            <td><span class="badge b-green">না</span></td>
+            <td class="small">slot status + <code>isSlotBookable</code> 20-min cutoff দুই জায়গায়</td>
+          </tr>
+          <tr>
+            <td>Cancelled booking modify?</td>
+            <td><span class="badge b-green">না</span></td>
+            <td class="small">cancel শুধু held/payment_pending/confirmed থেকে; terminal states immutable</td>
+          </tr>
+          <tr>
+            <td>Completed match modify?</td>
+            <td><span class="badge b-green">না</span> (event delete ব্যতীত)</td>
+            <td class="small">result flow pending/disputed ছাড়া locked</td>
+          </tr>
+          <tr>
+            <td>Team squad capacity ছাড়াতে পারবে?</td>
+            <td><span class="badge b-green">না</span></td>
+            <td class="small">FOR UPDATE + seatsFreeSql + PK (app pre-check ইচ্ছাকৃত non-authoritative)</td>
+          </tr>
+          <tr>
+            <td>এক প্লেয়ার conflicting (overlap) ম্যাচে থাকতে পারে?</td>
+            <td><span class="badge b-red">হ্যাঁ</span></td>
+            <td class="small">কোনো cross-match check নেই — <b>gap</b></td>
+          </tr>
+          <tr>
+            <td>একই প্লেয়ারের একাধিক pending invite?</td>
+            <td><span class="badge b-yellow">app-level check আটকায়</span></td>
+            <td class="small">DB constraint নেই → race-এ duplicate row ঢুকতে পারে</td>
+          </tr>
+          <tr>
+            <td>Conflicting invitation accept?</td>
+            <td><span class="badge b-red">সম্ভব</span></td>
+            <td class="small">overlap check নেই; শেষ ভরসা capacity</td>
+          </tr>
+          <tr>
+            <td>Player ছাড়া team "ready" হতে পারে?</td>
+            <td><span class="badge b-green">না</span></td>
+            <td class="small">ready/roster_building state আসলে কেউ set করেই না — start শুধু confirmed থেকে</td>
+          </tr>
+          <tr>
+            <td>Opponent double-accept?</td>
+            <td><span class="badge b-green">না</span></td>
+            <td class="small">single-row conditional UPDATE FCFS</td>
+          </tr>
+          <tr>
+            <td>Owner A অন্য owner-এর turf-এ হাত দিতে পারে?</td>
+            <td><span class="badge b-green">না</span></td>
+            <td class="small">প্রতিটি action-এ ownerId reload + capability check</td>
+          </tr>
+          <tr>
+            <td>Financial data অননুমোদিত access?</td>
+            <td><span class="badge b-yellow">ERP export শুধু role check</span></td>
+            <td class="small"><code>erp/export/route.ts:32-33</code> — per-turf ownership re-check দুর্বল</td>
+          </tr>
+          <tr>
+            <td>সাধারণ user admin-only operation চালাতে পারে?</td>
+            <td><span class="badge b-green">না</span></td>
+            <td class="small">প্রতিটি mutating action-এ <code>requireAdmin</code></td>
+          </tr>
+          <tr>
+            <td>Price client থেকে আসে?</td>
+            <td><span class="badge b-green">না</span></td>
+            <td class="small">slot price DB থেকে recompute; platformFee trigger-immutable</td>
+          </tr>
+          <tr>
+            <td>Duplicate fee charge হয়?</td>
+            <td><span class="badge b-green">না</span></td>
+            <td class="small">unique <code>idempotency_key</code> + NOT EXISTS guard — challenge fee এখন <code>db.batch</code>-ে
+              charge+insert একসাথে (G-2 FIXED)</td>
+          </tr>
+          <tr>
+            <td>Payment submit = payment verified?</td>
+            <td><span class="badge b-red">না — admin verify বাধ্যতামূলক</span></td>
+            <td class="small">manual bKash Send Money মডেল: <code>payment_submissions</code> pending → admin verify →
+              consumed (সেকশন 15b)</td>
+          </tr>
+          <tr>
+            <td>একই TxID দুবার ব্যবহার?</td>
+            <td><span class="badge b-green">না</span></td>
+            <td class="small">partial unique index <code>payment_submissions_txid_live</code> — rejected হলে TxID মুক্ত
+              হয়, consumed থাকলে চিরতরে ব্লক</td>
+          </tr>
+          <tr>
+            <td>Client amount দিয়ে টাকা নির্ধারণ?</td>
+            <td><span class="badge b-green">না</span></td>
+            <td class="small">booking: slot price থেকে server recompute; top-up: server-side ৳50–৳10,000 bound</td>
+          </tr>
+          <tr>
+            <td>Admin verify ছাড়া feature unlock?</td>
+            <td><span class="badge b-green">অসম্ভব</span></td>
+            <td class="small">verify = submission consume + business effect এক statement-এ; wallet-এর টাকাও শুধু verified
+              top-up থেকে আসে (transitively verified)</td>
+          </tr>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ 12. STATE MACHINES ============ -->
+    <section id="states">
+      <h2><span class="num">12</span> State Machine Analysis</h2>
+
+      <h3>Booking — <code>booking_status</code> (enums.ts:56-66)</h3>
+      <div class="svgwrap"><svg viewBox="0 0 960 220" width="100%" height="auto" style="min-width:760px">
+          <defs>
+            <marker id="ar" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+              <path d="M0,0 L8,4 L0,8 z" fill="#8b949e" />
+            </marker>
+          </defs>
+          <g font-size="12" font-family="Segoe UI">
+            <rect x="10" y="20" width="90" height="30" rx="6" fill="#1c2330" stroke="#58a6ff" /><text x="55" y="40"
+              fill="#58a6ff" text-anchor="middle">available</text>
+            <rect x="140" y="20" width="70" height="30" rx="6" fill="#1c2330" stroke="#d29922" /><text x="175" y="40"
+              fill="#d29922" text-anchor="middle">held</text>
+            <rect x="250" y="20" width="130" height="30" rx="6" fill="#1c2330" stroke="#d29922" /><text x="315" y="40"
+              fill="#d29922" text-anchor="middle">payment_pending</text>
+            <rect x="420" y="20" width="100" height="30" rx="6" fill="#1c2330" stroke="#3fb950" /><text x="470" y="40"
+              fill="#3fb950" text-anchor="middle">confirmed</text>
+            <rect x="560" y="20" width="100" height="30" rx="6" fill="#1c2330" stroke="#3fb950" /><text x="610" y="40"
+              fill="#3fb950" text-anchor="middle">completed</text>
+            <rect x="250" y="110" width="90" height="30" rx="6" fill="#1c2330" stroke="#f85149" /><text x="295" y="130"
+              fill="#f85149" text-anchor="middle">expired</text>
+            <rect x="420" y="110" width="100" height="30" rx="6" fill="#1c2330" stroke="#f85149" /><text x="470" y="130"
+              fill="#f85149" text-anchor="middle">cancelled</text>
+            <rect x="560" y="110" width="100" height="30" rx="6" fill="#1c2330" stroke="#bc8cff" /><text x="610" y="130"
+              fill="#bc8cff" text-anchor="middle">refunded</text>
+            <rect x="140" y="110" width="90" height="30" rx="6" fill="#1c2330" stroke="#8b949e" /><text x="185" y="130"
+              fill="#8b949e" text-anchor="middle">payment_failed</text>
+            <path d="M100,35 L138,35" stroke="#8b949e" marker-end="url(#ar)" fill="none" />
+            <path d="M210,35 L248,35" stroke="#8b949e" marker-end="url(#ar)" fill="none" />
+            <path d="M380,35 L418,35" stroke="#8b949e" marker-end="url(#ar)" fill="none" />
+            <path d="M520,35 L558,35" stroke="#8b949e" marker-end="url(#ar)" fill="none" />
+            <path d="M185,52 C185,85 220,110 235,118" stroke="#8b949e" marker-end="url(#ar)" fill="none" />
+            <path d="M300,52 C290,75 200,95 190,108" stroke="#8b949e" marker-end="url(#ar)" fill="none" />
+            <path d="M460,52 C455,75 470,88 470,108" stroke="#8b949e" marker-end="url(#ar)" fill="none" />
+            <path d="M480,52 C520,80 580,100 605,108" stroke="#8b949e" marker-end="url(#ar)" fill="none" />
+            <text x="205" y="15" fill="#8b949e">hold (10min TTL)</text><text x="255" y="68" fill="#8b949e">cron
+              expire</text><text x="330" y="15" fill="#8b949e">webhook confirm</text><text x="500" y="15"
+              fill="#8b949e">kickoff settle</text>
+          </g>
+        </svg></div>
+      <div class="tblwrap">
+        <table>
+          <tr>
+            <th>Transition</th>
+            <th>Trigger (কে)</th>
+            <th>Backend enforce</th>
+          </tr>
+          <tr>
+            <td class="small">available→held</td>
+            <td class="small">booker (holdSlot)</td>
+            <td class="small">✅ conditional UPDATE — race-safe</td>
+          </tr>
+          <tr>
+            <td class="small">held→expired</td>
+            <td class="small">Inngest cron (10min)</td>
+            <td class="small">✅ conditional <code>WHERE status='held'</code>; <b>তবে event-only — DB sweep backstop
+                নেই</b></td>
+          </tr>
+          <tr>
+            <td class="small">payment_pending→confirmed</td>
+            <td class="small">signed webhook</td>
+            <td class="small">✅ idempotent conditional</td>
+          </tr>
+          <tr>
+            <td class="small">confirmed→completed</td>
+            <td class="small">Inngest kickoff settle</td>
+            <td class="small">✅</td>
+          </tr>
+          <tr>
+            <td class="small">held/payment_pending/confirmed→cancelled</td>
+            <td class="small">booker/owner/admin</td>
+            <td class="small">✅ + audit row + slot reopen + refund calc + match cascade</td>
+          </tr>
+          <tr>
+            <td class="small">confirmed→refunded</td>
+            <td class="small">admin dual-control</td>
+            <td class="small">⚠️ non-atomic multi-write (P0)</td>
+          </tr>
+        </table>
+      </div>
+
+      <h3>Match — <code>match_state</code> (enums.ts:105-118)</h3>
+      <p class="small">আসলে ব্যবহৃত পথ:
+        <code>draft → open → confirmed → ongoing → completed | cancelled | expired</code>; disputed শুধু result path-এ।
+      </p>
+      <div class="tblwrap">
+        <table>
+          <tr>
+            <th>State</th>
+            <th>Status</th>
+            <th>মন্তব্য</th>
+          </tr>
+          <tr>
+            <td class="small"><code>draft</code></td>
+            <td><span class="badge b-yellow">অব্যবহৃত?</span></td>
+            <td class="small">default value, কিন্তু create সরাসরি open-এ চলে যায় — মৃত state</td>
+          </tr>
+          <tr>
+            <td class="small"><code>open</code></td>
+            <td><span class="badge b-green">ব্যবহৃত</span></td>
+            <td class="small">কেউ claim না করলে kickoff+90min-এ expired + fee credit (Inngest + nightly sweep)</td>
+          </tr>
+          <tr>
+            <td class="small"><code>opponent_found</code></td>
+            <td><span class="badge b-red">মৃত state</span></td>
+            <td class="small">claim সরাসরি confirmed-এ চলে যায় — এই state-এ কেউ পৌঁছায় না</td>
+          </tr>
+          <tr>
+            <td class="small"><code>payment_pending, roster_building, ready</code></td>
+            <td><span class="badge b-red">মৃত state</span></td>
+            <td class="small">enum-এ আছে, কোনো action set করে না — ভবিষ্যৎ design-এর অবশিষ্টাংশ</td>
+          </tr>
+          <tr>
+            <td class="small"><code>ongoing → completed</code></td>
+            <td><span class="badge b-green">ঠিক</span></td>
+            <td class="small">result submit + অন্য captain confirm; না মিললে disputed → admin resolve</td>
+          </tr>
+          <tr>
+            <td class="small">যেকোনো সময় cancel?</td>
+            <td><span class="badge b-yellow">হ্যাঁ</span></td>
+            <td class="small">kickoff gate নেই — শুধু state check</td>
+          </tr>
+        </table>
+      </div>
+
+      <h3>Wallet Entry / Invitation / Team invite</h3>
+      <ul class="small">
+        <li><b>wallet_entry:</b> pending → success | failed (top-up 24h nightly sweep; fee সরাসরি success — CTE)।
+          idempotency_key UNIQUE — replay-safe।</li>
+        <li><b>match_invitation:</b> pending → accepted | declined | cancelled | expired; accept = conditional
+          pending-flip + capacity seat — ঠিক আছে; তবে invitation নিজে থেকে expire হয় না (kickoff-এর পরেও pending থাকতে
+          পারে)।</li>
+        <li><b>player_request / opponent_request:</b> pending → accepted/rejected/cancelled; opponent_requests-এ একটা
+          accept হলে বাকিগুলো auto-cancel + refund — ভালো।</li>
+        <li><b>team_invitation:</b> signup-এ fulfill হয়; pending dedupe শুধু app-level।</li>
+      </ul>
+    </section>
+
+    <!-- ============ 13. MATCHMAKING DEEP DIVE ============ -->
+    <section id="matchmaking">
+      <h2><span class="num">13</span> Matchmaking Deep Dive</h2>
+      <h3>আসলে algorithm-টা কী করে — কোন input, কোথায় ব্যবহার হয়</h3>
+      <div class="tblwrap">
+        <table>
+          <tr>
+            <th>Input</th>
+            <th>ব্যবহার হয়?</th>
+            <th>কোথায়</th>
+          </tr>
+          <tr>
+            <td>Location/distance</td>
+            <td><span class="badge b-green">হ্যাঁ</span></td>
+            <td class="small">PostGIS <code>ST_Distance</code>/<code>ST_DWithin</code> — open match sort (নিকটবর্তী
+              আগে), player search default 10km</td>
+          </tr>
+          <tr>
+            <td>Date/time (kickoff)</td>
+            <td><span class="badge b-green">হ্যাঁ</span></td>
+            <td class="small">open matches: kickoff future; sort asc</td>
+          </tr>
+          <tr>
+            <td>Squad size / match type</td>
+            <td><span class="badge b-yellow">display only</span></td>
+            <td class="small">filter/ranking-এ নেই</td>
+          </tr>
+          <tr>
+            <td>Skill / rating</td>
+            <td><span class="badge b-red">না</span></td>
+            <td class="small">profile-এ আছে, কিন্তু matching-এ কখনো ব্যবহারই হয় না</td>
+          </tr>
+          <tr>
+            <td>Position</td>
+            <td><span class="badge b-yellow">filter only</span></td>
+            <td class="small">available-player search-এ</td>
+          </tr>
+          <tr>
+            <td>Availability (24h)</td>
+            <td><span class="badge b-green">হ্যাঁ</span></td>
+            <td class="small">player search</td>
+          </tr>
+          <tr>
+            <td>Blocks</td>
+            <td><span class="badge b-green">হ্যাঁ</span></td>
+            <td class="small">search + invite + join-এ server-enforced</td>
+          </tr>
+          <tr>
+            <td>Gender/age/rating threshold</td>
+            <td><span class="badge b-red">নেই</span></td>
+            <td class="small">এমন কোনো input-ই নেই</td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="flow">
+        <div class="fstep"><span class="fname">Team/Player Request</span><span class="badge b-green">🟢 match create +
+            ৳25 CTE fee / availability toggle</span></div>
+        <div class="farrow">↓</div>
+        <div class="fstep"><span class="fname">Requirements</span><span class="badge b-green">🟢 squadSize/side +
+            placeholderCount; 🟡 skill/position requirement specify করার কোনো উপায় নেই</span></div>
+        <div class="farrow">↓</div>
+        <div class="fstep"><span class="fname">Candidate Discovery</span><span class="badge b-yellow">🟡 শুধু listing —
+            open matches / available players; নিজে থেকে কাউকে suggest করে না</span></div>
+        <div class="farrow">↓</div>
+        <div class="fstep"><span class="fname">Filtering</span><span class="badge b-yellow">🟡 distance+position+block;
+            skill/size/time-window যায় না</span></div>
+        <div class="farrow">↓</div>
+        <div class="fstep"><span class="fname">Scoring / Ranking</span><span class="badge b-red">🔴 নেই — sort হয় শুধু
+            distance/kickoff দিয়ে</span></div>
+        <div class="farrow">↓</div>
+        <div class="fstep"><span class="fname">Invitation / Request</span><span class="badge b-green">🟢 invite + phone
+            + join request; ⚠️ dup constraint নেই</span></div>
+        <div class="farrow">↓</div>
+        <div class="fstep"><span class="fname">Acceptance + Squad Validation</span><span class="badge b-green">🟢 FOR
+            UPDATE capacity-locked seating</span></div>
+        <div class="farrow">↓</div>
+        <div class="fstep"><span class="fname">Opponent Matching</span><span class="badge b-green">🟢 FCFS claim + team
+            challenge; ⚠️ challenge fee gap; 🔴 auto-suggestion কিছুই নেই</span></div>
+        <div class="farrow">↓</div>
+        <div class="fstep"><span class="fname">Turf/Time → Confirmation</span><span class="badge b-green">🟢 booking 1:1
+            + kickoff derive + countdown</span></div>
+      </div>
+    </section>
+
+    <!-- ============ 14. BOOKING AUDIT ============ -->
+    <section id="booking">
+      <h2><span class="num">14</span> Turf Booking Logic Audit</h2>
+      <div class="cards">
+        <div class="card">
+          <h4>Slot তৈরি ও availability</h4>
+          <p class="small">Schedule (weekly sections, per-section price) → date exception (multiplier/absolute,
+            isClosed) → materialized <code>turf_slots</code> (status: available/held/booked/maintenance/blocked)।
+            Precedence: manual &gt; exception &gt; schedule। প্রতি রাতে materialization cron চলে।</p>
+        </div>
+        <div class="card">
+          <h4>Pricing</h4>
+          <p class="small">Structural peak/off-peak (section price); price slot row-এ frozen; server recompute; 5%
+            platform fee cap ৳100; slot price zod-bounded (৳1–100,000)।</p>
+        </div>
+        <div class="card">
+          <h4>Booking creation</h4>
+          <p class="small">hold(10min) → payment_pending → webhook confirm। 20-min cutoff। Idempotency key unique। slot
+            + booking + hold — পুরো পথ conditional-update দিয়ে guard করা।</p>
+        </div>
+        <div class="card">
+          <h4>Expiration / blocking</h4>
+          <p class="small">Hold expiry cron (শুধু event-driven)। Maintenance/blocked owner set করতে পারে; booked/held
+            পারে না। payment_pending-এ আটকে থাকা booking-এর জন্য কোনো sweeper নেই।</p>
+        </div>
+      </div>
+      <div class="tblwrap">
+        <table>
+          <tr>
+            <th>Guard</th>
+            <th>আসলে যা আছে</th>
+            <th>Verdict</th>
+          </tr>
+          <tr>
+            <td>Double booking</td>
+            <td class="small">৩ স্তর: conditional UPDATE, partial unique index, EXCLUDE range constraint</td>
+            <td><span class="badge b-green">খুব শক্ত</span></td>
+          </tr>
+          <tr>
+            <td>Race condition (hold)</td>
+            <td class="small">পরে ঢোকা request-এ 0 rows → slotTaken error</td>
+            <td><span class="badge b-green">safe</span></td>
+          </tr>
+          <tr>
+            <td>Stale availability (UI)</td>
+            <td class="small">calendar server-computed; আসল সিদ্ধান্ত hold-ই নেয়</td>
+            <td><span class="badge b-green">safe</span></td>
+          </tr>
+          <tr>
+            <td>Unauthorized cancel</td>
+            <td class="small">capability: শুধু booker/owner/admin</td>
+            <td><span class="badge b-green">safe</span></td>
+          </tr>
+          <tr>
+            <td>Price manipulation</td>
+            <td class="small">client-এর পাঠানো amount কখনো trusted নয়</td>
+            <td><span class="badge b-green">safe</span></td>
+          </tr>
+          <tr>
+            <td>Rescheduling</td>
+            <td class="small">নেই</td>
+            <td><span class="badge b-red">missing</span></td>
+          </tr>
+          <tr>
+            <td>No-show</td>
+            <td class="small">নেই (auto-completed)</td>
+            <td><span class="badge b-red">missing</span></td>
+          </tr>
+          <tr>
+            <td>rebook_contingent clawback</td>
+            <td class="small">design comment আছে, implementation নেই</td>
+            <td><span class="badge b-orange">partial — টাকা হারানোর ঝুঁকি আছে</span></td>
+          </tr>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ 15. FINANCE ============ -->
+    <section id="finance">
+      <h2><span class="num">15</span> Payment &amp; Financial Logic</h2>
+      <h3>টাকার flow</h3>
+      <div class="flow">
+        <div class="fstep"><span class="fname">Booking</span><span class="small muted">booker → bKash → transactions
+            (amount, platformFee immutable) → owner share = amount − platformFee</span><span
+            class="badge b-green">🟢</span></div>
+        <div class="farrow">↓</div>
+        <div class="fstep"><span class="fname">Settle at kickoff</span><span class="small muted">confirmed→completed →
+            payout-eligible pool</span><span class="badge b-green">🟢</span></div>
+        <div class="farrow">↓</div>
+        <div class="fstep"><span class="fname">Payout</span><span class="small muted">table + query আছে, কিন্তু পুরো
+            lifecycle নেই</span><span class="badge b-red">🔴</span></div>
+        <div class="farrow">↓</div>
+        <div class="fstep"><span class="fname">ERP Profit</span><span class="small muted">revenue + otherIncome −
+            refunds − expenses (DB-side, audit-logged, void-only)</span><span class="badge b-green">🟢</span></div>
+      </div>
+      <div class="tblwrap">
+        <table>
+          <tr>
+            <th>বিষয়</th>
+            <th>আসলে যা আছে</th>
+            <th>Verdict</th>
+          </tr>
+          <tr>
+            <td>Match fee ৳25</td>
+            <td class="small">wallet-first CTE; create/claim-এ atomic; cancel/expired-এ idempotent credit-back;
+              completed হলে platform রেখে দেয়</td>
+            <td><span class="badge b-green">ঠিক</span> <span class="badge b-blue">completed-refund = decision</span>
+            </td>
+          </tr>
+          <tr>
+            <td>Challenge fee</td>
+            <td class="small">send-এর সময় charge হয় (crash window আছে), accept-এ আবার verify হয় না</td>
+            <td><span class="badge b-red">P0 gap</span></td>
+          </tr>
+          <tr>
+            <td>bKash webhook</td>
+            <td class="small">HMAC timingSafeEqual + IP allowlist + 30/min; callback কখনো mutate করে না</td>
+            <td><span class="badge b-yellow">allowlist default ফাঁকা — production-এ ops config দরকার</span></td>
+          </tr>
+          <tr>
+            <td>Payment fail / success-but-booking-fail</td>
+            <td class="small">idempotent conditional flips; pending txn 24h পরে fail হয়</td>
+            <td><span class="badge b-green">covered</span></td>
+          </tr>
+          <tr>
+            <td>Refund (booking)</td>
+            <td class="small">policy engine; owner share থেকে funded; dual-control ৳5k+; <b>multiple statement,
+                non-atomic</b></td>
+            <td><span class="badge b-red">P0</span></td>
+          </tr>
+          <tr>
+            <td>Wallet claim (cash-in)</td>
+            <td class="small">admin-approved; reject-এর credit-back non-atomic; pending dedupe raceable</td>
+            <td><span class="badge b-orange">P0/P1</span></td>
+          </tr>
+          <tr>
+            <td>Platform fee config</td>
+            <td class="small">hardcoded (5%, cap ৳100, match fee ৳25) — DB/config flag কিছুই নেই</td>
+            <td><span class="badge b-blue">decision: config table?</span></td>
+          </tr>
+          <tr>
+            <td>Financial auditability</td>
+            <td class="small">ERP-র নিজস্ব audit log আছে; platform-level admin action log নেই</td>
+            <td><span class="badge b-green">FIXED — <code>audit_logs</code> সব admin money action-এ wired</span></td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="finding" style="border-left-color:var(--green)">
+        <div class="fhead"><span class="ftitle">RE-AUDIT: Payment intake সম্পূর্ণ বদলে গেছে</span><span class="badge
+            b-green">IMPLEMENTED</span></div>
+        <div class="bn">উপরের টেবিলের bKash webhook/HMAC/allowlist সংক্রান্ত row-গুলো এখন superseded — bKash Tokenized
+          Checkout (<code>src/lib/payment.ts</code>, callback/webhook route, dev mock route) intake থেকে পুরোপুরি সরানো
+          হয়েছে। নতুন মডেলে platform bKash নম্বরে Send Money করে TxID + রিসিট জমা পড়ে, আর admin verification-ই
+          source of truth। নিচের <a href="#manual-flow">সেকশন 15b</a>-তে পুরো আর্কিটেকচার।</div>
+      </div>
+    </section>
+
+    <!-- ============ 15b. MANUAL PAYMENT ARCHITECTURE ============ -->
+    <section id="manual-flow">
+      <h2><span class="num">15b</span> Manual bKash Send Money — Admin-Verified Payment Architecture</h2>
+      <p class="muted small">Product owner-এর নতুন ফাইনান্সিয়াল নিয়ম: <b>payment submit করা মানেই payment verified
+          নয়</b>। প্রতিটা টাকা admin verification পার হওয়ার আগে শুধু "evidence"।</p>
+
+      <h3>মূল flow — প্রতিটা টাকার পথ</h3>
+      <div class="flow">
+        <div class="fstep" style="border-left:4px solid var(--blue)"><span class="fname">User / Team</span><span class="small
+            muted">paid feature বেছে নেয় (booking / wallet top-up)</span></div>
+        <div class="farrow">↓</div>
+        <div class="fstep"><span class="fname">System amount হিসাব করে</span><span class="small muted">booking: slot price
+            থেকে server recompute (5% fee, cap ৳100) · top-up: ৳50–৳10,000 bound — <b>client কখনো amount পাঠায় না</b></span><span
+            class="badge b-green">server-authoritative</span></div>
+        <div class="farrow">↓</div>
+        <div class="fstep"><span class="fname">bKash Send Money</span><span class="small muted">user DeshiTurf-এর bKash
+            নম্বরে (<code>NEXT_PUBLIC_PLATFORM_BKASH_NUMBER</code>) টাকা পাঠায়</span></div>
+        <div class="farrow">↓</div>
+        <div class="fstep"><span class="fname">TxID + রিসিট জমা</span><span class="small muted">Transaction ID (normalized,
+            dedupe) + ঐচ্ছিক Cloudinary রিসিট স্ক্রিনশট + sender নম্বর</span></div>
+        <div class="farrow">↓</div>
+        <div class="fstep" style="border-left:4px solid var(--yellow)"><span class="fname">PENDING_VERIFICATION</span><span
+            class="small muted"><code>payment_submissions.status = 'pending'</code> — এই অবস্থায় কোনো টাকাই move করে না,
+            কোনো feature-ই unlock হয় না</span><span class="badge b-yellow">locked</span></div>
+        <div class="farrow">↓</div>
+        <div class="fstep" style="border-left:4px solid var(--orange)"><span class="fname">ADMIN PAYMENT REVIEW</span><span
+            class="small muted"><code>/admin/payments</code> — amount, TxID, sender, purpose, related booking, রিসিট
+            স্ক্রিনশট দেখে admin সিদ্ধান্ত নেয়</span></div>
+        <div class="frow">
+          <div class="fstep" style="border-left:4px solid var(--red)"><span class="fname">REJECT</span><span class="small
+              muted">কারণ বাধ্যতামূলক → <code>rejected</code> → feature locked থাকে, TxID মুক্ত হয় (ঠিক করে resubmit
+              করা যায়)</span></div>
+          <div class="fstep" style="border-left:4px solid var(--green)"><span class="fname">APPROVE → CONSUMED</span><span
+              class="small muted">এক statement-এই business effect প্রয়োগ — booking confirm / wallet credit — মাঝে crash
+              হলে কিছুই হয় না</span><span class="badge b-green">atomic</span></div>
+        </div>
+        <div class="farrow">↓</div>
+        <div class="fstep" style="border-left:4px solid var(--green)"><span class="fname">AUDIT LOG</span><span
+            class="small muted">প্রতিটা verify/reject <code>audit_logs</code>-এ who/when/what সহ লেখা হয় + payer/admin
+            notification</span></div>
+      </div>
+
+      <h3>Payment state machine — <code>payment_submissions</code></h3>
+      <div class="tblwrap">
+        <table>
+          <tr>
+            <th>State</th>
+            <th>মানে</th>
+            <th>Transition</th>
+          </tr>
+          <tr>
+            <td><code>pending</code></td>
+            <td class="small">evidence জমা হয়েছে, টাকা এখনো কোনো কাজে আসেনি — feature locked</td>
+            <td class="small">submit → pending; booking cancel / hold expire হলে → rejected (auto)</td>
+          </tr>
+          <tr>
+            <td><code>consumed</code></td>
+            <td class="small">admin verify করেছে এবং business effect একই statement-এ প্রয়োগ হয়েছে — "verified" আর
+              "consumed" ইচ্ছাকৃতভাবে এক state</td>
+            <td class="small">multi-CTE: submission flip → booking confirm / wallet credit; দ্বিতীয়বার verify = no-op</td>
+          </tr>
+          <tr>
+            <td><code>rejected</code></td>
+            <td class="small">admin প্রত্যাখ্যান করেছে (কারণ বাধ্যতামূলক)</td>
+            <td class="small">TxID partial unique index (<code>WHERE status &lt;&gt; 'rejected'</code>) থেকে মুক্ত —
+              ঠিক করে একই TxID আবার জমা দেওয়া যায়</td>
+          </tr>
+        </table>
+      </div>
+      <div class="finding" style="border-left-color:var(--green)">
+        <div class="bn"><b>কেন intermediate "VERIFIED" state নেই:</b> verify আর business effect এক statement-এ হওয়ায়
+          "verify হয়েছে কিন্তু effect বসেনি" — এমন অবস্থা <b>সম্ভবই নয়</b>, তাই কোনো reconciliation sweeper-এর দরকারও
+          নেই। <code>reviewedBy/reviewedAt</code> + <code>consumedBy/consumedAt</code> — admin কে verify করেছে সেটা আলাদা
+          রেকর্ড হয়ে থাকে।</div>
+      </div>
+
+      <h3>Duplicate/abuse ঠেকানোর নিয়ম</h3>
+      <div class="tblwrap">
+        <table>
+          <tr>
+            <th>নিয়ম</th>
+            <th>বাস্তবায়ন</th>
+          </tr>
+          <tr>
+            <td class="small">একই TxID দুবার ব্যবহার</td>
+            <td class="small">partial unique index <code>payment_submissions_txid_live</code> — pending/consumed TxID
+              আবার জমা দিলে unique violation → <code>txidAlreadyUsed</code></td>
+          </tr>
+          <tr>
+            <td class="small">একাধিক pending submission</td>
+            <td class="small">প্রতি booking-এ এক pending (pre-check), প্রতি user-এ এক pending wallet top-up</td>
+          </tr>
+          <tr>
+            <td class="small">amount manipulation</td>
+            <td class="small">amount কখনো client input নয় — booking-এ slot price থেকে server recompute; top-up-এ
+              server-side bounds</td>
+          </tr>
+          <tr>
+            <td class="small">frontend financial state control</td>
+            <td class="small">frontend শুধু evidence পাঠায়; <code>PENDING→consumed</code> flip শুধু admin verify
+              statement-এ</td>
+          </tr>
+          <tr>
+            <td class="small">ভুল booking-এ payment attach</td>
+            <td class="small"><code>booking_id</code> FK + purpose enum + submission-এর সাথে booking আগেই বেঁধে; verify-র
+              সময় booking <code>held|payment_pending</code> না থাকলে no-op</td>
+          </tr>
+          <tr>
+            <td class="small">stale submission</td>
+            <td class="small">৪৮ ঘণ্টার পর nightly sweep auto-reject (<code>expired_unreviewed</code>) — TxID মুক্ত হয়</td>
+          </tr>
+        </table>
+      </div>
+
+      <h3>৳25 matchmaking fee — কেন wallet-debit থেকে গেছে</h3>
+      <p class="small">প্রতি match-এ per-fee manual submission মানে দিনে শত শত ৳25-এর TxID admin-কে verify করতে হবে।
+        বিকল্প: wallet শুধু verified top-up দিয়ে ভরতে পারে (upstream-এ admin verification), তারপর fee wallet থেকে
+        atomic CTE-তে কাটে — অর্থাৎ wallet-এর প্রতিটা টাকাই transitively admin-verified। Cancel/expiry-তে fee credit-back
+        আগের মতোই idempotent।</p>
+
+      <h3>Booking hold — নতুন সময়</h3>
+      <div class="tblwrap">
+        <table>
+          <tr>
+            <th>আগে</th>
+            <th>এখন</th>
+          </tr>
+          <tr>
+            <td class="small">hold ১০ মিনিট; bKash checkout-এ instant confirm</td>
+            <td class="small">hold <b>৩ ঘণ্টা</b> (বা kickoff−২০min cutoff, যেটা আগে) — manual verify-র সময় ধরে রাখার জন্য</td>
+          </tr>
+          <tr>
+            <td class="small">hold expire হলে slot <code>held</code>-ই থেকে যেত (latent bug)</td>
+            <td class="small">FIXED — expire হলে slot <code>available</code>, booking <code>expired</code>, pending
+              submission auto-reject</td>
+          </tr>
+          <tr>
+            <td class="small"><code>payment_pending</code> booking-এর কোনো sweeper নেই</td>
+            <td class="small">hold expiry এখন <code>held</code> আর <code>payment_pending</code> দুটোই expire করে</td>
+          </tr>
+        </table>
+      </div>
+
+      <h3>Admin Verification Center — <code>/admin/payments</code></h3>
+      <p class="small">Status filter (pending / rejected / verified) সহ card list: expected amount (বড় করে), TxID
+        (mono), sender নম্বর, purpose, related booking লিংক (turf/slot/date), payer-এর নোট, রিসিট স্ক্রিনশট। Verify
+        বাটন এক ক্লিকে submission consume + business effect apply; Reject-এ inline reason বাধ্যতামূলক। Amount
+        mismatch-এর নীতি: <b>admin amount edit করতে পারে না — mismatch হলে reject, payer ঠিক করে resubmit করবে</b>। এই
+        পেজেই owner payout panel (manual bKash payout out)।</p>
+    </section>
+    <!-- ============ 16. SECURITY ============ -->
+    <section id="security">
+      <h2><span class="num">16</span> Authorization &amp; Security Audit</h2>
+      <div class="tblwrap">
+        <table>
+          <tr>
+            <th>Attack surface</th>
+            <th>Finding</th>
+            <th>Severity</th>
+          </tr>
+          <tr>
+            <td>IDOR (turf)</td>
+            <td class="small">প্রতিটি mutation-এ row reload + ownerId capability — অন্য owner-এর turf edit করা অসম্ভব
+            </td>
+            <td><span class="badge b-green">সুরক্ষিত</span></td>
+          </tr>
+          <tr>
+            <td>IDOR (booking/match/team/ERP)</td>
+            <td class="small">প্রতিটি action-এ bookerId/captain/owner scope; ERP-তে belongs-to guard</td>
+            <td><span class="badge b-green">সুরক্ষিত</span></td>
+          </tr>
+          <tr>
+            <td>Admin endpoints</td>
+            <td class="small">প্রতিটি mutating action-এ requireAdmin; read query-তে guard নেই (পুরোটা layout-এর ওপর
+              নির্ভর করছে)</td>
+            <td><span class="badge b-yellow">defense-in-depth দুর্বল</span></td>
+          </tr>
+          <tr>
+            <td>Mass assignment</td>
+            <td class="small">সব জায়গায় zod schema; owner booked/held status set করতে পারে না</td>
+            <td><span class="badge b-green">সুরক্ষিত</span></td>
+          </tr>
+          <tr>
+            <td>Payment spoofing</td>
+            <td class="small">callback কখনো mutate করে না; webhook HMAC+allowlist; dev mock route prod-এ 404</td>
+            <td><span class="badge b-yellow">allowlist default ফাঁকা + mock route-এ ownership check নেই</span></td>
+          </tr>
+          <tr>
+            <td>providerReference guessing</td>
+            <td class="small"><code>confirmWalletTopUpAction</code>-এ ownership check নেই — অন্যের ref জানা থাকলে
+              confirm করা যায় (ক্ষতিকর না হলেও নীতিগত ফাঁক)</td>
+            <td><span class="badge b-yellow">low</span></td>
+          </tr>
+          <tr>
+            <td>Rate limit gaps</td>
+            <td class="small">topup initiate, claim request, match create, invites, reports — কোনো limiter নেই; Redis
+              unconfigured থাকলে সব open</td>
+            <td><span class="badge b-orange">medium</span></td>
+          </tr>
+          <tr>
+            <td>Sensitive data exposure</td>
+            <td class="small">JWT-তে role থাকে (stale হতে পারে) — তবে <code>getCurrentUser</code> DB থেকে fresh নেয়;
+              match room-এ phone number exposure ইত্যাদি আবার দেখা দরকার</td>
+            <td><span class="badge b-green">মূলত ঠিক</span></td>
+          </tr>
+          <tr>
+            <td>Block evasion</td>
+            <td class="small">block server-enforced — search/invite/join/friends সব জায়গায়, test-ও আছে
+              (<code>matches/__tests__/invite-block.test.ts</code>)</td>
+            <td><span class="badge b-green">সুরক্ষিত</span></td>
+          </tr>
+        </table>
+      </div>
+      <div class="finding p1">
+        <div class="fhead"><span class="ftitle">bKash allowlist + dev-mode fallback</span><span
+            class="badge b-orange">P1</span></div>
+        <div class="kv"><b>Evidence</b> <code>src/lib/payment.ts:60-66,197-206</code>;
+          <code>api/payments/bkash/webhook/route.ts</code></div>
+        <div class="bn">Production-এ IP allowlist array ফাঁকা থাকলে <code>ipAllowed()</code> সবসময় true রিটার্ন করে —
+          অর্থাৎ IP allowlist check কার্যত bypass হয়ে যাচ্ছে। ফলে webhook-এর নিরাপত্তা নির্ভর করছে মূলত HMAC
+          signature-এর ওপর। signature secret ঠিক থাকলে এটা যথেষ্ট হতে পারে, কিন্তু "defense in depth" design অনুযায়ী
+          allowlist ফাঁকা থাকা মানে misconfiguration নীরবে দুর্বলতা হয়ে যাচ্ছে। এছাড়া <code>devMode()</code>-এ
+          signature ছাড়া payload accept করা হয় — NODE_ENV ভুল set থাকলে বা secret unset থাকলে এই পথটা খুলে যেতে পারে।
+          Launch-এর আগে ops checklist-এ allowlist + secret বাধ্যতামূলক verify করা উচিত (startup assertion দিলে ভালো
+          হয়)।</div>
+      </div>
+    </section>
+
+    <!-- ============ 17. DB INTEGRITY ============ -->
+    <section id="db">
+      <h2><span class="num">17</span> Database Integrity Audit</h2>
+      <h3>ভালো দিক</h3>
+      <ul class="small">
+        <li>Money-related table-গুলোতে RESTRICT cascade — orphan money record তৈরি হওয়া অসম্ভব;
+          <code>wallet_entries.idempotency_key</code>, <code>bookings/transactions.idempotency_key</code> UNIQUE</li>
+        <li>Partial unique: active schedule per turf, one active claim invite per turf, one active owner-login per
+          phone, <code>bookings_active_unique</code></li>
+        <li>Generated column + EXCLUDE: slot overlap DB level-এই অসম্ভব; platformFee trigger-immutable</li>
+        <li>Soft delete: user (14 দিন grace → anonymize), turf (<code>isActive</code>); booking-এ terminal status
+          ব্যবহার হয়</li>
+      </ul>
+      <h3>দুর্বলতা / Missing constraint</h3>
+      <div class="tblwrap">
+        <table>
+          <tr>
+            <th>Table</th>
+            <th>সমস্যা</th>
+            <th>প্রভাব</th>
+          </tr>
+          <tr>
+            <td class="small"><code>match_invitations</code></td>
+            <td class="small">(matchId, inviteeUserId/phone, side) unique নেই; XOR-এর কোনো CHECK নেই</td>
+            <td class="small">concurrent duplicate invite; ভুল shape-এর data</td>
+          </tr>
+          <tr>
+            <td class="small"><code>team_invitations</code></td>
+            <td class="small">comment-এ লেখা "one pending per (team,phone)", কিন্তু আসলে শুধু non-unique index</td>
+            <td class="small">duplicate pending invite</td>
+          </tr>
+          <tr>
+            <td class="small"><code>wallet_claims</code></td>
+            <td class="small">pending claim per user — unique partial নেই</td>
+            <td class="small">race-এ দুটো claim row</td>
+          </tr>
+          <tr>
+            <td class="small"><code>payouts</code></td>
+            <td class="small">(owner, period) unique নেই</td>
+            <td class="small">একই সপ্তাহে দুবার payout row তৈরি হতে পারে</td>
+          </tr>
+          <tr>
+            <td class="small"><code>reports</code></td>
+            <td class="small">(reporter, entity) unique নেই</td>
+            <td class="small">report spam</td>
+          </tr>
+          <tr>
+            <td class="small"><code>cancellations</code></td>
+            <td class="small">প্রতি booking-এ unique নেই</td>
+            <td class="small">এক booking-এ একাধিক cancel row সম্ভব (audit noise)</td>
+          </tr>
+          <tr>
+            <td class="small"><code>friendships</code></td>
+            <td class="small">canonical ordering নেই — (A,B) ও (B,A) দুটোই coexist করতে পারে</td>
+            <td class="small">dedupe-এর ভার query-side-এর ওপর</td>
+          </tr>
+          <tr>
+            <td class="small"><code>bookings.totalAmount</code>, <code>wallet_entries.balanceAfter</code>,
+              <code>cancellations.refundAmount</code></td>
+            <td class="small">nullable money column</td>
+            <td class="small">invariant আংশিক enforce হয় (by design, তবে audit-এ ধরে রাখা দরকার)</td>
+          </tr>
+          <tr>
+            <td class="small"><code>match_guests</code></td>
+            <td class="small">(matchId, phone) unique নেই</td>
+            <td class="small">একই guest দুবার যোগ হতে পারে</td>
+          </tr>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ 18. NOTIFICATIONS ============ -->
+    <section id="notify">
+      <h2><span class="num">18</span> Notification Flow Audit</h2>
+      <p class="small muted">চ্যানেল: in-app DB row + Pusher realtime (<code>notifications/create.ts:30-51</code>)।
+        Email/SMS/push explicitly post-MVP। Delivery best-effort (fail → log, নীরবে হারানো মেনে নেওয়া)। Registry:
+        <code>features/notifications/types.ts</code> — ৩১টা type, সব wired।</p>
+      <div class="cards">
+        <div class="card" style="border-top:3px solid var(--green)">
+          <h4 style="color:var(--green)">যা আছে</h4>
+          <p class="small">turf application/verify, booking confirmed/received/cancelled, match invite/accept/decline,
+            join request, opponent claim, team challenge send/accept/decline, match cancelled, fee charged/credited,
+            friend request/accept, wallet topup + claim lifecycle, ERP bill/salary/premium + nightly reminder।
+              Re-audit-এ যোগ: payment submission received (admin) / verified / rejected (payer) — manual payment
+              lifecycle-এর তিনটা মোড।</p>
+        </div>
+        <div class="card" style="border-top:3px solid var(--red)">
+          <h4 style="color:var(--red)">যা নেই (এই state change-গুলোতে user নীরব)</h4>
+          <p class="small">
+          <ul>
+            <li>Booking held→expired — user জানেই না তার hold শেষ হয়ে গেছে</li>
+            <li>Admin refund executed — <code>executeRefund</code> কাউকে notify-ই করে না</li>
+            <li>Payout paid — এমন notification পাঠানোর কোডই নেই</li>
+            <li>Report resolved — reporter জানে না</li>
+            <li>User suspension — suspend হওয়া user জানে না</li>
+            <li>Match fall-through expiry-তে অন্য পক্ষের state change-এ notification নেই (fee credit-এর notification
+              হয়)</li>
+          </ul>
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 19. FE vs BE ============ -->
+    <section id="fe-be">
+      <h2><span class="num">19</span> Frontend vs Backend Validation Consistency</h2>
+      <div class="tblwrap">
+        <table>
+          <tr>
+            <th>Rule</th>
+            <th>UI</th>
+            <th>Action</th>
+            <th>DB</th>
+            <th>Verdict</th>
+          </tr>
+          <tr>
+            <td>Squad capacity (spotsLeft)</td>
+            <td class="small">✅</td>
+            <td class="small">✅ FOR UPDATE</td>
+            <td class="small">✅ PK + predicate</td>
+            <td><span class="badge b-green">সব স্তরে</span></td>
+          </tr>
+          <tr>
+            <td>Double booking</td>
+            <td class="small">✅ calendar</td>
+            <td class="small">✅ conditional</td>
+            <td class="small">✅ unique+EXCLUDE</td>
+            <td><span class="badge b-green">সব স্তরে</span></td>
+          </tr>
+          <tr>
+            <td>Invite dedupe</td>
+            <td class="small">✅</td>
+            <td class="small">✅ pre-check</td>
+            <td class="small">❌</td>
+            <td><span class="badge b-orange">HIGH RISK — DB level-এ নেই</span></td>
+          </tr>
+          <tr>
+            <td>Wallet pending claim dedupe</td>
+            <td class="small">✅</td>
+            <td class="small">✅ pre-check</td>
+            <td class="small">❌</td>
+            <td><span class="badge b-orange">HIGH RISK</span></td>
+          </tr>
+          <tr>
+            <td>Match invite XOR (userId/phone)</td>
+            <td class="small">✅</td>
+            <td class="small">✅</td>
+            <td class="small">❌ কোনো CHECK নেই</td>
+            <td><span class="badge b-yellow">মাঝারি</span></td>
+          </tr>
+          <tr>
+            <td>Cancel "before kickoff"</td>
+            <td class="small">✅ (সম্ভবত)</td>
+            <td class="small">❌ সময় check হয় না</td>
+            <td class="small">❌</td>
+            <td><span class="badge b-orange">HIGH RISK — rule-টা আসলে শুধু UI/comment-এ</span></td>
+          </tr>
+          <tr>
+            <td>Role check</td>
+            <td class="small">✅ UI-তে hide</td>
+            <td class="small">✅ capability</td>
+            <td class="small">—</td>
+            <td><span class="badge b-green">server-authoritative</span></td>
+          </tr>
+          <tr>
+            <td>Price</td>
+            <td class="small">display only</td>
+            <td class="small">✅ recompute</td>
+            <td class="small">✅ frozen</td>
+            <td><span class="badge b-green">সব স্তরে</span></td>
+          </tr>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ 20. SOURCE OF TRUTH ============ -->
+    <section id="sot">
+      <h2><span class="num">20</span> Source-of-Truth Analysis</h2>
+      <div class="tblwrap">
+        <table>
+          <tr>
+            <th>ডেটা</th>
+            <th>উৎস</th>
+            <th>Verdict</th>
+          </tr>
+          <tr>
+            <td>Squad player count / spotsLeft</td>
+            <td class="small">DB — seat-claim-এর সময় row-lock করে হিসাব; UI-র count শুধু display</td>
+            <td><span class="badge b-green">Reliable</span></td>
+          </tr>
+          <tr>
+            <td>Slot availability</td>
+            <td class="small">DB <code>turf_slots.status</code> + hold; UI calendar derived</td>
+            <td><span class="badge b-green">Reliable</span></td>
+          </tr>
+          <tr>
+            <td>Wallet balance</td>
+            <td class="small">stored balance row-ই atomic guard; invariant balance = Σ(success entries) — ডকুমেন্ট করা
+              আছে</td>
+            <td><span class="badge b-green">Reliable</span> (তবে drift sweeper নেই — invariant ভাঙলে ধরার কোনো job নেই)
+            </td>
+          </tr>
+          <tr>
+            <td>Booking price</td>
+            <td class="small"><code>turf_slots.price</code> frozen — server আবার recompute করে</td>
+            <td><span class="badge b-green">Reliable</span></td>
+          </tr>
+          <tr>
+            <td>Team ownership</td>
+            <td class="small"><code>team_members.role</code> — denormalized copy নেই; কিন্তু DB-র
+              <code>user_role</code>-এর সাথে দ্বৈত সত্য</td>
+            <td><span class="badge b-yellow">dual truth</span></td>
+          </tr>
+          <tr>
+            <td>Match kickoff</td>
+            <td class="small">creation-এ booking slot থেকে derive হয়ে stored; booking পরে বদলালে (cancel) match
+              cascade, তাই sync ঠিক থাকে</td>
+            <td><span class="badge b-green">Reliable</span></td>
+          </tr>
+          <tr>
+            <td>Owner revenue (ERP)</td>
+            <td class="small">DB aggregation <code>amount − platform_fee</code> on success txns</td>
+            <td><span class="badge b-green">Reliable</span></td>
+          </tr>
+          <tr>
+            <td>Payout eligibility</td>
+            <td class="small"><code>completed</code> settled txns — কিন্তু payout execution-ই নেই</td>
+            <td><span class="badge b-red">lifecycle অসম্পূর্ণ</span></td>
+          </tr>
+        </table>
+      </div>
+    </section>
+    <!-- ============ 21. GAPS ============ -->
+    <section id="gaps">
+      <h2><span class="num">21</span> Business Logic Gaps — বিস্তারিত (বাংলা ব্যাখ্যা সহ)</h2>
+
+      <div class="finding p0">
+        <div class="fhead"><span class="ftitle">G-1 · Admin refund execution অ-পারমাণবিক (non-atomic)</span><span
+            class="badge b-green">FIXED — atomic multi-CTE</span></div>
+        <div class="kv"><b>Evidence</b> <code>src/features/admin/actions.ts</code> (<code>executeRefund</code>)
+        </div>
+        <div class="kv"><b>Was</b> ৪–৫টা আলাদা statement: cancellation row → booking→refunded → slot reopen →
+          transaction flip।</div>
+        <div class="bn"><b>সমাধান হয়েছে:</b> পুরো refund এখন একটা মাত্র multi-CTE statement — booking
+          <code>→refunded</code> flip-এর RETURNING থেকে slot reopen, transaction flip আর <code>cancellations</code> row
+          cascade হয়। মাঝপথে crash হলে সব একসাথে হয় বা কিছুই হয় না — হিসাব আর আর আসল টাকা আর কখনো আলাদা হবে না।</div>
+      </div>
+
+      <div class="finding p0">
+        <div class="fhead"><span class="ftitle">G-2 · Team challenge গ্রহণে ফি যাচাই নেই + ফি চার্জে crash
+            window</span><span class="badge b-green">FIXED — batch + fee re-verify</span></div>
+        <div class="kv"><b>Evidence</b> <code>src/features/matches/actions.ts</code> (<code>challengeMatchAction</code>,
+          <code>respondTeamChallengeAction</code>)</div>
+        <div class="kv"><b>Was</b> challenge পাঠাতে ৳25 কাটে, তারপর আলাদা statement-এ challenge row বসে। Accept করার
+          সময় challenger-এর fee এখনো valid আছে কি না কেউ দেখে না।</div>
+        <div class="bn"><b>সমাধান হয়েছে:</b> (১) fee debit + challenge row এখন এক <code>db.batch</code>-এ (এক server-side
+          transaction) — crash হলে ৳25 আর হারাবে না; race-এ request row না বসলে fee সাথে সাথে credit-back হয়। (২) accept-এর
+          সময় challenger-এর fee hold আবার verify হয়, আর fee-liveness predicate (কোনো <code>fee_back_</code> credit নেই)
+          claim UPDATE-এর ভেতরেই আছে — concurrent credit-back হলে claim no-op হবে, ফি ছাড়া match confirm অসম্ভব।</div>
+      </div>
+
+      <div class="finding p0">
+        <div class="fhead"><span class="ftitle">G-3 · Wallet claim reject-এর credit-back অ-পারমাণবিক</span><span
+            class="badge b-green">FIXED — atomic CTE + nightly backstop</span></div>
+        <div class="kv"><b>Evidence</b> <code>src/features/wallet/actions.ts</code>
+          (<code>decideWalletClaimAction</code> reject path)</div>
+        <div class="bn"><b>সমাধান হয়েছে:</b> claim reject + credit-back এখন একটা CTE-তে — claim flip-এর RETURNING থেকেই
+          balance credit আর ledger entry (<code>claim_back_{claimId}</code>) হয়। সাথে nightly sweep-এ backstop আছে: পুরনো
+          rejected claim-এ credit entry না থাকলে idempotent key দিয়ে ঠিক করে দেয় — deploy-এর আগের আটকে থাকা টাকাও ফেরত
+          পাবে।</div>
+      </div>
+
+      <div class="finding p1">
+        <div class="fhead"><span class="ftitle">G-4 · Payout lifecycle</span><span class="badge b-green">STRENGTHENED</span>
+        </div>
+        <div class="bn">Re-audit-এ ধরা পড়েছে payout lifecycle আসলে আগেই ছিল (<code>generateWeeklyPayoutsAction</code>,
+          <code>markPayoutPaidAction</code>, <code>PayoutsPanel</code>) — মূল audit-টা এটা মিস করেছিল। নতুন যোগ: period
+          duplicate ঠেকাতে <code>payouts_period_unique</code> index, generate/mark-paid-এ <code>audit_logs</code> entry,
+          আর payout panel <code>/admin/payments</code>-এ সরিয়ে এক জায়গায় সব money surface।</div>
+      </div>
+
+      <div class="finding p1">
+        <div class="fhead"><span class="ftitle">G-5 · rebook_contingent refund-এর clawback অসম্পূর্ণ</span><span
+            class="badge b-orange">P1</span></div>
+        <div class="kv"><b>Evidence</b> <code>src/lib/cancellation.ts:10-14</code> (comment-এ নিজেই লেখা "needs
+          settle-time clawback"), কোনো implementation নেই</div>
+        <div class="bn">এই policy-তে cancel-এর সময় "সাময়িক" refund দেওয়া হয় — ধরে নেওয়া হয় slot আর বিক্রি না হলে
+          settle-এর সময় refund-এর অংশটা আবার ফেরত নিয়ে নেওয়া হবে (clawback)। কিন্তু clawback লেখাই হয়নি। ফলে slot
+          দ্বিতীয়বার বিক্রি না হলেও owner পুরো refund-ই দিয়ে দেয় — policy-টা বাস্তবে flexible হয়ে যায়। হয় clawback
+          implement করতে হবে, নয়তো product decision নিয়ে policy-টা বাদ দিতে হবে।</div>
+      </div>
+
+      <div class="finding p1">
+        <div class="fhead"><span class="ftitle">G-6 · Duplicate ঠেকানোর DB constraint নেই (৫টা table)</span><span
+            class="badge b-green">FIXED — partial unique index ×৫</span></div>
+        <div class="bn"><b>সমাধান হয়েছে:</b> <code>wallet_claims_one_pending</code> (প্রতি user-এ এক pending claim),
+          <code>match_invitations_user_pending</code> + <code>match_invitations_phone_pending</code> (match/side/invitee),
+          <code>team_invitations_pending</code> (team+phone, unfulfilled), <code>payouts_period_unique</code> (owner+period),
+          <code>reports_reporter_entity_pending</code> — সব partial unique index, race-এ দুইবার insert এখন DB level-এই
+          অসম্ভব। সাথে manual payment-এর <code>payment_submissions_txid_live</code> (TxID anti-reuse) যোগ হয়েছে।</div>
+      </div>
+
+      <div class="finding p1">
+        <div class="fhead"><span class="ftitle">G-7 · match expire/hold expire-এর backstop sweep নেই</span><span
+            class="badge b-green">FIXED — nightly sweep</span></div>
+        <div class="bn"><b>সমাধান হয়েছে:</b> <code>expireSlotHold</code> এখন slot-কে <code>available</code>-এ ফেরত দেয়,
+          <code>held</code>/<code>payment_pending</code> দুই অবস্থার booking-ই expire করে, আর pending payment submission
+          auto-reject করে (TxID মুক্ত)। Nightly sweep-এ তিনটা backstop: stale open match + fee credit, ৪৮ ঘণ্টার পুরনো
+          pending submission auto-reject, আর credit ছাড়া rejected claim-এর idempotent heal।</div>
+      </div>
+
+      <div class="finding p2">
+        <div class="fhead"><span class="ftitle">G-8 · cancelMatchAction-এ kickoff সময় যাচাই নেই</span><span
+            class="badge b-yellow">P2</span></div>
+        <div class="kv"><b>Evidence</b> <code>matches/actions.ts:1553-1589</code> — comment-এ "before kickoff", কোডে
+          শুধু state check</div>
+        <div class="bn">Kickoff-এর পরেও (slot-এর মধ্যে থাকলে) match cancel করা যায় — booking বাতিল হয়, slot খুলে যায়,
+          দুই পক্ষের ৳25 ফেরত যায়। কিন্তু ততক্ষণে turf owner ম্যাচের প্রস্তুতি নিয়ে ফেলেছে, আর ওই সময়টা অন্য কাউকে
+          বিক্রি করার সুযোগও পায়নি। booking-cancel path-এ refund policy engine আছে, কিন্তু match-cancel path-এ slot
+          owner-এর ন্যায্যতার কথা ভাবা হয়নি। cancel-এর আগে kickoff time compare করা দরকার (late-cancel-এ policy-based
+          কাটসহ)।</div>
+      </div>
+
+      <div class="finding p2">
+        <div class="fhead"><span class="ftitle">G-9 · প্লেয়ার overlap / conflicting invitation নিয়ন্ত্রণ
+            নেই</span><span class="badge b-yellow">P2</span></div>
+        <div class="bn">একজন প্লেয়ার একই সন্ধ্যার দুই ম্যাচে rostered থাকতে পারে, overlapping দুটো invitation-ই accept
+          করতে পারে। সিস্টেম কোনো warning দেয় না, conflict ধরেও না — ফলাফল ম্যাচের দিন একটা ম্যাচে নিশ্চিত no-show। হয়
+          hard block করতে হবে, নয়তো accept-এর সময় warning দিয়ে captain-কে জানাতে হবে — product decision দরকার (নিচে
+          Decisions সেকশনে দেখুন)।</div>
+      </div>
+
+      <div class="finding p2">
+        <div class="fhead"><span class="ftitle">G-10 · Rescheduling আর No-show — কিছুই নেই</span><span
+            class="badge b-yellow">P2</span></div>
+        <div class="bn">বাস্তবের টার্ফ ব্যবসায় reschedule আর no-show প্রতিদিনের ব্যাপার। এখন একমাত্র পথ: cancel
+          (policy-র কাটসহ) → নতুন করে book। reschedule-এর কোনো first-class flow নেই; owner no-show mark করতে পারে না —
+          kickoff পার হলে সব confirmed booking auto-completed হয়ে যায়, খালি মাঠও "completed"। ভবিষ্যতে no-show flag +
+          policy-based partial refund/credit-এর কোনো model দরকার হবে।</div>
+      </div>
+
+      <div class="finding p2">
+        <div class="fhead"><span class="ftitle">G-11 · Admin action-এ কোনো audit trail নেই</span><span
+            class="badge b-yellow">P2</span></div>
+        <div class="bn"><code>audit_logs</code> table বানানো আছে (ERP নিজের আলাদা লগ লেখে), কিন্তু admin-এর refund,
+          suspension, dispute resolution, turf verify — কোনোটাই platform audit log-এ যায় না; আছে শুধু stdout logger।
+          টাকা-জড়িত সিদ্ধান্তের who/when/what পরে database থেকে প্রমাণ করার উপায় নেই — dispute বা অভিযোগের সময় এটা
+          গুরুতর দুর্বলতা হয়ে দাঁড়ায়।</div>
+      </div>
+
+      <div class="finding p2">
+        <div class="fhead"><span class="ftitle">G-12 · মৃত enum state ও semantic অসঙ্গতি</span><span
+            class="badge b-yellow">P2</span></div>
+        <div class="bn"><code>draft, opponent_found, payment_pending, roster_building, ready</code> — এই পাঁচটা match
+          state-এ কোনো action কখনো পৌঁছায় না। আবার join-request accept করা registered প্লেয়ার
+          <code>matchPlayerRole='guest'</code> হয়ে যায় (অথচ invite-accept-এ হয় <code>member</code>)। এগুলো এই
+          মুহূর্তে ইউজারের ক্ষতি করছে না, কিন্তু ভবিষ্যতে roster locking বা fee-র ধাপ বানানোর সময় বিভ্রান্তি আর bug-এর
+          উৎস হবে। হয় implement করুন, নয়তো enum থেকে বাদ দিন।</div>
+      </div>
+
+      <div class="finding p3">
+        <div class="fhead"><span class="ftitle">G-13 · Rate limiting coverage ফাঁকা জায়গায়</span><span
+            class="badge b-muted">P3</span></div>
+        <div class="bn">Booking hold, OTP, login, webhook — এই জায়গাগুলোতে rate limiting ভালো। কিন্তু wallet top-up
+          initiation, claim request, match creation, invitation, report submit — এখানে নেই; আর Redis unconfigured থাকলে
+          limiter নীরবে সব request allow করে দেয়। একজন logged-in দুষ্ট ইউজার শত শত প্লেয়ারকে invite/notification spam
+          করতে পারবে।</div>
+      </div>
+    </section>
+
+    <!-- ============ 22. UX ============ -->
+    <section id="ux">
+      <h2><span class="num">22</span> UX / Flow Problems</h2>
+      <div class="tblwrap">
+        <table>
+          <tr>
+            <th>সমস্যা</th>
+            <th>প্রভাব</th>
+            <th>Priority</th>
+          </tr>
+          <tr>
+            <td class="small">Hold-এর মেয়াদ শেষ হলে user-কে কোনো notification যায় না — payment page-এ ফিরে গেলে তবেই
+              বোঝে</td>
+            <td class="small">confusion, টাকা হারিয়েছে মনে হওয়া</td>
+            <td><span class="badge b-yellow">P2</span></td>
+          </tr>
+          <tr>
+            <td class="small">"Matchmaking" branding কিন্তু বাস্তব অভিজ্ঞতা listing-based — opponent নিজেই খুঁজতে হয়
+            </td>
+            <td class="small">প্রত্যাশা আর বাস্তবতার ফারাক; match open অবস্থায়ই বসে থেকে যেতে পারে</td>
+            <td><span class="badge b-orange">P1</span></td>
+          </tr>
+          <tr>
+            <td class="small">Loading state: প্রজেক্টের নিয়ম অনুযায়ী <code>Loader/LoaderOverlay</code> +
+              <code>loading.tsx</code> সব প্রধান পথে বসানো — consistent</td>
+            <td class="small">—</td>
+            <td><span class="badge b-green">ভালো</span></td>
+          </tr>
+          <tr>
+            <td class="small">Match room anonymous অবস্থায়ও দেখা যায় (management শুধু captain-gated) — ইচ্ছাকৃত মনে
+              হয়, তবে roster-এর কতটা public হওয়া উচিত সেটা আবার দেখা দরকার</td>
+            <td class="small">privacy consideration</td>
+            <td><span class="badge b-blue">P3 decision</span></td>
+          </tr>
+          <tr>
+            <td class="small">Cancellation policy (flexible/moderate/strict) booking-এর সময় user আসলে কতটা স্পষ্টভাবে
+              দেখে, তা refund preview-র ওপর নির্ভর করছে</td>
+            <td class="small">refund নিয়ে অভিযোগের ঝুঁকি</td>
+            <td><span class="badge b-yellow">P2</span></td>
+          </tr>
+          <tr>
+            <td class="small">i18n parity test আছে, server action dictionary-key error দেয় — Bangla-first নীতি সব
+              জায়গায় প্রয়োগ হচ্ছে</td>
+            <td class="small">—</td>
+            <td><span class="badge b-green">ভালো</span></td>
+          </tr>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ 23. RISK REGISTER ============ -->
+    <section id="risks">
+      <h2><span class="num">23</span> Risk Register</h2>
+      <div class="tblwrap">
+        <table>
+          <tr>
+            <th>ID</th>
+            <th>রিস্ক</th>
+            <th>সম্ভাবনা</th>
+            <th>প্রভাব</th>
+            <th>Priority</th>
+            <th>Mitigation</th>
+          </tr>
+          <tr>
+            <td>R1</td>
+            <td class="small">Refund/claim-এ partial write → টাকার হিসাবে অমিল</td>
+            <td>—</td>
+            <td>—</td>
+            <td><span class="badge b-green">CLOSED</span></td>
+            <td class="small">FIXED — refund, claim-reject, payment-verify সব atomic multi-CTE; nightly sweep backstop</td>
+          </tr>
+          <tr>
+            <td>R2</td>
+            <td class="small">ফি ছাড়া challenge accept</td>
+            <td>—</td>
+            <td>—</td>
+            <td><span class="badge b-green">CLOSED</span></td>
+            <td class="small">FIXED — charge+insert এক batch-এ; accept-এ fee-liveness guard claim UPDATE-এর ভেতরে</td>
+          </tr>
+          <tr>
+            <td>R3</td>
+            <td class="small">bKash allowlist misconfig</td>
+            <td>—</td>
+            <td>—</td>
+            <td><span class="badge b-green">N/A</span></td>
+            <td class="small">bKash Tokenized API intake সরানো হয়েছে — এখন manual Send Money, allowlist প্রাসঙ্গিক নয়</td>
+          </tr>
+          <tr>
+            <td>R4</td>
+            <td class="small">Payout চালু না থাকায় owner আসলে টাকা পায় না</td>
+            <td>কম</td>
+            <td>উচ্চ (ব্যবসায়িক)</td>
+            <td><span class="badge b-yellow">P2</span></td>
+            <td class="small">lifecycle আগেই ছিল; এখন period unique index + audit log + <code>/admin/payments</code>-এ
+              panel — বাকি শুধু পরিচালন গোছানো</td>
+          </tr>
+          <tr>
+            <td>R5</td>
+            <td class="small">Inngest outage-এ slot স্থায়ীভাবে lock</td>
+            <td>—</td>
+            <td>—</td>
+            <td><span class="badge b-green">CLOSED</span></td>
+            <td class="small">FIXED — hold expiry এখন slot release + booking expire + submission auto-reject করে</td>
+          </tr>
+          <tr>
+            <td>R6</td>
+            <td class="small">Duplicate invite/claim/payout row</td>
+            <td>—</td>
+            <td>—</td>
+            <td><span class="badge b-green">CLOSED</span></td>
+            <td class="small">FIXED — পাঁচটা partial unique index + TxID anti-reuse index</td>
+          </tr>
+          <tr>
+            <td>R7</td>
+            <td class="small">no-show/overlap → ম্যাচ ভাঙে</td>
+            <td>উচ্চ (স্বাভাবিকভাবেই ঘটবে)</td>
+            <td>মাঝারি</td>
+            <td><span class="badge b-yellow">P2</span></td>
+            <td class="small">overlap warning + no-show flow</td>
+          </tr>
+          <tr>
+            <td>R8</td>
+            <td class="small">Audit trail না থাকায় dispute-এ প্রমাণ নেই</td>
+            <td>—</td>
+            <td>—</td>
+            <td><span class="badge b-green">CLOSED</span></td>
+            <td class="small">FIXED — refund, claim decision, payment verify/reject, suspension, dispute, payout — সব
+              <code>audit_logs</code>-এ</td>
+          </tr>
+          <tr>
+            <td>R9</td>
+            <td class="small">Manual verification-এর মানুষ-ভুল (ভুল TxID approve, amount mismatch)</td>
+            <td>মাঝারি</td>
+            <td>উচ্চ</td>
+            <td><span class="badge b-orange">P1 — নতুন (manual model)</span></td>
+            <td class="small">admin UI-তে expected amount বড় করে + mismatch hint; amount edit নেই — mismatch মানে reject;
+              প্রতিটা সিদ্ধান্ত audit_logs-এ</td>
+          </tr>
+          <tr>
+            <td>R10</td>
+            <td class="small">Verification latency — booking-এর hold (৩ ঘণ্টা) শেষ হয়ে যাওয়া</td>
+            <td>মাঝারি</td>
+            <td>মাঝারি</td>
+            <td><span class="badge b-yellow">P2 — নতুন (manual model)</span></td>
+            <td class="small">hold expiry-তে submission auto-reject + TxID মুক্ত — user resubmit করতে পারে; admin queue
+              stale submission sweep করে</td>
+          </tr>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ 24. RECOMMENDATIONS ============ -->
+    <section id="recs">
+      <h2><span class="num">24</span> Recommended Improvements</h2>
+      <h3>Immediate (Launch-এর আগে)</h3>
+      <div class="tblwrap">
+        <table>
+          <tr>
+            <th>সুপারিশ</th>
+            <th>Solution sketch</th>
+            <th>Priority</th>
+          </tr>
+          <tr>
+            <td class="small"><code>executeRefund</code> আর claim-reject এক atomic statement/batch-এ নেওয়া</td>
+            <td class="small">create/claim-এর মতো multi-CTE বা <code>db.batch</code>; সাথে nightly reconciliation query
+            </td>
+            <td><span class="badge b-green">DONE</span></td>
+          </tr>
+          <tr>
+            <td class="small">Challenge fee: accept-এ re-verify + charge/insert এক batch-এ</td>
+            <td class="small">fee entry-র pending/live status check; না থাকলে re-debit বা reject</td>
+            <td><span class="badge b-green">DONE</span></td>
+          </tr>
+          <tr>
+            <td class="small">Prod hardening: bKash allowlist assertion, mock route ownership check</td>
+            <td class="small">boot-এ env assertion; mock-এ session + ref ownership</td>
+            <td><span class="badge b-green">N/A — API intake সরানো হয়েছে</span></td>
+          </tr>
+          <tr>
+            <td class="small">Partial unique index ×5 (invite ×2, claim, payout, report)</td>
+            <td class="small">নতুন migration; কোডবেসে ইতোমধ্যে প্রমাণিত pattern</td>
+            <td><span class="badge b-green">DONE</span></td>
+          </tr>
+          <tr>
+            <td class="small">Manual bKash Send Money + Admin Verification Center (<code>/admin/payments</code>)</td>
+            <td class="small">product decision — <code>payment_submissions</code> + TxID anti-reuse + audit trail</td>
+            <td><span class="badge b-green">DONE</span></td>
+          </tr>
+        </table>
+      </div>
+      <h3>Short Term (Launch-এর পরেই)</h3>
+      <div class="tblwrap">
+        <table>
+          <tr>
+            <th>সুপারিশ</th>
+            <th>কেন</th>
+            <th>Priority</th>
+          </tr>
+          <tr>
+            <td class="small">Payout cron + admin payouts UI + paid-notification</td>
+            <td class="small">owner-কে টাকা পৌঁছে দেওয়াই ব্যবসার মূল প্রতিশ্রুতি</td>
+            <td><span class="badge b-green">PARTIAL — panel + audit + index; operations গোছাতে হবে</span></td>
+          </tr>
+          <tr>
+            <td class="small">Hold/payment_pending backstop sweep</td>
+            <td class="small">slot স্থায়ীভাবে lock হয়ে যাওয়া ঠেকানো</td>
+            <td><span class="badge b-green">DONE</span></td>
+          </tr>
+          <tr>
+            <td class="small">cancelMatch-এ kickoff gate + late-cancel policy</td>
+            <td class="small">turf owner-এর ন্যায্যতা রক্ষা</td>
+            <td><span class="badge b-yellow">P2</span></td>
+          </tr>
+          <tr>
+            <td class="small">Admin audit log + missing notification-গুলো (refund, suspension, report)</td>
+            <td class="small">দায়বদ্ধতা আর user-এর আস্থা</td>
+            <td><span class="badge b-yellow">P2</span></td>
+          </tr>
+          <tr>
+            <td class="small">rebook_contingent clawback, নয়তো policy-টা বাদ</td>
+            <td class="small">refund নীতিতে স্বচ্ছতা</td>
+            <td><span class="badge b-yellow">P2</span></td>
+          </tr>
+        </table>
+      </div>
+      <h3>Medium Term</h3>
+      <ul class="small">
+        <li>Matchmaking scoring: squad-size compatibility + skill band + time-window overlap দিয়ে "suggested
+          opponents/players" — বর্তমান listing-কে আসল matching-এ নেওয়া</li>
+        <li>Reschedule flow (same-turf slot swap, policy-aware) আর no-show flag</li>
+        <li>Platform config table (fee %, cap, match fee, cutoff) + admin settings</li>
+        <li>Friendship canonical ordering migration (a_id &lt; b_id)</li>
+        <li>Rate limiting coverage: topup/claim/match-create/invite/report + Redis missing থাকলে fail-closed policy</li>
+      </ul>
+      <h3>Future</h3>
+      <ul class="small">
+        <li>OTP/SMS + push notification (Post-MVP পরিকল্পনায় আছে)</li>
+        <li>Match dispute-এর জন্য evidence upload, completion-এর পরে ratings/reviews</li>
+        <li>Auto opponent-matching queue (নিজের time-window declare করে অপেক্ষা করা)</li>
+        <li>Multi-owner turf (<code>turf_owners</code> M:N চালু করা) আর staff RBAC সম্প্রসারণ</li>
+      </ul>
+    </section>
+
+    <!-- ============ 25. DECISIONS ============ -->
+    <section id="decisions">
+      <h2><span class="num">25</span> Product Decisions Required</h2>
+      <div class="tblwrap">
+        <table>
+          <tr>
+            <th>প্রশ্ন</th>
+            <th>বিকল্প</th>
+            <th>প্রভাব</th>
+          </tr>
+          <tr>
+            <td><b>এক প্লেয়ার কি overlapping match-এ rostered থাকতে পারবে?</b></td>
+            <td class="small">(a) hard block (b) warning + captain-কে জানানো (c) উন্মুক্ত</td>
+            <td class="small">(a) সবচেয়ে নিরাপদ কিন্তু বেশি বাধা; (c) হলে no-show স্বাভাবিক হয়ে যাবে</td>
+          </tr>
+          <tr>
+            <td><b>Completed ম্যাচের ৳25 কি ফেরতযোগ্য?</b></td>
+            <td class="small">এখন platform রেখে দেয়</td>
+            <td class="small">partial credit ভাবা যায়, তবে revenue model-এ প্রভাব পড়বে</td>
+          </tr>
+          <tr>
+            <td><b>Owner-এর booking manually accept/reject করা দরকার কি?</b></td>
+            <td class="small">এখন payment-driven auto-confirm</td>
+            <td class="small">manual gate মানে booking funnel ধীর হবে; auto-ই সম্ভবত ঠিক — সিদ্ধান্তটা ডকুমেন্ট করে
+              রাখুন</td>
+          </tr>
+          <tr>
+            <td><b>Match cancel-এর সময়সীমা কত?</b></td>
+            <td class="small">kickoff-এর আগে কত ঘণ্টা? late-cancel-এ কত কাটবে?</td>
+            <td class="small">booking cancellation policy-র সাথে align করতে হবে</td>
+          </tr>
+          <tr>
+            <td><b>No-show কে declare করবে, ফলাফল কী হবে?</b></td>
+            <td class="small">owner? opponent captain? admin? — refund/score কী হবে?</td>
+            <td class="small">এখন কোনো ব্যবস্থাই নেই; kickoff-এ সব auto-completed</td>
+          </tr>
+          <tr>
+            <td><b>Skill/position কি matching-এ ব্যবহার হবে?</b></td>
+            <td class="small">শুধু filter, নাকি scoring-ও</td>
+            <td class="small">scoring করলে "skill band" define করতে হবে, আর self-rating কতটা বিশ্বাসযোগ্য সেটাও প্রশ্ন
+            </td>
+          </tr>
+          <tr>
+            <td><b>Team-এর capacity limit হবে কি?</b></td>
+            <td class="small">এখন unlimited; match squad-এর spotsLeft আলাদা</td>
+            <td class="small">ভবিষ্যতে leaderboard/rating হলে roster limit দরকার হতে পারে</td>
+          </tr>
+          <tr>
+            <td><b><code>roster_building/ready</code> state রাখা হবে?</b></td>
+            <td class="small">implement করা, নাকি enum থেকে বাদ</td>
+            <td class="small">roster lock আর fee-র ধাপের ভিত্তি তৈরি করে</td>
+          </tr>
+          <tr>
+            <td><b>Platform fee config কোথায় থাকবে?</b></td>
+            <td class="small">hardcoded (এখন) নাকি DB config + admin UI</td>
+            <td class="small">দ্রুত পরিবর্তন বনাম নমনীয়তা</td>
+          </tr>
+          <tr>
+            <td><b>Match room-এর কোন তথ্য anonymous অবস্থায় দেখা যাবে?</b></td>
+            <td class="small">roster/phone level review</td>
+            <td class="small">privacy বনাম discoverability</td>
+          </tr>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ 26. ROADMAP ============ -->
+    <section id="roadmap">
+      <h2><span class="num">26</span> Implementation Priority Roadmap</h2>
+      <div class="flow">
+        <div class="fstep" style="border-left:4px solid var(--green)"><b>ধাপ ০ — Launch blocker</b><span
+            class="small muted">G-1, G-2, G-3 (money atomicity + fee gap) · prod payment hardening · ৫টা unique
+            index · manual bKash Send Money + Admin Verification Center</span><span class="badge
+            b-green">DONE (re-audit)</span></div>
+        <div class="farrow">↓</div>
+        <div class="fstep" style="border-left:4px solid var(--orange)"><b>ধাপ ১ — ব্যবসা চালু করা</b><span
+            class="small muted">Payout lifecycle · hold/pending backstop sweep · admin audit log · missing
+            notification-গুলো</span><span class="badge b-green">বেশিরভাগ DONE — payout operations বাকি</span></div>
+        <div class="farrow">↓</div>
+        <div class="fstep" style="border-left:4px solid var(--yellow)"><b>ধাপ ২ — আস্থার যোগ্যতা</b><span
+            class="small muted">kickoff gate · reschedule/no-show · clawback সিদ্ধান্ত · overlap policy</span><span
+            class="badge b-yellow">P2</span></div>
+        <div class="farrow">↓</div>
+        <div class="fstep" style="border-left:4px solid var(--blue)"><b>ধাপ ৩ — প্রতিযোগিতামূলক সুবিধা</b><span
+            class="small muted">Matchmaking scoring · config table · auto-match queue · ratings</span><span
+            class="badge b-blue">P2/P3</span></div>
+      </div>
+    </section>
+
+    <!-- ============ 27. SCORECARD ============ -->
+    <section id="scorecard">
+      <h2><span class="num">27</span> Business Readiness Scorecard</h2>
+      <div class="tblwrap">
+        <table>
+          <tr>
+            <th>Area</th>
+            <th>Score</th>
+            <th></th>
+            <th>যুক্তি</th>
+          </tr>
+          <tr>
+            <td>Authentication</td>
+            <td><b>8.5</b>/10</td>
+            <td>
+              <div class="scorebar">
+                <div style="width:85%;background:var(--green)"></div>
+              </div>
+            </td>
+            <td class="small">NextAuth v5 + OTP + owner-code, প্রতি request-এ DB থেকে fresh role, rate-limited — JWT
+              role staleness সামলানো।</td>
+          </tr>
+          <tr>
+            <td>Authorization</td>
+            <td><b>8</b>/10</td>
+            <td>
+              <div class="scorebar">
+                <div style="width:80%;background:var(--green)"></div>
+              </div>
+            </td>
+            <td class="small">capability system + প্রতিটি action-এ check; কিন্তু admin read query আর ERP export-এ
+              defense-in-depth দুর্বল।</td>
+          </tr>
+          <tr>
+            <td>Turf Management</td>
+            <td><b>8.5</b>/10</td>
+            <td>
+              <div class="scorebar">
+                <div style="width:85%;background:var(--green)"></div>
+              </div>
+            </td>
+            <td class="small">slot engine অসাধারণ; claim funnel পরিণত; multi-owner table dormant।</td>
+          </tr>
+          <tr>
+            <td>Booking</td>
+            <td><b>8</b>/10</td>
+            <td>
+              <div class="scorebar">
+                <div style="width:80%;background:var(--green)"></div>
+              </div>
+            </td>
+            <td class="small">double-booking অসম্ভব, price server-authoritative; reschedule/no-show নেই, clawback
+              অসম্পূর্ণ।</td>
+          </tr>
+          <tr>
+            <td>Matchmaking</td>
+            <td><b>6.5</b>/10</td>
+            <td>
+              <div class="scorebar">
+                <div style="width:65%;background:var(--yellow)"></div>
+              </div>
+            </td>
+            <td class="small">mechanics (fee/seat/claim) চমৎকার, কিন্তু discovery এখনো শুধু listing —
+              skill/scoring/suggestion কিছুই নেই।</td>
+          </tr>
+          <tr>
+            <td>Team Management</td>
+            <td><b>7.5</b>/10</td>
+            <td>
+              <div class="scorebar">
+                <div style="width:75%;background:var(--green)"></div>
+              </div>
+            </td>
+            <td class="small">roles/transfer ঠিক আছে; কিন্তু dup-invite constraint, capacity limit, transfer race guard
+              — সবই দুর্বল।</td>
+          </tr>
+          <tr>
+            <td>Player Management</td>
+            <td><b>7.5</b>/10</td>
+            <td>
+              <div class="scorebar">
+                <div style="width:75%;background:var(--green)"></div>
+              </div>
+            </td>
+            <td class="small">DT-ID/friends/blocks শক্ত; কিন্তু overlap control নেই, role semantics-ও অসঙ্গত।</td>
+          </tr>
+          <tr>
+            <td>Payment</td>
+            <td><b>8.5</b>/10</td>
+            <td>
+              <div class="scorebar">
+                <div style="width:85%;background:var(--green)"></div>
+              </div>
+            </td>
+            <td class="small">Manual bKash + admin verification center চালু; তিনটা P0 atomicity বাগ fixed, TxID
+              anti-reuse index — মানুষ-নির্ভর verify-র latency-ই এখন প্রধান trade-off।</td>
+          </tr>
+          <tr>
+            <td>Financial Logic</td>
+            <td><b>8.5</b>/10</td>
+            <td>
+              <div class="scorebar">
+                <div style="width:85%;background:var(--green)"></div>
+              </div>
+            </td>
+            <td class="small">প্রতিটা টাকা admin-verified; refund/claim-reject/payment-verify সব atomic CTE; payout panel
+              + audit — বাকি শুধু পরিচালন গোছানো আর clawback সিদ্ধান্ত।</td>
+          </tr>
+          <tr>
+            <td>Admin</td>
+            <td><b>8</b>/10</td>
+            <td>
+              <div class="scorebar">
+                <div style="width:80%;background:var(--green)"></div>
+              </div>
+            </td>
+            <td class="small">Payment Verification Center + <code>audit_logs</code> wired (refund, claim, suspension,
+              dispute, payout); read query-তে defense-in-depth আর wallet correction এখনো বাকি।</td>
+          </tr>
+          <tr>
+            <td>Notifications</td>
+            <td><b>7</b>/10</td>
+            <td>
+              <div class="scorebar">
+                <div style="width:70%;background:var(--green)"></div>
+              </div>
+            </td>
+            <td class="small">৩১ type + Pusher আছে; কিন্তু expiry/refund/suspension-এর মতো গুরুত্বপূর্ণ event-এ নীরব।
+            </td>
+          </tr>
+          <tr>
+            <td>Database Integrity</td>
+            <td><b>9</b>/10</td>
+            <td>
+              <div class="scorebar">
+                <div style="width:90%;background:var(--green)"></div>
+              </div>
+            </td>
+            <td class="small">money RESTRICT, EXCLUDE, partial unique — চমৎকার; re-audit-এ ৫+ table-এর constraint ঘাটতি
+              পূরণ হয়েছে + TxID anti-reuse index।</td>
+          </tr>
+          <tr>
+            <td>UX Flow</td>
+            <td><b>7.5</b>/10</td>
+            <td>
+              <div class="scorebar">
+                <div style="width:75%;background:var(--green)"></div>
+              </div>
+            </td>
+            <td class="small">loader policy consistent, i18n parity-tested; কিন্তু silent expiry আর
+              discovery-expectation gap আছে।</td>
+          </tr>
+          <tr>
+            <td>Mobile UX</td>
+            <td><b>7.5</b>/10</td>
+            <td>
+              <div class="scorebar">
+                <div style="width:75%;background:var(--green)"></div>
+              </div>
+            </td>
+            <td class="small">mobile-first নীতি আর হালকা payload; server-rendered flow-গুলো mobile-friendly।</td>
+          </tr>
+          <tr>
+            <td><b>Overall Business Readiness</b></td>
+            <td><b>8.3</b>/10</td>
+            <td>
+              <div class="scorebar">
+                <div style="width:83%;background:var(--green)"></div>
+              </div>
+            </td>
+            <td class="small"><b>Re-audit: টাকার প্রতিটা পথ এখন admin-verified ও atomic — তিনটা P0 fixed, audit trail
+                চালু। Manual verification-এর মানুষ-নির্ভর latency-ই এখন প্রধান trade-off; matchmaking scoring এখনো
+                listing।</b></td>
+          </tr>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ 28. CONCLUSION ============ -->
+    <section id="conclusion">
+      <h2><span class="num">28</span> Final Conclusion</h2>
+      <p><b>প্রশ্নটা ছিল:</b> DeshiTurf বাস্তবে একটা football turf marketplace আর matchmaking platform হিসেবে কীভাবে কাজ
+        করার কথা, এবং বর্তমান implementation কি সেই business logic-টা শুরু থেকে শেষ পর্যন্ত ঠিকমতো implement করেছে?</p>
+      <p><b>উত্তর:</b> মূল লেনদেনের লুপ — turf publish → slot → hold → pay → confirm → play → settle → ERP — <b>সত্যিই
+          শক্তভাবে</b> বানানো হয়েছে। double-booking তিন স্তরে অসম্ভব, price কখনো client-কে trust করা হয় না, wallet-এর
+        প্রতিটি movement এক statement-এ idempotent, আর RBAC server-authoritative। সাধারণত যে মানের কাজ দেখা যায়, এটা
+        তার অনেক ওপরে।</p>
+      <p>কিন্তু ব্যবসা হিসেবে পুরো চক্রটা এখনো <b>অসম্পূর্ণ</b>: (১) জমা হওয়া টাকা owner-এর হাতে পৌঁছানোর ব্যবস্থা
+        (payout) এখনো বানানোই হয়নি; (২) টাকার তিনটা পথ (admin refund, challenge fee, claim reject) non-atomic — মাঝপথে
+        crash হলে হিসাবে অমিল হয়; (৩) "matchmaking" নামে যে বুদ্ধিমান matching বোঝায়, তা এখনো শুধু listing-এ নামিয়ে
+        আনা; (৪) বাস্তব জগতের ঘটনা — reschedule, no-show, overlap, dispute-এর পরে জানানো — কোনোটাই modeled নয়।</p>
+      <p><b>রায়:</b> তিনটা P0 ঠিক করে, payout চালু করে, আর ৫টা unique index বসালে platform-টা নিশ্চিন্তে চালু করা যায়।
+        এরপরের প্রতিযোগিতামূলক লাফটা হবে matchmaking-কে আসলের matching বানানো।</p>
+      <div class="finding" style="border-left-color:var(--green)">
+        <div class="fhead"><span class="ftitle">RE-AUDIT রায় (২০২৬-০৯-০৩) — manual payment architecture সহ</span><span
+            class="badge b-green">READY</span></div>
+        <div class="bn">মূল রায়ের শর্তগুলো পূরণ হয়ে গেছে, তার ওপরে product owner-এর নতুন নিয়ম অনুযায়ী পুরো money
+          intake বদলে গেছে: <b>Payment Evidence Submitted → Admin Verification → consumed → Business Action</b> —
+          submit করা মানেই verified নয়, আর verified মানেই applied (এক statement)। তিনটা P0 এখন atomic CTE-তে, ৫টা
+          partial unique index বসেছে, প্রতিটা admin money action <code>audit_logs</code>-এ যায়, payout panel
+          <code>/admin/payments</code>-এ। নতুন বাস্তবতা: booking confirm এখন manual verify-র গতির ওপর নির্ভর করে (hold ৩
+          ঘণ্টা), আর admin-এর review capacity-ই এখন ব্যবসার throughput — এটাই এই মডেলের জানা trade-off। Score: 7.4 →
+          <b>8.3</b>।</div>
+      </div>
+      <p class="muted small">Audit scope: repository <code>main@25f1416</code>, ২০২৬-০৯-০৩। Re-audit: manual bKash Send
+        Money architecture + P0 fixes implemented (৫২৮ test pass, build clean)। সব finding code evidence-ভিত্তিক।</p>
+    </section>
+
+  </main>
+  <script>
+    document.getElementById('menuBtn').addEventListener('click', () => document.getElementById('sidebar').classList.toggle('open'));
+    const links = [...document.querySelectorAll('nav.sidebar a')];
+    const obs = new IntersectionObserver(es => { es.forEach(e => { if (e.isIntersecting) { links.forEach(l => l.classList.toggle('active', l.getAttribute('href') === '#' + e.target.id)); } }) }, { rootMargin: '-80px 0px -70% 0px' });
+    document.querySelectorAll('section[id]').forEach(s => obs.observe(s));
+  </script>
+</body>
+
+</html>

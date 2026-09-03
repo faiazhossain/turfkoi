@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm"
 import { pgTable, uuid, timestamp, integer, text, index, uniqueIndex, primaryKey } from "drizzle-orm/pg-core"
 
 import {
@@ -229,6 +230,14 @@ export const matchInvitations = pgTable(
     index("match_invitations_match_idx").on(t.matchId),
     index("match_invitations_invitee_idx").on(t.inviteeUserId),
     index("match_invitations_phone_idx").on(t.inviteePhone),
+    // One PENDING invite per (match, side, invitee) — the app-level pre-check
+    // is best-effort; these partial uniques make concurrent dupes impossible.
+    uniqueIndex("match_invitations_user_pending")
+      .on(t.matchId, t.side, t.inviteeUserId)
+      .where(sql`status = 'pending' AND invitee_user_id IS NOT NULL`),
+    uniqueIndex("match_invitations_phone_pending")
+      .on(t.matchId, t.side, t.inviteePhone)
+      .where(sql`status = 'pending' AND invitee_phone IS NOT NULL`),
   ]
 )
 

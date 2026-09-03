@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm"
 import {
   pgTable,
   uuid,
@@ -5,6 +6,7 @@ import {
   timestamp,
   jsonb,
   index,
+  uniqueIndex,
 } from "drizzle-orm/pg-core"
 
 import { reportStatus } from "./enums"
@@ -76,4 +78,10 @@ export const reports = pgTable("reports", {
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .defaultNow()
     .notNull(),
-})
+}, (t) => [
+  // One OPEN report per (reporter, entity) — blocks spam re-reports while a
+  // report is still pending; re-reporting after resolution stays possible.
+  uniqueIndex("reports_reporter_entity_pending")
+    .on(t.reporterId, t.entityType, t.entityId)
+    .where(sql`status = 'pending'`),
+])

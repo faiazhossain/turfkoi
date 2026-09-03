@@ -96,14 +96,13 @@ vi.mock("@/lib/logger", () => ({
 }))
 
 // bookings/actions.ts pulls these in; none may run at import time in tests.
-vi.mock("@/lib/payment", () => ({ bkashProvider: {} }))
 vi.mock("@/lib/inngest", () => ({
   scheduleHoldExpiry: vi.fn(async () => {}),
   scheduleSettleAtKickoff: vi.fn(async () => {}),
-  SLOT_HOLD_TTL_MS: 300_000,
 }))
 vi.mock("@/features/notifications/create", () => ({
   createNotifications: vi.fn(async () => {}),
+  notifyAdmins: vi.fn(async () => {}),
 }))
 
 import { setTurfActiveAction, unverifyTurfAction, deleteTurfAction } from "../actions"

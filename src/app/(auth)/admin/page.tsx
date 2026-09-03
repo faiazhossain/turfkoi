@@ -4,7 +4,6 @@ import { AlertTriangleIcon, ShieldAlertIcon } from "lucide-react"
 
 import { EmptyState } from "@/components/shared"
 import { KpiTile } from "@/components/turfs"
-import { PayoutsPanel } from "@/components/bookings/payouts-panel"
 import { getAdminKPIs, listDisputedMatches, listRefundRequests, listReports } from "@/features/admin/queries"
 import { getT } from "@/i18n/server"
 import { buildMetadata } from "@/i18n/metadata"
@@ -20,26 +19,12 @@ function fmtBdt(n: number) {
 export default async function AdminOverviewPage() {
   const t = await getT()
 
-  // This week's payout window (Mon–Sun, UTC date strings).
-  const now = new Date()
-  const day = now.getUTCDay()
-  const mondayOffset = day === 0 ? 6 : day - 1
-  const periodEnd = now.toISOString().slice(0, 10)
-  const periodStart = new Date(now.getTime() - mondayOffset * 86400000)
-    .toISOString()
-    .slice(0, 10)
-
   const [kpis, disputes, pendingRefunds, openReports] = await Promise.all([
     getAdminKPIs(),
     listDisputedMatches(),
     listRefundRequests({ status: "pending", limit: 5 }),
     listReports({ limit: 5 }),
   ])
-
-  // Payouts list is fetched inside PayoutsPanel's props via listAllPayouts there
-  // — keep using the existing import path so the Phase 3 surface stays intact.
-  const { listAllPayouts } = await import("@/features/bookings/queries")
-  const payouts = await listAllPayouts(30)
 
   return (
     <div className="space-y-8">
@@ -141,12 +126,6 @@ export default async function AdminOverviewPage() {
           </ul>
         </section>
       )}
-
-      <PayoutsPanel
-        payouts={payouts}
-        periodStart={periodStart}
-        periodEnd={periodEnd}
-      />
 
       {kpis.totalTurfs === 0 && kpis.totalUsers === 0 ? (
         <EmptyState
