@@ -8,6 +8,7 @@ import { FeeBreakdown } from "@/components/bookings/fee-breakdown"
 import { BookingActions } from "@/components/bookings/booking-actions"
 import { CreateMatchButton } from "@/components/bookings/create-match-button"
 import { PaymentSubmissionForm } from "@/components/payments/payment-submission-form"
+import { DevVerifyButton } from "@/components/payments/dev-verify-button"
 import { getBooking } from "@/features/bookings/queries"
 import { getBookingPaymentSubmission } from "@/features/payments/queries"
 import { db } from "@/db"
@@ -61,38 +62,52 @@ export default async function BookingDetailPage({ params }: PageProps) {
 
   const { booking: b, turf, transaction } = booking
 
-  // Recover the breakdown from the transaction if present (immutable platformFee),
-  // otherwise compute from the slot price on the fly (held state, pre-payment).
-  const turfAmount = transaction
-    ? Number(transaction.amount) - Number(transaction.platformFee)
-    : Number(b.totalAmount ?? 0) / 1.05 // pre-payment approximation
-  const platformFee = transaction
-    ? Number(transaction.platformFee)
-    : Number(b.totalAmount ?? 0) - turfAmount
-  const total = Number(b.totalAmount ?? computeFees(turfAmount).total)
-
-  const fmt = (time: string) => time.slice(0, 5)
-  const tone = STATUS_TONE[b.status] ?? "neutral"
-
   // Manual bKash intake: the authoritative expected amount comes from the
   // slot price (server recompute), and the latest submission drives the banner.
   const awaitingPayment = b.status === "held" || b.status === "payment_pending"
   const submission = awaitingPayment ? await getBookingPaymentSubmission(b.id) : null
-  let expectedTotal = Math.round(total)
-  if (awaitingPayment) {
-    const [slot] = await db
-      .select({ price: turfSlots.price })
-      .from(turfSlots)
-      .where(
-        and(
-          eq(turfSlots.turfId, b.turfId),
-          eq(turfSlots.date, b.date),
-          eq(turfSlots.startTime, b.slotStart)
+  const [slot] = awaitingPayment
+    ? await db
+        .select({ price: turfSlots.price })
+        .from(turfSlots)
+        .where(
+          and(
+            eq(turfSlots.turfId, b.turfId),
+            eq(turfSlots.date, b.date),
+            eq(turfSlots.startTime, b.slotStart)
+          )
         )
-      )
-      .limit(1)
-    if (slot) expectedTotal = computeFees(Number(slot.price)).total
+        .limit(1)
+    : []
+
+  // Fee breakdown — never approximate: the platform fee is 5% of the BASE
+  // price capped at ৳100, so a `total / 1.05` split is wrong the moment the
+  // cap applies (e.g. ৳3,000 turf shows 2,952 + 148 instead of 3,000 + 100).
+  // 1. A confirmed payment: the transaction row is exact (immutable fee).
+  // 2. Pre-payment: recompute from the slot price — identical to what the
+  //    payment submission and the verify CTE charge.
+  let turfAmount: number
+  let platformFee: number
+  let total: number
+  if (transaction) {
+    turfAmount = Number(transaction.amount) - Number(transaction.platformFee)
+    platformFee = Number(transaction.platformFee)
+    total = Number(transaction.amount)
+  } else if (slot) {
+    const fees = computeFees(Number(slot.price))
+    turfAmount = fees.turfAmount
+    platformFee = fees.platformFee
+    total = fees.total
+  } else {
+    // Degenerate fallback (slot row gone): show the stored total as-is.
+    turfAmount = Number(b.totalAmount ?? 0)
+    platformFee = 0
+    total = Number(b.totalAmount ?? 0)
   }
+
+  const fmt = (time: string) => time.slice(0, 5)
+  const tone = STATUS_TONE[b.status] ?? "neutral"
+  const expectedTotal = Math.round(total)
 
   // Labels resolve from the typed key maps (unknown enum values fail typecheck).
   const statusText = t(bookingStatusLabel(b.status))
@@ -160,8 +175,9 @@ export default async function BookingDetailPage({ params }: PageProps) {
 
       {awaitingPayment && user.id === b.bookerId ? (
         submission?.status === "pending" ? (
-          <div className="rounded-lg border border-warning/40 bg-warning/10 p-3 text-sm text-warning">
-            {t("payments.pendingBanner")}
+          <div className="flex flex-wrap items-center gap-2 rounded-lg border border-warning/40 bg-warning/10 p-3 text-sm text-warning">
+            <span>{t("payments.pendingBanner")}</span>
+            <DevVerifyButton submissionId={submission.id} />
           </div>
         ) : (
           <>

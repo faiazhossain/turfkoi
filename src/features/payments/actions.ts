@@ -108,10 +108,23 @@ export async function reviewPaymentSubmissionAction(
   }
 
   // ---- VERIFY ----
+  return applyVerify(sub, admin.id)
+}
+
+/**
+ * Shared verify pipeline: consumes the submission AND applies the business
+ * effect (wallet credit / booking confirm) atomically, then notifications +
+ * audit + revalidation. Used by the admin review action and the dev-only
+ * instant verify. `actorId` is whoever triggered the verification.
+ */
+async function applyVerify(
+  sub: typeof paymentSubmissions.$inferSelect,
+  actorId: string
+): Promise<PaymentActionResult> {
   if (sub.purpose === "wallet_topup") {
     const applied = await verifyTopupSubmission({
       submissionId: sub.id,
-      adminId: admin.id,
+      adminId: actorId,
       payerId: sub.payerId,
     })
     if (!applied) return { ok: false, error: "payments.errors.alreadyHandled" }
@@ -127,7 +140,7 @@ export async function reviewPaymentSubmissionAction(
       [sub.payerId]
     ).catch(() => {})
     await logAudit({
-      actorId: admin.id,
+      actorId,
       action: "payment_submission.verified",
       resourceType: "payment_submission",
       resourceId: sub.id,
@@ -179,8 +192,8 @@ export async function reviewPaymentSubmissionAction(
       UPDATE payment_submissions
       SET status = 'consumed',
           consumed_at = now(),
-          consumed_by = ${admin.id}::uuid,
-          reviewed_by = ${admin.id}::uuid,
+          consumed_by = ${actorId}::uuid,
+          reviewed_by = ${actorId}::uuid,
           reviewed_at = now(),
           updated_at = now()
       WHERE id = ${sub.id}::uuid
@@ -263,7 +276,7 @@ export async function reviewPaymentSubmissionAction(
   ).catch(() => {})
 
   await logAudit({
-    actorId: admin.id,
+    actorId,
     action: "payment_submission.verified",
     resourceType: "payment_submission",
     resourceId: sub.id,
@@ -275,4 +288,36 @@ export async function reviewPaymentSubmissionAction(
   revalidatePath(`/bookings/${booking.bookingId}`)
   revalidatePath("/app")
   return { ok: true }
+}
+
+/**
+ * DEV-ONLY instant verify: skips the admin review wait so the full
+ * submission → verify → business-effect loop can be tested locally without
+ * a second (admin) account. Hard-refuses outside development, and only the
+ * payer themselves (or an admin) may trigger it. The code path is IDENTICAL
+ * to the admin verify — same CTE, same audit row.
+ */
+export async function devVerifyPaymentSubmissionAction(
+  submissionId: string
+): Promise<PaymentActionResult> {
+  if (process.env.NODE_ENV === "production") {
+    return { ok: false, error: "errors.notFound" }
+  }
+  const user = await getCurrentUser()
+  if (!user) return { ok: false, error: "errors.notSignedIn" }
+
+  const [sub] = await db
+    .select()
+    .from(paymentSubmissions)
+    .where(eq(paymentSubmissions.id, submissionId))
+    .limit(1)
+  if (!sub) return { ok: false, error: "payments.errors.notFound" }
+  if (sub.status !== "pending") {
+    return { ok: false, error: "payments.errors.alreadyHandled" }
+  }
+  if (sub.payerId !== user.id && !user.roles.includes("admin")) {
+    return { ok: false, error: "errors.noPermission" }
+  }
+
+  return applyVerify(sub, user.id)
 }

@@ -1872,6 +1872,8 @@ export const bn: Dictionary = {
     noteLabel: "নোট (ঐচ্ছিক)",
     submit: "ভেরিফিকেশনের জন্য জমা দিন",
     submittedToast: "পেমেন্ট জমা হয়েছে — admin শিগগিরই verify করবেন।",
+    devVerify: "Dev: সাথে সাথে verify",
+    devVerifiedToast: "পেমেন্ট সাথে সাথে verify হয়েছে (dev mode)।",
     pendingBanner: "পেমেন্ট জমা হয়েছে — admin ভেরিফিকেশনের অপেক্ষায় আছে।",
     rejectedBanner: "পেমেন্ট reject হয়েছে: {reason}",
     holdExpiryNote:

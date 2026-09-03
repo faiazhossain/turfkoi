@@ -1841,6 +1841,8 @@ export const en = {
     noteLabel: "Note (optional)",
     submit: "Submit for verification",
     submittedToast: "Payment submitted — an admin will verify it shortly.",
+    devVerify: "Dev: verify instantly",
+    devVerifiedToast: "Payment verified instantly (dev mode).",
     pendingBanner: "Payment submitted — waiting for admin verification.",
     rejectedBanner: "Payment rejected: {reason}",
     holdExpiryNote:

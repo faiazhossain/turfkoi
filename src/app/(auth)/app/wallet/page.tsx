@@ -9,6 +9,7 @@ import { getSession } from "@/lib/auth"
 import { formatBdt } from "@/lib/pricing"
 import { Button } from "@/components/ui/button"
 import { ClaimButton } from "@/components/wallet/claim-button"
+import { DevVerifyButton } from "@/components/payments/dev-verify-button"
 import {
   getWalletBalance,
   hasPendingWalletClaim,
@@ -98,7 +99,7 @@ export default async function WalletPage() {
                     {s.rejectReason ? ` · ${s.rejectReason}` : ""}
                   </p>
                 </div>
-                <div className="text-right">
+                <div className="flex flex-col items-end gap-1.5">
                   <p className="match-score tabular-nums font-bold">
                     {formatBdt(Number(s.amount))}
                   </p>
@@ -113,6 +114,9 @@ export default async function WalletPage() {
                   >
                     {t(`payments.status.${s.status}`)}
                   </p>
+                  {s.status === "pending" ? (
+                    <DevVerifyButton submissionId={s.id} />
+                  ) : null}
                 </div>
               </li>
             ))}
