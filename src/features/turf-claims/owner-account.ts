@@ -58,7 +58,7 @@ export async function findOrCreateOwnerByPhone(input: {
   if (existing) {
     await db
       .update(users)
-      .set({ passwordHash, updatedAt: new Date() })
+      .set({ passwordHash, passwordChangedAt: new Date(), updatedAt: new Date() })
       .where(eq(users.id, existing.id))
     return { userId: existing.id, phone, oneTimePassword }
   }

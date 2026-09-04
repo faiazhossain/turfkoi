@@ -1,9 +1,13 @@
 import NextAuth from "next-auth"
 import Credentials from "next-auth/providers/credentials"
 import bcrypt from "bcryptjs"
+import { eq } from "drizzle-orm"
 
+import { db } from "@/db"
+import { users } from "@/db/schema"
 import { authConfig } from "@/auth.config"
 import { resolveIdentifier } from "@/features/auth/identifier"
+import { isTokenStale } from "@/features/auth/token-staleness"
 import { getUserByIdentifier, getUserRoles } from "@/features/auth/users"
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -50,6 +54,23 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.phone = u.phone ?? null
         token.email = u.email ?? null
         token.roles = await getUserRoles(u.id)
+        return token
+      }
+      // Session eviction (token versioning): a token issued before the
+      // account's last password change is stripped of every claim, which
+      // cascades to "unauthenticated" (session() skips a token without id,
+      // getCurrentUser returns null, protected layouts redirect to /login).
+      // Costs one PK lookup per authenticated request - the same profile as
+      // the per-request getUserRoles read in getCurrentUser.
+      if (token.id) {
+        const [row] = await db
+          .select({ pwd: users.passwordChangedAt })
+          .from(users)
+          .where(eq(users.id, token.id))
+          .limit(1)
+        if (isTokenStale(token.iat, row?.pwd ?? null)) {
+          return {}
+        }
       }
       return token
     },

@@ -18,6 +18,9 @@ export const users = pgTable("users", {
   phone: text("phone").notNull().unique(),
   email: text("email").unique(),
   passwordHash: text("password_hash"),
+  // Session eviction: JWTs issued before this instant are invalid (checked in
+  // the jwt callback). NULL = password never changed since creation.
+  passwordChangedAt: timestamp("password_changed_at", { withTimezone: true }),
   emailVerifiedAt: timestamp("email_verified_at", { withTimezone: true }),
   name: text("name"),
   status: userStatus("status").notNull().default("active"),

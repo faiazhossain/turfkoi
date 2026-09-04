@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest"
 import bcrypt from "bcryptjs"
 
 import { resolveIdentifier } from "@/features/auth/identifier"
+import { isTokenStale } from "@/features/auth/token-staleness"
 import {
   registrationFormSchema,
   loginFormSchema,
@@ -105,5 +106,27 @@ describe("bcrypt roundtrip (login path)", () => {
     expect(hash).not.toBe("longenough1")
     expect(await bcrypt.compare("longenough1", hash)).toBe(true)
     expect(await bcrypt.compare("wrongpassword", hash)).toBe(false)
+  })
+})
+
+describe("isTokenStale (password-reset session eviction)", () => {
+  const iat = 1_700_000_000 // token issued at this epoch second
+  const before = new Date(iat * 1000 - 60_000) // password changed 1 min before issue
+  const after = new Date(iat * 1000 + 60_000) // password changed 1 min after issue
+
+  it("accepts any token when the password was never changed", () => {
+    expect(isTokenStale(iat, null)).toBe(false)
+  })
+
+  it("accepts a token issued after the password change", () => {
+    expect(isTokenStale(iat, before)).toBe(false)
+  })
+
+  it("rejects a token issued before the password change", () => {
+    expect(isTokenStale(iat, after)).toBe(true)
+  })
+
+  it("rejects a token with no iat once a password change exists", () => {
+    expect(isTokenStale(undefined, after)).toBe(true)
   })
 })

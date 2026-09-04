@@ -51,6 +51,7 @@ The foundations are genuinely good: capability-based authorization, Zod validati
 - Rate limiting (Upstash) on auth + bKash webhook; timing-safe webhook signature comparison.
 - bKash webhook: signature + IP allowlist + **idempotent** confirm action, so duplicate/forged/replayed webhooks collapse to no-ops (`src/app/api/payments/bkash/webhook/route.ts`).
 - bcrypt password hashing; OTP codes stored as SHA-256 hashes (not plaintext).
+- **Password-reset evicts existing sessions** (token versioning): `users.password_changed_at` is stamped on every password write; the `jwt` callback (`src/auth.ts`) strips tokens issued before that instant (`isTokenStale` in `src/features/auth/token-staleness.ts`), so a stolen session cookie dies with the password reset.
 - Dual-control approval for refunds > ৳5,000.
 - Image upload validation (format, size, authorization) with signed upload tokens.
 

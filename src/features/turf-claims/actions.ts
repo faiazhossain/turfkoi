@@ -367,7 +367,7 @@ export async function setClaimPasswordAction(
   const passwordHash = await bcrypt.hash(parsed.data.password, 10)
   await db
     .update(users)
-    .set({ passwordHash, updatedAt: new Date() })
+    .set({ passwordHash, passwordChangedAt: new Date(), updatedAt: new Date() })
     .where(eq(users.id, user.id))
   return { ok: true }
 }
@@ -387,7 +387,7 @@ export async function skipClaimPasswordAction(): Promise<
   const passwordHash = await bcrypt.hash(password, 10)
   await db
     .update(users)
-    .set({ passwordHash, updatedAt: new Date() })
+    .set({ passwordHash, passwordChangedAt: new Date(), updatedAt: new Date() })
     .where(eq(users.id, user.id))
   return { ok: true, password }
 }

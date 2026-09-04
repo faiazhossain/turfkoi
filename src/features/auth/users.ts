@@ -180,6 +180,6 @@ export async function updateUserPassword(
 ): Promise<void> {
   await db
     .update(users)
-    .set({ passwordHash, updatedAt: new Date() })
+    .set({ passwordHash, passwordChangedAt: new Date(), updatedAt: new Date() })
     .where(eq(users.id, userId))
 }
