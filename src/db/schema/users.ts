@@ -8,7 +8,7 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core"
 
-import { userStatus, userRole } from "./enums"
+import { userStatus, userAnonymizationStatus, userRole } from "./enums"
 import { geographyPoint } from "../geo"
 
 export const users = pgTable("users", {
@@ -21,6 +21,14 @@ export const users = pgTable("users", {
   // Session eviction: JWTs issued before this instant are invalid (checked in
   // the jwt callback). NULL = password never changed since creation.
   passwordChangedAt: timestamp("password_changed_at", { withTimezone: true }),
+  // Deletion pipeline: request -> status "deleted" + deletedAt + anonymizeAt
+  // (now + 14 days, when the Inngest hard-anonymization job fires and rewrites
+  // PII, then flips anonymizationStatus to "completed").
+  deletedAt: timestamp("deleted_at", { withTimezone: true }),
+  anonymizeAt: timestamp("anonymize_at", { withTimezone: true }),
+  anonymizationStatus: userAnonymizationStatus("anonymization_status")
+    .notNull()
+    .default("pending"),
   emailVerifiedAt: timestamp("email_verified_at", { withTimezone: true }),
   name: text("name"),
   status: userStatus("status").notNull().default("active"),

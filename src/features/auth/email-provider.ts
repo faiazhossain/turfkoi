@@ -2,6 +2,10 @@ import { Resend } from "resend"
 
 export interface EmailProvider {
   sendOtp(email: string, code: string): Promise<void>
+  /** Sent to an address that already has an account when someone tries to
+   * register with it — anti-enumeration: the API response never says the
+   * address is taken, the notice is what guides the real owner to sign in. */
+  sendAlreadyRegisteredNotice(email: string): Promise<void>
   sendTurfClaimInvite(
     email: string,
     turfName: string,
@@ -24,6 +28,13 @@ export const mockEmailProvider: EmailProvider = {
       return
     }
     throw new Error("[email] RESEND_API_KEY is not set - cannot send OTP")
+  },
+  async sendAlreadyRegisteredNotice(email) {
+    if (process.env.NODE_ENV !== "production") {
+      console.info(`[mock-email] already-registered notice for ${email}`)
+      return
+    }
+    throw new Error("[email] RESEND_API_KEY is not set - cannot send notice")
   },
   async sendTurfClaimInvite(email, turfName, claimUrl, expiresAt, otp) {
     if (process.env.NODE_ENV !== "production") {
@@ -55,6 +66,23 @@ function resendEmailProvider(): EmailProvider {
           `Your DeshiTurf code is ${code}.`,
           "It expires in 5 minutes.",
           "If you did not request it, you can ignore this email.",
+        ].join(" "),
+      })
+      if (error) {
+        throw new Error(`[email] resend send failed: ${error.message}`)
+      }
+    },
+    async sendAlreadyRegisteredNotice(email) {
+      const { error } = await client.emails.send({
+        from,
+        to: [email],
+        subject: "You already have a DeshiTurf account",
+        text: [
+          "Someone just tried to create a DeshiTurf account with this email,",
+          "but an account already exists for it.",
+          "If that was you, sign in at deshiturf.com/login or reset your password",
+          "at deshiturf.com/forgot-password.",
+          "If it wasn't you, you can ignore this email - your account is safe.",
         ].join(" "),
       })
       if (error) {

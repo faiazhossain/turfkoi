@@ -6,6 +6,13 @@ export const userStatus = pgEnum("user_status", [
   "suspended",
   "deleted",
 ])
+
+// Account deletion pipeline: after the 14-day anonymization job runs, the
+// account's PII rewrite is marked completed (skipped accounts stay pending).
+export const userAnonymizationStatus = pgEnum("user_anonymization_status", [
+  "pending",
+  "completed",
+])
 export const userRole = pgEnum("user_role", [
   "admin",
   "turf_owner",

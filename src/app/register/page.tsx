@@ -22,6 +22,7 @@ import { StatusBadge } from "@/components/shared"
 import { OwnerHelpButton } from "@/components/auth/owner-help-button"
 import { useI18n } from "@/i18n/client"
 import { reasonMessage } from "@/features/auth/reasons"
+import { formatLockCountdown, useOtpLock } from "@/features/auth/use-otp-lock"
 import {
   startRegistrationAction,
   verifyRegistrationAction,
@@ -55,11 +56,12 @@ const STEP2_KEYS: Record<string, string> = {
 
 export default function RegisterPage() {
   const router = useRouter()
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
   const [step, setStep] = useState<"details" | "code">("details")
   const [details, setDetails] = useState<RegistrationFormValues | null>(null)
   const [step1Error, setStep1Error] = useState<string | null>(null)
   const [step2Error, setStep2Error] = useState<string | null>(null)
+  const { locked, secondsLeft, start: startLock } = useOtpLock()
 
   const detailsForm = useForm<DetailsValues>({
     resolver: zodResolver(detailsSchema),
@@ -86,11 +88,20 @@ export default function RegisterPage() {
       setStep("code")
       return
     }
+    if (result.reason === "locked" && result.retryAfterSeconds) {
+      // The lockout lives on the email server-side; restarting the flow with
+      // the same address lands back here with the countdown still running.
+      setDetails(payload)
+      setStep("code")
+      startLock(result.retryAfterSeconds)
+      return
+    }
     setStep1Error(reasonMessage(t, result.reason))
   }
 
   async function submitCode(values: OtpFormValues) {
     setStep2Error(null)
+    if (locked) return
     if (!details) {
       setStep("details")
       return
@@ -101,6 +112,11 @@ export default function RegisterPage() {
       router.replace(result.home ?? "/auth/onboarding")
       return
     }
+    if (result.reason === "locked" && result.retryAfterSeconds) {
+      // Lockout: the code form disables itself and counts down (below).
+      startLock(result.retryAfterSeconds)
+      return
+    }
     setStep2Error(reasonMessage(t, STEP2_KEYS[result.reason] ?? result.reason))
   }
 
@@ -109,6 +125,10 @@ export default function RegisterPage() {
     setStep2Error(null)
     const result = await startRegistrationAction(details)
     if (!result.ok) {
+      if (result.reason === "locked" && result.retryAfterSeconds) {
+        startLock(result.retryAfterSeconds)
+        return
+      }
       setStep2Error(reasonMessage(t, result.reason))
     }
   }
@@ -227,6 +247,7 @@ export default function RegisterPage() {
                     maxLength={6}
                     placeholder="000000"
                     className="text-center text-lg tracking-[0.5em]"
+                    disabled={locked}
                     {...codeForm.register("code")}
                   />
                   {codeForm.formState.errors.code && (
@@ -235,11 +256,20 @@ export default function RegisterPage() {
                     </p>
                   )}
                 </div>
-                {step2Error && <StatusBadge status="danger">{step2Error}</StatusBadge>}
+                {locked ? (
+                  <StatusBadge status="danger">
+                    {t("auth.errors.lockedRetry", {
+                      time: formatLockCountdown(secondsLeft, locale),
+                    })}
+                  </StatusBadge>
+                ) : (
+                  step2Error && <StatusBadge status="danger">{step2Error}</StatusBadge>
+                )}
                 <Button
                   type="submit"
                   size="lg"
                   className="w-full"
+                  disabled={locked}
                   loading={codeForm.formState.isSubmitting}
                 >
                   {codeForm.formState.isSubmitting ? t("auth.verifying") : t("auth.verifyAndCreate")}
@@ -256,8 +286,8 @@ export default function RegisterPage() {
                 <button
                   type="button"
                   onClick={resendCode}
-                  disabled={detailsForm.formState.isSubmitting}
-                  className="text-dt-dim hover:text-dt-txt"
+                  disabled={locked || detailsForm.formState.isSubmitting}
+                  className="text-dt-dim hover:text-dt-txt disabled:opacity-50"
                 >
                   {detailsForm.formState.isSubmitting && (
                     <Loader size={14} className="size-3.5" aria-hidden />

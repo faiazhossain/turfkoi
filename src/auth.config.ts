@@ -34,6 +34,12 @@ const PROTECTED_PREFIXES = [
  * Edge-safe config shared by middleware and the full Auth.js config.
  * The Credentials provider (which needs the DB) is added in src/auth.ts.
  */
+// Fail-fast: a production deployment must never boot on the predictable dev
+// fallback — every JWT could be forged with a publicly-known secret.
+if (process.env.NODE_ENV === "production" && !process.env.AUTH_SECRET) {
+  throw new Error("[auth] FATAL: AUTH_SECRET is not set in production.")
+}
+
 export const authConfig = {
   secret:
     process.env.AUTH_SECRET ?? "dev-insecure-secret-set-AUTH_SECRET-in-prod",

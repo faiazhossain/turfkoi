@@ -9,6 +9,7 @@ import {
   slotHolds,
   turfSchedules,
   turfSlots,
+  users,
 } from "@/db/schema"
 import { materializeTurfSchedule } from "@/features/turfs/materialize"
 
@@ -182,9 +183,11 @@ export async function scheduleSettleAtKickoff(
 export const ACCOUNT_DELETION_GRACE_MS = 14 * 24 * 60 * 60 * 1000 // 14 days
 
 /**
- * K3 — after the 14-day grace window, hard-anonymize the user. Re-runs are
- * safe: anonymizeUser is idempotent (writing the placeholder phone twice is a
- * no-op modulo the unique constraint, which is satisfied by the hash).
+ * K3 — after the 14-day grace window, hard-anonymize the user. Skips (without
+ * touching PII) if the account is no longer status='deleted' — e.g. support
+ * reinstated it during the window. Re-runs are safe: anonymizeUser is
+ * idempotent (writing the placeholder phone twice is a no-op modulo the
+ * unique constraint, which is satisfied by the hash).
  */
 export const hardAnonymizeAccount = inngest.createFunction(
   {
@@ -195,24 +198,41 @@ export const hardAnonymizeAccount = inngest.createFunction(
   async ({ event, step }) => {
     const { userId } = (event.data ?? {}) as { userId?: string }
     if (!userId) return
+    const status = await step.run("check-status", async () => {
+      const [row] = await db
+        .select({ status: users.status })
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1)
+      return row?.status
+    })
+    if (status !== "deleted") return { skipped: true, status }
     await step.run("anonymize", async () => {
       const { anonymizeUser } = await import("@/features/auth/deletion")
       await anonymizeUser(userId)
       return { userId }
     })
+    await step.run("mark-completed", async () => {
+      await db
+        .update(users)
+        .set({ anonymizationStatus: "completed", updatedAt: new Date() })
+        .where(eq(users.id, userId))
+    })
+    return { userId, anonymized: true }
   }
 )
 
 /**
- * Helper: schedule hard anonymization of a user-requested deletion. Fires after
- * the grace window; the user can cancel by signing back in, which reinstates
- * status (the Inngest job re-checks status before anonymizing).
+ * Helper: schedule hard anonymization of a user-requested deletion. `at`
+ * defaults to the grace window from now; pass the stored anonymizeAt so the
+ * job clock and the DB column can never drift. The job re-checks status
+ * before anonymizing (support can reinstate during the window).
  */
-export async function scheduleAccountAnonymization(userId: string) {
+export async function scheduleAccountAnonymization(userId: string, at?: number) {
   await inngest.send({
     name: "account/delete.hard",
     data: { userId },
-    ts: Date.now() + ACCOUNT_DELETION_GRACE_MS,
+    ts: at ?? Date.now() + ACCOUNT_DELETION_GRACE_MS,
   })
 }
 

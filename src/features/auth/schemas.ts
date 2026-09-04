@@ -51,6 +51,28 @@ export const otpFormSchema = z.object({
   code: z.string().length(6, "auth.errors.otp_length"),
 })
 
+// Settings → Security: password change (server re-verifies the current
+// password against the stored hash).
+export const changePasswordFormSchema = z
+  .object({
+    currentPassword: z.string().min(1, "auth.errors.password_required"),
+    newPassword: z
+      .string()
+      .min(8, "auth.errors.password_min")
+      .max(72, "auth.errors.password_max"),
+    confirmPassword: z.string(),
+  })
+  .refine((d) => d.newPassword === d.confirmPassword, {
+    message: "auth.passwordsNoMatch",
+    path: ["confirmPassword"],
+  })
+
+// Settings → Security: phone change (authorized by an OTP over the verified
+// email). Validation only — the action normalizes before the unique check.
+export const changePhoneFormSchema = z.object({
+  phone: z.string().refine(isValidPhone, "auth.errors.phone_invalid"),
+})
+
 export const onboardingFormSchema = z.object({
   name: z
     .string()
@@ -89,6 +111,8 @@ export type LoginFormValues = z.infer<typeof loginFormSchema>
 export type ForgotPasswordFormValues = z.infer<typeof forgotPasswordFormSchema>
 export type ResetPasswordFormValues = z.infer<typeof resetPasswordFormSchema>
 export type OtpFormValues = z.infer<typeof otpFormSchema>
+export type ChangePasswordFormValues = z.infer<typeof changePasswordFormSchema>
+export type ChangePhoneFormValues = z.input<typeof changePhoneFormSchema>
 /** Form-field (pre-transform) type — pickers submit "" until chosen. */
 export type OnboardingFormInput = z.input<typeof onboardingFormSchema>
 export type OnboardingFormValues = z.output<typeof onboardingFormSchema>

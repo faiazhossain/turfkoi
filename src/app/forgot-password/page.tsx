@@ -20,6 +20,7 @@ import {
 import { StatusBadge } from "@/components/shared"
 import { useI18n } from "@/i18n/client"
 import { reasonMessage } from "@/features/auth/reasons"
+import { formatLockCountdown, useOtpLock } from "@/features/auth/use-otp-lock"
 import {
   requestPasswordResetAction,
   resetPasswordAction,
@@ -44,10 +45,11 @@ type NewPasswordValues = z.infer<typeof newPasswordSchema>
 
 export default function ForgotPasswordPage() {
   const router = useRouter()
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
   const [step, setStep] = useState<"email" | "reset">("email")
   const [email, setEmail] = useState("")
   const [error, setError] = useState<string | null>(null)
+  const { locked, secondsLeft, start: startLock } = useOtpLock()
 
   const emailForm = useForm<ForgotPasswordFormValues>({
     resolver: zodResolver(forgotPasswordFormSchema),
@@ -68,14 +70,28 @@ export default function ForgotPasswordPage() {
       setStep("reset")
       return
     }
+    if (result.reason === "locked" && result.retryAfterSeconds) {
+      // The lockout lives on the email server-side; restarting the flow with
+      // the same address lands back here with the countdown still running.
+      setEmail(values.email.toLowerCase())
+      setStep("reset")
+      startLock(result.retryAfterSeconds)
+      return
+    }
     setError(reasonMessage(t, result.reason))
   }
 
   async function submitReset(values: NewPasswordValues) {
     setError(null)
+    if (locked) return
     const result = await resetPasswordAction(email, values.code, values.password)
     if (result.ok) {
       router.replace(result.home ?? "/login")
+      return
+    }
+    if (result.reason === "locked" && result.retryAfterSeconds) {
+      // Lockout: the reset form disables itself and counts down (below).
+      startLock(result.retryAfterSeconds)
       return
     }
     setError(reasonMessage(t, result.reason))
@@ -141,6 +157,7 @@ export default function ForgotPasswordPage() {
                     maxLength={6}
                     placeholder="000000"
                     className="text-center text-lg tracking-[0.5em]"
+                    disabled={locked}
                     {...resetForm.register("code")}
                   />
                   {resetForm.formState.errors.code && (
@@ -178,11 +195,20 @@ export default function ForgotPasswordPage() {
                     </p>
                   )}
                 </div>
-                {error && <StatusBadge status="danger">{error}</StatusBadge>}
+                {locked ? (
+                  <StatusBadge status="danger">
+                    {t("auth.errors.lockedRetry", {
+                      time: formatLockCountdown(secondsLeft, locale),
+                    })}
+                  </StatusBadge>
+                ) : (
+                  error && <StatusBadge status="danger">{error}</StatusBadge>
+                )}
                 <Button
                   type="submit"
                   size="lg"
                   className="w-full"
+                  disabled={locked}
                   loading={resetForm.formState.isSubmitting}
                 >
                   {resetForm.formState.isSubmitting ? t("auth.saving") : t("auth.setNewPassword")}

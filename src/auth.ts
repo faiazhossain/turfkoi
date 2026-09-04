@@ -10,6 +10,9 @@ import { resolveIdentifier } from "@/features/auth/identifier"
 import { isTokenStale } from "@/features/auth/token-staleness"
 import { getUserByIdentifier, getUserRoles } from "@/features/auth/users"
 
+// AUTH_SECRET missing in production throws at import time in auth.config.ts
+// (fail-fast) — the old boot-time warning is no longer reachable.
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   providers: [
@@ -76,7 +79,3 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
   },
 })
-
-if (process.env.NODE_ENV === "production" && !process.env.AUTH_SECRET) {
-  console.error("[auth] FATAL: AUTH_SECRET is not set in production.")
-}

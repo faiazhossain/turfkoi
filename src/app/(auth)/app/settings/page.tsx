@@ -5,6 +5,8 @@ import { redirect } from "next/navigation"
 import { getPlayerProfile } from "@/features/player/queries"
 import { getSession } from "@/lib/auth"
 import { DeleteAccountButton } from "@/components/auth/delete-account-button"
+import { ChangePasswordForm } from "@/components/auth/change-password-form"
+import { ChangePhoneForm } from "@/components/auth/change-phone-form"
 import { AvatarField } from "@/components/player/avatar-field"
 import { buildMetadata } from "@/i18n/metadata"
 import { getT } from "@/i18n/server"
@@ -48,6 +50,33 @@ export default async function SettingsPage() {
           avatarPresetId={profile?.avatarPresetId ?? null}
           userName={session.user.name ?? null}
         />
+      </section>
+
+      <section className="space-y-3">
+        <div>
+          <h2 className="font-heading text-lg font-semibold">
+            {t("settings.securityTitle")}
+          </h2>
+          <p className="text-sm text-dt-dim">{t("settings.securityDesc")}</p>
+        </div>
+        <div className="rounded-lg border border-dt-line bg-dt-card p-4">
+          <p className="font-medium">{t("settings.changePasswordTitle")}</p>
+          <p className="mt-1 text-sm text-dt-dim">
+            {t("settings.changePasswordDesc")}
+          </p>
+          <div className="mt-4">
+            <ChangePasswordForm />
+          </div>
+        </div>
+        <div className="rounded-lg border border-dt-line bg-dt-card p-4">
+          <p className="font-medium">{t("settings.changePhoneTitle")}</p>
+          <p className="mt-1 text-sm text-dt-dim">
+            {t("settings.changePhoneDesc")}
+          </p>
+          <div className="mt-4">
+            <ChangePhoneForm />
+          </div>
+        </div>
       </section>
 
       <section className="space-y-3">
