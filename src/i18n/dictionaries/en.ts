@@ -46,6 +46,7 @@ export const en = {
     signIn: "Sign in",
     signOut: "Sign out",
     dashboard: "Dashboard",
+    settings: "Settings",
     adminConsole: "Admin console",
     bookTurf: "Book a turf",
     language: "Language",

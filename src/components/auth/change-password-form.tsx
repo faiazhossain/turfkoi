@@ -56,7 +56,7 @@ export function ChangePasswordForm() {
         )}
       </div>
       <div className="space-y-2">
-        <Label htmlFor="newPassword">{t("reset.newPassword")}</Label>
+        <Label htmlFor="newPassword">{t("auth.newPassword")}</Label>
         <Input
           id="newPassword"
           type="password"
@@ -70,7 +70,7 @@ export function ChangePasswordForm() {
         )}
       </div>
       <div className="space-y-2">
-        <Label htmlFor="confirmPassword">{t("reset.confirmNewPassword")}</Label>
+        <Label htmlFor="confirmPassword">{t("auth.confirmNewPassword")}</Label>
         <Input
           id="confirmPassword"
           type="password"

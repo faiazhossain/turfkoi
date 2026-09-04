@@ -3,8 +3,10 @@ import { redirect } from "next/navigation"
 import type { ReactNode } from "react"
 import {
   ArrowLeftIcon,
+  ChevronRightIcon,
   MapPinIcon,
   PencilIcon,
+  SettingsIcon,
   ZapIcon,
 } from "lucide-react"
 
@@ -218,6 +220,16 @@ export default async function ProfilePage() {
           </ul>
         ) : null}
       </section>
+
+      {/* Account settings — the standard hub-row entry point. */}
+      <Link
+        href="/app/settings"
+        className="flex items-center gap-3 rounded-lg border border-dt-line bg-dt-card p-4 text-sm font-medium transition-colors hover:border-dt-txt/30"
+      >
+        <SettingsIcon className="size-4 text-dt-dim" aria-hidden />
+        {t("nav.settings")}
+        <ChevronRightIcon className="ml-auto size-4 text-dt-dim" aria-hidden />
+      </Link>
     </div>
   )
 }

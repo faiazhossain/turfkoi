@@ -1,7 +1,7 @@
 import { Suspense } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { LayoutDashboardIcon } from "lucide-react"
+import { LayoutDashboardIcon, SettingsIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -13,12 +13,28 @@ import { LocaleToggle } from "@/i18n/toggle"
 import { MainNav } from "./main-nav"
 import { LinkPendingIndicator } from "./link-pending-indicator"
 
+/** Account settings entry point — a gear beside the session actions, the
+ * standard "always reachable" pattern (icon-only below sm like Dashboard). */
+function SettingsShortcut({ t }: { t: Awaited<ReturnType<typeof getT>> }) {
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      aria-label={t("nav.settings")}
+      className="px-2 sm:px-2.5"
+      render={<Link href="/app/settings" />}
+    >
+      <SettingsIcon />
+      <span className="hidden sm:inline">{t("nav.settings")}</span>
+    </Button>
+  )
+}
+
 /**
  * Session-aware right-side header actions. Kept in its own Suspense boundary
  * so the root layout stays a static shell — awaiting session data directly in
  * the layout would block navigation and suppress `loading.tsx` fallbacks.
- */
-async function SessionActions() {
+ */async function SessionActions() {
   const t = await getT()
   const session = await getSession()
 
@@ -47,6 +63,7 @@ async function SessionActions() {
           <LayoutDashboardIcon />
           <span className="hidden sm:inline">{t("nav.adminConsole")}</span>
         </Button>
+        <SettingsShortcut t={t} />
         <SignOutButton />
       </>
     )
@@ -68,6 +85,7 @@ async function SessionActions() {
         <LayoutDashboardIcon />
         <span className="hidden sm:inline">{t("nav.dashboard")}</span>
       </Button>
+      <SettingsShortcut t={t} />
       <SignOutButton />
     </>
   )

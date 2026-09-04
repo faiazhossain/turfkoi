@@ -48,6 +48,7 @@ export const bn: Dictionary = {
     signIn: "সাইন ইন",
     signOut: "সাইন আউট",
     dashboard: "ড্যাশবোর্ড",
+    settings: "সেটিংস",
     adminConsole: "Admin কনসোল",
     bookTurf: "টার্ফ বুক করুন",
     language: "ভাষা",
