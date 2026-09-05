@@ -1369,6 +1369,9 @@ export const en = {
     hqEyebrow: "Player HQ",
     classLabel: "Class",
     rankLabel: "Rank",
+    tabHome: "Home",
+    tabMatches: "Matches",
+    tabSquad: "Squad",
     liveOnline: "Available to Play",
     liveHint: "Tap to switch",
     soloHintOff:
@@ -1379,7 +1382,7 @@ export const en = {
     availabilityInfoLabel: "What's this?",
     availabilityInfo:
       "Turn this on and captains near you can see you're free to play tonight — they can invite you to their matches.",
-    liveOff: "OFFLINE",
+    liveOff: "OFFLINE — Tap to go Online",
     levelLabel: "Level",
     xpInfoLabel: "How to earn XP?",
     xpInfo:
@@ -1491,6 +1494,7 @@ export const en = {
     uploading: "Uploading",
     changePhoto: "Change photo",
     uploadPhoto: "Upload photo",
+    useStoredPhoto: "Use this photo",
     securityTitle: "Security",
     securityDesc: "Change your password or the phone number you sign in with.",
     changePasswordTitle: "Change password",

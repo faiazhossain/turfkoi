@@ -1389,6 +1389,9 @@ export const bn: Dictionary = {
     hqEyebrow: "Player HQ",
     classLabel: "Class",
     rankLabel: "Rank",
+    tabHome: "হোম",
+    tabMatches: "ম্যাচ",
+    tabSquad: "স্কোয়াড",
     liveOnline: "খেলতে Available",
     liveHint: "ট্যাপ করে বদলে নিন",
     soloHintOff:
@@ -1399,7 +1402,7 @@ export const bn: Dictionary = {
     availabilityInfoLabel: "এটা কী?",
     availabilityInfo:
       "এটা ON করলে কাছাকাছি captain-রা দেখবে আপনি আজ খেলতে free — তারা আপনাকে তাদের Match-এ invite করতে পারবে।",
-    liveOff: "OFFLINE",
+    liveOff: "OFFLINE — Online হতে ট্যাপ করুন",
     levelLabel: "লেভেল",
     xpInfoLabel: "XP কীভাবে পাবেন?",
     xpInfo:
@@ -1512,6 +1515,7 @@ export const bn: Dictionary = {
     uploading: "আপলোড হচ্ছে",
     changePhoto: "ছবি বদলান",
     uploadPhoto: "ছবি আপলোড করুন",
+    useStoredPhoto: "ছবিটা ব্যবহার করুন",
     securityTitle: "নিরাপত্তা",
     securityDesc: "আপনার password বা login-এর phone number বদলান।",
     changePasswordTitle: "Password বদলান",

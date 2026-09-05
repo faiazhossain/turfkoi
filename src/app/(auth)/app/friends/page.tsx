@@ -21,9 +21,14 @@ export async function generateMetadata() {
  * identity search and per-friend match invites. Server page fetches the
  * lists once; the client component handles tabs + actions.
  */
-export default async function FriendsHubPage() {
+export default async function FriendsHubPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string }>
+}) {
   const session = await getSession()
   if (!session?.user) redirect("/login")
+  const { tab } = await searchParams
 
   const profile = await getPlayerProfile(session.user.id)
   const [t, friends, requests, sent, suggestions] = await Promise.all([
@@ -52,6 +57,9 @@ export default async function FriendsHubPage() {
           sent={sent}
           suggestions={suggestions}
           friendIds={friends.map((f) => f.userId)}
+          initialTab={
+            tab === "requests" ? "requests" : tab === "sent" ? "sent" : "friends"
+          }
         />
       </div>
     </div>

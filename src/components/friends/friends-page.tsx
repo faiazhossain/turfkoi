@@ -176,6 +176,7 @@ export function FriendsPage({
   sent,
   suggestions,
   friendIds,
+  initialTab = "friends",
 }: {
   myPlayerId: string | null
   friends: FriendRow[]
@@ -185,10 +186,12 @@ export function FriendsPage({
   suggestions: FriendCandidateRow[]
   /** Ids already befriended — used to hide stale search hits. */
   friendIds: string[]
+  /** Deep-link support (?tab=requests from the /app badge shortcut). */
+  initialTab?: Tab
 }) {
   const { t } = useI18n()
   const router = useRouter()
-  const [tab, setTab] = useState<Tab>("friends")
+  const [tab, setTab] = useState<Tab>(initialTab)
   const [pending, start] = useTransition()
   const [term, setTerm] = useState("")
   const [hits, setHits] = useState<PlayerCardRow[] | null>(null)
