@@ -44,18 +44,21 @@ export async function sendFriendRequestAction(
     return { ok: false, error: "friends.errors.blocked" }
   }
 
-  const existing = await db
-    .select()
-    .from(friendships)
-    .where(
-      or(
-        and(eq(friendships.requesterId, user.id), eq(friendships.addresseeId, targetId)),
-        and(eq(friendships.requesterId, targetId), eq(friendships.addresseeId, user.id))
+  // Resolve an existing row for the pair (either direction). Returns an
+  // ActionResult when the request is settled without an insert; null when a
+  // declined row was revived (fall through to the notification below).
+  const resolvePrior = async (): Promise<ActionResult | null> => {
+    const [prior] = await db
+      .select()
+      .from(friendships)
+      .where(
+        or(
+          and(eq(friendships.requesterId, user.id), eq(friendships.addresseeId, targetId)),
+          and(eq(friendships.requesterId, targetId), eq(friendships.addresseeId, user.id))
+        )
       )
-    )
-    .limit(1)
-  const prior = existing[0]
-  if (prior) {
+      .limit(1)
+    if (!prior) return null
     if (prior.status === "accepted") return { ok: false, error: "friends.errors.alreadyFriends" }
     if (prior.status === "pending") {
       // They asked first — accept their request instead of duplicating.
@@ -75,11 +78,24 @@ export async function sendFriendRequestAction(
       .update(friendships)
       .set({ status: "pending", respondedAt: null, requesterId: user.id, addresseeId: targetId })
       .where(eq(friendships.id, prior.id))
-  } else {
+    return null
+  }
+
+  const priorResult = await resolvePrior()
+  if (priorResult) return priorResult
+
+  try {
     await db.insert(friendships).values({
       requesterId: user.id,
       addresseeId: targetId,
     })
+  } catch (err) {
+    // Lost the insert race (a parallel identical or reverse request won):
+    // the pair unique indexes are the backstop — re-read and settle through
+    // the same prior-row logic instead of leaking a 23505 to the client.
+    if ((err as { code?: string }).code !== "23505") throw err
+    const retry = await resolvePrior()
+    if (retry) return retry
   }
 
   const [me] = await db

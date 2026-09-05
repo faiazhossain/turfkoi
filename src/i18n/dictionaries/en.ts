@@ -1746,6 +1746,8 @@ export const en = {
     confirmPassword: "Confirm password",
     sendingCode: "Sending code…",
     devCodeHint: "Dev mode: use code 123456",
+    devNoAccount:
+      "Dev: no account found for {email} — no code was actually sent. Register first or check the email.",
     enterCodeTitle: "Enter the code",
     sentCodeTo: "We sent a 6-digit code to {email}.",
     codeLabel: "Verification code",

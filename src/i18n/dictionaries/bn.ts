@@ -1771,6 +1771,8 @@ export const bn: Dictionary = {
     confirmPassword: "পাসওয়ার্ড আবার লিখুন",
     sendingCode: "কোড পাঠানো হচ্ছে…",
     devCodeHint: "Dev mode: কোড 123456 ব্যবহার করুন",
+    devNoAccount:
+      "Dev: {email} দিয়ে কোনো account পাওয়া যায়নি — আসলে কোনো code পাঠানো হয়নি। আগে register করুন বা email ঠিক আছে কিনা দেখুন।",
     enterCodeTitle: "কোড লিখুন",
     sentCodeTo: "{email} ঠিকানায় একটি ৬-ডিজিটের কোড পাঠানো হয়েছে।",
     codeLabel: "Verification code",

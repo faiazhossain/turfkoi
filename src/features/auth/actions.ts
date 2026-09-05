@@ -50,7 +50,15 @@ import {
 const BCRYPT_COST = 10
 
 type ActionResult =
-  | { ok: true; devCode?: string; isNew?: boolean; home?: string }
+  | {
+      ok: true
+      devCode?: string
+      isNew?: boolean
+      home?: string
+      /** Dev-only: no account for this email — nothing was sent (prod keeps
+       * the silent anti-enumeration ok). */
+      devNoAccount?: boolean
+    }
   | { ok: false; reason: string; retryAfterSeconds?: number }
 
 async function clientIp(): Promise<string> {
@@ -238,7 +246,13 @@ export async function requestPasswordResetAction(rawEmail: string): Promise<Acti
   if (!parsed.success) return { ok: false, reason: parsed.error.issues[0]?.message ?? "errors.generic" }
 
   const user = await getUserByEmail(parsed.data.email)
-  if (!user) return { ok: true }
+  if (!user) {
+    // Production stays silent (anti-enumeration); dev surfaces the miss so a
+    // tester does not stare at the code box with no code ever sent.
+    return process.env.NODE_ENV === "production"
+      ? { ok: true }
+      : { ok: true, devNoAccount: true }
+  }
 
   const result = await sendOtp(parsed.data.email)
   if (result.ok) return { ok: true, devCode: result.devCode }

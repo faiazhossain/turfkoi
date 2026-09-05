@@ -101,7 +101,10 @@ export function FriendsCard({
           <p className="text-sm font-medium">{t("friends.requestsTitle")}</p>
           <ul className="divide-y divide-dt-line overflow-hidden rounded-lg border border-dt-line">
             {requests.map((r) => (
-              <li key={r.friendshipId} className="flex items-center gap-3 bg-dt-card p-2.5 text-sm">
+              <li
+                key={r.friendshipId}
+                className="flex items-center gap-3 p-2.5 text-sm odd:bg-dt-card even:bg-dt-card2"
+              >
                 <PlayerAvatar
                   display={resolveAvatarDisplay({
                     avatarType: r.avatarType,
@@ -191,7 +194,10 @@ export function FriendsCard({
         ) : (
           <ul className="divide-y divide-dt-line overflow-hidden rounded-lg border border-dt-line">
             {friends.map((f) => (
-              <li key={f.friendshipId} className="flex items-center gap-3 bg-dt-card p-2.5 text-sm">
+              <li
+                key={f.friendshipId}
+                className="flex items-center gap-3 p-2.5 text-sm odd:bg-dt-card even:bg-dt-card2"
+              >
                 <PlayerAvatar
                   display={resolveAvatarDisplay({
                     avatarType: f.avatarType,

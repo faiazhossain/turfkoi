@@ -56,7 +56,10 @@ describe("classifyBookingDays", () => {
         slot({ date: "2026-09-05", startTime: "20:00", endTime: "21:00" }),
       ],
       [],
-      RANGE
+      RANGE,
+      // Fixed clock: without it the real 20-min bookability cutoff turns the
+      // slots "past" once the wall clock passes their start times.
+      new Date("2026-09-02T12:00:00")
     )
     expect(days["2026-09-05"]!.status).toBe("open")
     expect(days["2026-09-05"]!.slots).toHaveLength(2)

@@ -48,6 +48,7 @@ export default function ForgotPasswordPage() {
   const { t, locale } = useI18n()
   const [step, setStep] = useState<"email" | "reset">("email")
   const [email, setEmail] = useState("")
+  const [devNoAccount, setDevNoAccount] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const { locked, secondsLeft, start: startLock } = useOtpLock()
 
@@ -67,6 +68,7 @@ export default function ForgotPasswordPage() {
     const result = await requestPasswordResetAction(values.email)
     if (result.ok) {
       setEmail(values.email.toLowerCase())
+      setDevNoAccount(result.devNoAccount ?? false)
       setStep("reset")
       return
     }
@@ -146,6 +148,11 @@ export default function ForgotPasswordPage() {
             <>
               {isDev && (
                 <StatusBadge status="info">{t("auth.devCodeHint")}</StatusBadge>
+              )}
+              {isDev && devNoAccount && (
+                <StatusBadge status="warning">
+                  {t("auth.devNoAccount", { email })}
+                </StatusBadge>
               )}
               <form onSubmit={resetForm.handleSubmit(submitReset)} className="space-y-4">
                 <div className="space-y-2">

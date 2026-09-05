@@ -1,4 +1,5 @@
-import { pgTable, uuid, timestamp, uniqueIndex, index } from "drizzle-orm/pg-core"
+import { sql } from "drizzle-orm"
+import { pgTable, uuid, timestamp, text, uniqueIndex, index } from "drizzle-orm/pg-core"
 
 import { users } from "./users"
 import { friendshipStatus } from "./enums"
@@ -20,6 +21,11 @@ export const friendships = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     status: friendshipStatus("status").notNull().default("pending"),
+    /** Direction-canonical pair id (DB-generated): the race backstop that
+     * makes one-row-per-pair hold even for simultaneous reverse requests. */
+    pairKey: text("pair_key").generatedAlwaysAs(
+      sql`least(requester_id::text, addressee_id::text) || greatest(requester_id::text, addressee_id::text)`
+    ),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
@@ -27,6 +33,7 @@ export const friendships = pgTable(
   },
   (t) => [
     uniqueIndex("friendships_pair_idx").on(t.requesterId, t.addresseeId),
+    uniqueIndex("friendships_pair_key_idx").on(t.pairKey),
     index("friendships_addressee_idx").on(t.addresseeId),
   ]
 )
