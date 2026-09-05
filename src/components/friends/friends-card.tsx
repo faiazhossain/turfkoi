@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react"
 import { toast } from "sonner"
+import { MapPinIcon } from "lucide-react"
 
 import { useI18n } from "@/i18n/client"
 
@@ -13,19 +14,16 @@ import {
   sendFriendRequestAction,
   respondToFriendRequestAction,
   removeFriendAction,
-  searchUsersForFriendAction,
 } from "@/features/friends/actions"
+import { searchPlayersAction } from "@/features/player/actions"
 import type { FriendRow, PendingRequestRow } from "@/features/friends/queries"
-
-interface SearchHit {
-  id: string
-  name: string | null
-  phone: string
-}
+import type { PlayerCardRow } from "@/features/player/queries"
 
 /**
  * Friends hub on the player dashboard: friends list, received requests with
- * accept/decline, and a name/phone search that offers "add friend".
+ * accept/decline, and the shared identity search (DT-ID / @username / name)
+ * that offers "add friend". Same search as the /app/friends hub — hits show
+ * DT-ID + @username + area so same-name players are tellable.
  */
 export function FriendsCard({
   friends,
@@ -40,11 +38,11 @@ export function FriendsCard({
   const { t } = useI18n()
   const [pending, start] = useTransition()
   const [term, setTerm] = useState("")
-  const [hits, setHits] = useState<SearchHit[] | null>(null)
+  const [hits, setHits] = useState<PlayerCardRow[] | null>(null)
 
   function search() {
     start(async () => {
-      const rows = await searchUsersForFriendAction(term)
+      const rows = await searchPlayersAction(term)
       setHits(rows)
     })
   }
@@ -57,7 +55,7 @@ export function FriendsCard({
         return
       }
       toast.success(t("friends.requestSent"))
-      setHits((prev) => (prev ?? []).filter((h) => h.id !== userId))
+      setHits((prev) => (prev ?? []).filter((h) => h.userId !== userId))
     })
   }
 
@@ -83,7 +81,7 @@ export function FriendsCard({
     })
   }
 
-  const visibleHits = (hits ?? []).filter((h) => !friendIds.includes(h.id))
+  const visibleHits = (hits ?? []).filter((h) => !friendIds.includes(h.userId))
 
   return (
     <section className="rounded-lg border border-dt-line bg-dt-card p-4">
@@ -147,9 +145,36 @@ export function FriendsCard({
       {visibleHits.length > 0 ? (
         <ul className="mt-2 space-y-1">
           {visibleHits.map((h) => (
-            <li key={h.id} className="flex items-center justify-between gap-2 text-sm">
-              <span className="min-w-0 truncate">{h.name ?? h.phone}</span>
-              <Button size="xs" variant="outline" onClick={() => request(h.id)} loading={pending}>
+            <li key={h.userId} className="flex items-center justify-between gap-2 text-sm">
+              <span className="min-w-0">
+                <span className="block truncate font-medium">
+                  {h.name}
+                  {h.username ? (
+                    <span className="ml-1.5 text-xs font-semibold text-dt-dim">
+                      @{h.username}
+                    </span>
+                  ) : null}
+                </span>
+                <span className="mt-0.5 flex items-center gap-2 text-[11px] text-dt-dim">
+                  {h.playerId ? (
+                    <span className="rounded bg-dt-blue/10 px-1.5 py-0.5 font-mono font-semibold text-dt-blue">
+                      {h.playerId}
+                    </span>
+                  ) : null}
+                  {h.area ? (
+                    <span className="flex min-w-0 items-center gap-0.5">
+                      <MapPinIcon className="size-3 shrink-0" aria-hidden />
+                      <span className="truncate">{h.area}</span>
+                    </span>
+                  ) : null}
+                </span>
+              </span>
+              <Button
+                size="xs"
+                variant="outline"
+                onClick={() => request(h.userId)}
+                loading={pending}
+              >
                 {t("friends.addFriend")}
               </Button>
             </li>

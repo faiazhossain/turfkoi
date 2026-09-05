@@ -12,18 +12,8 @@ import {
   respondFriendRequestSchema,
   removeFriendSchema,
   blockUserSchema,
-  friendSearchSchema,
 } from "./schemas"
-import { searchUsersForFriend, isBlockedEitherDirection } from "./queries"
-
-/** Search registered users for the friend picker (server action wrapper). */
-export async function searchUsersForFriendAction(q: string) {
-  const parsed = friendSearchSchema.safeParse({ q })
-  if (!parsed.success) return []
-  const user = await getCurrentUser()
-  if (!user) return []
-  return searchUsersForFriend(user.id, parsed.data.q)
-}
+import { isBlockedEitherDirection } from "./queries"
 
 export type ActionResult =
   | { ok: true }

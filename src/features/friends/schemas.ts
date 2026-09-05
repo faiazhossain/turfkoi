@@ -22,9 +22,3 @@ export const blockUserSchema = z.object({
   userId: z.string().uuid(),
 })
 export type BlockUserValues = z.infer<typeof blockUserSchema>
-
-/** Find users for the friend search (name/phone prefix). */
-export const friendSearchSchema = z.object({
-  q: z.string().trim().min(2).max(50),
-})
-export type FriendSearchValues = z.infer<typeof friendSearchSchema>

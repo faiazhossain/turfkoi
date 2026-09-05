@@ -1,5 +1,5 @@
 import "server-only"
-import { and, asc, desc, eq, ilike, ne, notExists, or, sql } from "drizzle-orm"
+import { and, asc, desc, eq, ne, notExists, or, sql } from "drizzle-orm"
 
 import { db } from "@/db"
 import { friendships, userBlocks, users, playerProfiles } from "@/db/schema"
@@ -230,27 +230,6 @@ export async function listFriendCandidates(
     lat: r.lat == null ? null : Number(r.lat),
     lng: r.lng == null ? null : Number(r.lng),
   }))
-}
-
-/** Search registered players by name/phone prefix for the friend search box. */
-export async function searchUsersForFriend(userId: string, q: string, limit = 8) {
-  const term = `%${q}%`
-  const rows = await db
-    .select({
-      id: users.id,
-      name: users.name,
-      phone: users.phone,
-    })
-    .from(users)
-    .where(
-      and(
-        ne(users.id, userId),
-        or(ilike(users.name, term), ilike(users.phone, term)),
-        notBlockedEitherDirection(userId, users.id)
-      )
-    )
-    .limit(limit)
-  return rows
 }
 
 /** True when a block row exists between the two users in EITHER direction. */

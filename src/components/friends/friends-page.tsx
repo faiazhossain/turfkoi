@@ -3,7 +3,7 @@
 import { useRef, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { CheckIcon, CopyIcon, SearchIcon, XIcon } from "lucide-react"
+import { CheckIcon, CopyIcon, MapPinIcon, SearchIcon, XIcon } from "lucide-react"
 
 import { useI18n } from "@/i18n/client"
 
@@ -328,6 +328,7 @@ export function FriendsPage({
                     playerId: h.playerId,
                     username: h.username,
                     position: h.position,
+                    area: h.area,
                     lastSeenAt: h.lastSeenAt,
                     avatarType: h.avatarType,
                     avatarPresetId: h.avatarPresetId,
@@ -668,6 +669,8 @@ interface RowLike {
   playerId: string | null
   username: string | null
   position: string | null
+  /** Area label — shown on search hits so same-name players are tellable. */
+  area?: string | null
   lastSeenAt: Date | null
   avatarType: string | null
   avatarPresetId: string | null
@@ -713,6 +716,12 @@ function PlayerRow({
           ) : null}
           {row.position ? (
             <span className="text-[11px] font-bold text-dt-dim">{row.position}</span>
+          ) : null}
+          {row.area ? (
+            <span className="flex min-w-0 items-center gap-0.5 text-[11px] text-dt-dim">
+              <MapPinIcon className="size-3 shrink-0" aria-hidden />
+              <span className="truncate">{row.area}</span>
+            </span>
           ) : null}
         </span>
       )}
