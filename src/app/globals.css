@@ -620,6 +620,44 @@ html[lang="bn"] :is(.match-hq, .player-hq) :is(h1, h2, h3, h4) {
   box-shadow: 0 0 12px rgb(0 224 122 / 0.45);
 }
 
+/*
+ * Player HQ segmented tabs — scoreboard treatment: Rajdhani labels (latin
+ * only; Bangla keeps natural spacing), active tab lights up with the
+ * lime→green CTA gradient. Overrides the shared Tabs base visuals, so these
+ * rules stay unlayered to win the cascade.
+ */
+.match-tabs {
+  height: auto;
+  padding: 4px;
+  border-radius: 0.875rem;
+  border: 1px solid var(--color-dt-line);
+  background: var(--color-dt-card2);
+}
+.match-tab {
+  height: auto;
+  padding: 0.5rem;
+  font-family: var(--font-sport), var(--font-bengali), ui-sans-serif, sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #93a0bd;
+  transition: color 0.2s, box-shadow 0.2s;
+}
+html:not([lang="bn"]) .match-tab {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+.match-tab:hover {
+  color: #00e5ff;
+}
+.match-tab[data-active] {
+  background-image: linear-gradient(135deg, #b4ff39, #00e07a);
+  color: #0a1206;
+  box-shadow: 0 4px 18px rgb(180 255 57 / 0.3);
+}
+.match-tab[data-active]:hover {
+  color: #0a1206;
+}
+
 /* XP progression bar — track + animated lime fill. */
 .player-xp {
   background: rgb(255 255 255 / 0.06);

@@ -129,10 +129,14 @@ export default async function PlayerDashboardPage({
       <div className="match-hq-glow" aria-hidden />
 
       <Tabs defaultValue={initialTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="home">{t("player.tabHome")}</TabsTrigger>
-          <TabsTrigger value="matches">{t("player.tabMatches")}</TabsTrigger>
-          <TabsTrigger value="squad">
+        <TabsList className="match-tabs grid w-full grid-cols-3">
+          <TabsTrigger value="home" className="match-tab">
+            {t("player.tabHome")}
+          </TabsTrigger>
+          <TabsTrigger value="matches" className="match-tab">
+            {t("player.tabMatches")}
+          </TabsTrigger>
+          <TabsTrigger value="squad" className="match-tab">
             {t("player.tabSquad")}
             {showRequestBadge ? (
               <span className="absolute -right-1 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-dt-red px-1 text-[10px] font-bold leading-none text-white">
@@ -489,6 +493,65 @@ export default async function PlayerDashboardPage({
 
         {/* Squad — friends + referral */}
         <TabsContent value="squad" className="space-y-6">
+          {/* What Squad is for — 3-step explainer */}
+          <section className="rounded-2xl border border-dt-line bg-dt-card p-4">
+            <h2 className="match-eyebrow">{t("player.squadHowTitle")}</h2>
+            <ol className="mt-3 space-y-3">
+              <li className="flex items-start gap-3">
+                <span
+                  aria-hidden
+                  className="match-score grid size-7 shrink-0 place-items-center rounded-lg bg-gradient-to-br from-[#b4ff39] to-[#00e07a] text-sm font-bold text-dt-ink"
+                >
+                  1
+                </span>
+                <div>
+                  <p className="font-heading text-sm font-semibold">
+                    {t("player.squadHowStep1Title")}
+                  </p>
+                  <p className="text-xs text-dt-dim">
+                    {t("player.squadHowStep1Desc")}
+                  </p>
+                </div>
+              </li>
+              <li className="flex items-start gap-3">
+                <span
+                  aria-hidden
+                  className="match-score grid size-7 shrink-0 place-items-center rounded-lg bg-gradient-to-br from-[#b4ff39] to-[#00e07a] text-sm font-bold text-dt-ink"
+                >
+                  2
+                </span>
+                <div>
+                  <p className="font-heading text-sm font-semibold">
+                    {t("player.squadHowStep2Title")}
+                  </p>
+                  <p className="text-xs text-dt-dim">
+                    {t("player.squadHowStep2Desc")}
+                  </p>
+                </div>
+              </li>
+              <li className="flex items-start gap-3">
+                <span
+                  aria-hidden
+                  className="match-score grid size-7 shrink-0 place-items-center rounded-lg bg-gradient-to-br from-[#b4ff39] to-[#00e07a] text-sm font-bold text-dt-ink"
+                >
+                  3
+                </span>
+                <div>
+                  <p className="font-heading text-sm font-semibold">
+                    {t("player.squadHowStep3Title")}
+                  </p>
+                  <p className="text-xs text-dt-dim">
+                    {t("player.squadHowStep3Desc")}
+                  </p>
+                </div>
+              </li>
+            </ol>
+            <p className="mt-3 flex items-center gap-2 border-t border-dt-line pt-3 text-xs text-dt-dim">
+              <span aria-hidden className="size-2 shrink-0 rounded-full bg-dt-red" />
+              {t("player.squadHowBadgeNote")}
+            </p>
+          </section>
+
           {/* Squad — friends */}
           <section className="space-y-3">
             <h2 className="match-eyebrow">{t("player.squadTitle")}</h2>

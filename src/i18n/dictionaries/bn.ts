@@ -1392,6 +1392,18 @@ export const bn: Dictionary = {
     tabHome: "হোম",
     tabMatches: "ম্যাচ",
     tabSquad: "স্কোয়াড",
+    squadHowTitle: "Squad দিয়ে কী করবেন?",
+    squadHowStep1Title: "Teammate যোগ করুন",
+    squadHowStep1Desc:
+      "DeshiTurf ID, @username বা নাম দিয়ে search করে friend request পাঠান।",
+    squadHowStep2Title: "কারা খেলতে free দেখুন",
+    squadHowStep2Desc:
+      "Online friend আর কাছাকাছি available player-রা একদম উপরে দেখা যাবে।",
+    squadHowStep3Title: "Match-এ invite করুন",
+    squadHowStep3Desc:
+      "Match room খুলে friend-দের সরাসরি আপনার roster-এ ডাকুন।",
+    squadHowBadgeNote:
+      "নতুন friend request এলে এই tab-এর লাল badge-এ দেখা যাবে।",
     liveOnline: "খেলতে Available",
     liveHint: "ট্যাপ করে বদলে নিন",
     soloHintOff:

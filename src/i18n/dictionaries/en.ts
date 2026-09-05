@@ -1372,6 +1372,18 @@ export const en = {
     tabHome: "Home",
     tabMatches: "Matches",
     tabSquad: "Squad",
+    squadHowTitle: "What is Squad for?",
+    squadHowStep1Title: "Add teammates",
+    squadHowStep1Desc:
+      "Search by DeshiTurf ID, @username or name and send a friend request.",
+    squadHowStep2Title: "See who's free",
+    squadHowStep2Desc:
+      "Online friends and players available to play near you show up first.",
+    squadHowStep3Title: "Invite to your match",
+    squadHowStep3Desc:
+      "Open a match room and invite friends straight onto your roster.",
+    squadHowBadgeNote:
+      "New friend requests show as a red badge on this tab.",
     liveOnline: "Available to Play",
     liveHint: "Tap to switch",
     soloHintOff:
